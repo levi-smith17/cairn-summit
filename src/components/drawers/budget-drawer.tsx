@@ -25,7 +25,7 @@ import { saveBudget } from '@/actions/budgets'
 
 const budgetSchema = z.object({
   category: z.string().min(1, 'Category is required'),
-  limit: z.coerce.number().positive('Limit must be greater than 0'),
+  limit: z.number().positive('Limit must be greater than 0'),
 })
 
 type BudgetFormValues = z.infer<typeof budgetSchema>
@@ -53,7 +53,7 @@ export function BudgetDrawer({
     resolver: zodResolver(budgetSchema),
     defaultValues: {
       category: budget?.category ?? '',
-      limit: budget?.limit ?? undefined,
+      limit: budget?.limit as number ?? undefined,
     },
   })
 
@@ -61,7 +61,7 @@ export function BudgetDrawer({
     if (open) {
       form.reset({
         category: budget?.category ?? '',
-        limit: budget?.limit ?? undefined,
+        limit: budget?.limit as number ?? undefined,
       })
     }
   }, [open, budget])
