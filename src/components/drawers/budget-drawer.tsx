@@ -53,7 +53,7 @@ export function BudgetDrawer({
     resolver: zodResolver(budgetSchema),
     defaultValues: {
       category: budget?.category ?? '',
-      limit: budget?.limit ?? '',
+      limit: budget?.limit ?? undefined,
     },
   })
 
@@ -61,7 +61,7 @@ export function BudgetDrawer({
     if (open) {
       form.reset({
         category: budget?.category ?? '',
-        limit: budget?.limit ?? '',
+        limit: budget?.limit ?? undefined,
       })
     }
   }, [open, budget])
