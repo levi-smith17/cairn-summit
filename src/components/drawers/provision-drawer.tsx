@@ -35,7 +35,7 @@ import { saveProvision } from '@/actions/provisions'
 
 const provisionSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  amount: z.coerce.number().positive('Amount must be greater than 0'),
+  amount: z.number().min(0, 'Amount must be 0 or greater'),
   billingCycle: z.enum(['WEEKLY', 'BIWEEKLY', 'MONTHLY', 'QUARTERLY', 'ANNUALLY']),
   nextRenewal: z.string().min(1, 'Next renewal date is required'),
   category: z.string().min(1, 'Category is required'),
@@ -76,7 +76,7 @@ export function ProvisionDrawer({
     resolver: zodResolver(provisionSchema),
     defaultValues: {
       name: provision?.name ?? '',
-      amount: provision?.amount ?? '',
+      amount: provision?.amount as  number ?? undefined,
       billingCycle: provision?.billingCycle ?? 'MONTHLY',
       nextRenewal: provision?.nextRenewal?.split('T')[0] ?? '',
       category: provision?.category ?? '',
@@ -90,7 +90,7 @@ export function ProvisionDrawer({
     if (open) {
       form.reset({
         name: provision?.name ?? '',
-        amount: provision?.amount ?? '',
+        amount: provision?.amount as  number ?? undefined,
         billingCycle: provision?.billingCycle ?? 'MONTHLY',
         nextRenewal: provision?.nextRenewal?.split('T')[0] ?? '',
         category: provision?.category ?? '',

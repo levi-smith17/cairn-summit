@@ -29,7 +29,7 @@ import { Camera, X, Receipt } from 'lucide-react'
 
 const expenseSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  amount: z.coerce.number().positive('Amount must be greater than 0'),
+  amount: z.number().positive('Amount must be greater than 0'),
   category: z.string().min(1, 'Category is required'),
   date: z.string().min(1, 'Date is required'),
   notes: z.string().optional(),
@@ -65,7 +65,7 @@ export function ExpenseDrawer({
     resolver: zodResolver(expenseSchema),
     defaultValues: {
       name: expense?.name ?? '',
-      amount: expense?.amount ?? '',
+      amount: expense?.amount as number | undefined,
       category: expense?.category ?? '',
       date: expense?.date?.split('T')[0] ?? new Date().toISOString().split('T')[0],
       notes: expense?.notes ?? '',
@@ -77,7 +77,7 @@ export function ExpenseDrawer({
     if (open) {
       form.reset({
         name: expense?.name ?? '',
-        amount: expense?.amount ?? '',
+        amount: expense?.amount as number | undefined,
         category: expense?.category ?? '',
         date: expense?.date?.split('T')[0] ?? new Date().toISOString().split('T')[0],
         notes: expense?.notes ?? '',
