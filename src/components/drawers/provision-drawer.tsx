@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { BillingCycle } from '@prisma/client'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { FormActions } from '@/components/forms/form-actions'
@@ -113,7 +114,7 @@ export function ProvisionDrawer({
         id: provision?.id,
         name: values.name,
         amount: values.amount,
-        billingCycle: values.billingCycle,
+        billingCycle: values.billingCycle as BillingCycle,
         nextRenewal: values.nextRenewal,
         category: values.category,
         url: values.url || null,

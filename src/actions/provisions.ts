@@ -3,6 +3,7 @@
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
+import { BillingCycle } from '@prisma/client'
 
 export async function saveProvision({
   id,
@@ -19,7 +20,7 @@ export async function saveProvision({
   id?: string
   name: string
   amount: number
-  billingCycle: string
+  billingCycle: BillingCycle
   nextRenewal: string
   category: string
   url?: string | null
