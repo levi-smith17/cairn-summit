@@ -23,6 +23,7 @@ interface Expense {
   category: string
   date: string
   notes?: string
+  receiptUrl?: string | null
   tags: Tag[]
 }
 
