@@ -6,15 +6,16 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { key: string } }
+  { params }: { params: Promise<{ key: string }> }
 ) {
   const session = await auth()
+  const { key: keyParam } = await params
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   // Reconstruct the full key from the path segments
-  const key = `receipts/${session.user.id}/${params.key}`
+  const key = `receipts/${session.user.id}/${keyParam}`
 
   // Verify the receipt belongs to this user
   const expense = await prisma.expense.findFirst({
@@ -46,14 +47,15 @@ export async function GET(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { key: string } }
+  { params }: { params: Promise<{ key: string }> }
 ) {
   const session = await auth()
+  const { key: keyParam } = await params
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const key = `receipts/${session.user.id}/${params.key}`
+  const key = `receipts/${session.user.id}/${keyParam}`
 
   const expense = await prisma.expense.findFirst({
     where: {
