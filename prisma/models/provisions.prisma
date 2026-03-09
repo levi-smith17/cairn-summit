@@ -1,0 +1,69 @@
+model Provision {
+  id           String       @id @default(cuid())
+  name         String
+  amount       Float
+  billingCycle BillingCycle
+  nextRenewal  DateTime
+  category     String
+  url          String?
+  notes        String?
+  active       Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  wayfarerId   String
+  wayfarer     Wayfarer     @relation(fields: [wayfarerId], references: [id])
+  tags         TagsOnProvisions[]
+}
+
+model Expense {
+  id         String   @id @default(cuid())
+  name       String
+  amount     Float
+  category   String
+  date       DateTime
+  notes      String?
+  receiptUrl String?
+  createdAt  DateTime @default(now())
+  wayfarerId String
+  wayfarer   Wayfarer @relation(fields: [wayfarerId], references: [id])
+  tags       TagsOnExpenses[]
+}
+
+model Budget {
+  id         String   @id @default(cuid())
+  category   String
+  limit      Float
+  month      Int
+  year       Int
+  wayfarerId String
+  wayfarer   Wayfarer @relation(fields: [wayfarerId], references: [id])
+  
+  @@unique([wayfarerId, category, month, year])
+}
+
+enum BillingCycle {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  QUARTERLY
+  ANNUALLY
+}
+
+model TagsOnProvisions {
+  provision   Provision @relation(fields: [provisionId], references: [id], onDelete: Cascade)
+  provisionId String
+  tag         Tag       @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  tagId       String
+
+  @@id([provisionId, tagId])
+  @@map("tags_on_provisions")
+}
+
+model TagsOnExpenses {
+  expense   Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  expenseId String
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  tagId     String
+
+  @@id([expenseId, tagId])
+  @@map("tags_on_expenses")
+}

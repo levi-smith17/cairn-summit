@@ -1,0 +1,178 @@
+model Wayfarer {
+  id                 String           @id @default(cuid())
+  name               String?
+  email              String?          @unique
+  emailVerified      DateTime?
+  image              String?
+  username           String?          @unique
+  listed             Boolean          @default(true)
+  defaultTerminology TerminologyStyle @default(CAIRN)
+  defaultTheme       ThemePreference  @default(SYSTEM)
+  createdAt          DateTime         @default(now())
+  accounts           Account[]
+  sessions           Session[]
+  waypoints          Waypoint[]
+  folders            Folder[]
+  logs               Log[]
+  tags               Tag[]
+  provisions         Provision[]
+  expenses           Expense[]
+  budget             Budget[]
+  origins            Origins?
+  expeditions        Expedition[]
+  training           Training[]
+  gear               Gear[]
+  landmarks          Landmark[]
+  summits            Summit[]
+  pathfinding        Pathfinding[]
+
+  @@map("wayfarers")
+}
+
+enum TerminologyStyle {
+  CAIRN
+  STANDARD
+}
+
+enum ThemePreference {
+  LIGHT
+  DARK
+  SYSTEM
+}
+
+// Origins — personal summary/bio
+model Origins {
+  id         String   @id @default(cuid())
+  headline   String?
+  summary    String?
+  location   String?
+  website    String?
+  linkedin   String?
+  github     String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  wayfarerId String   @unique
+  wayfarer   Wayfarer @relation(fields: [wayfarerId], references: [id], onDelete: Cascade)
+
+  @@map("origins")
+}
+
+// Expeditions — work experience
+model Expedition {
+  id          String    @id @default(cuid())
+  title       String
+  company     String
+  location    String?
+  startDate   DateTime
+  endDate     DateTime?
+  current     Boolean   @default(false)
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  wayfarerId  String
+  wayfarer    Wayfarer  @relation(fields: [wayfarerId], references: [id], onDelete: Cascade)
+
+  @@map("expeditions")
+}
+
+// Training — education
+model Training {
+  id          String    @id @default(cuid())
+  institution String
+  degree      String?
+  field       String?
+  startDate   DateTime
+  endDate     DateTime?
+  current     Boolean   @default(false)
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  wayfarerId  String
+  wayfarer    Wayfarer  @relation(fields: [wayfarerId], references: [id], onDelete: Cascade)
+
+  @@map("training")
+}
+
+// Gear — skills
+model Gear {
+  id         String     @id @default(cuid())
+  name       String
+  category   String?
+  level      GearLevel?
+  createdAt  DateTime   @default(now())
+  wayfarerId String
+  wayfarer   Wayfarer   @relation(fields: [wayfarerId], references: [id], onDelete: Cascade)
+
+  @@map("gear")
+}
+
+enum GearLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+// Landmarks — projects
+model Landmark {
+  id          String               @id @default(cuid())
+  name        String
+  description String?
+  url         String?
+  startDate   DateTime?
+  endDate     DateTime?
+  current     Boolean              @default(false)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  wayfarerId  String
+  wayfarer    Wayfarer             @relation(fields: [wayfarerId], references: [id], onDelete: Cascade)
+  summits     SummitsOnLandmarks[]
+
+  @@map("landmarks")
+}
+
+// Summits — achievements/awards
+model Summit {
+  id          String               @id @default(cuid())
+  title       String
+  issuer      String?
+  date        DateTime?
+  description String?
+  url         String?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  wayfarerId  String
+  wayfarer    Wayfarer             @relation(fields: [wayfarerId], references: [id], onDelete: Cascade)
+  landmarks   SummitsOnLandmarks[]
+
+  @@map("summits")
+}
+
+// Join table for summits and landmarks
+model SummitsOnLandmarks {
+  landmark   Landmark @relation(fields: [landmarkId], references: [id])
+  landmarkId String
+  summit     Summit   @relation(fields: [summitId], references: [id])
+  summitId   String
+
+  @@id([landmarkId, summitId])
+  @@map("summits_on_landmarks")
+}
+
+// Pathfinding — volunteering
+model Pathfinding {
+  id           String    @id @default(cuid())
+  organization String
+  role         String?
+  location     String?
+  startDate    DateTime
+  endDate      DateTime?
+  current      Boolean   @default(false)
+  description  String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  wayfarerId   String
+  wayfarer     Wayfarer  @relation(fields: [wayfarerId], references: [id], onDelete: Cascade)
+
+  @@map("pathfinding")
+}

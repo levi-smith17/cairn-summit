@@ -1,0 +1,11 @@
+model Folder {
+  id         String     @id @default(cuid())
+  name       String
+  createdAt  DateTime   @default(now())
+  wayfarerId String
+  wayfarer   Wayfarer   @relation(fields: [wayfarerId], references: [id], onDelete: Cascade)
+  waypoints  Waypoint[]
+  logs       Log[]
+
+  @@map("folders")
+}

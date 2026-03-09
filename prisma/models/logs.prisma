@@ -1,0 +1,25 @@
+model Log {
+  id         String    @id @default(cuid())
+  content    String
+  folderId   String?
+  waypointId String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  wayfarerId String
+  wayfarer   Wayfarer  @relation(fields: [wayfarerId], references: [id], onDelete: Cascade)
+  folder     Folder?   @relation(fields: [folderId], references: [id])
+  waypoint   Waypoint? @relation(fields: [waypointId], references: [id])
+  tags       TagsOnLogs[]
+
+  @@map("logs")
+}
+
+model TagsOnLogs {
+  log   Log    @relation(fields: [logId], references: [id], onDelete: Cascade)
+  logId String
+  tag   Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  tagId String
+
+  @@id([logId, tagId])
+  @@map("tags_on_logs")
+}
