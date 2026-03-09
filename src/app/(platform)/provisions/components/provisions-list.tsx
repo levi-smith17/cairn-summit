@@ -31,6 +31,8 @@ interface Provision {
 }
 
 interface Props {
+  categories: string[]
+  tags: any[]
   refreshKey: number
   onRefresh: () => void
 }

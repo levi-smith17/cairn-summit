@@ -32,6 +32,8 @@ interface Props {
   year: number
   onMonthChange: (m: number) => void
   onYearChange: (y: number) => void
+  categories: string[]
+  tags: any[]
   refreshKey: number
   onRefresh: () => void
 }
