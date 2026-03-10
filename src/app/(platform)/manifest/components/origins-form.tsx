@@ -13,15 +13,14 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { FormActions } from '@/components/forms/form-actions'
 import { RichTextEditor } from '@/components/ui/rich-text-editor'
-import { RichTextContent } from '@/components/ui/rich-text-content'
 import { useFormStatus } from '@/hooks/use-form-status'
 
 const originsSchema = z.object({
   headline: z.string().optional(),
   summary: z.string().optional(),
+  bio: z.string().optional(),
   location: z.string().optional(),
   website: z.string().url().optional().or(z.literal('')),
   linkedin: z.string().url().optional().or(z.literal('')),
@@ -42,6 +41,7 @@ export function OriginsForm({ defaultValues }: OriginsFormProps) {
     defaultValues: defaultValues ?? {
       headline: '',
       summary: '',
+      bio: '',
       location: '',
       website: '',
       linkedin: '',
@@ -53,6 +53,7 @@ export function OriginsForm({ defaultValues }: OriginsFormProps) {
     await handleSubmit(() => saveOrigins({
       headline: values.headline ?? null,
       summary: values.summary ?? null,
+      bio: values.bio ?? null,
       location: values.location ?? null,
       website: values.website ?? null,
       linkedin: values.linkedin ?? null,
@@ -87,6 +88,23 @@ export function OriginsForm({ defaultValues }: OriginsFormProps) {
                   value={field.value ?? ''}
                   onChange={field.onChange}
                   placeholder="A brief summary about yourself..."
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="bio"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Trail Notes (Bio)</FormLabel>
+              <FormControl>
+                <RichTextEditor
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                  placeholder="Tell your story..."
                 />
               </FormControl>
               <FormMessage />

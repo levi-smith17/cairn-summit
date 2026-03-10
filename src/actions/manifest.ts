@@ -3,22 +3,33 @@
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
+import { r2Companions, R2_COMPANIONS_BUCKET } from '@/lib/r2-companions'
+import { DeleteObjectCommand } from '@aws-sdk/client-s3'
 
-export async function saveOrigins(data: {
-  headline: string | null
-  summary: string | null
-  location: string | null
-  website: string | null
-  linkedin: string | null
-  github: string | null
+export async function saveOrigins({
+  headline,
+  summary,
+  bio,
+  location,
+  website,
+  linkedin,
+  github,
+}: {
+  headline?: string | null
+  summary?: string | null
+  bio?: string | null
+  location?: string | null
+  website?: string | null
+  linkedin?: string | null
+  github?: string | null
 }) {
   const session = await auth()
   if (!session?.user?.id) throw new Error('Unauthorized')
 
   await prisma.origins.upsert({
     where: { wayfarerId: session.user.id },
-    update: data,
-    create: { ...data, wayfarerId: session.user.id },
+    update: { headline, summary, bio, location, website, linkedin, github },
+    create: { headline, summary, bio, location, website, linkedin, github, wayfarerId: session.user.id },
   })
 
   revalidatePath('/manifest')
@@ -314,5 +325,123 @@ export async function saveManifestSettings(data: {
     },
   })
 
+  revalidatePath('/manifest')
+}
+
+export async function saveCompanion({
+  id,
+  name,
+  species,
+  breed,
+  birthday,
+  bio,
+  passed,
+}: {
+  id?: string
+  name: string
+  species: string
+  breed?: string | null
+  birthday?: Date | null
+  bio?: string | null
+  passed?: boolean
+}) {
+  const session = await auth()
+  if (!session?.user?.id) throw new Error('Unauthorized')
+  const wayfarerId = session.user.id
+
+  if (id) {
+    await prisma.companion.update({
+      where: { id },
+      data: { name, species, breed: breed ?? null, birthday: birthday ?? null, bio: bio ?? null, passed: passed ?? false },
+    })
+  } else {
+    await prisma.companion.create({
+      data: { name, species, breed: breed ?? null, birthday: birthday ?? null, bio: bio ?? null, passed: passed ?? false, wayfarerId },
+    })
+  }
+
+  revalidatePath('/manifest')
+}
+
+export async function deleteCompanion(id: string) {
+  const session = await auth()
+  if (!session?.user?.id) throw new Error('Unauthorized')
+
+  const companion = await prisma.companion.findFirst({
+    where: { id, wayfarerId: session.user.id },
+    include: { media: true },
+  })
+  if (!companion) throw new Error('Not found')
+
+  // Delete all media from R2
+  await Promise.all(
+    companion.media.map((m) =>
+      r2Companions.send(new DeleteObjectCommand({ Bucket: R2_COMPANIONS_BUCKET, Key: m.key }))
+    )
+  )
+
+  await prisma.companion.delete({ where: { id } })
+  revalidatePath('/manifest')
+}
+
+export async function addCompanionMedia({
+  companionId,
+  key,
+  type,
+  caption,
+  order,
+}: {
+  companionId: string
+  key: string
+  type: 'IMAGE' | 'VIDEO'
+  caption?: string | null
+  order?: number
+}) {
+  const session = await auth()
+  if (!session?.user?.id) throw new Error('Unauthorized')
+
+  const companion = await prisma.companion.findFirst({
+    where: { id: companionId, wayfarerId: session.user.id },
+  })
+  if (!companion) throw new Error('Not found')
+
+  await prisma.companionMedia.create({
+    data: { companionId, key, type, caption: caption ?? null, order: order ?? 0 },
+  })
+
+  revalidatePath('/manifest')
+}
+
+export async function updateCompanionMediaCaption(mediaId: string, caption: string | null) {
+  const session = await auth()
+  if (!session?.user?.id) throw new Error('Unauthorized')
+
+  const media = await prisma.companionMedia.findFirst({
+    where: { id: mediaId, companion: { wayfarerId: session.user.id } },
+  })
+  if (!media) throw new Error('Not found')
+
+  await prisma.companionMedia.update({
+    where: { id: mediaId },
+    data: { caption },
+  })
+
+  revalidatePath('/manifest')
+}
+
+export async function deleteCompanionMedia(mediaId: string) {
+  const session = await auth()
+  if (!session?.user?.id) throw new Error('Unauthorized')
+
+  const media = await prisma.companionMedia.findFirst({
+    where: { id: mediaId, companion: { wayfarerId: session.user.id } },
+  })
+  if (!media) throw new Error('Not found')
+
+  await r2Companions.send(
+    new DeleteObjectCommand({ Bucket: R2_COMPANIONS_BUCKET, Key: media.key })
+  )
+
+  await prisma.companionMedia.delete({ where: { id: mediaId } })
   revalidatePath('/manifest')
 }

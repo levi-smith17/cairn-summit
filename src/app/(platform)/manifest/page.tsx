@@ -2,7 +2,7 @@ import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import { ManifestSummary } from './components/manifest-summary'
-import { ManifestTabs } from './components/manifest-tabs'
+import { ManifestSections } from './components/manifest-sections'
 import { WayfarerOverview } from './components/wayfarer-overview'
 import { PageHeader } from '@/components/nav/page-header'
 
@@ -16,7 +16,7 @@ export default async function ManifestPage() {
         select: { username: true, listed: true, defaultTerminology: true, defaultTheme: true },
     })
 
-    const [origins, expeditions, training, gear, landmarks, summits, pathfinding] = await Promise.all([
+    const [origins, expeditions, training, gear, landmarks, summits, pathfinding, companions] = await Promise.all([
         prisma.origins.findUnique({ where: { wayfarerId } }),
         prisma.expedition.findMany({ where: { wayfarerId }, orderBy: { startDate: 'desc' } }),
         prisma.training.findMany({ where: { wayfarerId }, orderBy: { startDate: 'desc' } }),
@@ -24,13 +24,14 @@ export default async function ManifestPage() {
         prisma.landmark.findMany({ where: { wayfarerId }, orderBy: { startDate: 'desc' } }),
         prisma.summit.findMany({ where: { wayfarerId }, orderBy: { date: 'desc' } }),
         prisma.pathfinding.findMany({ where: { wayfarerId }, orderBy: { startDate: 'desc' } }),
+        prisma.companion.findMany({ where: { wayfarerId }, orderBy: { name: 'asc' }, include: { media: { orderBy: { order: 'asc' } } } })
     ])
 
     return (
         <>
-            <PageHeader title="Manifest" />
-            <div className="flex flex-1 flex-col gap-4 p-4 min-w-0 overflow-hidden">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <PageHeader title="My Manifest" />
+            <div className="flex flex-col flex-1 min-h-0 gap-4 p-4 overflow-hidden">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 shrink-0">
                     <WayfarerOverview
                         name={session.user.name ?? null}
                         email={session.user.email ?? null}
@@ -65,23 +66,22 @@ export default async function ManifestPage() {
                         }
                     />
                 </div>
-                <div className="flex-1 rounded-xl bg-muted/50 md:min-h-min p-6">
-                    <ManifestTabs
-                        origins={origins}
-                        expeditions={expeditions}
-                        training={training}
-                        gear={gear}
-                        landmarks={landmarks}
-                        summits={summits}
-                        pathfinding={pathfinding}
-                        settings={{
-                            username: wayfarer?.username ?? null,
-                            listed: wayfarer?.listed ?? true,
-                            defaultTerminology: wayfarer?.defaultTerminology ?? 'CAIRN',
-                            defaultTheme: wayfarer?.defaultTheme ?? 'SYSTEM',
-                        }}
-                    />
-                </div>
+                <ManifestSections
+                    origins={origins}
+                    expeditions={expeditions}
+                    training={training}
+                    gear={gear}
+                    landmarks={landmarks}
+                    summits={summits}
+                    pathfinding={pathfinding}
+                    companions={companions}
+                    settings={{
+                        username: wayfarer?.username ?? null,
+                        listed: wayfarer?.listed ?? true,
+                        defaultTerminology: wayfarer?.defaultTerminology ?? 'CAIRN',
+                        defaultTheme: wayfarer?.defaultTheme ?? 'SYSTEM',
+                    }}
+                />
             </div>
         </>
     )

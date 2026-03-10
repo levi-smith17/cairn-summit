@@ -14,17 +14,14 @@ import {
     FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { DatePicker } from '@/components/ui/date-picker'
+import { MonthYearPicker } from '@/components/ui/month-year-picker'
 import { FormActions } from '@/components/forms/form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
 import { Pencil, Trash2, Plus } from 'lucide-react'
 import { RichTextContent } from '@/components/ui/rich-text-content'
 import { RichTextEditor } from '@/components/ui/rich-text-editor'
-import { Separator } from '@/components/ui/separator'
-import { Timeline } from '@/components/ui/timeline'
 import { format } from 'date-fns'
 
 const expeditionSchema = z.object({
@@ -37,8 +34,6 @@ const expeditionSchema = z.object({
     current: z.boolean(),
     description: z.string().optional(),
 })
-
-const formatDate = (date: Date) => format(date, 'MMM yyyy')
 
 type ExpeditionFormValues = z.infer<typeof expeditionSchema>
 
@@ -124,186 +119,163 @@ export function ExpeditionsForm({ expeditions }: ExpeditionsFormProps) {
         await deleteExpedition(id)
     }
 
+    function renderForm() {
+        return (
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                            control={form.control}
+                            name="title"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Title</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="e.g. Software Engineer" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="company"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Company</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="e.g. Acme Corp" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+
+                    <FormField
+                        control={form.control}
+                        name="location"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Location</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="e.g. San Francisco, CA" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                            control={form.control}
+                            name="startDate"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Start Date</FormLabel>
+                                    <FormControl>
+                                        <MonthYearPicker value={field.value} onChange={field.onChange} placeholder="Select start date" />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        {!current && (
+                            <FormField
+                                control={form.control}
+                                name="endDate"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>End Date</FormLabel>
+                                        <FormControl>
+                                            <MonthYearPicker value={field.value} onChange={field.onChange} placeholder="Select end date" />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
+                    </div>
+
+                    <FormField
+                        control={form.control}
+                        name="current"
+                        render={({ field }) => (
+                            <FormItem className="flex items-center gap-2 space-y-0">
+                                <FormControl>
+                                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                                </FormControl>
+                                <FormLabel>I currently work here</FormLabel>
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="description"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Description</FormLabel>
+                                <FormControl>
+                                    <RichTextEditor value={field.value ?? ''} onChange={field.onChange} placeholder="Describe your role and responsibilities..." />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <div className="flex justify-end items-center gap-4">
+                        <Button type="button" variant="ghost" onClick={cancel}>Cancel</Button>
+                        <FormActions saving={saving} saved={saved} error={error} saveLabel={editing ? 'Update Expedition' : 'Add Expedition'} />
+                    </div>
+                </form>
+            </Form>
+        )
+    }
+
     return (
         <div className="space-y-6">
-            {/* Existing entries */}
             {expeditions.length > 0 && (
                 <div className="relative">
-                    {expeditions.map((exp, index) => (
-                        <div key={exp.id} className="relative pl-6 pb-8 last:pb-0">
-                            {/* Vertical line */}
-                            <div className="absolute left-0 top-2 bottom-0 w-px bg-border" />
-                            {/* Dot */}
-                            <div className="absolute left-[-4px] top-2 h-2 w-2 rounded-full bg-foreground ring-2 ring-background" />
-
-                            <div className="flex items-start justify-between gap-4">
-                                <div className="flex flex-col gap-1">
-                                    <p className="font-medium leading-tight">{exp.title}</p>
-                                    <p className="text-sm text-muted-foreground">{exp.company}</p>
-                                    {exp.location && (
-                                        <p className="text-sm text-muted-foreground">{exp.location}</p>
-                                    )}
-                                    <span className="text-sm text-muted-foreground">
-                                        {format(exp.startDate, 'MMM yyyy')} —{' '}
-                                        {exp.current ? 'Present' : exp.endDate ? format(exp.endDate, 'MMM yyyy') : ''}
-                                    </span>
-                                    {exp.description && (
-                                        <RichTextContent html={exp.description} className="text-muted-foreground" />
-                                    )}
-                                </div>
-                                <div className="flex gap-1 shrink-0">
-                                    <Button variant="ghost" size="icon" onClick={() => startEdit(exp)}>
-                                        <Pencil className="h-4 w-4" />
-                                    </Button>
-                                    <Button variant="ghost" size="icon" onClick={() => onDelete(exp.id)}>
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
+                    {expeditions.map((exp) => (
+                        editing === exp.id ? (
+                            <div key={exp.id} className="relative pl-6 pb-8 last:pb-0">
+                                <div className="absolute left-0 top-2 bottom-0 w-px bg-border" />
+                                <div className="absolute left-[-4px] top-2 h-2 w-2 rounded-full bg-foreground ring-2 ring-background" />
+                                {renderForm()}
+                            </div>
+                        ) : (
+                            <div key={exp.id} className="relative pl-6 pb-8 last:pb-0">
+                                <div className="absolute left-0 top-2 bottom-0 w-px bg-border" />
+                                <div className="absolute left-[-4px] top-2 h-2 w-2 rounded-full bg-foreground ring-2 ring-background" />
+                                <div className="flex items-start justify-between gap-4">
+                                    <div className="flex flex-col gap-1">
+                                        <p className="font-medium leading-tight">{exp.title}</p>
+                                        <p className="text-sm text-muted-foreground">{exp.company}</p>
+                                        {exp.location && <p className="text-sm text-muted-foreground">{exp.location}</p>}
+                                        <span className="text-sm text-muted-foreground">
+                                            {format(exp.startDate, 'MMM yyyy')} —{' '}
+                                            {exp.current ? 'Present' : exp.endDate ? format(exp.endDate, 'MMM yyyy') : ''}
+                                        </span>
+                                        {exp.description && <RichTextContent html={exp.description} className="text-muted-foreground" />}
+                                    </div>
+                                    <div className="flex gap-1 shrink-0">
+                                        <Button variant="ghost" size="icon" onClick={() => startEdit(exp)}>
+                                            <Pencil className="h-4 w-4" />
+                                        </Button>
+                                        <Button variant="ghost" size="icon" onClick={() => onDelete(exp.id)}>
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )
                     ))}
                 </div>
             )}
 
-            {/* Add/Edit form */}
-            {(adding || editing) && (
-                <>
-                    {expeditions.length > 0 && <Separator />}
-                    <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="title"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Title</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="e.g. Software Engineer" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="company"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Company</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="e.g. Acme Corp" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
+            {adding && renderForm()}
 
-                            <FormField
-                                control={form.control}
-                                name="location"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Location</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="e.g. San Francisco, CA" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="startDate"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Start Date</FormLabel>
-                                            <FormControl>
-                                                <DatePicker
-                                                    value={field.value}
-                                                    onChange={field.onChange}
-                                                    placeholder="Select start date"
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                {!current && (
-                                    <FormField
-                                        control={form.control}
-                                        name="endDate"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>End Date</FormLabel>
-                                                <FormControl>
-                                                    <DatePicker
-                                                        value={field.value}
-                                                        onChange={field.onChange}
-                                                        placeholder="Select end date"
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                )}
-                            </div>
-
-                            <FormField
-                                control={form.control}
-                                name="current"
-                                render={({ field }) => (
-                                    <FormItem className="flex items-center gap-2 space-y-0">
-                                        <FormControl>
-                                            <Checkbox
-                                                checked={field.value}
-                                                onCheckedChange={field.onChange}
-                                            />
-                                        </FormControl>
-                                        <FormLabel>I currently work here</FormLabel>
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="description"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Description</FormLabel>
-                                        <FormControl>
-                                            <RichTextEditor
-                                                value={field.value ?? ''}
-                                                onChange={field.onChange}
-                                                placeholder="Describe your role and responsibilities..."
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <div className="flex justify-end items-center gap-4">
-                                <Button type="button" variant="ghost" onClick={cancel}>
-                                    Cancel
-                                </Button>
-                                <FormActions
-                                    saving={saving}
-                                    saved={saved}
-                                    error={error}
-                                    saveLabel={editing ? 'Update Expedition' : 'Add Expedition'}
-                                />
-                            </div>
-                        </form>
-                    </Form>
-                </>
-            )}
-
-            {/* Add button */}
             {!adding && !editing && (
                 <Button variant="outline" onClick={startAdd}>
                     <Plus className="h-4 w-4" />

@@ -49,7 +49,7 @@ export function PublicNav({ currentUser, terminologyToggle, showDirectoryLink }:
                 {/* Theme toggle */}
                 {mounted && (
                     <Button
-                        variant="ghost"
+                        variant="secondary"
                         size="sm"
                         className="rounded-none"
                         onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}

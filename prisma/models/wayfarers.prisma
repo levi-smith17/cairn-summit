@@ -25,6 +25,7 @@ model Wayfarer {
   landmarks          Landmark[]
   summits            Summit[]
   pathfinding        Pathfinding[]
+  companions         Companion[]
 
   @@map("wayfarers")
 }
@@ -45,6 +46,7 @@ model Origins {
   id         String   @id @default(cuid())
   headline   String?
   summary    String?
+  bio        String?
   location   String?
   website    String?
   linkedin   String?
@@ -175,4 +177,35 @@ model Pathfinding {
   wayfarer     Wayfarer  @relation(fields: [wayfarerId], references: [id], onDelete: Cascade)
 
   @@map("pathfinding")
+}
+
+// Companions - pets
+model Companion {
+  id          String            @id @default(cuid())
+  name        String
+  species     String
+  breed       String?
+  birthday    DateTime?
+  bio         String?
+  passed      Boolean           @default(false)
+  createdAt   DateTime          @default(now())
+  wayfarerId  String
+  wayfarer    Wayfarer          @relation(fields: [wayfarerId], references: [id], onDelete: Cascade)
+  media       CompanionMedia[]
+}
+
+model CompanionMedia {
+  id           String     @id @default(cuid())
+  key          String
+  type         MediaType
+  caption      String?
+  order        Int        @default(0)
+  createdAt    DateTime   @default(now())
+  companionId  String
+  companion    Companion  @relation(fields: [companionId], references: [id], onDelete: Cascade)
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
 }

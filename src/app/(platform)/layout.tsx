@@ -19,8 +19,8 @@ export default async function PlatformLayout({
         email: user.email ?? null,
         avatar: user.image ?? null,
       }} />
-      <SidebarInset className="min-w-0">
-        <div className="flex flex-col flex-1 min-w-0">
+      <SidebarInset className="min-w-0 h-svh overflow-hidden">
+        <div className="flex flex-col h-full min-w-0 overflow-y-auto">
           {children}
         </div>
       </SidebarInset>

@@ -1,16 +1,13 @@
 'use client'
 
 import Link from 'next/link'
-import { Sun, Moon, BookType } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useState, useEffect, useRef } from 'react'
-import { getTerms, type TerminologyStyle, type Terms } from '@/lib/terminology'
+import { getTerms, type TerminologyStyle } from '@/lib/terminology'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { PublicNav } from '@/components/nav/public-nav'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import {
-    LayoutList,
     MapPin,
     Globe,
     Mail
@@ -18,25 +15,14 @@ import {
 import { RichTextContent } from '@/components/ui/rich-text-content'
 import { Timeline } from '@/components/ui/timeline'
 import { format } from 'date-fns'
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipTrigger,
-} from '@/components/ui/tooltip'
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { LogoutMenuItem } from '@/components/nav/wayfarer/logout-menu-item'
 import { useRouter } from 'next/navigation'
+import { ManifestStickyHeader } from './sticky-header'
+
 
 const formatDate = (date: Date) => format(date, 'MMM yyyy')
 
 interface ManifestContentProps {
+    username: string
     wayfarer: {
         name: string | null
         email: string | null
@@ -134,6 +120,7 @@ function DateRange({ startDate, endDate, current }: { startDate: Date; endDate: 
 }
 
 export function ManifestContent({
+    username,
     wayfarer,
     origins,
     expeditions,
@@ -186,231 +173,159 @@ export function ManifestContent({
     }, {})
 
     return (
-        <div className="max-w-3xl mx-auto px-6 pb-6 flex flex-col gap-12">
+        <div className="relative">
+            {/* Sticky top bar */}
+            <ManifestStickyHeader
+                username={username}
+                wayfarer={wayfarer}
+                terminology={terminology}
+                onTerminologyToggle={() => setTerminology(t => t === 'CAIRN' ? 'STANDARD' : 'CAIRN')}
+                showAvatar={showStickyHeader}
+                showDirectoryLink={showDirectoryLink}
+                currentUser={currentUser}
+            />
 
-            {/* Header */}
-            <div className="flex flex-col gap-6">
-                {/* Sticky top bar */}
-                <div className="sticky top-0 z-10 flex items-center justify-between py-2 px-4 bg-background border-b">
-                    {/* Compact avatar + name — only visible after scrolling past header */}
-                    <div className={`flex items-center gap-3 transition-opacity duration-200 ${showStickyHeader ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                        <Avatar className="h-8 w-8">
+            <div className="max-w-3xl mx-auto px-6 pb-6 flex flex-col gap-12">
+                <div className="flex flex-col gap-6">
+                    {/* Full header — observed for scroll detection */}
+                    <div ref={headerRef} className="flex items-center gap-4 pt-8">
+                        <Avatar className="h-20 w-20">
                             <AvatarImage src={wayfarer.image ?? undefined} />
-                            <AvatarFallback className="text-sm">{initials}</AvatarFallback>
+                            <AvatarFallback className="text-xl">{initials}</AvatarFallback>
                         </Avatar>
-                        <span className="font-medium text-sm">{wayfarer.name ?? wayfarer.email}</span>
+                        <div className="flex flex-col gap-1">
+                            <h1 className="text-2xl font-semibold">{wayfarer.name ?? wayfarer.email}</h1>
+                            {origins?.headline && (
+                                <p className="text-muted-foreground">{origins.headline}</p>
+                            )}
+                        </div>
                     </div>
 
-                    {/* Button group — always visible */}
-                    <div className="flex items-center gap-2 ml-auto">
-                        <PublicNav
-                            currentUser={currentUser}
-                            terminologyToggle={
-                                <>
-                                    {showDirectoryLink && (
-                                        <Link href="/">
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="rounded-none"
-                                                asChild
-                                            >
-                                                <span className="flex items-center gap-1.5">
-                                                    <LayoutList className="h-4 w-4" />
-                                                </span>
-                                            </Button>
-                                        </Link>
-                                    )}
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="rounded-none gap-2"
-                                                onClick={() => setTerminology(t => t === 'CAIRN' ? 'STANDARD' : 'CAIRN')}
-                                            >
-                                                <BookType className="h-4 w-4" />
-                                                {terminology === 'CAIRN' ? 'Standard' : 'Cairn'}
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            {terminology === 'CAIRN'
-                                                ? 'Switch to standard resume terminology'
-                                                : 'Switch to Cairn terminology'}
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </>
-                            }
-                        />
-                    </div>
-                </div>
-
-                {/* Full header — observed for scroll detection */}
-                <div ref={headerRef} className="flex items-center gap-4">
-                    <Avatar className="h-20 w-20">
-                        <AvatarImage src={wayfarer.image ?? undefined} />
-                        <AvatarFallback className="text-xl">{initials}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col gap-1">
-                        <h1 className="text-2xl font-semibold">{wayfarer.name ?? wayfarer.email}</h1>
-                        {origins?.headline && (
-                            <p className="text-muted-foreground">{origins.headline}</p>
+                    {/* Contact info */}
+                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                        {origins?.location && (
+                            <div className="flex items-center gap-1">
+                                <MapPin className="h-4 w-4" />
+                                {origins.location}
+                            </div>
+                        )}
+                        {wayfarer.email && (
+                            <div className="flex items-center gap-1">
+                                <Mail className="h-4 w-4" />
+                                <a href={`mailto:${wayfarer.email}`} className="hover:text-foreground">
+                                    {wayfarer.email}
+                                </a>
+                            </div>
+                        )}
+                        {origins?.website && (
+                            <div className="flex items-center gap-1">
+                                <Globe className="h-4 w-4" />
+                                <a href={origins.website} target="_blank" rel="noopener noreferrer" className="hover:text-foreground">
+                                    {origins.website}
+                                </a>
+                            </div>
+                        )}
+                        {origins?.linkedin && (
+                            <a href={origins.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-foreground">
+                                LinkedIn
+                            </a>
+                        )}
+                        {origins?.github && (
+                            <a href={origins.github} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-foreground">
+                                GitHub
+                            </a>
                         )}
                     </div>
-                </div>
 
-                {/* Contact info */}
-                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                    {origins?.location && (
-                        <div className="flex items-center gap-1">
-                            <MapPin className="h-4 w-4" />
-                            {origins.location}
-                        </div>
+                    {/* Summary */}
+                    {origins?.summary && (
+                        <RichTextContent html={origins.summary} className="text-muted-foreground" />
                     )}
-                    {wayfarer.email && (
-                        <div className="flex items-center gap-1">
-                            <Mail className="h-4 w-4" />
-                            <a href={`mailto:${wayfarer.email}`} className="hover:text-foreground">
-                                {wayfarer.email}
-                            </a>
-                        </div>
-                    )}
-                    {origins?.website && (
-                        <div className="flex items-center gap-1">
-                            <Globe className="h-4 w-4" />
-                            <a href={origins.website} target="_blank" rel="noopener noreferrer" className="hover:text-foreground">
-                                {origins.website}
-                            </a>
-                        </div>
-                    )}
-                    {origins?.linkedin && (
-                        <a href={origins.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-foreground">
-                            LinkedIn
-                        </a>
-                    )}
-                    {origins?.github && (
-                        <a href={origins.github} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-foreground">
-                            GitHub
-                        </a>
-                    )}
-                </div>
-
-                {/* Summary */}
-                {origins?.summary && (
-                    <RichTextContent html={origins.summary} className="text-muted-foreground" />
-                )}
-            </div>
-
-            {/* Expeditions */}
-            {expeditions.length > 0 && (
-                <Section title={terms.expeditions}>
-                    <Timeline
-                        items={expeditions.map((exp) => ({
-                            title: exp.title,
-                            subtitle: exp.company,
-                            location: exp.location,
-                            startDate: exp.startDate,
-                            endDate: exp.endDate,
-                            current: exp.current,
-                            description: exp.description,
-                            formatDate,
-                        }))}
-                    />
-                </Section>
-            )}
-
-            {/* Training */}
-            {training.length > 0 && (
-                <Section title={terms.training}>
-                    {training.map((t) => (
-                        <div key={t.id} className="flex flex-col gap-1">
-                            <div className="flex items-start justify-between gap-4">
-                                <div>
-                                    <p className="font-medium">{t.institution}</p>
-                                    {t.degree && <p className="text-sm text-muted-foreground">{t.degree}</p>}
-                                    {t.field && <p className="text-sm text-muted-foreground">{t.field}</p>}
-                                </div>
-                                <DateRange startDate={t.startDate} endDate={t.endDate} current={t.current} />
-                            </div>
-                            {t.description && (
-                                <RichTextContent html={t.description} className="text-muted-foreground" />
-                            )}
-                        </div>
-                    ))}
-                </Section>
-            )}
-
-            {/* Gear */}
-            {gear.length > 0 && (
-                <Section title={terms.gear}>
-                    <div className="flex flex-col gap-4">
-                        {Object.entries(grouped).map(([category, items]) => (
-                            <div key={category} className="flex flex-col gap-2">
-                                <p className="text-sm text-muted-foreground">{category}</p>
-                                <div className="flex flex-wrap gap-2">
-                                    {items.map((item) => (
-                                        <span
-                                            key={item.id}
-                                            className="rounded-full border px-3 py-1 text-sm"
-                                        >
-                                            {item.name}
-                                            {item.level && (
-                                                <span className="text-muted-foreground ml-1 text-xs">
-                                                    · {item.level.charAt(0) + item.level.slice(1).toLowerCase()}
-                                                </span>
-                                            )}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
+                    {/* About link */}
+                    <div className="flex justify-end">
+                        <Link href={`/manifest/${username}/journey`}>
+                            <Button variant="outline" size="sm">
+                                {terms.about}
+                            </Button>
+                        </Link>
                     </div>
-                </Section>
-            )}
+                </div>
 
-            {/* Landmarks */}
-            {landmarks.length > 0 && (
-                <Section title={terms.landmarks}>
-                    {landmarks.map((l) => (
-                        <div key={l.id} className="flex flex-col gap-1">
-                            <div className="flex items-start justify-between gap-4">
-                                <div className="flex items-center gap-2">
-                                    <p className="font-medium">{l.name}</p>
-                                    {l.url && (
-                                        <a
-                                            href={l.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-muted-foreground hover:text-foreground text-xs underline underline-offset-4"
-                                        >
-                                            Link
-                                        </a>
-                                    )}
+                {/* Expeditions */}
+                {expeditions.length > 0 && (
+                    <Section title={terms.expeditions}>
+                        <Timeline
+                            items={expeditions.map((exp) => ({
+                                title: exp.title,
+                                subtitle: exp.company,
+                                location: exp.location,
+                                startDate: exp.startDate,
+                                endDate: exp.endDate,
+                                current: exp.current,
+                                description: exp.description,
+                                formatDate,
+                            }))}
+                        />
+                    </Section>
+                )}
+
+                {/* Training */}
+                {training.length > 0 && (
+                    <Section title={terms.training}>
+                        <Timeline
+                            items={training.map((t) => ({
+                                title: t.institution,
+                                subtitle: t.degree ?? undefined,
+                                location: t.field ?? undefined,
+                                startDate: t.startDate,
+                                endDate: t.endDate,
+                                current: t.current,
+                                description: t.description,
+                                formatDate,
+                            }))}
+                        />
+                    </Section>
+                )}
+
+                {/* Gear */}
+                {gear.length > 0 && (
+                    <Section title={terms.gear}>
+                        <div className="flex flex-col gap-4">
+                            {Object.entries(grouped).map(([category, items]) => (
+                                <div key={category} className="flex flex-col gap-2">
+                                    <p className="text-sm text-muted-foreground">{category}</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {items.map((item) => (
+                                            <span
+                                                key={item.id}
+                                                className="rounded-full border px-3 py-1 text-sm"
+                                            >
+                                                {item.name}
+                                                {item.level && (
+                                                    <span className="text-muted-foreground ml-1 text-xs">
+                                                        · {item.level.charAt(0) + item.level.slice(1).toLowerCase()}
+                                                    </span>
+                                                )}
+                                            </span>
+                                        ))}
+                                    </div>
                                 </div>
-                                {l.startDate && (
-                                    <DateRange startDate={l.startDate} endDate={l.endDate} current={l.current} />
-                                )}
-                            </div>
-                            {l.description && (
-                                <RichTextContent html={l.description} className="text-muted-foreground" />
-                            )}
+                            ))}
                         </div>
-                    ))}
-                </Section>
-            )}
+                    </Section>
+                )}
 
-            {/* Summits */}
-            {summits.length > 0 && (
-                <Section title={terms.summits}>
-                    {summits.map((s) => (
-                        <div key={s.id} className="flex flex-col gap-1">
-                            <div className="flex items-start justify-between gap-4">
-                                <div>
+                {/* Landmarks */}
+                {landmarks.length > 0 && (
+                    <Section title={terms.landmarks}>
+                        {landmarks.map((l) => (
+                            <div key={l.id} className="flex flex-col gap-1">
+                                <div className="flex items-start justify-between gap-4">
                                     <div className="flex items-center gap-2">
-                                        <p className="font-medium">{s.title}</p>
-                                        {s.url && (
+                                        <p className="font-medium">{l.name}</p>
+                                        {l.url && (
                                             <a
-                                                href={s.url}
+                                                href={l.url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="text-muted-foreground hover:text-foreground text-xs underline underline-offset-4"
@@ -419,51 +334,84 @@ export function ManifestContent({
                                             </a>
                                         )}
                                     </div>
-                                    {s.issuer && <p className="text-sm text-muted-foreground">{s.issuer}</p>}
+                                    {l.startDate && (
+                                        <DateRange startDate={l.startDate} endDate={l.endDate} current={l.current} />
+                                    )}
                                 </div>
-                                {s.date && (
-                                    <span className="text-sm text-muted-foreground shrink-0">
-                                        {format(s.date, 'MMM yyyy')}
-                                    </span>
+                                {l.description && (
+                                    <RichTextContent html={l.description} className="text-muted-foreground" />
                                 )}
                             </div>
-                            {s.description && (
-                                <RichTextContent html={s.description} className="text-muted-foreground" />
-                            )}
-                        </div>
-                    ))}
-                </Section>
-            )}
+                        ))}
+                    </Section>
+                )}
 
-            {/* Pathfinding */}
-            {pathfinding.length > 0 && (
-                <Section title={terms.pathfinding}>
-                    {pathfinding.map((p) => (
-                        <div key={p.id} className="flex flex-col gap-1">
-                            <div className="flex items-start justify-between gap-4">
-                                <div>
-                                    <p className="font-medium">{p.organization}</p>
-                                    {p.role && <p className="text-sm text-muted-foreground">{p.role}</p>}
-                                    {p.location && <p className="text-sm text-muted-foreground">{p.location}</p>}
+                {/* Summits */}
+                {summits.length > 0 && (
+                    <Section title={terms.summits}>
+                        {summits.map((s) => (
+                            <div key={s.id} className="flex flex-col gap-1">
+                                <div className="flex items-start justify-between gap-4">
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <p className="font-medium">{s.title}</p>
+                                            {s.url && (
+                                                <a
+                                                    href={s.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-muted-foreground hover:text-foreground text-xs underline underline-offset-4"
+                                                >
+                                                    Link
+                                                </a>
+                                            )}
+                                        </div>
+                                        {s.issuer && <p className="text-sm text-muted-foreground">{s.issuer}</p>}
+                                    </div>
+                                    {s.date && (
+                                        <span className="text-sm text-muted-foreground shrink-0">
+                                            {format(s.date, 'MMM yyyy')}
+                                        </span>
+                                    )}
                                 </div>
-                                <DateRange startDate={p.startDate} endDate={p.endDate} current={p.current} />
+                                {s.description && (
+                                    <RichTextContent html={s.description} className="text-muted-foreground" />
+                                )}
                             </div>
-                            {p.description && (
-                                <RichTextContent html={p.description} className="text-muted-foreground" />
-                            )}
-                        </div>
-                    ))}
-                </Section>
-            )}
+                        ))}
+                    </Section>
+                )}
 
-            {/* Footer */}
-            <div className="flex justify-center pt-8">
-                <p className="text-xs text-muted-foreground">
-                    Built with{' '}
-                    <a href="/" className="underline underline-offset-4 hover:text-foreground">
-                        Cairn
-                    </a>
-                </p>
+                {/* Pathfinding */}
+                {pathfinding.length > 0 && (
+                    <Section title={terms.pathfinding}>
+                        {pathfinding.map((p) => (
+                            <div key={p.id} className="flex flex-col gap-1">
+                                <div className="flex items-start justify-between gap-4">
+                                    <div>
+                                        <p className="font-medium">{p.organization}</p>
+                                        {p.role && <p className="text-sm text-muted-foreground">{p.role}</p>}
+                                        {p.location && <p className="text-sm text-muted-foreground">{p.location}</p>}
+                                    </div>
+                                    <DateRange startDate={p.startDate} endDate={p.endDate} current={p.current} />
+                                </div>
+                                {p.description && (
+                                    <RichTextContent html={p.description} className="text-muted-foreground" />
+                                )}
+                            </div>
+                        ))}
+                    </Section>
+                )}
+
+                {/* Footer */}
+                <div className="flex justify-center pt-8">
+                    <p className="text-xs text-muted-foreground">
+                        Built with{' '}
+                        <a href="/" className="underline underline-offset-4 hover:text-foreground">
+                            Cairn
+                        </a>
+                    </p>
+                </div>
             </div>
         </div>
     )

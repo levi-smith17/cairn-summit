@@ -14,7 +14,6 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { FormActions } from '@/components/forms/form-actions'
@@ -23,7 +22,6 @@ import { DatePicker } from '@/components/ui/date-picker'
 import { Pencil, Trash2, Plus, ExternalLink } from 'lucide-react'
 import { RichTextEditor } from '@/components/ui/rich-text-editor'
 import { RichTextContent } from '@/components/ui/rich-text-content'
-import { Separator } from '@/components/ui/separator'
 
 const landmarkSchema = z.object({
   id: z.string().optional(),
@@ -115,184 +113,151 @@ export function LandmarksForm({ landmarks }: LandmarksFormProps) {
     await deleteLandmark(id)
   }
 
+  function renderForm() {
+    return (
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Project Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g. Cairn" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="url"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>URL</FormLabel>
+                <FormControl>
+                  <Input placeholder="https://github.com/you/project" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="startDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Start Date</FormLabel>
+                  <FormControl>
+                    <DatePicker value={field.value} onChange={field.onChange} placeholder="Select start date" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {!current && (
+              <FormField
+                control={form.control}
+                name="endDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>End Date</FormLabel>
+                    <FormControl>
+                      <DatePicker value={field.value} onChange={field.onChange} placeholder="Select end date" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+          </div>
+
+          <FormField
+            control={form.control}
+            name="current"
+            render={({ field }) => (
+              <FormItem className="flex items-center gap-2 space-y-0">
+                <FormControl>
+                  <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                </FormControl>
+                <FormLabel>Currently working on this</FormLabel>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <RichTextEditor value={field.value ?? ''} onChange={field.onChange} placeholder="Describe the project, your role, technologies used..." />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="flex justify-end items-center gap-4">
+            <Button type="button" variant="ghost" onClick={cancel}>Cancel</Button>
+            <FormActions saving={saving} saved={saved} error={error} saveLabel={editing ? 'Update Landmark' : 'Add Landmark'} />
+          </div>
+        </form>
+      </Form>
+    )
+  }
+
   return (
     <div className="space-y-6">
-      {/* Existing entries */}
       {landmarks.length > 0 && (
         <div className="space-y-4">
           {landmarks.map((entry) => (
-            <div key={entry.id} className="rounded-lg border p-4 space-y-1">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium">{entry.name}</p>
-                    {entry.url && (
-                      <a
-                        href={entry.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-muted-foreground hover:text-foreground"
-                      >
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
+            editing === entry.id ? (
+              <div key={entry.id} className="rounded-lg border p-4">
+                {renderForm()}
+              </div>
+            ) : (
+              <div key={entry.id} className="rounded-lg border p-4 space-y-1">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{entry.name}</p>
+                      {entry.url && (
+                        <a href={entry.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      )}
+                    </div>
+                    {(entry.startDate || entry.endDate) && (
+                      <p className="text-sm text-muted-foreground">
+                        {entry.startDate?.toLocaleDateString()} —{' '}
+                        {entry.current ? 'Present' : entry.endDate?.toLocaleDateString()}
+                      </p>
                     )}
+                    {entry.description && <RichTextContent html={entry.description} className="text-muted-foreground" />}
                   </div>
-                  {(entry.startDate || entry.endDate) && (
-                    <p className="text-sm text-muted-foreground">
-                      {entry.startDate?.toLocaleDateString()} —{' '}
-                      {entry.current ? 'Present' : entry.endDate?.toLocaleDateString()}
-                    </p>
-                  )}
-                  {entry.description && (
-                    <RichTextContent html={entry.description} className="text-muted-foreground" />
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => startEdit(entry)}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onDelete(entry.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="icon" onClick={() => startEdit(entry)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => onDelete(entry.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
+            )
           ))}
         </div>
       )}
 
-      {/* Add/Edit form */}
-      {(adding || editing) && (
-        <>
-          {landmarks.length > 0 && <Separator />}
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Project Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. Cairn" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+      {adding && renderForm()}
 
-              <FormField
-                control={form.control}
-                name="url"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>URL</FormLabel>
-                    <FormControl>
-                      <Input placeholder="https://github.com/you/project" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="startDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Start Date</FormLabel>
-                      <FormControl>
-                        <DatePicker
-                          value={field.value}
-                          onChange={field.onChange}
-                          placeholder="Select start date"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                {!current && (
-                  <FormField
-                    control={form.control}
-                    name="endDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>End Date</FormLabel>
-                        <FormControl>
-                          <DatePicker
-                            value={field.value}
-                            onChange={field.onChange}
-                            placeholder="Select end date"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-              </div>
-
-              <FormField
-                control={form.control}
-                name="current"
-                render={({ field }) => (
-                  <FormItem className="flex items-center gap-2 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormLabel>Currently working on this</FormLabel>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <RichTextEditor
-                        value={field.value ?? ''}
-                        onChange={field.onChange}
-                        placeholder="Describe the project, your role, technologies used..."
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex justify-end items-center gap-4">
-                <Button type="button" variant="ghost" onClick={cancel}>
-                  Cancel
-                </Button>
-                <FormActions
-                  saving={saving}
-                  saved={saved}
-                  error={error}
-                  saveLabel={editing ? 'Update Landmark' : 'Add Landmark'}
-                />
-              </div>
-            </form>
-          </Form>
-        </>
-      )}
-
-      {/* Add button */}
       {!adding && !editing && (
         <Button variant="outline" onClick={startAdd}>
           <Plus className="h-4 w-4" />

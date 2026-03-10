@@ -3,14 +3,19 @@
 import { useSidebar } from "@/components/ui/sidebar"
 import {
   Bookmark,
+  ChevronRight,
+  Database,
+  Factory,
   Folder,
+  Globe,
   LayoutDashboard,
   LayoutList,
   NotebookPen,
+  Rocket,
   Tag,
   Wallet,
 } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { CairnLockup } from '@/components/cairn-lockup'
 import { CairnLogo } from '@/components/cairn-logo'
 import { NavUser } from "@/components/nav/wayfarer/wayfarer-menu"
@@ -24,42 +29,67 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
   SidebarRail,
 } from "@/components/ui/sidebar"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
+import { type LucideIcon } from "lucide-react"
 
-const data = {
-  navMain: [
-    {
-      title: "Waypoints",
-      url: "/waypoints",
-      icon: Bookmark,
-      items: [
-        { title: "All Waypoints", url: "/waypoints" },
-        { title: "Folders", url: "/waypoints/folders" },
-        { title: "Tags", url: "/waypoints/tags" },
-      ],
-    },
-    {
-      title: "Log",
-      url: "/log",
-      icon: NotebookPen,
-      items: [
-        { title: "All Entries", url: "/log" },
-        { title: "Notebooks", url: "/log/notebooks" },
-      ],
-    },
-    {
-      title: "Provisions",
-      url: "/provisions",
-      icon: Wallet,
-      items: [
-        { title: "Subscriptions", url: "/provisions/subscriptions" },
-        { title: "Expenses", url: "/provisions/expenses" },
-        { title: "Budget", url: "/provisions/budget" },
-      ],
-    },
-  ],
+interface NavSubItem {
+  title: string
+  url: string
+  icon?: LucideIcon
 }
+
+interface NavItem {
+  title: string
+  url: string
+  icon: LucideIcon
+  tooltip: string
+  children?: NavSubItem[]
+}
+
+const navItems: { group: string; items: NavItem[] }[] = [
+  {
+    group: 'Navigation',
+    items: [
+      { title: 'Directory', url: '/', icon: LayoutList, tooltip: 'Directory' },
+      { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, tooltip: 'Dashboard' },
+    ],
+  },
+  {
+    group: 'Platform',
+    items: [
+      { title: 'Waypoints', url: '/waypoints', icon: Bookmark, tooltip: 'Waypoints' },
+      { title: 'Log', url: '/log', icon: NotebookPen, tooltip: 'Log' },
+      { title: 'Provisions', url: '/provisions', icon: Wallet, tooltip: 'Provisions' },
+      { title: 'Folders', url: '/folders', icon: Folder, tooltip: 'Folders' },
+      { title: 'Tags', url: '/tags', icon: Tag, tooltip: 'Tags' },
+    ],
+  },
+  {
+    group: 'Apps',
+    items: [
+      {
+        title: 'Starfield',
+        url: '/starfield',
+        icon: Rocket,
+        tooltip: 'Starfield',
+        children: [
+          { title: 'Facilities', url: '/starfield/facilities', icon: Factory },
+          { title: 'Resources', url: '/starfield/resources', icon: Database },
+          { title: 'Systems', url: '/starfield/systems', icon: Globe },
+        ],
+      },
+    ],
+  },
+]
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   wayfarer: {
@@ -71,7 +101,7 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 
 export function AppSidebar({ wayfarer, ...props }: AppSidebarProps) {
   const router = useRouter()
-
+  const pathname = usePathname()
   const { state } = useSidebar()
   const collapsed = state === 'collapsed'
 
@@ -87,76 +117,62 @@ export function AppSidebar({ wayfarer, ...props }: AppSidebarProps) {
         </div>
       </SidebarHeader>
       <SidebarContent>
-        {/* Dashboard button */}
-        <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={() => router.push('/')}
-                tooltip="Directory"
-              >
-                <LayoutList className="h-4 w-4" />
-                <span>Directory</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={() => router.push('/dashboard')}
-                tooltip="Dashboard"
-              >
-                <LayoutDashboard className="h-4 w-4" />
-                <span>Dashboard</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarGroupLabel>Platform</SidebarGroupLabel>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={() => router.push('/waypoints')}
-                tooltip="Waypoints"
-              >
-                <Bookmark className="h-4 w-4" />
-                <span>Waypoints</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={() => router.push('/log')}
-                tooltip="Log"
-              >
-                <NotebookPen className="h-4 w-4" />
-                <span>Log</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={() => router.push('/provisions')}
-                tooltip="Provisions"
-              >
-                <Wallet className="h-4 w-4" />
-                <span>Provisions</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={() => router.push('/folders')}
-                tooltip="Folders"
-              >
-                <Folder className="h-4 w-4" />
-                <span>Folders</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={() => router.push('/tags')}
-                tooltip="Tags"
-              >
-                <Tag className="h-4 w-4" />
-                <span>Tags</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroup>
+        {navItems.map(({ group, items }) => (
+          <SidebarGroup key={group}>
+            <SidebarGroupLabel>{group}</SidebarGroupLabel>
+            <SidebarMenu>
+              {items.map(({ title, url, icon: Icon, tooltip, children }) => {
+                const isActive = children
+                  ? pathname.startsWith(url)
+                  : pathname === url
+
+                if (children) {
+                  return (
+                    <Collapsible key={url} defaultOpen={isActive} className="group/collapsible">
+                      <SidebarMenuItem>
+                        <CollapsibleTrigger asChild>
+                          <SidebarMenuButton tooltip={tooltip} isActive={isActive}>
+                            <Icon className="h-4 w-4" />
+                            <span>{title}</span>
+                            <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                          </SidebarMenuButton>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <SidebarMenuSub>
+                            {children.map(child => (
+                              <SidebarMenuSubItem key={child.url}>
+                                <SidebarMenuSubButton
+                                  onClick={() => router.push(child.url)}
+                                  isActive={pathname === child.url}
+                                >
+                                  {child.icon && <child.icon className="h-4 w-4" />}
+                                  {child.title}
+                                </SidebarMenuSubButton>
+                              </SidebarMenuSubItem>
+                            ))}
+                          </SidebarMenuSub>
+                        </CollapsibleContent>
+                      </SidebarMenuItem>
+                    </Collapsible>
+                  )
+                }
+
+                return (
+                  <SidebarMenuItem key={url}>
+                    <SidebarMenuButton
+                      onClick={() => router.push(url)}
+                      tooltip={tooltip}
+                      isActive={isActive}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{title}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
+            </SidebarMenu>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
       <SidebarFooter>
         <NavUser wayfarer={wayfarer} />

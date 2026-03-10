@@ -34,6 +34,7 @@ export default async function ManifestPage({ params }: ManifestPageProps) {
 
     return (
         <ManifestContent
+            username={username}
             wayfarer={{
                 name: wayfarer.name,
                 email: wayfarer.email,
