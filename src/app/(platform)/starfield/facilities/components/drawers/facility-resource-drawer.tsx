@@ -56,12 +56,12 @@ function InlinePlanetCreator({ label, systems, onCreated, onCancel }: InlinePlan
       let updatedSystems = [...systems]
 
       if (creatingSystem) {
-        const newSystem = await saveSystem(newSystemName)
+        const newSystem = await saveSystem({ name: newSystemName })
         finalSystemId = newSystem.id
         updatedSystems = [...systems, { ...newSystem, planets: [] }]
       }
 
-      const planet = await savePlanet(planetName, finalSystemId)
+      const planet = await savePlanet({name: planetName, systemId: finalSystemId})
       updatedSystems = updatedSystems.map(s =>
         s.id === finalSystemId
           ? { ...s, planets: [...s.planets, planet] }
