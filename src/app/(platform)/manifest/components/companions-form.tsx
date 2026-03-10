@@ -29,7 +29,7 @@ const companionSchema = z.object({
   breed: z.string().optional(),
   birthday: z.string().optional(),
   bio: z.string().optional(),
-  passed: z.boolean().default(false),
+  passed: z.boolean(),
 })
 
 type CompanionFormValues = z.infer<typeof companionSchema>
