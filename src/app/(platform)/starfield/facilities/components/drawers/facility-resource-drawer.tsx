@@ -27,7 +27,7 @@ const schema = z.object({
   subfacility2Id: z.string().optional(),
   subfacility3Id: z.string().optional(),
   relayId: z.string().optional(),
-  onsite: z.boolean().default(false),
+  onsite: z.boolean()
 })
 
 type FormValues = z.infer<typeof schema>
