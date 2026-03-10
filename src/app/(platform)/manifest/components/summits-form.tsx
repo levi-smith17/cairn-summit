@@ -15,10 +15,10 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { EntryActions } from './entry-actions'
+import { ExternalLink } from 'lucide-react'
 import { FormActions } from '@/components/forms/form-actions'
-import { useFormStatus } from '@/hooks/use-form-status'
-import { DatePicker } from '@/components/ui/date-picker'
-import { Pencil, Trash2, Plus, ExternalLink } from 'lucide-react'
+import { MonthYearPicker } from '@/components/ui/month-year-picker'
 import { RichTextEditor } from '@/components/ui/rich-text-editor'
 import { RichTextContent } from '@/components/ui/rich-text-content'
 
@@ -44,6 +44,12 @@ interface Summit {
 
 interface SummitsFormProps {
   summits: Summit[]
+  adding: boolean
+  setAdding: (v: boolean) => void
+  saving: boolean
+  saved: boolean
+  error: boolean
+  handleSubmit: (action: () => Promise<void>) => Promise<void>
 }
 
 const emptyDefaults: SummitFormValues = {
@@ -54,21 +60,13 @@ const emptyDefaults: SummitFormValues = {
   url: '',
 }
 
-export function SummitsForm({ summits }: SummitsFormProps) {
-  const { saving, saved, error, handleSubmit } = useFormStatus()
+export function SummitsForm({ summits, adding, setAdding, saving, saved, error, handleSubmit }: SummitsFormProps) {
   const [editing, setEditing] = useState<string | null>(null)
-  const [adding, setAdding] = useState(false)
 
   const form = useForm<SummitFormValues>({
     resolver: zodResolver(summitSchema),
     defaultValues: emptyDefaults,
   })
-
-  function startAdd() {
-    form.reset(emptyDefaults)
-    setEditing(null)
-    setAdding(true)
-  }
 
   function startEdit(entry: Summit) {
     form.reset({
@@ -90,15 +88,17 @@ export function SummitsForm({ summits }: SummitsFormProps) {
   }
 
   async function onSubmit(values: SummitFormValues) {
-    await handleSubmit(() => saveSummit({
-      id: values.id,
-      title: values.title,
-      issuer: values.issuer ?? null,
-      date: values.date ? new Date(values.date) : null,
-      description: values.description ?? null,
-      url: values.url ?? null,
-    }))
-    cancel()
+    await handleSubmit(async () => {
+      await saveSummit({
+        id: values.id,
+        title: values.title,
+        issuer: values.issuer ?? null,
+        date: values.date ? new Date(values.date) : null,
+        description: values.description ?? null,
+        url: values.url ?? null,
+      })
+      cancel()
+    })
   }
 
   async function onDelete(id: string) {
@@ -108,7 +108,7 @@ export function SummitsForm({ summits }: SummitsFormProps) {
   function renderForm() {
     return (
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="rounded-lg border bg-secondary p-4 space-y-6">
           <FormField
             control={form.control}
             name="title"
@@ -144,7 +144,7 @@ export function SummitsForm({ summits }: SummitsFormProps) {
                 <FormItem>
                   <FormLabel>Date</FormLabel>
                   <FormControl>
-                    <DatePicker value={field.value} onChange={field.onChange} placeholder="Select date" />
+                    <MonthYearPicker value={field.value} onChange={field.onChange} placeholder="Select date" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -182,7 +182,7 @@ export function SummitsForm({ summits }: SummitsFormProps) {
 
           <div className="flex justify-end items-center gap-4">
             <Button type="button" variant="ghost" onClick={cancel}>Cancel</Button>
-            <FormActions saving={saving} saved={saved} error={error} saveLabel={editing ? 'Update Summit' : 'Add Summit'} />
+            <FormActions saving={saving} saved={saved} error={error} saveLabel={editing ? 'Update Summit' : 'Add Summit'} hideAlert />
           </div>
         </form>
       </Form>
@@ -191,6 +191,8 @@ export function SummitsForm({ summits }: SummitsFormProps) {
 
   return (
     <div className="space-y-6">
+      {adding && renderForm()}
+
       {summits.length > 0 && (
         <div className="space-y-4">
           {summits.map((entry) => (
@@ -214,28 +216,17 @@ export function SummitsForm({ summits }: SummitsFormProps) {
                     {entry.date && <p className="text-sm text-muted-foreground">{entry.date.toLocaleDateString()}</p>}
                     {entry.description && <RichTextContent html={entry.description} className="text-muted-foreground" />}
                   </div>
-                  <div className="flex gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => startEdit(entry)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => onDelete(entry.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <EntryActions
+                    onEdit={() => startEdit(entry)}
+                    onDelete={() => onDelete(entry.id)}
+                    deleteTitle="Remove Summit"
+                    itemName={entry.title}
+                  />
                 </div>
               </div>
             )
           ))}
         </div>
-      )}
-
-      {adding && renderForm()}
-
-      {!adding && !editing && (
-        <Button variant="outline" onClick={startAdd}>
-          <Plus className="h-4 w-4" />
-          Add Summit
-        </Button>
       )}
     </div>
   )

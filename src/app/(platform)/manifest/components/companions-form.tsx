@@ -17,10 +17,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { CompanionCard } from './companion-card'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { FormActions } from '@/components/forms/form-actions'
-import { useFormStatus } from '@/hooks/use-form-status'
-import { Plus, X, } from 'lucide-react'
 import { RichTextEditor } from '@/components/ui/rich-text-editor'
 
 const companionSchema = z.object({
@@ -55,12 +52,16 @@ interface Companion {
 
 interface CompanionsFormProps {
   companions: Companion[]
+  adding: boolean
+  setAdding: (v: boolean) => void
+  saving: boolean
+  saved: boolean
+  error: boolean
+  handleSubmit: (action: () => Promise<void>) => Promise<void>
 }
 
-export function CompanionsForm({ companions: initialCompanions }: CompanionsFormProps) {
-  const { saving, saved, error, handleSubmit } = useFormStatus()
+export function CompanionsForm({ companions: initialCompanions, adding, setAdding, saving, saved, error, handleSubmit }: CompanionsFormProps) {
   const [companions, setCompanions] = useState(initialCompanions)
-  const [showAdd, setShowAdd] = useState(false)
 
   const form = useForm<CompanionFormValues>({
     resolver: zodResolver(companionSchema),
@@ -85,7 +86,7 @@ export function CompanionsForm({ companions: initialCompanions }: CompanionsForm
         passed: values.passed
       })
       form.reset()
-      setShowAdd(false)
+      setAdding(false)
       await refreshCompanions()
     })
   }
@@ -98,7 +99,113 @@ export function CompanionsForm({ companions: initialCompanions }: CompanionsForm
 
   return (
     <div className="space-y-6">
-      {companions.length === 0 && !showAdd && (
+      {adding && (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="rounded-lg border bg-secondary p-4 space-y-6">
+            <div className="grid grid-cols-2 gap-3">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Buddy" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="species"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Species</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Dog, Cat..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <FormField
+                control={form.control}
+                name="breed"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Breed (optional)</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="birthday"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Birthday (optional)</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="passed"
+                render={({ field }) => (
+                  <FormItem className="flex items-center gap-2 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="font-normal">In memoriam</FormLabel>
+                  </FormItem>
+                )}
+              />
+            </div>
+            <FormField
+              control={form.control}
+              name="bio"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Bio (optional)</FormLabel>
+                  <FormControl>
+                    <RichTextEditor
+                      value={field.value ?? ''}
+                      onChange={field.onChange}
+                      placeholder="Tell their story..."
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex justify-end items-center gap-4">
+              <Button type="button" variant="ghost" onClick={() => setAdding(false)}>Cancel</Button>
+              <FormActions
+                saving={saving}
+                saved={saved}
+                error={error}
+                saveLabel="Add Companion"
+                hideAlert
+              />
+            </div>
+          </form>
+        </Form>
+      )}
+      
+      {companions.length === 0 && !adding && (
         <p className="text-sm text-muted-foreground">No companions added yet.</p>
       )}
 
@@ -109,125 +216,6 @@ export function CompanionsForm({ companions: initialCompanions }: CompanionsForm
           onRefresh={refreshCompanions}
         />
       ))}
-
-      {showAdd && (
-        <Card>
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base">New Companion</CardTitle>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowAdd(false)}>
-                <X className="h-3 w-3" />
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Buddy" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="species"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Species</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Dog, Cat..." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <FormField
-                    control={form.control}
-                    name="breed"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Breed (optional)</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="birthday"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Birthday (optional)</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="passed"
-                    render={({ field }) => (
-                      <FormItem className="flex items-center gap-2 space-y-0">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <FormLabel className="font-normal">In memoriam</FormLabel>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <FormField
-                  control={form.control}
-                  name="bio"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Bio (optional)</FormLabel>
-                      <FormControl>
-                        <RichTextEditor
-                          value={field.value ?? ''}
-                          onChange={field.onChange}
-                          placeholder="Tell their story..."
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormActions
-                  saving={saving}
-                  saved={saved}
-                  error={error}
-                  saveLabel="Add Companion"
-                />
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-      )}
-
-      {!showAdd && (
-        <Button variant="outline" size="sm" onClick={() => setShowAdd(true)}>
-          <Plus className="h-4 w-4 mr-1" /> Add Companion
-        </Button>
-      )}
     </div>
   )
 }

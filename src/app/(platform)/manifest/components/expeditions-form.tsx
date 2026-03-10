@@ -16,10 +16,9 @@ import {
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { MonthYearPicker } from '@/components/ui/month-year-picker'
+import { EntryActions } from './entry-actions'
 import { FormActions } from '@/components/forms/form-actions'
-import { useFormStatus } from '@/hooks/use-form-status'
-import { Pencil, Trash2, Plus } from 'lucide-react'
+import { MonthYearPicker } from '@/components/ui/month-year-picker'
 import { RichTextContent } from '@/components/ui/rich-text-content'
 import { RichTextEditor } from '@/components/ui/rich-text-editor'
 import { format } from 'date-fns'
@@ -50,6 +49,12 @@ interface Expedition {
 
 interface ExpeditionsFormProps {
     expeditions: Expedition[]
+    adding: boolean
+    setAdding: (v: boolean) => void
+    saving: boolean
+    saved: boolean
+    error: boolean
+    handleSubmit: (action: () => Promise<void>) => Promise<void>
 }
 
 const emptyDefaults: ExpeditionFormValues = {
@@ -62,10 +67,8 @@ const emptyDefaults: ExpeditionFormValues = {
     description: '',
 }
 
-export function ExpeditionsForm({ expeditions }: ExpeditionsFormProps) {
-    const { saving, saved, error, handleSubmit } = useFormStatus()
+export function ExpeditionsForm({ expeditions: expeditions, adding, setAdding, saving, saved, error, handleSubmit }: ExpeditionsFormProps) {
     const [editing, setEditing] = useState<string | null>(null)
-    const [adding, setAdding] = useState(false)
 
     const form = useForm<ExpeditionFormValues>({
         resolver: zodResolver(expeditionSchema),
@@ -73,12 +76,6 @@ export function ExpeditionsForm({ expeditions }: ExpeditionsFormProps) {
     })
 
     const current = form.watch('current')
-
-    function startAdd() {
-        form.reset(emptyDefaults)
-        setEditing(null)
-        setAdding(true)
-    }
 
     function startEdit(expedition: Expedition) {
         form.reset({
@@ -102,17 +99,19 @@ export function ExpeditionsForm({ expeditions }: ExpeditionsFormProps) {
     }
 
     async function onSubmit(values: ExpeditionFormValues) {
-        await handleSubmit(() => saveExpedition({
-            id: values.id,
-            title: values.title,
-            company: values.company,
-            location: values.location ?? null,
-            startDate: new Date(values.startDate),
-            endDate: values.current ? null : values.endDate ? new Date(values.endDate) : null,
-            current: values.current,
-            description: values.description ?? null,
-        }))
-        cancel()
+        await handleSubmit(async () => {
+            await saveExpedition({
+                id: values.id,
+                title: values.title,
+                company: values.company,
+                location: values.location ?? null,
+                startDate: new Date(values.startDate),
+                endDate: values.current ? null : values.endDate ? new Date(values.endDate) : null,
+                current: values.current,
+                description: values.description ?? null,
+            })
+            cancel()
+        })
     }
 
     async function onDelete(id: string) {
@@ -122,7 +121,7 @@ export function ExpeditionsForm({ expeditions }: ExpeditionsFormProps) {
     function renderForm() {
         return (
             <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="rounded-lg border bg-secondary p-4 space-y-6">
                     <div className="grid grid-cols-2 gap-4">
                         <FormField
                             control={form.control}
@@ -226,7 +225,7 @@ export function ExpeditionsForm({ expeditions }: ExpeditionsFormProps) {
 
                     <div className="flex justify-end items-center gap-4">
                         <Button type="button" variant="ghost" onClick={cancel}>Cancel</Button>
-                        <FormActions saving={saving} saved={saved} error={error} saveLabel={editing ? 'Update Expedition' : 'Add Expedition'} />
+                        <FormActions saving={saving} saved={saved} error={error} saveLabel={editing ? 'Update Expedition' : 'Add Expedition'} hideAlert />
                     </div>
                 </form>
             </Form>
@@ -234,53 +233,44 @@ export function ExpeditionsForm({ expeditions }: ExpeditionsFormProps) {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-8">
+            {adding && renderForm()}
+
             {expeditions.length > 0 && (
                 <div className="relative">
-                    {expeditions.map((exp) => (
-                        editing === exp.id ? (
-                            <div key={exp.id} className="relative pl-6 pb-8 last:pb-0">
+                    {expeditions.map((entry) => (
+                        editing === entry.id ? (
+                            <div key={entry.id} className="relative pl-6 pb-8 last:pb-0">
                                 <div className="absolute left-0 top-2 bottom-0 w-px bg-border" />
                                 <div className="absolute left-[-4px] top-2 h-2 w-2 rounded-full bg-foreground ring-2 ring-background" />
                                 {renderForm()}
                             </div>
                         ) : (
-                            <div key={exp.id} className="relative pl-6 pb-8 last:pb-0">
+                            <div key={entry.id} className="relative pl-6 pb-8 last:pb-0">
                                 <div className="absolute left-0 top-2 bottom-0 w-px bg-border" />
                                 <div className="absolute left-[-4px] top-2 h-2 w-2 rounded-full bg-foreground ring-2 ring-background" />
                                 <div className="flex items-start justify-between gap-4">
                                     <div className="flex flex-col gap-1">
-                                        <p className="font-medium leading-tight">{exp.title}</p>
-                                        <p className="text-sm text-muted-foreground">{exp.company}</p>
-                                        {exp.location && <p className="text-sm text-muted-foreground">{exp.location}</p>}
+                                        <p className="font-medium leading-tight">{entry.title}</p>
+                                        <p className="text-sm text-muted-foreground">{entry.company}</p>
+                                        {entry.location && <p className="text-sm text-muted-foreground">{entry.location}</p>}
                                         <span className="text-sm text-muted-foreground">
-                                            {format(exp.startDate, 'MMM yyyy')} —{' '}
-                                            {exp.current ? 'Present' : exp.endDate ? format(exp.endDate, 'MMM yyyy') : ''}
+                                            {format(entry.startDate, 'MMM yyyy')} —{' '}
+                                            {entry.current ? 'Present' : entry.endDate ? format(entry.endDate, 'MMM yyyy') : ''}
                                         </span>
-                                        {exp.description && <RichTextContent html={exp.description} className="text-muted-foreground" />}
+                                        {entry.description && <RichTextContent html={entry.description} className="text-muted-foreground" />}
                                     </div>
-                                    <div className="flex gap-1 shrink-0">
-                                        <Button variant="ghost" size="icon" onClick={() => startEdit(exp)}>
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
-                                        <Button variant="ghost" size="icon" onClick={() => onDelete(exp.id)}>
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </div>
+                                    <EntryActions
+                                        onEdit={() => startEdit(entry)}
+                                        onDelete={() => onDelete(entry.id)}
+                                        deleteTitle="Remove Expedition"
+                                        itemName={entry.title}
+                                    />
                                 </div>
                             </div>
                         )
                     ))}
                 </div>
-            )}
-
-            {adding && renderForm()}
-
-            {!adding && !editing && (
-                <Button variant="outline" onClick={startAdd}>
-                    <Plus className="h-4 w-4" />
-                    Add Expedition
-                </Button>
             )}
         </div>
     )

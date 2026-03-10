@@ -16,10 +16,9 @@ import {
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { EntryActions } from './entry-actions'
 import { FormActions } from '@/components/forms/form-actions'
-import { useFormStatus } from '@/hooks/use-form-status'
-import { DatePicker } from '@/components/ui/date-picker'
-import { Pencil, Trash2, Plus } from 'lucide-react'
+import { MonthYearPicker } from '@/components/ui/month-year-picker'
 import { RichTextEditor } from '@/components/ui/rich-text-editor'
 import { RichTextContent } from '@/components/ui/rich-text-content'
 
@@ -49,6 +48,12 @@ interface Pathfinding {
 
 interface PathfindingFormProps {
     pathfinding: Pathfinding[]
+    adding: boolean
+    setAdding: (v: boolean) => void
+    saving: boolean
+    saved: boolean
+    error: boolean
+    handleSubmit: (action: () => Promise<void>) => Promise<void>
 }
 
 const emptyDefaults: PathfindingFormValues = {
@@ -61,10 +66,8 @@ const emptyDefaults: PathfindingFormValues = {
     description: '',
 }
 
-export function PathfindingForm({ pathfinding }: PathfindingFormProps) {
-    const { saving, saved, error, handleSubmit } = useFormStatus()
+export function PathfindingForm({ pathfinding, adding, setAdding, saving, saved, error, handleSubmit }: PathfindingFormProps) {
     const [editing, setEditing] = useState<string | null>(null)
-    const [adding, setAdding] = useState(false)
 
     const form = useForm<PathfindingFormValues>({
         resolver: zodResolver(pathfindingSchema),
@@ -72,12 +75,6 @@ export function PathfindingForm({ pathfinding }: PathfindingFormProps) {
     })
 
     const current = form.watch('current')
-
-    function startAdd() {
-        form.reset(emptyDefaults)
-        setEditing(null)
-        setAdding(true)
-    }
 
     function startEdit(entry: Pathfinding) {
         form.reset({
@@ -101,17 +98,19 @@ export function PathfindingForm({ pathfinding }: PathfindingFormProps) {
     }
 
     async function onSubmit(values: PathfindingFormValues) {
-        await handleSubmit(() => savePathfinding({
-            id: values.id,
-            organization: values.organization,
-            role: values.role ?? null,
-            location: values.location ?? null,
-            startDate: new Date(values.startDate),
-            endDate: values.current ? null : values.endDate ? new Date(values.endDate) : null,
-            current: values.current,
-            description: values.description ?? null,
-        }))
-        cancel()
+        await handleSubmit(async () => {
+            await savePathfinding({
+                id: values.id,
+                organization: values.organization,
+                role: values.role ?? null,
+                location: values.location ?? null,
+                startDate: new Date(values.startDate),
+                endDate: values.current ? null : values.endDate ? new Date(values.endDate) : null,
+                current: values.current,
+                description: values.description ?? null,
+            })
+            cancel()
+        })
     }
 
     async function onDelete(id: string) {
@@ -121,7 +120,7 @@ export function PathfindingForm({ pathfinding }: PathfindingFormProps) {
     function renderForm() {
         return (
             <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="rounded-lg border bg-secondary p-4 space-y-6">
                     <div className="grid grid-cols-2 gap-4">
                         <FormField
                             control={form.control}
@@ -173,7 +172,7 @@ export function PathfindingForm({ pathfinding }: PathfindingFormProps) {
                                 <FormItem>
                                     <FormLabel>Start Date</FormLabel>
                                     <FormControl>
-                                        <DatePicker value={field.value} onChange={field.onChange} placeholder="Select start date" />
+                                        <MonthYearPicker value={field.value} onChange={field.onChange} placeholder="Select start date" />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -187,7 +186,7 @@ export function PathfindingForm({ pathfinding }: PathfindingFormProps) {
                                     <FormItem>
                                         <FormLabel>End Date</FormLabel>
                                         <FormControl>
-                                            <DatePicker value={field.value} onChange={field.onChange} placeholder="Select end date" />
+                                            <MonthYearPicker value={field.value} onChange={field.onChange} placeholder="Select end date" />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -225,7 +224,7 @@ export function PathfindingForm({ pathfinding }: PathfindingFormProps) {
 
                     <div className="flex justify-end items-center gap-4">
                         <Button type="button" variant="ghost" onClick={cancel}>Cancel</Button>
-                        <FormActions saving={saving} saved={saved} error={error} saveLabel={editing ? 'Update Pathfinding' : 'Add Pathfinding'} />
+                        <FormActions saving={saving} saved={saved} error={error} saveLabel={editing ? 'Update Pathfinding' : 'Add Pathfinding'} hideAlert />
                     </div>
                 </form>
             </Form>
@@ -234,6 +233,8 @@ export function PathfindingForm({ pathfinding }: PathfindingFormProps) {
 
     return (
         <div className="space-y-6">
+            {adding && renderForm()}
+
             {pathfinding.length > 0 && (
                 <div className="space-y-4">
                     {pathfinding.map((entry) => (
@@ -254,28 +255,17 @@ export function PathfindingForm({ pathfinding }: PathfindingFormProps) {
                                         </p>
                                         {entry.description && <RichTextContent html={entry.description} className="text-muted-foreground" />}
                                     </div>
-                                    <div className="flex gap-2">
-                                        <Button variant="ghost" size="icon" onClick={() => startEdit(entry)}>
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
-                                        <Button variant="ghost" size="icon" onClick={() => onDelete(entry.id)}>
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </div>
+                                    <EntryActions
+                                        onEdit={() => startEdit(entry)}
+                                        onDelete={() => onDelete(entry.id)}
+                                        deleteTitle="Remove Pathfinding"
+                                        itemName={entry.organization}
+                                    />
                                 </div>
                             </div>
                         )
                     ))}
                 </div>
-            )}
-
-            {adding && renderForm()}
-
-            {!adding && !editing && (
-                <Button variant="outline" onClick={startAdd}>
-                    <Plus className="h-4 w-4" />
-                    Add Pathfinding
-                </Button>
             )}
         </div>
     )

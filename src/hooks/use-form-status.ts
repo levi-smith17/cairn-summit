@@ -9,14 +9,14 @@ export function useFormStatus() {
 
   useEffect(() => {
     if (saved) {
-      const timer = setTimeout(() => setSaved(false), 3000)
+      const timer = setTimeout(() => setSaved(false), 5000)
       return () => clearTimeout(timer)
     }
   }, [saved])
 
   useEffect(() => {
     if (error) {
-      const timer = setTimeout(() => setError(false), 3000)
+      const timer = setTimeout(() => setError(false), 5000)
       return () => clearTimeout(timer)
     }
   }, [error])

@@ -1,17 +1,18 @@
 'use client'
 
 import { useState } from 'react'
-import { 
-    ArrowLeft, 
-    MapPin, 
-    Briefcase, 
-    GraduationCap, 
-    Backpack, 
-    Flag, 
-    Trophy, 
+import {
+    ArrowLeft,
+    MapPin,
+    Briefcase,
+    GraduationCap,
+    Backpack,
+    Flag,
+    Trophy,
     Compass,
     PawPrint,
-    Settings 
+    Settings,
+    Plus,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -24,6 +25,8 @@ import { SummitsForm } from './summits-form'
 import { PathfindingForm } from './pathfinding-form'
 import { CompanionsForm } from './companions-form'
 import { SettingsForm } from './settings-form'
+import { useFormStatus } from '@/hooks/use-form-status'
+import { FormAlert } from '@/components/forms/form-actions'
 import type { Prisma } from '@prisma/client'
 
 type Origins = Prisma.OriginsGetPayload<{}>
@@ -54,6 +57,8 @@ interface ManifestSectionsProps {
 
 export function ManifestSections({ origins, expeditions, training, gear, landmarks, summits, pathfinding, companions, settings }: ManifestSectionsProps) {
     const [active, setActive] = useState<string | null>(null)
+    const [adding, setAdding] = useState(false)
+    const { saving, saved, error, handleSubmit } = useFormStatus()
 
     const sections = [
         { value: 'origins',      label: 'Origins',      count: null,               icon: MapPin },
@@ -67,21 +72,37 @@ export function ManifestSections({ origins, expeditions, training, gear, landmar
         { value: 'settings',     label: 'Settings',     count: null,               icon: Settings },
     ]
 
-    function renderContent() {
-        switch (active ?? 'origins') {
-            case 'origins':     return <OriginsForm defaultValues={{ headline: origins?.headline ?? '', summary: origins?.summary ?? '', bio: origins?.bio ?? '', location: origins?.location ?? '', website: origins?.website ?? '', linkedin: origins?.linkedin ?? '', github: origins?.github ?? '' }} />
-            case 'expeditions': return <ExpeditionsForm expeditions={expeditions} />
-            case 'training':    return <TrainingForm training={training} />
-            case 'gear':        return <GearForm gear={gear} />
-            case 'landmarks':   return <LandmarksForm landmarks={landmarks} />
-            case 'summits':     return <SummitsForm summits={summits} />
-            case 'pathfinding': return <PathfindingForm pathfinding={pathfinding} />
-            case 'companions':  return <CompanionsForm companions={companions} />
-            case 'settings':    return <SettingsForm defaultValues={settings} />
-        }
+    function handleSectionChange(value: string) {
+        setActive(value)
+        setAdding(false)
+    }
+
+    const addLabels: Record<string, string> = {
+        expeditions: 'Add Expedition',
+        training:    'Add Training',
+        gear:        'Add Gear',
+        landmarks:   'Add Landmark',
+        summits:     'Add Summit',
+        pathfinding: 'Add Pathfinding',
+        companions:  'Add Companion',
     }
 
     const selectedSection = active ?? 'origins'
+    const showAddButton = selectedSection in addLabels && !adding
+
+    function renderContent() {
+        switch (selectedSection) {
+            case 'origins':     return <OriginsForm defaultValues={{ headline: origins?.headline ?? '', summary: origins?.summary ?? '', bio: origins?.bio ?? '', location: origins?.location ?? '', website: origins?.website ?? '', linkedin: origins?.linkedin ?? '', github: origins?.github ?? '' }} />
+            case 'expeditions': return <ExpeditionsForm expeditions={expeditions} adding={adding} setAdding={setAdding} saving={saving} saved={saved} error={error} handleSubmit={handleSubmit} />
+            case 'training':    return <TrainingForm training={training} adding={adding} setAdding={setAdding} saving={saving} saved={saved} error={error} handleSubmit={handleSubmit} />
+            case 'gear':        return <GearForm gear={gear} adding={adding} setAdding={setAdding} saving={saving} saved={saved} error={error} handleSubmit={handleSubmit} />
+            case 'landmarks':   return <LandmarksForm landmarks={landmarks} adding={adding} setAdding={setAdding} saving={saving} saved={saved} error={error} handleSubmit={handleSubmit} />
+            case 'summits':     return <SummitsForm summits={summits} adding={adding} setAdding={setAdding} saving={saving} saved={saved} error={error} handleSubmit={handleSubmit} />
+            case 'pathfinding': return <PathfindingForm pathfinding={pathfinding} adding={adding} setAdding={setAdding} saving={saving} saved={saved} error={error} handleSubmit={handleSubmit} />
+            case 'companions':  return <CompanionsForm companions={companions} adding={adding} setAdding={setAdding} saving={saving} saved={saved} error={error} handleSubmit={handleSubmit} />
+            case 'settings':    return <SettingsForm defaultValues={settings} />
+        }
+    }
 
     return (
         <div className="flex flex-1 min-h-0 gap-4 overflow-hidden">
@@ -102,7 +123,7 @@ export function ManifestSections({ origins, expeditions, training, gear, landmar
                                 cursor-pointer transition-colors
                                 ${selectedSection === s.value ? 'bg-primary/20' : 'hover:bg-muted/50'}
                             `}
-                            onClick={() => setActive(s.value)}
+                            onClick={() => handleSectionChange(s.value)}
                         >
                             <div className="flex items-center gap-2">
                                 <s.icon className="h-4 w-4 text-muted-foreground" />
@@ -128,6 +149,15 @@ export function ManifestSections({ origins, expeditions, training, gear, landmar
                     <span className="text-sm font-medium">
                         {sections.find(s => s.value === selectedSection)?.label}
                     </span>
+                    <div className="ml-auto flex items-center gap-3">
+                        <FormAlert saved={saved} error={error} />
+                        {showAddButton && (
+                            <Button variant="outline" size="sm" onClick={() => setAdding(true)}>
+                                <Plus className="h-4 w-4" />
+                                {addLabels[selectedSection]}
+                            </Button>
+                        )}
+                    </div>
                 </div>
                 <div className="flex-1 overflow-y-auto p-6">
                     {renderContent()}

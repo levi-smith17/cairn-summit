@@ -15,8 +15,8 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { EntryActions } from './entry-actions'
 import { FormActions } from '@/components/forms/form-actions'
-import { useFormStatus } from '@/hooks/use-form-status'
 import {
   Select,
   SelectContent,
@@ -24,7 +24,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Pencil, Trash2, Plus } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 
 const gearLevels = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'EXPERT'] as const
@@ -48,6 +47,12 @@ interface Gear {
 
 interface GearFormProps {
   gear: Gear[]
+  adding: boolean
+  setAdding: (v: boolean) => void
+  saving: boolean
+  saved: boolean
+  error: boolean
+  handleSubmit: (action: () => Promise<void>) => Promise<void>
 }
 
 const emptyDefaults: GearFormValues = {
@@ -63,21 +68,13 @@ const levelLabels: Record<GearLevel, string> = {
   EXPERT: 'Expert',
 }
 
-export function GearForm({ gear }: GearFormProps) {
-  const { saving, saved, error, handleSubmit } = useFormStatus()
+export function GearForm({ gear, adding, setAdding, saving, saved, error, handleSubmit }: GearFormProps) {
   const [editing, setEditing] = useState<string | null>(null)
-  const [adding, setAdding] = useState(false)
 
   const form = useForm<GearFormValues>({
     resolver: zodResolver(gearSchema),
     defaultValues: emptyDefaults,
   })
-
-  function startAdd() {
-    form.reset(emptyDefaults)
-    setEditing(null)
-    setAdding(true)
-  }
 
   function startEdit(entry: Gear) {
     form.reset({
@@ -97,13 +94,15 @@ export function GearForm({ gear }: GearFormProps) {
   }
 
   async function onSubmit(values: GearFormValues) {
-    await handleSubmit(() => saveGear({
-      id: values.id,
-      name: values.name,
-      category: values.category ?? null,
-      level: values.level ?? null,
-    }))
-    cancel()
+    await handleSubmit(async () => {
+      await saveGear({
+        id: values.id,
+        name: values.name,
+        category: values.category ?? null,
+        level: values.level ?? null,
+      })
+      cancel()
+    })
   }
 
   async function onDelete(id: string) {
@@ -111,10 +110,10 @@ export function GearForm({ gear }: GearFormProps) {
   }
 
   // Group gear by category for display
-  const grouped = gear.reduce<Record<string, Gear[]>>((acc, item) => {
-    const key = item.category ?? 'Uncategorized'
+  const grouped = gear.reduce<Record<string, Gear[]>>((acc, entry) => {
+    const key = entry.category ?? 'Uncategorized'
     if (!acc[key]) acc[key] = []
-    acc[key].push(item)
+    acc[key].push(entry)
     return acc
   }, {})
 
@@ -123,33 +122,27 @@ export function GearForm({ gear }: GearFormProps) {
       {/* Existing entries grouped by category */}
       {gear.length > 0 && (
         <div className="space-y-6">
-          {Object.entries(grouped).map(([category, items]) => (
+          {Object.entries(grouped).map(([category, gear]) => (
             <div key={category}>
               <p className="text-sm font-medium text-muted-foreground mb-2">{category}</p>
               <div className="flex flex-wrap gap-2">
-                {items.map((item) => (
+                {gear.map((entry) => (
                   <div
-                    key={item.id}
+                    key={entry.id}
                     className="flex items-center gap-2 rounded-full border px-3 py-1 text-sm"
                   >
-                    <span>{item.name}</span>
-                    {item.level && (
+                    <span>{entry.name}</span>
+                    {entry.level && (
                       <span className="text-muted-foreground text-xs">
-                        · {levelLabels[item.level]}
+                        · {levelLabels[entry.level]}
                       </span>
                     )}
-                    <button
-                      onClick={() => startEdit(item)}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      <Pencil className="h-3 w-3" />
-                    </button>
-                    <button
-                      onClick={() => onDelete(item.id)}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </button>
+                    <EntryActions
+                      onEdit={() => startEdit(entry)}
+                      onDelete={() => onDelete(entry.id)}
+                      deleteTitle="Remove Gear"
+                      itemName={entry.name}
+                    />
                   </div>
                 ))}
               </div>
@@ -163,7 +156,7 @@ export function GearForm({ gear }: GearFormProps) {
         <>
           {gear.length > 0 && <Separator />}
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="rounded-lg border bg-secondary p-4 space-y-6">
               <div className="grid grid-cols-3 gap-4">
                 <FormField
                   control={form.control}
@@ -229,19 +222,12 @@ export function GearForm({ gear }: GearFormProps) {
                   saved={saved}
                   error={error}
                   saveLabel={editing ? 'Update Gear' : 'Add Gear'}
+                  hideAlert
                 />
               </div>
             </form>
           </Form>
         </>
-      )}
-
-      {/* Add button */}
-      {!adding && !editing && (
-        <Button variant="outline" onClick={startAdd}>
-          <Plus className="h-4 w-4" />
-          Add Gear
-        </Button>
       )}
     </div>
   )

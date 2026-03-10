@@ -16,12 +16,11 @@ import {
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { EntryActions } from './entry-actions'
 import { FormActions } from '@/components/forms/form-actions'
 import { MonthYearPicker } from '@/components/ui/month-year-picker'
 import { RichTextEditor } from '@/components/ui/rich-text-editor'
 import { RichTextContent } from '@/components/ui/rich-text-content'
-import { Pencil, Trash2, Plus } from 'lucide-react'
-import { useFormStatus } from '@/hooks/use-form-status'
 import { format } from 'date-fns'
 
 const trainingSchema = z.object({
@@ -50,6 +49,12 @@ interface Training {
 
 interface TrainingFormProps {
   training: Training[]
+  adding: boolean
+  setAdding: (v: boolean) => void
+  saving: boolean
+  saved: boolean
+  error: boolean
+  handleSubmit: (action: () => Promise<void>) => Promise<void>
 }
 
 const emptyDefaults: TrainingFormValues = {
@@ -62,10 +67,8 @@ const emptyDefaults: TrainingFormValues = {
   description: '',
 }
 
-export function TrainingForm({ training }: TrainingFormProps) {
-  const { saving, saved, error, handleSubmit } = useFormStatus()
+export function TrainingForm({ training, adding, setAdding, saving, saved, error, handleSubmit }: TrainingFormProps) {
   const [editing, setEditing] = useState<string | null>(null)
-  const [adding, setAdding] = useState(false)
 
   const form = useForm<TrainingFormValues>({
     resolver: zodResolver(trainingSchema),
@@ -73,12 +76,6 @@ export function TrainingForm({ training }: TrainingFormProps) {
   })
 
   const current = form.watch('current')
-
-  function startAdd() {
-    form.reset(emptyDefaults)
-    setEditing(null)
-    setAdding(true)
-  }
 
   function startEdit(entry: Training) {
     form.reset({
@@ -102,17 +99,19 @@ export function TrainingForm({ training }: TrainingFormProps) {
   }
 
   async function onSubmit(values: TrainingFormValues) {
-    await handleSubmit(() => saveTraining({
-      id: values.id,
-      institution: values.institution,
-      degree: values.degree ?? null,
-      field: values.field ?? null,
-      startDate: new Date(values.startDate),
-      endDate: values.current ? null : values.endDate ? new Date(values.endDate) : null,
-      current: values.current,
-      description: values.description ?? null,
-    }))
-    cancel()
+    await handleSubmit(async () => {
+      await saveTraining({
+        id: values.id,
+        institution: values.institution,
+        degree: values.degree ?? null,
+        field: values.field ?? null,
+        startDate: new Date(values.startDate),
+        endDate: values.current ? null : values.endDate ? new Date(values.endDate) : null,
+        current: values.current,
+        description: values.description ?? null,
+      })
+      cancel()
+    })
   }
 
   async function onDelete(id: string) {
@@ -122,7 +121,7 @@ export function TrainingForm({ training }: TrainingFormProps) {
   function renderForm() {
     return (
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="rounded-lg border bg-secondary p-4 space-y-6">
           <FormField
             control={form.control}
             name="institution"
@@ -226,7 +225,7 @@ export function TrainingForm({ training }: TrainingFormProps) {
 
           <div className="flex justify-end items-center gap-4">
             <Button type="button" variant="ghost" onClick={cancel}>Cancel</Button>
-            <FormActions saving={saving} saved={saved} error={error} saveLabel={editing ? 'Update Training' : 'Add Training'} />
+            <FormActions saving={saving} saved={saved} error={error} saveLabel={editing ? 'Update Training' : 'Add Training'} hideAlert />
           </div>
         </form>
       </Form>
@@ -234,7 +233,9 @@ export function TrainingForm({ training }: TrainingFormProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {adding && renderForm()}
+
       {training.length > 0 && (
         <div className="relative">
           {training.map((entry) => (
@@ -259,28 +260,17 @@ export function TrainingForm({ training }: TrainingFormProps) {
                     </span>
                     {entry.description && <RichTextContent html={entry.description} className="text-muted-foreground" />}
                   </div>
-                  <div className="flex gap-1 shrink-0">
-                    <Button variant="ghost" size="icon" onClick={() => startEdit(entry)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => onDelete(entry.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <EntryActions
+                    onEdit={() => startEdit(entry)}
+                    onDelete={() => onDelete(entry.id)}
+                    deleteTitle="Remove Training"
+                    itemName={entry.degree + " in " + entry.field}
+                  />
                 </div>
               </div>
             )
           ))}
         </div>
-      )}
-
-      {adding && renderForm()}
-
-      {!adding && !editing && (
-        <Button variant="outline" onClick={startAdd}>
-          <Plus className="h-4 w-4" />
-          Add Training
-        </Button>
       )}
     </div>
   )

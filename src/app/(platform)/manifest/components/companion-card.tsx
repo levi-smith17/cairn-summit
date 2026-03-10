@@ -5,12 +5,6 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
-  saveCompanion,
-  deleteCompanion,
-  deleteCompanionMedia,
-  updateCompanionMediaCaption,
-} from '@/actions/manifest'
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -22,6 +16,12 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import {
+  saveCompanion,
+  deleteCompanion,
+  deleteCompanionMedia,
+  updateCompanionMediaCaption,
+} from '@/actions/manifest'
+import {
   Form,
   FormControl,
   FormField,
@@ -30,13 +30,13 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { EntryActions } from './entry-actions'
 import { FormActions } from '@/components/forms/form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
 import { RichTextEditor } from '@/components/ui/rich-text-editor'
-import { Trash2, Pencil, X, ImagePlus } from 'lucide-react'
+import { X, ImagePlus } from 'lucide-react'
 import { formatAge } from '@/lib/format-age'
 
 const companionSchema = z.object({
@@ -156,35 +156,12 @@ export function CompanionCard({ companion, onRefresh }: CompanionCardProps) {
               <span className="text-xs font-normal text-muted-foreground italic"> [Summit Reached]</span>
             )}
           </CardTitle>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditing(!editing)}>
-              <Pencil className="h-3 w-3" />
-            </Button>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-7 w-7">
-                  <Trash2 className="h-3 w-3 text-destructive" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Remove Companion</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to remove "{companion.name}"? All photos and videos will be permanently deleted. This cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDelete}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    Delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
+          <EntryActions
+            onEdit={() => setEditing(!editing)}
+            onDelete={handleDelete}
+            deleteTitle="Remove Companion"
+            itemName={companion.name}
+          />
         </div>
         <p className="text-sm text-muted-foreground">
           {companion.species}

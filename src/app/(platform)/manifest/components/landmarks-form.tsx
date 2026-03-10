@@ -16,10 +16,10 @@ import {
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { EntryActions } from './entry-actions'
 import { FormActions } from '@/components/forms/form-actions'
-import { useFormStatus } from '@/hooks/use-form-status'
 import { DatePicker } from '@/components/ui/date-picker'
-import { Pencil, Trash2, Plus, ExternalLink } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
 import { RichTextEditor } from '@/components/ui/rich-text-editor'
 import { RichTextContent } from '@/components/ui/rich-text-content'
 
@@ -47,6 +47,12 @@ interface Landmark {
 
 interface LandmarksFormProps {
   landmarks: Landmark[]
+  adding: boolean
+  setAdding: (v: boolean) => void
+  saving: boolean
+  saved: boolean
+  error: boolean
+  handleSubmit: (action: () => Promise<void>) => Promise<void>
 }
 
 const emptyDefaults: LandmarkFormValues = {
@@ -58,10 +64,8 @@ const emptyDefaults: LandmarkFormValues = {
   current: false,
 }
 
-export function LandmarksForm({ landmarks }: LandmarksFormProps) {
-  const { saving, saved, error, handleSubmit } = useFormStatus()
+export function LandmarksForm({ landmarks, adding, setAdding, saving, saved, error, handleSubmit }: LandmarksFormProps) {
   const [editing, setEditing] = useState<string | null>(null)
-  const [adding, setAdding] = useState(false)
 
   const form = useForm<LandmarkFormValues>({
     resolver: zodResolver(landmarkSchema),
@@ -69,12 +73,6 @@ export function LandmarksForm({ landmarks }: LandmarksFormProps) {
   })
 
   const current = form.watch('current')
-
-  function startAdd() {
-    form.reset(emptyDefaults)
-    setEditing(null)
-    setAdding(true)
-  }
 
   function startEdit(entry: Landmark) {
     form.reset({
@@ -97,16 +95,18 @@ export function LandmarksForm({ landmarks }: LandmarksFormProps) {
   }
 
   async function onSubmit(values: LandmarkFormValues) {
-    await handleSubmit(() => saveLandmark({
-      id: values.id,
-      name: values.name,
-      description: values.description ?? null,
-      url: values.url ?? null,
-      startDate: values.startDate ? new Date(values.startDate) : null,
-      endDate: values.current ? null : values.endDate ? new Date(values.endDate) : null,
-      current: values.current,
-    }))
-    cancel()
+    await handleSubmit(async () => {
+      await saveLandmark({
+        id: values.id,
+        name: values.name,
+        description: values.description ?? null,
+        url: values.url ?? null,
+        startDate: values.startDate ? new Date(values.startDate) : null,
+        endDate: values.current ? null : values.endDate ? new Date(values.endDate) : null,
+        current: values.current,
+      })
+      cancel()
+    })
   }
 
   async function onDelete(id: string) {
@@ -116,7 +116,7 @@ export function LandmarksForm({ landmarks }: LandmarksFormProps) {
   function renderForm() {
     return (
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="rounded-lg border bg-secondary p-4 space-y-6">
           <FormField
             control={form.control}
             name="name"
@@ -205,7 +205,7 @@ export function LandmarksForm({ landmarks }: LandmarksFormProps) {
 
           <div className="flex justify-end items-center gap-4">
             <Button type="button" variant="ghost" onClick={cancel}>Cancel</Button>
-            <FormActions saving={saving} saved={saved} error={error} saveLabel={editing ? 'Update Landmark' : 'Add Landmark'} />
+            <FormActions saving={saving} saved={saved} error={error} saveLabel={editing ? 'Update Landmark' : 'Add Landmark'} hideAlert />
           </div>
         </form>
       </Form>
@@ -213,7 +213,9 @@ export function LandmarksForm({ landmarks }: LandmarksFormProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
+      {adding && renderForm()}
+
       {landmarks.length > 0 && (
         <div className="space-y-4">
           {landmarks.map((entry) => (
@@ -241,28 +243,17 @@ export function LandmarksForm({ landmarks }: LandmarksFormProps) {
                     )}
                     {entry.description && <RichTextContent html={entry.description} className="text-muted-foreground" />}
                   </div>
-                  <div className="flex gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => startEdit(entry)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => onDelete(entry.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <EntryActions
+                    onEdit={() => startEdit(entry)}
+                    onDelete={() => onDelete(entry.id)}
+                    deleteTitle="Remove Landmark"
+                    itemName={entry.name}
+                  />
                 </div>
               </div>
             )
           ))}
         </div>
-      )}
-
-      {adding && renderForm()}
-
-      {!adding && !editing && (
-        <Button variant="outline" onClick={startAdd}>
-          <Plus className="h-4 w-4" />
-          Add Landmark
-        </Button>
       )}
     </div>
   )
