@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import {
+    ExternalLink,
     MapPin,
     Globe,
     Mail
@@ -17,6 +18,7 @@ import { Timeline } from '@/components/ui/timeline'
 import { format } from 'date-fns'
 import { useRouter } from 'next/navigation'
 import { ManifestStickyHeader } from './sticky-header'
+import { GearChart } from './gear-chart'
 
 
 const formatDate = (date: Date) => format(date, 'MMM yyyy')
@@ -290,26 +292,9 @@ export function ManifestContent({
                 {/* Gear */}
                 {gear.length > 0 && (
                     <Section title={terms.gear}>
-                        <div className="flex flex-col gap-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
                             {Object.entries(grouped).map(([category, items]) => (
-                                <div key={category} className="flex flex-col gap-2">
-                                    <p className="text-sm text-muted-foreground">{category}</p>
-                                    <div className="flex flex-wrap gap-2">
-                                        {items.map((item) => (
-                                            <span
-                                                key={item.id}
-                                                className="rounded-full border px-3 py-1 text-sm"
-                                            >
-                                                {item.name}
-                                                {item.level && (
-                                                    <span className="text-muted-foreground ml-1 text-xs">
-                                                        · {item.level.charAt(0) + item.level.slice(1).toLowerCase()}
-                                                    </span>
-                                                )}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
+                                <GearChart key={category} category={category} items={items as Parameters<typeof GearChart>[0]['items']} />
                             ))}
                         </div>
                     </Section>
@@ -318,33 +303,34 @@ export function ManifestContent({
                 {/* Landmarks */}
                 {landmarks.length > 0 && (
                     <Section title={terms.landmarks}>
-                        {landmarks.map((l) => (
-                            <div key={l.id} className="flex flex-col gap-1">
-                                <div className="flex items-start justify-between gap-4">
-                                    <div className="flex items-center gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {landmarks.map((l) => (
+                                <div key={l.id} className="rounded-lg border p-4 flex flex-col gap-2 bg-secondary">
+                                    <div className="flex items-start justify-between gap-2">
                                         <p className="font-medium">{l.name}</p>
                                         {l.url && (
                                             <a
                                                 href={l.url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="text-muted-foreground hover:text-foreground text-xs underline underline-offset-4"
+                                                className="text-muted-foreground hover:text-foreground shrink-0"
                                             >
-                                                Link
+                                                <ExternalLink className="h-3 w-3" />
                                             </a>
                                         )}
                                     </div>
                                     {l.startDate && (
                                         <DateRange startDate={l.startDate} endDate={l.endDate} current={l.current} />
                                     )}
+                                    {l.description && (
+                                        <RichTextContent html={l.description} className="text-muted-foreground text-sm" />
+                                    )}
                                 </div>
-                                {l.description && (
-                                    <RichTextContent html={l.description} className="text-muted-foreground" />
-                                )}
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </Section>
                 )}
+
 
                 {/* Summits */}
                 {summits.length > 0 && (
