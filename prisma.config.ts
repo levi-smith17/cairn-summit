@@ -5,5 +5,5 @@ import * as dotenv from 'dotenv'
 dotenv.config({ path: path.resolve(__dirname, '.env') })
 
 export default defineConfig({
-  schema: path.join(__dirname, 'prisma/models'),
+  schema: path.join(__dirname, 'prisma/'),
 })
