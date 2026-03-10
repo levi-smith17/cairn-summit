@@ -80,7 +80,7 @@ export function CompanionCard({ companion, onRefresh }: CompanionCardProps) {
   const [uploading, setUploading] = useState(false)
   const media = companion.media ?? []
 
-  const form = useForm<CompanionFormValues>({
+  const form = useForm({
     resolver: zodResolver(companionSchema),
     defaultValues: {
       name: companion.name,
@@ -90,7 +90,7 @@ export function CompanionCard({ companion, onRefresh }: CompanionCardProps) {
         ? new Date(companion.birthday).toISOString().split('T')[0]
         : '',
       bio: companion.bio ?? '',
-      passed: companion.passed ?? false,
+      passed: !!companion.passed,
     },
   })
 
