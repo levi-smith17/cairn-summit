@@ -47,8 +47,8 @@ interface ManifestSectionsProps {
     settings: {
         username: string | null
         listed: boolean
-        defaultTerminology: string
-        defaultTheme: string
+        defaultTerminology: 'CAIRN' | 'STANDARD'
+        defaultTheme: 'LIGHT' | 'DARK' | 'SYSTEM'
     }
 }
 
