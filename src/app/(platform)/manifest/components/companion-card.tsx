@@ -45,7 +45,7 @@ const companionSchema = z.object({
   breed: z.string().optional(),
   birthday: z.string().optional(),
   bio: z.string().optional(),
-  passed: z.boolean().default(false),
+  passed: z.boolean(),
 })
 
 type CompanionFormValues = z.infer<typeof companionSchema>
@@ -80,7 +80,7 @@ export function CompanionCard({ companion, onRefresh }: CompanionCardProps) {
   const [uploading, setUploading] = useState(false)
   const media = companion.media ?? []
 
-  const form = useForm({
+  const form = useForm<CompanionFormValues>({
     resolver: zodResolver(companionSchema),
     defaultValues: {
       name: companion.name,
