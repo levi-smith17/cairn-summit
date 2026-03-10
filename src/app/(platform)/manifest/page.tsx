@@ -46,13 +46,13 @@ export default async function ManifestPage() {
                     />
                     <ManifestSummary
                         sections={[
-                            { label: 'Origins', count: origins ? 1 : 0 },
                             { label: 'Expeditions', count: expeditions.length },
                             { label: 'Training', count: training.length },
                             { label: 'Gear', count: gear.length },
                             { label: 'Landmarks', count: landmarks.length },
                             { label: 'Summits', count: summits.length },
                             { label: 'Pathfinding', count: pathfinding.length },
+                            { label: 'Companions', count: companions.length },
                         ]}
                         mostRecentExpedition={expeditions[0] ?? null}
                         mostRecentTraining={training[0] ?? null}
