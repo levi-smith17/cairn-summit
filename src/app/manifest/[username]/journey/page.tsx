@@ -63,7 +63,7 @@ export async function generateMetadata({ params }: AboutPageProps) {
     if (!wayfarer) return {}
 
     return {
-        title: `${wayfarer.name ?? wayfarer.username} — About`,
-        description: wayfarer.origins?.bio ?? `About ${wayfarer.name}`,
+        title: `${wayfarer.name ?? wayfarer.username} — Journey`,
+        description: wayfarer.origins?.bio ?? `${wayfarer.name}'s Journey`,
     }
 }

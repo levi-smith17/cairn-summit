@@ -52,10 +52,17 @@ export function ManifestStickyHeader({
         {backHref && (
           <>
             <Link href={backHref}>
-              <Button variant="secondary" size="sm" className="gap-2 hover:bg-black/10 dark:hover:bg-white/10">
-                <ChevronLeft className="h-4 w-4" />
-                {backLabel ?? 'Back to ' + terms.page}
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="secondary" size="sm" className="gap-2 hover:bg-black/10 dark:hover:bg-white/10">
+                    <ChevronLeft className="h-4 w-4" />
+                    {backLabel ?? terms.page}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Back to {backLabel ?? terms.page}
+                </TooltipContent>
+              </Tooltip>
             </Link>
             <div className="w-px h-5 bg-foreground/20" />
           </>
