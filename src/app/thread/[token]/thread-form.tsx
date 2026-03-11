@@ -3,10 +3,13 @@
 import { useState, useTransition } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
-import { Bold, Italic, List } from 'lucide-react'
+import Underline from '@tiptap/extension-underline'
+import Link from '@tiptap/extension-link'
+import Highlight from '@tiptap/extension-highlight'
+import TextAlign from '@tiptap/extension-text-align'
 import { Button } from '@/components/ui/button'
 import { CheckCircle, Send } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { TipTapToolbar } from '@/components/ui/tiptap-toolbar'
 import { sendThreadReply } from './actions'
 
 interface ThreadFormProps {
@@ -21,7 +24,13 @@ export function ThreadForm({ token, wayfarerName }: ThreadFormProps) {
 
     const editor = useEditor({
         immediatelyRender: false,
-        extensions: [StarterKit],
+        extensions: [
+            StarterKit,
+            Underline,
+            Link.configure({ openOnClick: false }),
+            Highlight,
+            TextAlign.configure({ types: ['heading', 'paragraph'] }),
+        ],
         editorProps: {
             attributes: {
                 class: 'min-h-[120px] px-3 py-2 text-sm focus:outline-none prose prose-sm dark:prose-invert max-w-none',
@@ -67,36 +76,7 @@ export function ThreadForm({ token, wayfarerName }: ThreadFormProps) {
     return (
         <div className="flex flex-col gap-3">
             <div className="rounded-lg border border-input bg-background overflow-hidden">
-                {/* Toolbar */}
-                <div className="flex items-center gap-1 border-b border-input px-2 py-1">
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className={cn('h-7 w-7', editor?.isActive('bold') && 'bg-muted')}
-                        onClick={() => editor?.chain().focus().toggleBold().run()}
-                    >
-                        <Bold className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className={cn('h-7 w-7', editor?.isActive('italic') && 'bg-muted')}
-                        onClick={() => editor?.chain().focus().toggleItalic().run()}
-                    >
-                        <Italic className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className={cn('h-7 w-7', editor?.isActive('bulletList') && 'bg-muted')}
-                        onClick={() => editor?.chain().focus().toggleBulletList().run()}
-                    >
-                        <List className="h-3.5 w-3.5" />
-                    </Button>
-                </div>
+                <TipTapToolbar editor={editor} />
                 <EditorContent editor={editor} />
             </div>
 

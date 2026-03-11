@@ -2,13 +2,17 @@
 
 import { useState, useRef, useEffect, useTransition } from 'react'
 import { format, formatDistanceToNow } from 'date-fns'
-import { MailOpen, Trash2, Send, ArrowLeft, Bold, Italic, List } from 'lucide-react'
+import { MailOpen, Trash2, Send, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
+import Underline from '@tiptap/extension-underline'
+import Link from '@tiptap/extension-link'
+import Highlight from '@tiptap/extension-highlight'
+import TextAlign from '@tiptap/extension-text-align'
 import { markMessageRead, deleteMessage, sendReply } from '../actions'
-import { cn } from '@/lib/utils'
+import { TipTapToolbar } from '@/components/ui/tiptap-toolbar'
 
 interface MessageReply {
     id: string
@@ -37,7 +41,13 @@ function ReplyEditor({ messageId }: { messageId: string }) {
 
     const editor = useEditor({
         immediatelyRender: false,
-        extensions: [StarterKit],
+        extensions: [
+            StarterKit,
+            Underline,
+            Link.configure({ openOnClick: false }),
+            Highlight,
+            TextAlign.configure({ types: ['heading', 'paragraph'] }),
+        ],
         editorProps: {
             attributes: {
                 class: 'min-h-[60px] max-h-[160px] overflow-y-auto px-3 py-2 text-sm focus:outline-none prose prose-sm dark:prose-invert max-w-none',
@@ -64,17 +74,7 @@ function ReplyEditor({ messageId }: { messageId: string }) {
     return (
         <div className="border-t bg-card p-3 flex flex-col gap-2 shrink-0">
             <div className="rounded-lg border border-input bg-background overflow-hidden">
-                <div className="flex items-center gap-1 border-b border-input px-2 py-1">
-                    <Button type="button" variant="ghost" size="icon" className={cn('h-7 w-7', editor?.isActive('bold') && 'bg-muted')} onClick={() => editor?.chain().focus().toggleBold().run()}>
-                        <Bold className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button type="button" variant="ghost" size="icon" className={cn('h-7 w-7', editor?.isActive('italic') && 'bg-muted')} onClick={() => editor?.chain().focus().toggleItalic().run()}>
-                        <Italic className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button type="button" variant="ghost" size="icon" className={cn('h-7 w-7', editor?.isActive('bulletList') && 'bg-muted')} onClick={() => editor?.chain().focus().toggleBulletList().run()}>
-                        <List className="h-3.5 w-3.5" />
-                    </Button>
-                </div>
+                <TipTapToolbar editor={editor} />
                 <EditorContent editor={editor} />
             </div>
             <div className="flex items-center justify-between">
