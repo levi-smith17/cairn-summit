@@ -8,11 +8,15 @@ import { Separator } from '@/components/ui/separator'
 import { RichTextContent } from '@/components/ui/rich-text-content'
 import { getTerms, type TerminologyStyle } from '@/lib/terminology'
 import { ManifestStickyHeader } from './sticky-header'
-import { useMasonryColumns } from '@/hooks/use-masonry-columns'
-import { useColumnCount } from '@/hooks/use-column-count'
-import { Card } from '@/components/ui/card'
 import { format } from 'date-fns'
 import { formatAge } from '@/lib/format-age'
+import {
+    Carousel,
+    CarouselContent,
+    CarouselItem,
+    CarouselNext,
+    CarouselPrevious,
+} from '@/components/ui/carousel'
 
 interface CompanionMedia {
     id: string
@@ -65,7 +69,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
         <section className="flex flex-col gap-4">
             <div className="flex items-center gap-4">
                 <h2 className="text-lg font-semibold shrink-0">{title}</h2>
-                <Separator className="flex-1" />
+                <Separator className="flex-1 bg-header" />
             </div>
             {children}
         </section>
@@ -76,44 +80,49 @@ function mediaFilename(key: string) {
     return key.split('/').pop()
 }
 
-function CompanionMediaGrid({ companion }: { companion: Companion }) {
-    const columnCount = useColumnCount()
-    const columns = useMasonryColumns(companion.media ?? [], columnCount)
+function CompanionMediaCarousel({ companion }: { companion: Companion }) {
+    const media = companion.media ?? []
 
     return (
         <>
             {companion.bio && (
                 <RichTextContent html={companion.bio} className="text-muted-foreground" />
             )}
-            {(companion.media ?? []).length > 0 && (
-                <div className="flex gap-3 w-full">
-                    {columns.map((column, colIndex) => (
-                        <div key={colIndex} className="flex flex-col gap-3 flex-1 min-w-0">
-                            {column.map((m) => (
-                                <Card key={m.id} className="p-2 flex flex-col gap-1 overflow-hidden">
-                                    <div className="rounded-md overflow-hidden bg-muted">
+            {media.length > 0 && (
+                <Carousel className="w-full" opts={{ loop: true }}>
+                    <CarouselContent>
+                        {media.map((m) => (
+                            <CarouselItem key={m.id}>
+                                <div className="flex flex-col gap-2">
+                                    <div className="rounded-lg overflow-hidden bg-transparent flex items-center justify-center h-96">
                                         {m.type === 'IMAGE' ? (
                                             <img
                                                 src={`/api/public/companions/media/${mediaFilename(m.key)}`}
                                                 alt={m.caption ?? companion.name}
-                                                className="w-full h-auto object-cover"
+                                                className="w-full h-full object-contain"
                                             />
                                         ) : (
                                             <video
                                                 src={`/api/public/companions/media/${mediaFilename(m.key)}`}
-                                                className="w-full h-auto"
+                                                className="w-full h-full object-contain"
                                                 controls
                                             />
                                         )}
                                     </div>
                                     {m.caption && (
-                                        <p className="text-xs text-muted-foreground px-1 pt-2">{m.caption}</p>
+                                        <p className="text-xs text-muted-foreground text-center">{m.caption}</p>
                                     )}
-                                </Card>
-                            ))}
-                        </div>
-                    ))}
-                </div>
+                                </div>
+                            </CarouselItem>
+                        ))}
+                    </CarouselContent>
+                    {media.length > 1 && (
+                        <>
+                            <CarouselPrevious variant="ghost" className="left-2 !bg-header border-0 opacity-90 hover:opacity-100" />
+                            <CarouselNext variant="ghost" className="right-2 !bg-header border-0 opacity-90 hover:opacity-100" />
+                        </>
+                    )}
+                </Carousel>
             )}
         </>
     )
@@ -267,7 +276,7 @@ export function AboutContent({
                                                         )}
                                                     </p>
                                                 </div>
-                                                <CompanionMediaGrid companion={companion} />
+                                                <CompanionMediaCarousel companion={companion} />
                                             </div>
                                         ))}
                                     </div>
@@ -289,7 +298,7 @@ export function AboutContent({
                                                         )}
                                                     </p>
                                                 </div>
-                                                <CompanionMediaGrid companion={companion} />
+                                                <CompanionMediaCarousel companion={companion} />
                                             </div>
                                         ))}
                                     </div>

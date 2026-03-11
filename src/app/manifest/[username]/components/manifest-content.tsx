@@ -106,7 +106,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
         <section className="flex flex-col gap-4">
             <div className="flex items-center gap-4">
                 <h2 className="text-lg font-semibold shrink-0">{title}</h2>
-                <Separator className="flex-1" />
+                <Separator className="flex-1 bg-header" />
             </div>
             {children}
         </section>
