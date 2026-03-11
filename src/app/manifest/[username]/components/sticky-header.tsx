@@ -56,7 +56,7 @@ export function ManifestStickyHeader({
                 <TooltipTrigger asChild>
                   <Button variant="secondary" size="sm" className="gap-2 hover:bg-black/10 dark:hover:bg-white/10">
                     <ChevronLeft className="h-4 w-4" />
-                    {backLabel ?? terms.page}
+                    <span className="hidden sm:inline">{backLabel ?? terms.page}</span>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -73,7 +73,7 @@ export function ManifestStickyHeader({
             <AvatarImage src={wayfarer.image ?? undefined} />
             <AvatarFallback className="text-sm">{initials}</AvatarFallback>
           </Avatar>
-          <span className="font-medium text-sm">{wayfarer.name ?? wayfarer.email}</span>
+          <span className="font-medium text-sm hidden sm:inline">{wayfarer.name ?? wayfarer.email}</span>
         </div>
       </div>
 
@@ -101,7 +101,7 @@ export function ManifestStickyHeader({
                     onClick={onTerminologyToggle}
                   >
                     <BookType className="h-4 w-4" />
-                    {terminology === 'CAIRN' ? 'Standard' : 'Cairn'}
+                    <span className="hidden sm:inline">{terminology === 'CAIRN' ? 'Standard' : 'Cairn'}</span>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>

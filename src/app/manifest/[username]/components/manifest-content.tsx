@@ -234,18 +234,18 @@ export function ManifestContent({
                         {origins?.website && (
                             <div className="flex items-center gap-1">
                                 <Globe className="h-4 w-4" />
-                                <a href={origins.website} target="_blank" rel="noopener noreferrer" className="hover:text-foreground">
+                                <a href={origins.website} target="_blank" rel="noopener noreferrer" className="hover:text-foreground underline underline-offset-4">
                                     {origins.website}
                                 </a>
                             </div>
                         )}
                         {origins?.linkedin && (
-                            <a href={origins.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-foreground">
+                            <a href={origins.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-foreground underline underline-offset-4">
                                 LinkedIn
                             </a>
                         )}
                         {origins?.github && (
-                            <a href={origins.github} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-foreground">
+                            <a href={origins.github} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-foreground underline underline-offset-4">
                                 GitHub
                             </a>
                         )}
@@ -305,7 +305,7 @@ export function ManifestContent({
                 {gear.length > 0 && (
                     <Section title={terms.gear}>
                         {/* Screen: radial chart grid */}
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 print:hidden">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 print:hidden">
                             {Object.entries(grouped).map(([category, items]) => (
                                 <GearChart key={category} category={category} items={items as Parameters<typeof GearChart>[0]['items']} />
                             ))}

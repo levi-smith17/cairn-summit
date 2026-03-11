@@ -1,7 +1,7 @@
 'use client'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { RadialBarChart, RadialBar, LabelList, Tooltip } from 'recharts'
+import { RadialBarChart, RadialBar, LabelList, Tooltip, ResponsiveContainer } from 'recharts'
 
 type GearLevel = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT'
 
@@ -58,21 +58,19 @@ export function GearChart({ category, items }: GearChartProps) {
     return (
         <>
             {data.length > 0 && (
-                <div className="flex justify-center">
-                    <Card className="gap-2">
-                        <CardHeader>
-                            <CardTitle>
-                                {category}
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
+                <Card className="gap-2 w-full">
+                    <CardHeader>
+                        <CardTitle>
+                            {category}
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <ResponsiveContainer width="100%" aspect={1}>
                             <RadialBarChart
-                                width={160}
-                                height={160}
-                                cx={80}
-                                cy={80}
-                                innerRadius={20}
-                                outerRadius={72}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius="15%"
+                                outerRadius="85%"
                                 data={data}
                                 startAngle={-90}
                                 endAngle={380}
@@ -111,9 +109,9 @@ export function GearChart({ category, items }: GearChartProps) {
                                     />
                                 </RadialBar>
                             </RadialBarChart>
-                        </CardContent>
-                    </Card>
-                </div>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
             )}
         </>
     )

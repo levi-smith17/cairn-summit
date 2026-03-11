@@ -47,7 +47,7 @@ export async function sendReply(messageId: string, html: string) {
     const threadUrl = message.token ? `${baseUrl}/thread/${message.token}` : null
 
     await mailer.sendMail({
-        from: process.env.EMAIL_SERVER_USER,
+        from: 'noreply@cairn.ing',
         to: message.senderEmail,
         subject: `Re: Your message via Cairn`,
         html: `
@@ -57,10 +57,9 @@ export async function sendReply(messageId: string, html: string) {
             ${html}
             <hr />
             ${threadUrl ? `<p><a href="${threadUrl}">Continue this conversation on Cairn</a> — link valid for 30 days from your original message.</p>` : ''}
-            <p style="color:#888;font-size:12px;">You can also reply directly to this email.</p>
+            <p style="color:#888;font-size:12px;">This is an automated notification. Please do not reply to this email.</p>
         `,
         text: html.replace(/<[^>]+>/g, '') + (threadUrl ? `\n\nContinue this conversation: ${threadUrl}` : ''),
-        replyTo: process.env.EMAIL_SERVER_USER,
     })
 
     revalidatePath('/messages')

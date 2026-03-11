@@ -34,20 +34,16 @@ export async function sendThreadReply(token: string, html: string) {
     })
 
     if (message.wayfarer.email) {
-        const baseUrl = process.env.NEXTAUTH_URL ?? ''
         await mailer.sendMail({
-            from: process.env.EMAIL_SERVER_USER,
+            from: 'noreply@cairn.ing',
             to: message.wayfarer.email,
             subject: `New reply from ${message.senderName} via Cairn`,
             html: `
-                <p>${message.senderName} replied to your message:</p>
-                <hr />
-                ${html}
-                <hr />
-                <p><a href="${baseUrl}/messages">View in your Cairn inbox</a></p>
+                <p><strong>${message.senderName}</strong> replied to your message.</p>
+                <p><a href="https://cairn.ing/messages">View it in your inbox</a></p>
+                <p style="color:#888;font-size:12px;">This is an automated notification. Please do not reply to this email.</p>
             `,
-            text: trimmed + `\n\nView in your inbox: ${baseUrl}/messages`,
-            replyTo: message.senderEmail,
+            text: `${message.senderName} replied to your message. View it in your inbox: https://cairn.ing/messages`,
         })
     }
 

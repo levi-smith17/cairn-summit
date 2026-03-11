@@ -44,23 +44,16 @@ export async function sendMessage(username: string, formData: FormData) {
         },
     })
 
-    const baseUrl = process.env.NEXTAUTH_URL ?? ''
-    const threadUrl = `${baseUrl}/thread/${token}`
-
     await mailer.sendMail({
-        from: process.env.EMAIL_SERVER_USER,
+        from: 'noreply@cairn.ing',
         to: wayfarer.email,
         subject: `New message from ${senderName} via Cairn`,
-        text: `You have a new message from ${senderName} (${senderEmail}):\n\n${body}\n\nReply at: ${threadUrl}`,
+        text: `You have a new message from ${senderName}. View it in your Cairn inbox: https://cairn.ing/messages`,
         html: `
-            <p>You have a new message on your Cairn manifest.</p>
-            <p><strong>From:</strong> ${senderName} (${senderEmail})</p>
-            <hr />
-            <p>${body.replace(/\n/g, '<br />')}</p>
-            <hr />
-            <p style="color:#888;font-size:12px;">Reply directly to this email to respond.</p>
+            <p>You have a new message from <strong>${senderName}</strong> on your Cairn manifest.</p>
+            <p><a href="https://cairn.ing/messages">View it in your inbox</a></p>
+            <p style="color:#888;font-size:12px;">This is an automated notification. Please do not reply to this email.</p>
         `,
-        replyTo: senderEmail,
     })
 
     return { success: true }

@@ -51,7 +51,7 @@ export function PublicNav({ currentUser, terminologyToggle, showDirectoryLink }:
                     <Button
                         variant="secondary"
                         size="sm"
-                        className="rounded-none"
+                        className="rounded-none hover:bg-black/10 dark:hover:bg-white/10"
                         onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
                     >
                         {resolvedTheme === 'dark' ? (
