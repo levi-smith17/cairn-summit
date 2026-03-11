@@ -4,6 +4,7 @@ import { auth } from '@/auth'
 import { ManifestStickyHeader } from '../components/sticky-header'
 import { ContactForm } from './contact-form'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { ManifestFooter } from '../components/manifest-footer'
 
 interface ContactPageProps {
     params: Promise<{ username: string }>
@@ -66,14 +67,7 @@ export default async function ContactPage({ params }: ContactPageProps) {
 
                 <ContactForm username={username} wayfarerName={wayfarer.name} />
 
-                <div className="flex justify-center pt-4">
-                    <p className="text-xs text-muted-foreground">
-                        Built with{' '}
-                        <a href="/" className="underline underline-offset-4 hover:text-foreground">
-                            Cairn
-                        </a>
-                    </p>
-                </div>
+                <ManifestFooter />
             </div>
         </div>
     )

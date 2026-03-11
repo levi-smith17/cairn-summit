@@ -5,6 +5,17 @@ import { format, formatDistanceToNow } from 'date-fns'
 import { MailOpen, Trash2, Send, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
@@ -164,18 +175,38 @@ export function MessagesClient({ messages }: MessagesClientProps) {
                                     {selectedMessage.senderEmail}
                                 </a>
                             </div>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-destructive hover:text-destructive"
-                                title="Delete conversation"
-                                onClick={async () => {
-                                    await deleteMessage(selectedMessage.id)
-                                    setSelected(messages.find((m) => m.id !== selectedMessage.id)?.id ?? null)
-                                }}
-                            >
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="text-destructive hover:text-destructive"
+                                        title="Delete conversation"
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Delete conversation?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This will permanently delete this message and all replies. This cannot be undone.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction
+                                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                            onClick={async () => {
+                                                await deleteMessage(selectedMessage.id)
+                                                setSelected(messages.find((m) => m.id !== selectedMessage.id)?.id ?? null)
+                                            }}
+                                        >
+                                            Delete
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
                         </div>
 
                         {/* Chat bubbles */}

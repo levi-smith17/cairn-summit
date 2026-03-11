@@ -79,6 +79,25 @@ export async function toggleWaypointReadLater(id: string, readLater: boolean) {
 
 // --- Folders ---
 
+export async function createFolder(name: string): Promise<{ id: string; name: string }> {
+  const session = await auth()
+  if (!session?.user?.id) throw new Error('Unauthorized')
+  const folder = await prisma.folder.create({ data: { name, wayfarerId: session.user.id } })
+  revalidatePath('/waypoints')
+  return folder
+}
+
+export async function createTag(data: {
+  name: string
+  color: string
+}): Promise<{ id: string; name: string; color: string; icon: string | null }> {
+  const session = await auth()
+  if (!session?.user?.id) throw new Error('Unauthorized')
+  const tag = await prisma.tag.create({ data: { ...data, wayfarerId: session.user.id } })
+  revalidatePath('/waypoints')
+  return tag
+}
+
 export async function saveFolder(data: { id?: string; name: string }) {
   const session = await auth()
   if (!session?.user?.id) throw new Error('Unauthorized')
