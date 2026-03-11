@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { CairnLockup } from '@/components/cairn-lockup'
 import { DirectoryTable } from './components/directory-table'
 import { DirectoryStats } from './components/directory-stats'
+import { ManifestFooter } from './manifest/[username]/components/manifest-footer'
 import { PublicNav } from '@/components/nav/public-nav'
 
 export default async function HomePage() {
@@ -100,6 +101,7 @@ export default async function HomePage() {
           </div>
         </div>
       </div>
+      <ManifestFooter />
     </div>
   )
 }

@@ -46,7 +46,7 @@ export function ManifestStickyHeader({
   const terms = getTerms(terminology)
 
   return (
-    <div className="sticky top-0 z-10 flex items-center justify-between py-2 px-4 bg-header border-b">
+    <div className="sticky top-0 z-10 flex items-center justify-between py-2 px-4 bg-header border-b print:hidden">
       {/* Left side — back button + avatar */}
       <div className="flex items-center gap-2">
         {backHref && (
