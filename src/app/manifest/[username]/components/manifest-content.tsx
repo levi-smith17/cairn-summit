@@ -9,9 +9,9 @@ import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import {
     ExternalLink,
-    MapPin,
     Globe,
-    Mail
+    Mail,
+    MapPin,
 } from 'lucide-react'
 import { RichTextContent } from '@/components/ui/rich-text-content'
 import { Timeline } from '@/components/ui/timeline'
@@ -19,6 +19,7 @@ import { format } from 'date-fns'
 import { useRouter } from 'next/navigation'
 import { ManifestStickyHeader } from './sticky-header'
 import { GearChart } from './gear-chart'
+import { ManifestFooter } from './manifest-footer'
 
 
 const formatDate = (date: Date) => format(date, 'MMM yyyy')
@@ -183,7 +184,7 @@ export function ManifestContent({
     }, {})
 
     return (
-        <div className="relative">
+        <div className="relative manifest-page">
             {/* Sticky top bar */}
             <ManifestStickyHeader
                 username={username}
@@ -199,7 +200,7 @@ export function ManifestContent({
                 currentUser={currentUser}
             />
 
-            <div className="max-w-3xl mx-auto px-6 pb-6 flex flex-col gap-12">
+            <div className="max-w-3xl mx-auto px-6 pb-6 flex flex-col gap-12 print:max-w-none print:px-0 print:mx-0 print:pb-0">
                 <div className="flex flex-col gap-6">
                     {/* Full header — observed for scroll detection */}
                     <div ref={headerRef} className="flex items-center gap-4 pt-8">
@@ -223,29 +224,28 @@ export function ManifestContent({
                                 {origins.location}
                             </div>
                         )}
-                        {wayfarer.email && (
-                            <div className="flex items-center gap-1">
-                                <Mail className="h-4 w-4" />
-                                <a href={`mailto:${wayfarer.email}`} className="hover:text-foreground">
-                                    {wayfarer.email}
-                                </a>
-                            </div>
-                        )}
+                        <div className="flex items-center gap-1">
+                            <Mail className="h-4 w-4" />
+                            <Link href={`/manifest/${username}/contact`} className="hover:text-foreground underline underline-offset-4">
+                                Contact {wayfarer.name ?? username}
+                            </Link>
+                        </div>
                         {origins?.website && (
                             <div className="flex items-center gap-1">
                                 <Globe className="h-4 w-4" />
-                                <a href={origins.website} target="_blank" rel="noopener noreferrer" className="hover:text-foreground">
+                                <a href={origins.website} target="_blank" rel="noopener noreferrer" className="hover:text-foreground underline underline-offset-4">
                                     {origins.website}
                                 </a>
                             </div>
                         )}
                         {origins?.linkedin && (
-                            <a href={origins.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-foreground">
+                            <a href={origins.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-foreground underline underline-offset-4">
                                 LinkedIn
                             </a>
                         )}
                         {origins?.github && (
-                            <a href={origins.github} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-foreground">
+                            <a href={origins.github} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-foreground underline underline-offset-4">
+                                <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current shrink-0" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" /></svg>
                                 GitHub
                             </a>
                         )}
@@ -256,7 +256,7 @@ export function ManifestContent({
                         <RichTextContent html={origins.summary} className="text-muted-foreground" />
                     )}
                     {/* About link */}
-                    <div className="flex justify-end">
+                    <div className="flex justify-end print:hidden">
                         <Link href={`/manifest/${username}/journey`}>
                             <Button variant="outline" size="sm">
                                 {terms.about}
@@ -304,9 +304,25 @@ export function ManifestContent({
                 {/* Gear */}
                 {gear.length > 0 && (
                     <Section title={terms.gear}>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
+                        {/* Screen: radial chart grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 print:hidden">
                             {Object.entries(grouped).map(([category, items]) => (
                                 <GearChart key={category} category={category} items={items as Parameters<typeof GearChart>[0]['items']} />
+                            ))}
+                        </div>
+                        {/* Print: plain text list */}
+                        <div className="hidden print:flex print:flex-wrap print:gap-x-8 print:gap-y-4">
+                            {Object.entries(grouped).map(([category, items]) => (
+                                <div key={category} className="flex flex-col gap-1">
+                                    <p className="text-sm font-semibold">{category}</p>
+                                    <ul className="text-sm text-muted-foreground list-none p-0 m-0 flex flex-col gap-0.5">
+                                        {items.map((item) => (
+                                            <li key={item.id}>
+                                                {item.name}{item.level ? ` — ${item.level}` : ''}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
                             ))}
                         </div>
                     </Section>
@@ -401,15 +417,7 @@ export function ManifestContent({
                     </Section>
                 )}
 
-                {/* Footer */}
-                <div className="flex justify-center pt-8">
-                    <p className="text-xs text-muted-foreground">
-                        Built with{' '}
-                        <a href="/" className="underline underline-offset-4 hover:text-foreground">
-                            Cairn
-                        </a>
-                    </p>
-                </div>
+                <ManifestFooter />
             </div>
         </div>
     )

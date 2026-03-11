@@ -140,7 +140,7 @@ export function ProvisionDrawer({
 
   return (
     <Drawer open={open} onOpenChange={handleOpenChange} direction="right">
-      <DrawerContent className="h-full w-96 flex flex-col">
+      <DrawerContent className="h-full w-full sm:w-96 flex flex-col">
         <DrawerHeader className="shrink-0 border-b">
           <DrawerTitle>{provision ? 'Edit Subscription' : 'New Subscription'}</DrawerTitle>
         </DrawerHeader>

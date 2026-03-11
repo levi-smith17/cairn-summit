@@ -47,7 +47,7 @@ export function WaypointItem({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7"
+                className="h-9 w-9 sm:h-7 sm:w-7"
                 onClick={() => onAddLog(waypoint.id)}
               >
                 <FileText className="h-3.5 w-3.5" />

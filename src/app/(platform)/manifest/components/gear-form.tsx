@@ -157,7 +157,7 @@ export function GearForm({ gear, adding, setAdding, saving, saved, error, handle
           {gear.length > 0 && <Separator />}
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="rounded-lg border bg-secondary p-4 space-y-6">
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <FormField
                   control={form.control}
                   name="name"

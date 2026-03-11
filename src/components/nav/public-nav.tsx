@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useTheme } from 'next-themes'
 import { useRouter } from 'next/navigation'
-import { Sun, Moon, LayoutDashboard, BookOpen } from 'lucide-react'
+import { Sun, Mail, Moon, LayoutDashboard, BookOpen } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -51,7 +51,7 @@ export function PublicNav({ currentUser, terminologyToggle, showDirectoryLink }:
                     <Button
                         variant="secondary"
                         size="sm"
-                        className="rounded-none"
+                        className="rounded-none hover:bg-black/10 dark:hover:bg-white/10"
                         onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
                     >
                         {resolvedTheme === 'dark' ? (
@@ -87,6 +87,10 @@ export function PublicNav({ currentUser, terminologyToggle, showDirectoryLink }:
                         <DropdownMenuItem onClick={() => router.push('/dashboard')}>
                             <LayoutDashboard className="h-4 w-4" />
                             Dashboard
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => router.push('/messages')}>
+                            <Mail className="h-4 w-4" />
+                            Messages
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => router.push('/manifest')}>
                             <BookOpen className="h-4 w-4" />

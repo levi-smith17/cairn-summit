@@ -1,9 +1,11 @@
 'use client'
 
+import { useState, useTransition } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { saveManifestSettings } from '@/actions/manifest'
+import { signOut } from 'next-auth/react'
+import { saveManifestSettings, deleteAccount } from '@/actions/manifest'
 import {
     Form,
     FormControl,
@@ -15,6 +17,7 @@ import {
 } from '@/components/ui/form'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 import { FormActions } from '@/components/forms/form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
 import {
@@ -24,6 +27,15 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
+import {
+    AlertDialog,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogCancel,
+} from '@/components/ui/alert-dialog'
 
 const settingsSchema = z.object({
     username: z
@@ -51,6 +63,16 @@ interface SettingsFormProps {
 
 export function SettingsForm({ defaultValues }: SettingsFormProps) {
     const { saving, saved, error, handleSubmit } = useFormStatus()
+    const [deleteOpen, setDeleteOpen] = useState(false)
+    const [confirmText, setConfirmText] = useState('')
+    const [deleting, startDelete] = useTransition()
+
+    function handleDeleteAccount() {
+        startDelete(async () => {
+            await deleteAccount()
+            await signOut({ callbackUrl: '/' })
+        })
+    }
 
     const form = useForm<SettingsFormValues>({
         resolver: zodResolver(settingsSchema),
@@ -74,6 +96,7 @@ export function SettingsForm({ defaultValues }: SettingsFormProps) {
     const username = form.watch('username')
 
     return (
+        <>
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField
@@ -187,6 +210,48 @@ export function SettingsForm({ defaultValues }: SettingsFormProps) {
                     saveLabel="Save Settings"
                 />
             </form>
-        </Form >
+        </Form>
+
+        {/* Danger Zone */}
+        <div className="rounded-lg border border-destructive/40 p-4 space-y-3 mt-6">
+            <div>
+                <p className="text-sm font-medium text-destructive">Delete Account</p>
+                <p className="text-sm text-muted-foreground">
+                    Permanently delete your account and all associated data. This cannot be undone.
+                </p>
+            </div>
+            <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
+                Delete Account
+            </Button>
+        </div>
+
+        <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Delete your account?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This will permanently delete your manifest, all entries, messages, and account data.
+                        This cannot be undone. Type <strong>DELETE</strong> to confirm.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <Input
+                    value={confirmText}
+                    onChange={e => setConfirmText(e.target.value)}
+                    placeholder="Type DELETE to confirm"
+                    className="mt-2"
+                />
+                <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setConfirmText('')}>Cancel</AlertDialogCancel>
+                    <Button
+                        variant="destructive"
+                        disabled={confirmText !== 'DELETE' || deleting}
+                        onClick={handleDeleteAccount}
+                    >
+                        {deleting ? 'Deleting…' : 'Delete Account'}
+                    </Button>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+        </>
     )
 }

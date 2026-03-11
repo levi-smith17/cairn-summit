@@ -1,5 +1,6 @@
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
+import { cn } from '@/lib/utils'
 
 interface PageHeaderProps {
   title: string
@@ -9,8 +10,16 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, filters, actions }: PageHeaderProps) {
   return (
-    <header className="sticky top-0 z-10 shrink-0 border-b bg-header transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-      <div className="flex min-h-14 items-center gap-3 px-4 py-2">
+    <header className={cn(
+      'sticky top-0 z-10 shrink-0 border-b bg-header transition-[width,height] ease-linear',
+      !filters && 'group-has-data-[collapsible=icon]/sidebar-wrapper:h-12'
+    )}>
+      <div className={cn(
+        'flex items-center gap-3 px-4',
+        filters
+          ? 'min-h-14 py-2'
+          : 'h-14 group-has-data-[collapsible=icon]/sidebar-wrapper:h-12'
+      )}>
         <SidebarTrigger className="shrink-0" variant="outline" />
         <Separator orientation="vertical" className="mr-1 h-full shrink-0 hidden md:block" />
         <span className="font-medium text-sm shrink-0">{title}</span>
@@ -39,4 +48,3 @@ export function PageHeader({ title, filters, actions }: PageHeaderProps) {
     </header>
   )
 }
-

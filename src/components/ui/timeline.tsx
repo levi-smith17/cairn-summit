@@ -28,7 +28,7 @@ function TimelineItem({
   formatDate,
 }: TimelineItemProps) {
   return (
-    <div className="relative pl-6 pb-8 last:pb-0">
+    <div className="relative pl-6 pb-8 last:pb-0 print:break-inside-avoid">
       {/* Vertical line */}
       <div className="absolute left-0 top-2 bottom-0 w-px bg-border last:hidden" />
       {/* Dot */}

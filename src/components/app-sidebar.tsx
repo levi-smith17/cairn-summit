@@ -10,6 +10,7 @@ import {
   Globe,
   LayoutDashboard,
   LayoutList,
+  Mail,
   NotebookPen,
   Rocket,
   Tag,
@@ -61,6 +62,7 @@ const navItems: { group: string; items: NavItem[] }[] = [
     items: [
       { title: 'Directory', url: '/', icon: LayoutList, tooltip: 'Directory' },
       { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, tooltip: 'Dashboard' },
+      { title: 'Messages', url: '/messages', icon: Mail, tooltip: 'Messages' },
     ],
   },
   {

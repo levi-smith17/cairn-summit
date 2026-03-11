@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import {
     ArrowLeft,
     Award,
@@ -26,7 +26,6 @@ import { PathfindingForm } from './pathfinding-form'
 import { CompanionsForm } from './companions-form'
 import { SettingsForm } from './settings-form'
 import { useFormStatus } from '@/hooks/use-form-status'
-import { FormAlert } from '@/components/forms/form-actions'
 import type { Prisma } from '@prisma/client'
 
 type Origins = Prisma.OriginsGetPayload<{}>
@@ -59,6 +58,7 @@ export function ManifestSections({ origins, expeditions, training, gear, landmar
     const [active, setActive] = useState<string | null>(null)
     const [adding, setAdding] = useState(false)
     const { saving, saved, error, handleSubmit } = useFormStatus()
+    const contentScrollRef = useRef<HTMLDivElement>(null)
 
     const sections = [
         { value: 'origins',      label: 'Origins',      count: null,               icon: MapPin },
@@ -142,24 +142,26 @@ export function ManifestSections({ origins, expeditions, training, gear, landmar
                 ${active !== null ? 'flex' : 'hidden md:flex'}
                 flex-col flex-1 rounded-lg border border-border bg-card overflow-hidden
             `}>
-                <div className="flex items-center gap-2 px-4 py-3 border-b border-border shrink-0">
+                <div className="flex items-center gap-2 px-4 min-h-[48px] border-b border-border shrink-0">
                     <Button variant="ghost" size="icon" className="h-7 w-7 md:hidden" onClick={() => setActive(null)}>
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
                     <span className="text-sm font-medium">
                         {sections.find(s => s.value === selectedSection)?.label}
                     </span>
-                    <div className="ml-auto flex items-center gap-3">
-                        <FormAlert saved={saved} error={error} />
-                        {showAddButton && (
-                            <Button variant="outline" size="sm" onClick={() => setAdding(true)}>
+                    {showAddButton && (
+                        <div className="ml-auto">
+                            <Button variant="outline" size="sm" onClick={() => {
+                                setAdding(true)
+                                contentScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+                            }}>
                                 <Plus className="h-4 w-4" />
                                 {addLabels[selectedSection]}
                             </Button>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
-                <div className="flex-1 overflow-y-auto p-6">
+                <div ref={contentScrollRef} className="flex-1 overflow-y-auto p-6">
                     {renderContent()}
                 </div>
             </div>

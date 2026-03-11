@@ -445,3 +445,27 @@ export async function deleteCompanionMedia(mediaId: string) {
   await prisma.companionMedia.delete({ where: { id: mediaId } })
   revalidatePath('/manifest')
 }
+
+export async function deleteAccount() {
+  const session = await auth()
+  if (!session?.user?.id) throw new Error('Unauthorized')
+
+  const wayfarerId = session.user.id
+
+  // Delete all companion media from R2 before removing DB records
+  const companions = await prisma.companion.findMany({
+    where: { wayfarerId },
+    include: { media: true },
+  })
+
+  await Promise.all(
+    companions.flatMap(c =>
+      c.media.map(m =>
+        r2Companions.send(new DeleteObjectCommand({ Bucket: R2_COMPANIONS_BUCKET, Key: m.key }))
+      )
+    )
+  )
+
+  // Delete wayfarer — Prisma cascade handles all related data
+  await prisma.wayfarer.delete({ where: { id: wayfarerId } })
+}

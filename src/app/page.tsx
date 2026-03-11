@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { CairnLockup } from '@/components/cairn-lockup'
 import { DirectoryTable } from './components/directory-table'
 import { DirectoryStats } from './components/directory-stats'
+import { ManifestFooter } from './manifest/[username]/components/manifest-footer'
 import { PublicNav } from '@/components/nav/public-nav'
 
 export default async function HomePage() {
@@ -79,7 +80,7 @@ export default async function HomePage() {
       </header>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto w-full px-6 py-12 flex flex-col gap-8">
+      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-8 sm:py-12 flex flex-col gap-8">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold">Wayfarer Directory</h1>
           <p className="text-sm text-muted-foreground">
@@ -100,6 +101,7 @@ export default async function HomePage() {
           </div>
         </div>
       </div>
+      <ManifestFooter />
     </div>
   )
 }

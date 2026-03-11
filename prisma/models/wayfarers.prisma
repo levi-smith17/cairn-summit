@@ -26,6 +26,7 @@ model Wayfarer {
   summits            Summit[]
   pathfinding        Pathfinding[]
   companions         Companion[]
+  messages           Message[]
 
   @@map("wayfarers")
 }
