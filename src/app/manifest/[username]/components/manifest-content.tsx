@@ -153,14 +153,26 @@ export function ManifestContent({
 
     useEffect(() => {
         setMounted(true)
-        if (wayfarer.defaultTheme === 'LIGHT') setTheme('light')
-        else if (wayfarer.defaultTheme === 'DARK') setTheme('dark')
-        // SYSTEM — leave it alone, next-themes handles it
+        const storedTheme = sessionStorage.getItem(`manifest-theme-${username}`)
+        if (storedTheme) {
+            setTheme(storedTheme)
+        } else if (wayfarer.defaultTheme === 'LIGHT') {
+            setTheme('light')
+            sessionStorage.setItem(`manifest-theme-${username}`, 'light')
+        } else if (wayfarer.defaultTheme === 'DARK') {
+            setTheme('dark')
+            sessionStorage.setItem(`manifest-theme-${username}`, 'dark')
+        }
     }, [])
 
     const [terminology, setTerminology] = useState<TerminologyStyle>(
         wayfarer.defaultTerminology
     )
+
+    useEffect(() => {
+        const stored = sessionStorage.getItem(`manifest-terminology-${username}`)
+        if (stored === 'CAIRN' || stored === 'STANDARD') setTerminology(stored)
+    }, [])
     const terms = getTerms(terminology)
 
     const initials = wayfarer.name
@@ -181,7 +193,11 @@ export function ManifestContent({
                 username={username}
                 wayfarer={wayfarer}
                 terminology={terminology}
-                onTerminologyToggle={() => setTerminology(t => t === 'CAIRN' ? 'STANDARD' : 'CAIRN')}
+                onTerminologyToggle={() => setTerminology(t => {
+                    const next = t === 'CAIRN' ? 'STANDARD' : 'CAIRN'
+                    sessionStorage.setItem(`manifest-terminology-${username}`, next)
+                    return next
+                })}
                 showAvatar={showStickyHeader}
                 showDirectoryLink={showDirectoryLink}
                 currentUser={currentUser}
