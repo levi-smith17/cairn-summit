@@ -2,12 +2,13 @@
 
 import { useState, useRef, useEffect, useTransition } from 'react'
 import { format, formatDistanceToNow } from 'date-fns'
-import { MailOpen, Trash2, Send } from 'lucide-react'
+import { MailOpen, Trash2, Send, ArrowLeft, Bold, Italic, List } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { markMessageRead, deleteMessage, sendReply } from '../actions'
+import { cn } from '@/lib/utils'
 
 interface MessageReply {
     id: string
@@ -63,6 +64,17 @@ function ReplyEditor({ messageId }: { messageId: string }) {
     return (
         <div className="border-t bg-card p-3 flex flex-col gap-2 shrink-0">
             <div className="rounded-lg border border-input bg-background overflow-hidden">
+                <div className="flex items-center gap-1 border-b border-input px-2 py-1">
+                    <Button type="button" variant="ghost" size="icon" className={cn('h-7 w-7', editor?.isActive('bold') && 'bg-muted')} onClick={() => editor?.chain().focus().toggleBold().run()}>
+                        <Bold className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button type="button" variant="ghost" size="icon" className={cn('h-7 w-7', editor?.isActive('italic') && 'bg-muted')} onClick={() => editor?.chain().focus().toggleItalic().run()}>
+                        <Italic className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button type="button" variant="ghost" size="icon" className={cn('h-7 w-7', editor?.isActive('bulletList') && 'bg-muted')} onClick={() => editor?.chain().focus().toggleBulletList().run()}>
+                        <List className="h-3.5 w-3.5" />
+                    </Button>
+                </div>
                 <EditorContent editor={editor} />
             </div>
             <div className="flex items-center justify-between">
@@ -77,7 +89,7 @@ function ReplyEditor({ messageId }: { messageId: string }) {
 }
 
 export function MessagesClient({ messages }: MessagesClientProps) {
-    const [selected, setSelected] = useState<string | null>(messages[0]?.id ?? null)
+    const [selected, setSelected] = useState<string | null>(null)
     const chatEndRef = useRef<HTMLDivElement>(null)
 
     const selectedMessage = messages.find((m) => m.id === selected)
@@ -104,7 +116,7 @@ export function MessagesClient({ messages }: MessagesClientProps) {
     return (
         <div className="flex flex-1 h-full min-h-0 gap-4 overflow-hidden">
             {/* Left — inbox list */}
-            <div className="w-72 shrink-0 flex flex-col rounded-lg border border-border bg-card overflow-hidden">
+            <div className={`${selected !== null ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-72 shrink-0 rounded-lg border border-border bg-card overflow-hidden`}>
                 <div className="px-4 min-h-[48px] flex items-center border-b border-border shrink-0">
                     <span className="text-sm font-medium">Inbox</span>
                 </div>
@@ -135,12 +147,15 @@ export function MessagesClient({ messages }: MessagesClientProps) {
             </div>
 
             {/* Right — chat view */}
-            <div className="flex flex-col flex-1 min-w-0 rounded-lg border border-border bg-card overflow-hidden">
+            <div className={`${selected !== null ? 'flex' : 'hidden md:flex'} flex-col flex-1 min-w-0 rounded-lg border border-border bg-card overflow-hidden`}>
                 {selectedMessage ? (
                     <>
                         {/* Header */}
-                        <div className="flex items-center justify-between px-4 min-h-[48px] border-b border-border shrink-0">
-                            <div className="flex flex-col gap-0.5">
+                        <div className="flex items-center gap-2 px-4 min-h-[48px] border-b border-border shrink-0">
+                            <Button variant="ghost" size="icon" className="h-7 w-7 md:hidden" onClick={() => setSelected(null)}>
+                                <ArrowLeft className="h-4 w-4" />
+                            </Button>
+                            <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                                 <span className="text-sm font-medium">{selectedMessage.senderName}</span>
                                 <a
                                     href={`mailto:${selectedMessage.senderEmail}`}
