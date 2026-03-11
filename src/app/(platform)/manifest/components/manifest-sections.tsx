@@ -3,12 +3,12 @@
 import { useState } from 'react'
 import {
     ArrowLeft,
+    Award,
     MapPin,
     Briefcase,
     GraduationCap,
     Backpack,
     Flag,
-    Trophy,
     Compass,
     PawPrint,
     Settings,
@@ -66,7 +66,7 @@ export function ManifestSections({ origins, expeditions, training, gear, landmar
         { value: 'training',     label: 'Training',     count: training.length,    icon: GraduationCap },
         { value: 'gear',         label: 'Gear',         count: gear.length,        icon: Backpack },
         { value: 'landmarks',    label: 'Landmarks',    count: landmarks.length,   icon: Flag },
-        { value: 'summits',      label: 'Summits',      count: summits.length,     icon: Trophy },
+        { value: 'summits',      label: 'Summits',      count: summits.length,     icon: Award },
         { value: 'pathfinding',  label: 'Pathfinding',  count: pathfinding.length, icon: Compass },
         { value: 'companions',   label: 'Companions',   count: companions.length,  icon: PawPrint },
         { value: 'settings',     label: 'Settings',     count: null,               icon: Settings },
