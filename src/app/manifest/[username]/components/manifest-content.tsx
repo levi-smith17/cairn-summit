@@ -183,23 +183,25 @@ export function ManifestContent({
     }, {})
 
     return (
-        <div className="relative">
+        <div className="relative manifest-page">
             {/* Sticky top bar */}
-            <ManifestStickyHeader
-                username={username}
-                wayfarer={wayfarer}
-                terminology={terminology}
-                onTerminologyToggle={() => setTerminology(t => {
-                    const next = t === 'CAIRN' ? 'STANDARD' : 'CAIRN'
-                    sessionStorage.setItem(`manifest-terminology-${username}`, next)
-                    return next
-                })}
-                showAvatar={showStickyHeader}
-                showDirectoryLink={showDirectoryLink}
-                currentUser={currentUser}
-            />
+            <div className="print:hidden">
+                <ManifestStickyHeader
+                    username={username}
+                    wayfarer={wayfarer}
+                    terminology={terminology}
+                    onTerminologyToggle={() => setTerminology(t => {
+                        const next = t === 'CAIRN' ? 'STANDARD' : 'CAIRN'
+                        sessionStorage.setItem(`manifest-terminology-${username}`, next)
+                        return next
+                    })}
+                    showAvatar={showStickyHeader}
+                    showDirectoryLink={showDirectoryLink}
+                    currentUser={currentUser}
+                />
+            </div>
 
-            <div className="max-w-3xl mx-auto px-6 pb-6 flex flex-col gap-12">
+            <div className="max-w-3xl mx-auto px-6 pb-6 flex flex-col gap-12 print:max-w-none print:px-0 print:mx-0 print:pb-0">
                 <div className="flex flex-col gap-6">
                     {/* Full header — observed for scroll detection */}
                     <div ref={headerRef} className="flex items-center gap-4 pt-8">
@@ -223,14 +225,12 @@ export function ManifestContent({
                                 {origins.location}
                             </div>
                         )}
-                        {wayfarer.email && (
-                            <div className="flex items-center gap-1">
-                                <Mail className="h-4 w-4" />
-                                <a href={`mailto:${wayfarer.email}`} className="hover:text-foreground">
-                                    {wayfarer.email}
-                                </a>
-                            </div>
-                        )}
+                        <div className="flex items-center gap-1">
+                            <Mail className="h-4 w-4" />
+                            <Link href={`/manifest/${username}/contact`} className="hover:text-foreground underline underline-offset-4">
+                                Contact {wayfarer.name ?? username}
+                            </Link>
+                        </div>
                         {origins?.website && (
                             <div className="flex items-center gap-1">
                                 <Globe className="h-4 w-4" />
@@ -256,7 +256,7 @@ export function ManifestContent({
                         <RichTextContent html={origins.summary} className="text-muted-foreground" />
                     )}
                     {/* About link */}
-                    <div className="flex justify-end">
+                    <div className="flex justify-end print:hidden">
                         <Link href={`/manifest/${username}/journey`}>
                             <Button variant="outline" size="sm">
                                 {terms.about}
@@ -304,9 +304,25 @@ export function ManifestContent({
                 {/* Gear */}
                 {gear.length > 0 && (
                     <Section title={terms.gear}>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
+                        {/* Screen: radial chart grid */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 print:hidden">
                             {Object.entries(grouped).map(([category, items]) => (
                                 <GearChart key={category} category={category} items={items as Parameters<typeof GearChart>[0]['items']} />
+                            ))}
+                        </div>
+                        {/* Print: plain text list */}
+                        <div className="hidden print:flex print:flex-wrap print:gap-x-8 print:gap-y-4">
+                            {Object.entries(grouped).map(([category, items]) => (
+                                <div key={category} className="flex flex-col gap-1">
+                                    <p className="text-sm font-semibold">{category}</p>
+                                    <ul className="text-sm text-muted-foreground list-none p-0 m-0 flex flex-col gap-0.5">
+                                        {items.map((item) => (
+                                            <li key={item.id}>
+                                                {item.name}{item.level ? ` — ${item.level}` : ''}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
                             ))}
                         </div>
                     </Section>
@@ -402,7 +418,7 @@ export function ManifestContent({
                 )}
 
                 {/* Footer */}
-                <div className="flex justify-center pt-8">
+                <div className="flex justify-center pt-8 print:hidden">
                     <p className="text-xs text-muted-foreground">
                         Built with{' '}
                         <a href="/" className="underline underline-offset-4 hover:text-foreground">

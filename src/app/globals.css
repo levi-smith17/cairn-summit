@@ -135,3 +135,36 @@
     @apply font-sans;
   }
 }
+
+@media print {
+  @page {
+    margin: 0.75in;
+  }
+
+  /* Keep section headings attached to their content */
+  .manifest-page h2 {
+    break-after: avoid;
+  }
+
+  /* Show external link URLs inline */
+  .manifest-page a[href^="http"]::after,
+  .manifest-page a[href^="https"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+    color: #555;
+    font-weight: normal;
+  }
+
+  /* Don't annotate internal links */
+  .manifest-page a[href^="/"]::after {
+    content: "" !important;
+  }
+
+  /* Separator lines: keep green color */
+  .manifest-page hr,
+  .manifest-page [role="separator"] {
+    border-color: #4e6a24;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

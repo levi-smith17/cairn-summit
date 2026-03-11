@@ -16,7 +16,7 @@ interface ManifestStickyHeaderProps {
     image: string | null
   }
   terminology: TerminologyStyle
-  onTerminologyToggle: () => void
+  onTerminologyToggle?: () => void
   showAvatar: boolean
   showDirectoryLink: boolean
   currentUser: {
@@ -32,7 +32,7 @@ export function ManifestStickyHeader({
   username,
   wayfarer,
   terminology,
-  onTerminologyToggle,
+  onTerminologyToggle = () => {},
   showAvatar,
   showDirectoryLink,
   currentUser,

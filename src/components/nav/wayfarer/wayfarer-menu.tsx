@@ -4,7 +4,6 @@ import {
   BookOpen,
   ChevronsUpDown,
 } from "lucide-react"
-
 import { ThemeToggle } from '@/components/nav/wayfarer/theme-toggle-menu-item'
 import {
   Avatar,

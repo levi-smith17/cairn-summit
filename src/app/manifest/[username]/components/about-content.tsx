@@ -218,14 +218,12 @@ export function AboutContent({
                                 {origins.location}
                             </div>
                         )}
-                        {wayfarer.email && (
-                            <div className="flex items-center gap-1">
-                                <Mail className="h-4 w-4" />
-                                <a href={`mailto:${wayfarer.email}`} className="hover:text-foreground">
-                                    {wayfarer.email}
-                                </a>
-                            </div>
-                        )}
+                        <div className="flex items-center gap-1">
+                            <Mail className="h-4 w-4" />
+                            <a href={`/manifest/${username}/contact`} className="hover:text-foreground underline underline-offset-4">
+                                Contact {wayfarer.name ?? username}
+                            </a>
+                        </div>
                         {origins?.website && (
                             <div className="flex items-center gap-1">
                                 <Globe className="h-4 w-4" />

@@ -1,0 +1,33 @@
+model Message {
+  id             String         @id @default(cuid())
+  senderName     String
+  senderEmail    String
+  body           String
+  read           Boolean        @default(false)
+  token          String?        @unique
+  tokenExpiresAt DateTime?
+  createdAt      DateTime       @default(now())
+  wayfarerId     String
+  wayfarer       Wayfarer       @relation(fields: [wayfarerId], references: [id], onDelete: Cascade)
+  replies        MessageReply[]
+
+  @@map("messages")
+}
+
+model MessageReply {
+  id          String         @id @default(cuid())
+  body        String
+  direction   ReplyDirection @default(OUTBOUND)
+  senderName  String?
+  senderEmail String?
+  createdAt   DateTime       @default(now())
+  messageId   String
+  message     Message        @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@map("message_replies")
+}
+
+enum ReplyDirection {
+  INBOUND
+  OUTBOUND
+}
