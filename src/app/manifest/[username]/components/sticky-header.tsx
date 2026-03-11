@@ -54,7 +54,7 @@ export function ManifestStickyHeader({
             <Link href={backHref}>
               <Button variant="secondary" size="sm" className="gap-2 hover:bg-black/10 dark:hover:bg-white/10">
                 <ChevronLeft className="h-4 w-4" />
-                {backLabel ?? 'Back to ' + terms.page}
+                {backLabel ?? terms.page}
               </Button>
             </Link>
             <div className="w-px h-5 bg-foreground/20" />

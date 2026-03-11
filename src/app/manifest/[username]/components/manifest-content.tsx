@@ -153,15 +153,11 @@ export function ManifestContent({
 
     useEffect(() => {
         setMounted(true)
-        const storedTheme = sessionStorage.getItem(`manifest-theme-${username}`)
-        if (storedTheme) {
-            setTheme(storedTheme)
-        } else if (wayfarer.defaultTheme === 'LIGHT') {
-            setTheme('light')
-            sessionStorage.setItem(`manifest-theme-${username}`, 'light')
-        } else if (wayfarer.defaultTheme === 'DARK') {
-            setTheme('dark')
-            sessionStorage.setItem(`manifest-theme-${username}`, 'dark')
+        const defaultApplied = sessionStorage.getItem(`manifest-theme-init-${username}`)
+        if (!defaultApplied) {
+            sessionStorage.setItem(`manifest-theme-init-${username}`, '1')
+            if (wayfarer.defaultTheme === 'LIGHT') setTheme('light')
+            else if (wayfarer.defaultTheme === 'DARK') setTheme('dark')
         }
     }, [])
 
