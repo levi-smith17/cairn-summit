@@ -3,7 +3,7 @@ import { signIn } from '@/auth'
 export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-white">
-      <div className="flex flex-col items-center gap-8 w-full max-w-sm px-6">
+      <div className="flex flex-col items-center gap-8 w-full max-w-sm px-4 sm:px-6">
 
         <img
           src="/cairn-lockup.svg"

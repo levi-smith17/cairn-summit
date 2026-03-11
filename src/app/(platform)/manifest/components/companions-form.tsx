@@ -102,7 +102,7 @@ export function CompanionsForm({ companions: initialCompanions, adding, setAddin
       {adding && (
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="rounded-lg border bg-secondary p-4 space-y-6">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <FormField
                 control={form.control}
                 name="name"
@@ -130,7 +130,7 @@ export function CompanionsForm({ companions: initialCompanions, adding, setAddin
                 )}
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <FormField
                 control={form.control}
                 name="breed"

@@ -51,7 +51,7 @@ export default async function ThreadPage({ params }: ThreadPageProps) {
                 )}
             </div>
 
-            <div className="max-w-2xl mx-auto px-6 pb-12 flex flex-col gap-8">
+            <div className="max-w-2xl mx-auto px-4 sm:px-6 pb-12 flex flex-col gap-8">
                 {/* Wayfarer info */}
                 <div className="flex items-center gap-4 pt-8">
                     <Avatar className="h-12 w-12">

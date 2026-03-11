@@ -123,7 +123,7 @@ export function SummitsForm({ summits, adding, setAdding, saving, saved, error, 
             )}
           />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="issuer"

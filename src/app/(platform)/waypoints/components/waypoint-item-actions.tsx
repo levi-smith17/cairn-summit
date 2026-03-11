@@ -39,7 +39,7 @@ export function WaypointItemActions({ waypoint, onEdit }: WaypointItemActionsPro
     <div className="flex items-center gap-1">
       {/* Open link — always visible */}
       <a href={waypoint.url} target="_blank" rel="noopener noreferrer">
-        <Button variant="ghost" size="icon" className="h-7 w-7">
+        <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-7 sm:w-7">
           <ExternalLink className="h-3.5 w-3.5" />
         </Button>
       </a>
@@ -47,7 +47,7 @@ export function WaypointItemActions({ waypoint, onEdit }: WaypointItemActionsPro
       {/* Actions dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-7 w-7">
+          <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-7 sm:w-7">
             <MoreHorizontal className="h-3.5 w-3.5" />
           </Button>
         </DropdownMenuTrigger>

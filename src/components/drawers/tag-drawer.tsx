@@ -95,7 +95,7 @@ export function TagDrawer({ open, onClose, tag }: TagDrawerProps) {
 
   return (
     <Drawer open={open} onOpenChange={handleOpenChange} direction="right">
-      <DrawerContent className="h-full w-96 flex flex-col">
+      <DrawerContent className="h-full w-full sm:w-96 flex flex-col">
         <DrawerHeader className="shrink-0 border-b">
           <DrawerTitle>{tag ? 'Edit Tag' : 'New Tag'}</DrawerTitle>
         </DrawerHeader>

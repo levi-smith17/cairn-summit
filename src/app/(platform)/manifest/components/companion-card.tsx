@@ -173,7 +173,7 @@ export function CompanionCard({ companion, onRefresh }: CompanionCardProps) {
         {editing && (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <FormField
                   control={form.control}
                   name="name"
@@ -197,7 +197,7 @@ export function CompanionCard({ companion, onRefresh }: CompanionCardProps) {
                   )}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <FormField
                   control={form.control}
                   name="breed"
@@ -267,7 +267,7 @@ export function CompanionCard({ companion, onRefresh }: CompanionCardProps) {
 
         {/* Media Grid */}
         {media.length > 0 && (
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {media.map((m) => (
               <div key={m.id} className="space-y-1">
                 <div className="relative group rounded-lg overflow-hidden aspect-square bg-muted">

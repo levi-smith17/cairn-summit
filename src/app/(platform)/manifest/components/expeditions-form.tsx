@@ -122,7 +122,7 @@ export function ExpeditionsForm({ expeditions: expeditions, adding, setAdding, s
         return (
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="rounded-lg border bg-secondary p-4 space-y-6">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <FormField
                             control={form.control}
                             name="title"
@@ -165,7 +165,7 @@ export function ExpeditionsForm({ expeditions: expeditions, adding, setAdding, s
                         )}
                     />
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <FormField
                             control={form.control}
                             name="startDate"

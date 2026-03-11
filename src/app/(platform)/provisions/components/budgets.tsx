@@ -80,10 +80,10 @@ export default function BudgetLimits({ month, year, budgetUtilization, onRefresh
                 <span className="text-sm text-muted-foreground">
                   {fmt(b.spent)} / {fmt(b.limit)}
                 </span>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(b)}>
+                <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-7 sm:w-7" onClick={() => handleEdit(b)}>
                   <Pencil className="h-3 w-3" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDelete(b.id)}>
+                <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-7 sm:w-7" onClick={() => handleDelete(b.id)}>
                   <Trash2 className="h-3 w-3 text-destructive" />
                 </Button>
               </div>
