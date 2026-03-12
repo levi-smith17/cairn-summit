@@ -20,7 +20,7 @@ export function ToggleFilter({ active, onToggle, label, icon, tooltip }: ToggleF
     <Button
       variant={active ? 'default' : 'outline'}
       size="sm"
-      className="h-8 gap-1.5"
+      className="h-8 gap-1.5 text-sm"
       onClick={onToggle}
     >
       {icon}

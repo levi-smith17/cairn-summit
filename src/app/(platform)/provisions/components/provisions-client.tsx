@@ -36,10 +36,10 @@ interface BudgetUtilization {
 
 interface Props {
   categories: string[]
-  tags: any[]
+  markers: any[]
 }
 
-export function ProvisionsClient({ categories, tags }: Props) {
+export function ProvisionsClient({ categories, markers }: Props) {
   const now = new Date()
   const [month, setMonth] = useState(now.getMonth() + 1)
   const [year, setYear] = useState(now.getFullYear())
@@ -178,7 +178,7 @@ export function ProvisionsClient({ categories, tags }: Props) {
           <TabsContent value="subscriptions">
             <ProvisionsList
               categories={categories}
-              tags={tags}
+              tags={markers}
               refreshKey={refreshKey}
               onRefresh={refresh}
             />
@@ -191,7 +191,7 @@ export function ProvisionsClient({ categories, tags }: Props) {
               onMonthChange={setMonth}
               onYearChange={setYear}
               categories={categories}
-              tags={tags}
+              tags={markers}
               refreshKey={refreshKey}
               onRefresh={refresh}
             />

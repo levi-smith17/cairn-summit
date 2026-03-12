@@ -1,11 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { BookType, ChevronLeft, LayoutList } from 'lucide-react'
+import { ChevronLeft, LayoutList } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { PublicNav } from '@/components/nav/public-nav'
+import { PublicHeader } from '@/components/nav/public/public-header'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { TerminologyToggle } from '@/components/nav/header-toggles'
 import { getTerms, type TerminologyStyle } from '@/lib/terminology'
 
 interface ManifestStickyHeaderProps {
@@ -56,11 +57,11 @@ export function ManifestStickyHeader({
                 <TooltipTrigger asChild>
                   <Button variant="secondary" size="sm" className="gap-2 hover:bg-black/10 dark:hover:bg-white/10">
                     <ChevronLeft className="h-4 w-4" />
-                    <span className="hidden sm:inline">{backLabel ?? terms.page}</span>
+                    <span className="hidden sm:inline">{backLabel ?? terms.manifest}</span>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  Back to {backLabel ?? terms.page}
+                  Back to {backLabel ?? terms.manifest}
                 </TooltipContent>
               </Tooltip>
             </Link>
@@ -79,8 +80,9 @@ export function ManifestStickyHeader({
 
       {/* Right side — directory + terminology toggle */}
       <div className="flex items-center gap-2 ml-auto">
-        <PublicNav
+        <PublicHeader
           currentUser={currentUser}
+          terms={terms}
           terminologyToggle={
             <>
               {showDirectoryLink && (
@@ -92,24 +94,7 @@ export function ManifestStickyHeader({
                   </Button>
                 </Link>
               )}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="rounded-none gap-2 hover:bg-black/10 dark:hover:bg-white/10"
-                    onClick={onTerminologyToggle}
-                  >
-                    <BookType className="h-4 w-4" />
-                    <span className="hidden sm:inline">{terminology === 'CAIRN' ? 'Standard' : 'Cairn'}</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {terminology === 'CAIRN'
-                    ? 'Switch to standard resume terminology'
-                    : 'Switch to Cairn terminology'}
-                </TooltipContent>
-              </Tooltip>
+              <TerminologyToggle terminology={terminology} onToggle={onTerminologyToggle} />
             </>
           }
         />

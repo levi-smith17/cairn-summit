@@ -29,7 +29,7 @@ import { BillingCycle } from '@prisma/client'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { FormActions } from '@/components/forms/form-actions'
-import { TagBadge } from '@/app/(platform)/waypoints/components/tag-badge'
+import { MarkerBadge } from '@/app/(platform)/waypoints/components/marker-badge'
 import { useFormStatus } from '@/hooks/use-form-status'
 import { saveProvision } from '@/actions/provisions'
 
@@ -293,7 +293,7 @@ export function ProvisionDrawer({
                             }`}
                             style={{ ['--tw-ring-color' as any]: tag.color }}
                           >
-                            <TagBadge tag={tag} />
+                            <MarkerBadge marker={tag} />
                           </button>
                         ))}
                       </div>

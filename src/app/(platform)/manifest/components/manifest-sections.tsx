@@ -51,6 +51,7 @@ interface ManifestSectionsProps {
         listed: boolean
         defaultTerminology: 'CAIRN' | 'STANDARD'
         defaultTheme: 'LIGHT' | 'DARK' | 'SYSTEM'
+        customDomain: string | null
     }
 }
 

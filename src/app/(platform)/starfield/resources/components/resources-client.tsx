@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { PageHeader } from '@/components/nav/page-header'
+import { PlatformHeader } from '@/components/nav/platform/platform-header'
 import { Button } from '@/components/ui/button'
 import { HeaderNavActions } from '@/components/nav/header-nav-actions'
 import { Globe, Factory, Plus, Search, X } from 'lucide-react'
@@ -67,7 +67,7 @@ export function ResourcesClient({ resources, resourceTypes }: ResourcesClientPro
 
   return (
     <>
-      <PageHeader
+      <PlatformHeader
         title="Starfield — Resources"
         filters={
           <div className="flex items-center gap-2 h-8 rounded-md border border-input px-3 text-sm w-full max-w-sm">

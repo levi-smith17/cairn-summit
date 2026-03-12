@@ -16,7 +16,7 @@ export async function saveLog(data: {
   const wayfarerId = session.user.id
 
   if (data.id) {
-    await prisma.log.update({
+    const log = await prisma.log.update({
       where: { id: data.id },
       data: {
         content: data.content,
@@ -28,8 +28,11 @@ export async function saveLog(data: {
         },
       },
     })
+    revalidatePath('/dashboard')
+    revalidatePath('/log')
+    return log
   } else {
-    await prisma.log.create({
+    const log = await prisma.log.create({
       data: {
         content: data.content,
         folderId: data.folderId,
@@ -40,10 +43,10 @@ export async function saveLog(data: {
         },
       },
     })
+    revalidatePath('/dashboard')
+    revalidatePath('/log')
+    return log
   }
-
-  revalidatePath('/dashboard')
-  revalidatePath('/log')
 }
 
 export async function deleteLog(id: string) {

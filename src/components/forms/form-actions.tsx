@@ -40,6 +40,7 @@ interface FormActionsProps {
   saveLabel?: string
   formId?: string
   hideAlert?: boolean
+  onCancel?: () => void
 }
 
 export function FormActions({
@@ -49,6 +50,7 @@ export function FormActions({
   saveLabel = 'Save',
   formId,
   hideAlert = false,
+  onCancel,
 }: FormActionsProps) {
   return (
     <div className="flex justify-end items-center gap-4">
@@ -67,6 +69,11 @@ export function FormActions({
             Something went wrong. Please try again.
           </AlertDescription>
         </Alert>
+      )}
+      {onCancel && (
+        <Button type="button" variant="ghost" onClick={onCancel}>
+          Cancel
+        </Button>
       )}
       <Button
         type="submit"

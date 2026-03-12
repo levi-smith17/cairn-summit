@@ -302,6 +302,7 @@ export async function saveManifestSettings(data: {
   defaultTerminology: 'CAIRN' | 'STANDARD'
   defaultTheme: 'LIGHT' | 'DARK' | 'SYSTEM'
   listed: boolean
+  customDomain: string | null
 }) {
   const session = await auth()
   if (!session?.user?.id) throw new Error('Unauthorized')
@@ -315,6 +316,15 @@ export async function saveManifestSettings(data: {
     }
   }
 
+  if (data.customDomain) {
+    const existing = await prisma.wayfarer.findUnique({
+      where: { customDomain: data.customDomain },
+    })
+    if (existing && existing.id !== session.user.id) {
+      throw new Error('Custom domain already in use')
+    }
+  }
+
   await prisma.wayfarer.update({
     where: { id: session.user.id },
     data: {
@@ -322,6 +332,7 @@ export async function saveManifestSettings(data: {
       defaultTerminology: data.defaultTerminology,
       defaultTheme: data.defaultTheme,
       listed: data.listed,
+      customDomain: data.customDomain,
     },
   })
 

@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { PageHeader } from '@/components/nav/page-header'
+import { PlatformHeader } from '@/components/nav/platform/platform-header'
 import { Button } from '@/components/ui/button'
 import { FacilityDrawer } from './drawers/facility-drawer'
 import { FacilityList } from './facility-list'
@@ -115,7 +115,7 @@ export function FacilitiesClient({ facilities, resources, systems }: FacilitiesC
 
   return (
     <>
-      <PageHeader
+      <PlatformHeader
         title="Starfield — Facilities"
         filters={
           <div className="flex items-center gap-2 h-8 rounded-md border border-input px-3 text-sm w-full max-w-sm">

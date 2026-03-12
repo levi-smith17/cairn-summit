@@ -8,10 +8,10 @@ import { ExpenseDrawer } from '@/components/drawers/expense-drawer'
 
 interface Props {
   categories: string[]
-  tags: any[]
+  markers: any[]
 }
 
-export function ProvisionActions({ categories, tags }: Props) {
+export function ProvisionActions({ categories, markers }: Props) {
   const [provisionDrawerOpen, setProvisionDrawerOpen] = useState(false)
   const [expenseDrawerOpen, setExpenseDrawerOpen] = useState(false)
 
@@ -28,13 +28,13 @@ export function ProvisionActions({ categories, tags }: Props) {
         open={provisionDrawerOpen}
         onClose={() => setProvisionDrawerOpen(false)}
         categories={categories}
-        tags={tags}
+        tags={markers}
       />
       <ExpenseDrawer
         open={expenseDrawerOpen}
         onClose={() => setExpenseDrawerOpen(false)}
         categories={categories}
-        tags={tags}
+        tags={markers}
       />
     </>
   )

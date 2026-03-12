@@ -5,7 +5,7 @@ import { CairnLockup } from '@/components/cairn-lockup'
 import { DirectoryTable } from './components/directory-table'
 import { DirectoryStats } from './components/directory-stats'
 import { ManifestFooter } from './manifest/[username]/components/manifest-footer'
-import { PublicNav } from '@/components/nav/public-nav'
+import { PublicHeader } from '@/components/nav/public/public-header'
 
 export default async function HomePage() {
   const [wayfarers, session] = await Promise.all([
@@ -76,7 +76,7 @@ export default async function HomePage() {
       {/* Nav bar */}
       <header className="sticky top-0 z-10 flex items-center justify-between bg-header px-6 py-3 bg-background border-b">
         <CairnLockup className="h-8" />
-        <PublicNav currentUser={currentUser} />
+        <PublicHeader currentUser={currentUser} />
       </header>
 
       {/* Content */}

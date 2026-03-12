@@ -2,8 +2,10 @@
 
 import { useState } from 'react'
 import { ExternalLink, Pencil, Trash2, Bookmark, BookCheck, BookMarked, MoreHorizontal } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { toggleWaypointRead, toggleWaypointReadLater, deleteWaypoint } from '@/actions/waypoints'
+import { useTerminology } from '@/contexts/terminology-context'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,11 +30,24 @@ interface WaypointItemActionsProps {
 }
 
 export function WaypointItemActions({ waypoint, onEdit }: WaypointItemActionsProps) {
+  const router = useRouter()
+  const { terms } = useTerminology()
   const [deleting, setDeleting] = useState(false)
 
   async function handleDelete() {
     setDeleting(true)
     await deleteWaypoint(waypoint.id)
+    router.refresh()
+  }
+
+  async function handleToggleReadLater() {
+    await toggleWaypointReadLater(waypoint.id, !waypoint.readLater)
+    router.refresh()
+  }
+
+  async function handleToggleRead() {
+    await toggleWaypointRead(waypoint.id, !waypoint.read)
+    router.refresh()
   }
 
   return (
@@ -52,11 +67,11 @@ export function WaypointItemActions({ waypoint, onEdit }: WaypointItemActionsPro
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-48">
-          <DropdownMenuItem onClick={() => toggleWaypointReadLater(waypoint.id, !waypoint.readLater)}>
+          <DropdownMenuItem onClick={handleToggleReadLater}>
             <Bookmark className={`h-3.5 w-3.5 mr-2 ${waypoint.readLater ? 'fill-current' : ''}`} />
             {waypoint.readLater ? 'Remove from Read Later' : 'Save for Later'}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => toggleWaypointRead(waypoint.id, !waypoint.read)}>
+          <DropdownMenuItem onClick={handleToggleRead}>
             {waypoint.read
               ? <BookCheck className="h-3.5 w-3.5 mr-2" />
               : <BookMarked className="h-3.5 w-3.5 mr-2" />}
@@ -74,14 +89,14 @@ export function WaypointItemActions({ waypoint, onEdit }: WaypointItemActionsPro
                 className="text-destructive focus:text-destructive"
               >
                 <Trash2 className="h-3.5 w-3.5 mr-2" />
-                Delete
+                Remove
               </DropdownMenuItem>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Delete Waypoint</AlertDialogTitle>
+                <AlertDialogTitle>Remove {terms.waypoints.slice(0, -1)}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Are you sure you want to delete "{waypoint.title}"? This cannot be undone.
+                  Are you sure you want to remove "{waypoint.title}"? This cannot be undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -90,7 +105,7 @@ export function WaypointItemActions({ waypoint, onEdit }: WaypointItemActionsPro
                   onClick={handleDelete}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
-                  Delete
+                  Remove
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

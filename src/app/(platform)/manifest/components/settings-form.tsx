@@ -48,6 +48,11 @@ const settingsSchema = z.object({
     defaultTerminology: z.enum(['CAIRN', 'STANDARD']),
     defaultTheme: z.enum(['LIGHT', 'DARK', 'SYSTEM']),
     listed: z.boolean(),
+    customDomain: z
+        .string()
+        .regex(/^[a-zA-Z0-9][a-zA-Z0-9-_.]+\.[a-zA-Z]{2,}$/, 'Enter a valid domain (e.g. mysite.com)')
+        .optional()
+        .or(z.literal('')),
 })
 
 type SettingsFormValues = z.infer<typeof settingsSchema>
@@ -58,6 +63,7 @@ interface SettingsFormProps {
         defaultTerminology: 'CAIRN' | 'STANDARD'
         defaultTheme: 'SYSTEM' | 'LIGHT' | 'DARK'
         listed: boolean
+        customDomain: string | null
     }
 }
 
@@ -81,6 +87,7 @@ export function SettingsForm({ defaultValues }: SettingsFormProps) {
             defaultTerminology: defaultValues.defaultTerminology,
             defaultTheme: defaultValues.defaultTheme,
             listed: defaultValues.listed,
+            customDomain: defaultValues.customDomain ?? '',
         },
     })
 
@@ -89,11 +96,13 @@ export function SettingsForm({ defaultValues }: SettingsFormProps) {
             username: values.username || null,
             defaultTerminology: values.defaultTerminology,
             defaultTheme: values.defaultTheme,
-            listed: values.listed
+            listed: values.listed,
+            customDomain: values.customDomain || null,
         }))
     }
 
     const username = form.watch('username')
+    const customDomain = form.watch('customDomain')
 
     return (
         <>
@@ -124,6 +133,28 @@ export function SettingsForm({ defaultValues }: SettingsFormProps) {
                                         </a>
                                     </>
                                     : 'Choose a unique username for your public manifest URL'}
+                            </FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                <FormField
+                    control={form.control}
+                    name="customDomain"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Custom Domain</FormLabel>
+                            <FormControl>
+                                <Input
+                                    placeholder="e.g. mysite.com"
+                                    {...field}
+                                />
+                            </FormControl>
+                            <FormDescription>
+                                {customDomain
+                                    ? <>Point your domain's DNS to Cairn's IP, then visitors can reach your Manifest at <strong>{customDomain}</strong>.</>
+                                    : 'Optionally serve your Manifest from your own domain. Point its DNS to Cairn first.'}
                             </FormDescription>
                             <FormMessage />
                         </FormItem>

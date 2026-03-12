@@ -20,8 +20,9 @@ export async function saveWaypoint(data: {
   if (!session?.user?.id) throw new Error('Unauthorized')
   const wayfarerId = session.user.id
 
+  let waypoint
   if (data.id) {
-    await prisma.waypoint.update({
+    waypoint = await prisma.waypoint.update({
       where: { id: data.id },
       data: {
         title: data.title,
@@ -37,7 +38,7 @@ export async function saveWaypoint(data: {
       },
     })
   } else {
-    await prisma.waypoint.create({
+    waypoint = await prisma.waypoint.create({
       data: {
         title: data.title,
         url: data.url,
@@ -54,6 +55,7 @@ export async function saveWaypoint(data: {
   }
 
   revalidatePath('/waypoints')
+  return waypoint
 }
 
 export async function deleteWaypoint(id: string) {
@@ -77,9 +79,9 @@ export async function toggleWaypointReadLater(id: string, readLater: boolean) {
   revalidatePath('/waypoints')
 }
 
-// --- Folders ---
+// --- Trails ---
 
-export async function createFolder(name: string): Promise<{ id: string; name: string }> {
+export async function createTrail(name: string): Promise<{ id: string; name: string }> {
   const session = await auth()
   if (!session?.user?.id) throw new Error('Unauthorized')
   const folder = await prisma.folder.create({ data: { name, wayfarerId: session.user.id } })
@@ -87,7 +89,7 @@ export async function createFolder(name: string): Promise<{ id: string; name: st
   return folder
 }
 
-export async function createTag(data: {
+export async function createMarker(data: {
   name: string
   color: string
 }): Promise<{ id: string; name: string; color: string; icon: string | null }> {
@@ -98,30 +100,35 @@ export async function createTag(data: {
   return tag
 }
 
-export async function saveFolder(data: { id?: string; name: string }) {
+export async function saveTrail(data: { id?: string; name: string }) {
   const session = await auth()
   if (!session?.user?.id) throw new Error('Unauthorized')
   const wayfarerId = session.user.id
 
   if (data.id) {
-    await prisma.folder.update({ where: { id: data.id }, data: { name: data.name } })
+    const folder = await prisma.folder.update({ where: { id: data.id }, data: { name: data.name } })
+    revalidatePath('/waypoints')
+    revalidatePath('/trails')
+    return folder
   } else {
-    await prisma.folder.create({ data: { name: data.name, wayfarerId } })
+    const folder = await prisma.folder.create({ data: { name: data.name, wayfarerId } })
+    revalidatePath('/waypoints')
+    revalidatePath('/trails')
+    return folder
   }
-
-  revalidatePath('/waypoints')
 }
 
-export async function deleteFolder(id: string) {
+export async function deleteTrail(id: string) {
   const session = await auth()
   if (!session?.user?.id) throw new Error('Unauthorized')
   await prisma.folder.delete({ where: { id } })
   revalidatePath('/waypoints')
+  revalidatePath('/trails')
 }
 
-// --- Tags ---
+// --- Markers ---
 
-export async function saveTag(data: {
+export async function saveMarker(data: {
   id?: string
   name: string
   color: string
@@ -132,22 +139,27 @@ export async function saveTag(data: {
   const wayfarerId = session.user.id
 
   if (data.id) {
-    await prisma.tag.update({
+    const tag = await prisma.tag.update({
       where: { id: data.id },
       data: { name: data.name, color: data.color, icon: data.icon },
     })
+    revalidatePath('/waypoints')
+    revalidatePath('/markers')
+    return tag
   } else {
-    await prisma.tag.create({
+    const tag = await prisma.tag.create({
       data: { name: data.name, color: data.color, icon: data.icon, wayfarerId },
     })
+    revalidatePath('/waypoints')
+    revalidatePath('/markers')
+    return tag
   }
-
-  revalidatePath('/waypoints')
 }
 
-export async function deleteTag(id: string) {
+export async function deleteMarker(id: string) {
   const session = await auth()
   if (!session?.user?.id) throw new Error('Unauthorized')
   await prisma.tag.delete({ where: { id } })
   revalidatePath('/waypoints')
+  revalidatePath('/markers')
 }

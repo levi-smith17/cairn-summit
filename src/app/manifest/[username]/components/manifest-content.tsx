@@ -259,7 +259,7 @@ export function ManifestContent({
                     <div className="flex justify-end print:hidden">
                         <Link href={`/manifest/${username}/journey`}>
                             <Button variant="outline" size="sm">
-                                {terms.about}
+                                {terms.bio_button}
                             </Button>
                         </Link>
                     </div>

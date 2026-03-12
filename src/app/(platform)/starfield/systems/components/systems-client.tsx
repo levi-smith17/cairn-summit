@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSearchParams } from 'next/navigation'
-import { PageHeader } from '@/components/nav/page-header'
+import { PlatformHeader } from '@/components/nav/platform/platform-header'
 import { Button } from '@/components/ui/button'
 import { HeaderNavActions } from '@/components/nav/header-nav-actions'
 import { Database, Factory, Globe, Plus } from 'lucide-react'
@@ -83,7 +83,7 @@ export function SystemsClient({ systems }: SystemsClientProps) {
 
   return (
     <>
-      <PageHeader
+      <PlatformHeader
         title="Starfield — Systems"
         actions={
           <HeaderNavActions
