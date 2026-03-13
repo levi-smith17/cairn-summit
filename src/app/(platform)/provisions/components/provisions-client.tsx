@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Plus, Search, ChevronLeft, ChevronRight, AlertTriangle, TrendingUp, Wallet, RefreshCw, Copy } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { PlatformHeader } from '@/components/nav/platform/platform-header'
 import { useTerminology } from '@/contexts/terminology-context'
 import { ExpenseRow, type Expense } from './expense-row'
@@ -267,14 +268,19 @@ export function ProvisionsClient({ categories: initialCategories, markers }: Pro
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-7 w-7 p-0"
-                onClick={() => setAddingExpense((v) => !v)}
-              >
-                <Plus className="h-3.5 w-3.5" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 w-7 p-0"
+                    onClick={() => setAddingExpense((v) => !v)}
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Add {terms.burn}</TooltipContent>
+              </Tooltip>
             </div>
 
             {/* Filter bar */}
@@ -358,14 +364,19 @@ export function ProvisionsClient({ categories: initialCategories, markers }: Pro
             <div className="rounded-lg border border-border bg-card overflow-hidden flex flex-col">
               <div className="flex items-center justify-between px-3 py-2.5 border-b shrink-0">
                 <span className="text-sm font-semibold">{terms.supplylines}</span>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 w-7 p-0"
-                  onClick={() => setAddingProvision((v) => !v)}
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0"
+                      onClick={() => setAddingProvision((v) => !v)}
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Add {terms.supplylines}</TooltipContent>
+                </Tooltip>
               </div>
 
               <div className="flex gap-2 px-3 py-2 border-b shrink-0">
@@ -433,23 +444,32 @@ export function ProvisionsClient({ categories: initialCategories, markers }: Pro
               <div className="flex items-center justify-between px-3 py-2.5 border-b shrink-0">
                 <span className="text-sm font-semibold">{terms.cache}</span>
                 <div className="flex items-center gap-1">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 w-7 p-0"
-                    title="Copy from last month"
-                    onClick={async () => { await carryOverBudgets({ month, year }); refresh() }}
-                  >
-                    <Copy className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 w-7 p-0"
-                    onClick={() => setAddingBudget((v) => !v)}
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 w-7 p-0"
+                        onClick={async () => { await carryOverBudgets({ month, year }); refresh() }}
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Copy from last month</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 w-7 p-0"
+                        onClick={() => setAddingBudget((v) => !v)}
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Add {terms.cache}</TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
 

@@ -238,7 +238,7 @@ export function SettingsForm({ defaultValues }: SettingsFormProps) {
                     saving={saving}
                     saved={saved}
                     error={error}
-                    saveLabel="Save Settings"
+                    saveLabel="Save Changes"
                 />
             </form>
         </Form>

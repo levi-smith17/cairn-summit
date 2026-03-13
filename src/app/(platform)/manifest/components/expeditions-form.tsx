@@ -225,7 +225,7 @@ export function ExpeditionsForm({ expeditions: expeditions, adding, setAdding, s
 
                     <div className="flex justify-end items-center gap-4">
                         <Button type="button" variant="ghost" onClick={cancel}>Cancel</Button>
-                        <FormActions saving={saving} saved={saved} error={error} saveLabel={editing ? 'Update Expedition' : 'Add Expedition'} hideAlert />
+                        <FormActions saving={saving} saved={saved} error={error} saveLabel={editing ? 'Save Changes' : 'Add Expedition'} hideAlert />
                     </div>
                 </form>
             </Form>
@@ -255,8 +255,8 @@ export function ExpeditionsForm({ expeditions: expeditions, adding, setAdding, s
                                         <p className="text-sm text-muted-foreground">{entry.company}</p>
                                         {entry.location && <p className="text-sm text-muted-foreground">{entry.location}</p>}
                                         <span className="text-sm text-muted-foreground">
-                                            {format(entry.startDate, 'MMM yyyy')} —{' '}
-                                            {entry.current ? 'Present' : entry.endDate ? format(entry.endDate, 'MMM yyyy') : ''}
+                                            {format(new Date(entry.startDate.toISOString().slice(0, 10) + 'T12:00:00'), 'MMM yyyy')} —{' '}
+                                            {entry.current ? 'Present' : entry.endDate ? format(new Date(entry.endDate.toISOString().slice(0, 10) + 'T12:00:00'), 'MMM yyyy') : ''}
                                         </span>
                                         {entry.description && <RichTextContent html={entry.description} className="text-muted-foreground" />}
                                     </div>

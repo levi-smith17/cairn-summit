@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import {
   Select,
   SelectContent,
@@ -24,24 +25,34 @@ const YEARS = Array.from({ length: currentYear - 1950 + 1 }, (_, i) => currentYe
 
 export function MonthYearPicker({ value, onChange }: MonthYearPickerProps) {
   const date = value ? new Date(value + 'T12:00:00') : null
-  const selectedMonth = date ? String(date.getMonth()) : ''
-  const selectedYear = date ? String(date.getFullYear()) : ''
+  const [month, setMonth] = useState(date ? String(date.getMonth()) : '')
+  const [year, setYear] = useState(date ? String(date.getFullYear()) : '')
 
-  function handleChange(month: string, year: string) {
-    if (month !== '' && year !== '') {
-      const mm = String(Number(month) + 1).padStart(2, '0')
+  useEffect(() => {
+    const d = value ? new Date(value + 'T12:00:00') : null
+    setMonth(d ? String(d.getMonth()) : '')
+    setYear(d ? String(d.getFullYear()) : '')
+  }, [value])
+
+  function handleMonthChange(val: string) {
+    setMonth(val)
+    if (val !== '' && year !== '') {
+      const mm = String(Number(val) + 1).padStart(2, '0')
       onChange(`${year}-${mm}-01`)
-    } else {
-      onChange('')
+    }
+  }
+
+  function handleYearChange(val: string) {
+    setYear(val)
+    if (month !== '' && val !== '') {
+      const mm = String(Number(month) + 1).padStart(2, '0')
+      onChange(`${val}-${mm}-01`)
     }
   }
 
   return (
     <div className="flex gap-2">
-      <Select
-        value={selectedMonth}
-        onValueChange={val => handleChange(val, selectedYear)}
-      >
+      <Select value={month} onValueChange={handleMonthChange}>
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Month" />
         </SelectTrigger>
@@ -51,10 +62,7 @@ export function MonthYearPicker({ value, onChange }: MonthYearPickerProps) {
           ))}
         </SelectContent>
       </Select>
-      <Select
-        value={selectedYear}
-        onValueChange={val => handleChange(selectedMonth, val)}
-      >
+      <Select value={year} onValueChange={handleYearChange}>
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Year" />
         </SelectTrigger>

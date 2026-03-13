@@ -259,7 +259,7 @@ export function CompanionCard({ companion, onRefresh }: CompanionCardProps) {
                 saving={saving}
                 saved={saved}
                 error={error}
-                saveLabel="Save Companion"
+                saveLabel="Save Changes"
               />
             </form>
           </Form>

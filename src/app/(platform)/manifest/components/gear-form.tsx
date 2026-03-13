@@ -109,6 +109,8 @@ export function GearForm({ gear, adding, setAdding, saving, saved, error, handle
     await deleteGear(id)
   }
 
+  const existingCategories = [...new Set(gear.map(g => g.category).filter(Boolean) as string[])]
+
   // Group gear by category for display
   const grouped = gear.reduce<Record<string, Gear[]>>((acc, entry) => {
     const key = entry.category ?? 'Uncategorized'
@@ -119,42 +121,10 @@ export function GearForm({ gear, adding, setAdding, saving, saved, error, handle
 
   return (
     <div className="space-y-6">
-      {/* Existing entries grouped by category */}
-      {gear.length > 0 && (
-        <div className="space-y-6">
-          {Object.entries(grouped).map(([category, gear]) => (
-            <div key={category}>
-              <p className="text-sm font-medium text-muted-foreground mb-2">{category}</p>
-              <div className="flex flex-wrap gap-2">
-                {gear.map((entry) => (
-                  <div
-                    key={entry.id}
-                    className="flex items-center gap-2 rounded-full border px-3 py-1 text-sm"
-                  >
-                    <span>{entry.name}</span>
-                    {entry.level && (
-                      <span className="text-muted-foreground text-xs">
-                        · {levelLabels[entry.level]}
-                      </span>
-                    )}
-                    <EntryActions
-                      onEdit={() => startEdit(entry)}
-                      onDelete={() => onDelete(entry.id)}
-                      deleteTitle="Remove Gear"
-                      itemName={entry.name}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
       {/* Add/Edit form */}
       {(adding || editing) && (
         <>
-          {gear.length > 0 && <Separator />}
+          {gear.length > 0}
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="rounded-lg border bg-secondary p-4 space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -178,8 +148,15 @@ export function GearForm({ gear, adding, setAdding, saving, saved, error, handle
                     <FormItem>
                       <FormLabel>Category</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. Programming" {...field} />
+                        <Input placeholder="e.g. Programming" list="gear-categories" {...field} />
                       </FormControl>
+                      {existingCategories.length > 0 && (
+                        <datalist id="gear-categories">
+                          {existingCategories.map(cat => (
+                            <option key={cat} value={cat} />
+                          ))}
+                        </datalist>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
@@ -221,13 +198,46 @@ export function GearForm({ gear, adding, setAdding, saving, saved, error, handle
                   saving={saving}
                   saved={saved}
                   error={error}
-                  saveLabel={editing ? 'Update Gear' : 'Add Gear'}
+                  saveLabel={editing ? 'Save Changes' : 'Add Gear'}
                   hideAlert
                 />
               </div>
             </form>
           </Form>
+          <Separator />
         </>
+      )}
+
+      {/* Existing entries grouped by category */}
+      {gear.length > 0 && (
+        <div className="space-y-6">
+          {Object.entries(grouped).map(([category, gear]) => (
+            <div key={category}>
+              <p className="text-sm font-medium text-muted-foreground mb-2">{category}</p>
+              <div className="flex flex-wrap gap-2">
+                {gear.map((entry) => (
+                  <div
+                    key={entry.id}
+                    className="flex items-center gap-2 rounded-full border px-3 py-1 text-sm"
+                  >
+                    <span>{entry.name}</span>
+                    {entry.level && (
+                      <span className="text-muted-foreground text-xs">
+                        · {levelLabels[entry.level]}
+                      </span>
+                    )}
+                    <EntryActions
+                      onEdit={() => startEdit(entry)}
+                      onDelete={() => onDelete(entry.id)}
+                      deleteTitle="Remove Gear"
+                      itemName={entry.name}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   )
