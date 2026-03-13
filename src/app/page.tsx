@@ -74,22 +74,22 @@ export default async function HomePage() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Nav bar */}
-      <header className="sticky top-0 z-10 flex items-center justify-between bg-header px-6 py-3 bg-background border-b">
+      <header className="sticky top-0 z-10 flex items-center justify-between bg-header px-6 py-3 border-b">
         <CairnLockup className="h-8" />
         <PublicHeader currentUser={currentUser} />
       </header>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-8 sm:py-12 flex flex-col gap-8">
-        <div className="flex flex-col gap-1">
+      <div className="max-w-7xl mx-auto w-full px-4 py-4 flex flex-col gap-4">
+        <div className="flex flex-col gap-1 bg-card rounded-xl px-6 py-4">
           <h1 className="text-2xl font-semibold">The Outpost</h1>
           <p className="text-sm text-muted-foreground">
             Explore the community of wayfarers on Cairn.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          <div className="lg:col-span-3">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          <div className="lg:col-span-3 bg-card rounded-xl p-4">
             <DirectoryTable data={tableData} />
           </div>
           <div className="lg:col-span-1">

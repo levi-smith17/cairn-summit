@@ -19,7 +19,6 @@ interface ManifestStickyHeaderProps {
   terminology: TerminologyStyle
   onTerminologyToggle?: () => void
   showAvatar: boolean
-  showDirectoryLink: boolean
   currentUser: {
     name: string | null
     email: string | null
@@ -35,7 +34,6 @@ export function ManifestStickyHeader({
   terminology,
   onTerminologyToggle = () => {},
   showAvatar,
-  showDirectoryLink,
   currentUser,
   backHref,
   backLabel,
@@ -85,15 +83,6 @@ export function ManifestStickyHeader({
           terms={terms}
           terminologyToggle={
             <>
-              {showDirectoryLink && (
-                <Link href="/">
-                  <Button variant="secondary" size="sm" className="rounded-none hover:bg-black/10 dark:hover:bg-white/10" asChild>
-                    <span className="flex items-center gap-1.5">
-                      <LayoutList className="h-4 w-4" />
-                    </span>
-                  </Button>
-                </Link>
-              )}
               <TerminologyToggle terminology={terminology} onToggle={onTerminologyToggle} />
             </>
           }

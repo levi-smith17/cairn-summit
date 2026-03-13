@@ -49,7 +49,6 @@ export default async function ManifestPage({ params }: ManifestPageProps) {
             landmarks={wayfarer.landmarks}
             summits={wayfarer.summits}
             pathfinding={wayfarer.pathfinding}
-            showDirectoryLink={showDirectoryLink}
             currentUser={session?.user ? {
                 name: session.user.name ?? null,
                 email: session.user.email ?? null,

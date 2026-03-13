@@ -27,9 +27,6 @@ export default async function AboutPage({ params }: AboutPageProps) {
 
     if (!wayfarer || !wayfarer.listed) notFound()
 
-    const isLoggedIn = !!session?.user
-    const showDirectoryLink = isLoggedIn || wayfarerCount > 1
-
     return (
         <AboutContent
             username={username}
@@ -42,7 +39,6 @@ export default async function AboutPage({ params }: AboutPageProps) {
             }}
             origins={wayfarer.origins}
             companions={wayfarer.companions}
-            showDirectoryLink={showDirectoryLink}
             currentUser={session?.user ? {
                 name: session.user.name ?? null,
                 email: session.user.email ?? null,

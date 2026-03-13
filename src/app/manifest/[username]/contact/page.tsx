@@ -28,9 +28,6 @@ export default async function ContactPage({ params }: ContactPageProps) {
         ? wayfarer.name.split(' ').map((n) => n[0]).join('').toUpperCase()
         : wayfarer.email?.[0].toUpperCase() ?? '?'
 
-    const isLoggedIn = !!session?.user
-    const showDirectoryLink = isLoggedIn || wayfarerCount > 1
-
     const currentUser = session?.user ? {
         name: session.user.name ?? null,
         email: session.user.email ?? null,
@@ -44,7 +41,6 @@ export default async function ContactPage({ params }: ContactPageProps) {
                 wayfarer={wayfarer}
                 terminology={wayfarer.defaultTerminology}
                 showAvatar={false}
-                showDirectoryLink={showDirectoryLink}
                 currentUser={currentUser}
                 backHref={`/manifest/${username}`}
             />

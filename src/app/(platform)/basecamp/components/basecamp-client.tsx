@@ -38,6 +38,9 @@ interface SnapshotData {
   }
   provisionsSummary: {
     monthlyTotal: number
+    monthlyBurn: number
+    cacheTotalLimit: number
+    cacheTotalSpent: number
     activeCount: number
     upcomingRenewals: number
   }

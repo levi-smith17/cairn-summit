@@ -16,11 +16,9 @@ import {
 import { RichTextContent } from '@/components/ui/rich-text-content'
 import { Timeline } from '@/components/ui/timeline'
 import { format } from 'date-fns'
-import { useRouter } from 'next/navigation'
 import { ManifestStickyHeader } from './sticky-header'
 import { GearChart } from './gear-chart'
 import { ManifestFooter } from './manifest-footer'
-
 
 const formatDate = (date: Date) => format(date, 'MMM yyyy')
 
@@ -99,7 +97,6 @@ interface ManifestContentProps {
         email: string | null
         avatar: string | null
     } | null
-    showDirectoryLink: boolean
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -133,9 +130,7 @@ export function ManifestContent({
     summits,
     pathfinding,
     currentUser,
-    showDirectoryLink,
 }: ManifestContentProps) {
-    const router = useRouter()
 
     const headerRef = useRef<HTMLDivElement>(null)
     const [showStickyHeader, setShowStickyHeader] = useState(false)
@@ -196,7 +191,6 @@ export function ManifestContent({
                     return next
                 })}
                 showAvatar={showStickyHeader}
-                showDirectoryLink={showDirectoryLink}
                 currentUser={currentUser}
             />
 

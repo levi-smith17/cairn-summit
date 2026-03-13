@@ -90,7 +90,7 @@ export function ProvisionDrawer({
     if (open) {
       form.reset({
         name: provision?.name ?? '',
-        amount: provision?.amount as number ?? undefined,
+        amount: provision?.amount as number ?? 0,
         billingCycle: provision?.billingCycle ?? 'MONTHLY',
         nextRenewal: provision?.nextRenewal?.split('T')[0] ?? '',
         category: provision?.category ?? '',
@@ -180,7 +180,7 @@ export function ProvisionDrawer({
                           step="0.01"
                           placeholder="9.99"
                           {...field}
-                          onChange={(e) => onChange(e.target.valueAsNumber)}
+                          onChange={(e) => onChange(e.target.value === '' ? 0 : parseFloat(e.target.value))}
                         />
                       </FormControl>
                       <FormMessage />

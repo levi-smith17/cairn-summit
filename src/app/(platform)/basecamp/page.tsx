@@ -7,12 +7,23 @@ import { BasecampClient } from './components/basecamp-client'
 const PAGE_SIZE = 15
 const WAYPOINTS_PER_FOLDER = 10
 
-const cycleToMonths: Record<string, number> = {
-  WEEKLY: 1 / 4.33,
-  BIWEEKLY: 1 / 2.17,
-  MONTHLY: 1,
-  QUARTERLY: 1 / 3,
-  ANNUALLY: 1 / 12,
+function provisionAmountForMonth(
+  billingCycle: string,
+  amount: number,
+  nextRenewal: Date,
+  monthStart: Date,
+  monthEnd: Date
+): number {
+  if (billingCycle === 'QUARTERLY' || billingCycle === 'ANNUALLY') {
+    if (nextRenewal >= monthStart && nextRenewal <= monthEnd) return amount
+    const prev = new Date(nextRenewal)
+    if (billingCycle === 'QUARTERLY') prev.setMonth(prev.getMonth() - 3)
+    else prev.setFullYear(prev.getFullYear() - 1)
+    if (prev >= monthStart && prev <= monthEnd) return amount
+    return 0
+  }
+  const cycleToMonths: Record<string, number> = { WEEKLY: 1 / 4.33, BIWEEKLY: 1 / 2.17, MONTHLY: 1 }
+  return amount * (cycleToMonths[billingCycle] ?? 1)
 }
 
 interface BasecampPageProps {
@@ -42,6 +53,10 @@ export default async function BasecampPage({ searchParams }: BasecampPageProps) 
 
   const now = new Date()
   const in7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+  const currentMonth = now.getMonth() + 1
+  const currentYear = now.getFullYear()
+  const monthStart = new Date(currentYear, currentMonth - 1, 1)
+  const monthEnd = new Date(currentYear, currentMonth, 0, 23, 59, 59)
 
   const [
     folders,
@@ -59,6 +74,8 @@ export default async function BasecampPage({ searchParams }: BasecampPageProps) 
     companionCount,
     activeProvisions,
     upcomingRenewals,
+    monthExpenseAgg,
+    currentBudgets,
     unreadSignals,
     latestSignals,
   ] = await Promise.all([
@@ -124,8 +141,10 @@ export default async function BasecampPage({ searchParams }: BasecampPageProps) 
     prisma.companion.count({ where: { wayfarerId } }),
 
     // Sidebar: Provisions
-    prisma.provision.findMany({ where: { wayfarerId, active: true }, select: { amount: true, billingCycle: true } }),
+    prisma.provision.findMany({ where: { wayfarerId, active: true }, select: { amount: true, billingCycle: true, nextRenewal: true, category: true } }),
     prisma.provision.count({ where: { wayfarerId, active: true, nextRenewal: { gte: now, lte: in7Days } } }),
+    prisma.expense.aggregate({ where: { wayfarerId, date: { gte: monthStart, lte: monthEnd } }, _sum: { amount: true } }),
+    prisma.budget.findMany({ where: { wayfarerId, month: currentMonth, year: currentYear }, select: { limit: true } }),
 
     // Sidebar: Signals
     prisma.message.count({ where: { wayfarerId, read: false } }),
@@ -149,9 +168,11 @@ export default async function BasecampPage({ searchParams }: BasecampPageProps) 
     ? Object.fromEntries(filteredCounts.map(r => [r.folderId, r._count]))
     : null
 
-  const monthlyTotal = activeProvisions.reduce((sum: number, p: { amount: number; billingCycle: string }) => {
-    return sum + p.amount * (cycleToMonths[p.billingCycle] ?? 1)
+  const monthlyTotal = activeProvisions.reduce((sum: number, p: { amount: number; billingCycle: string; nextRenewal: Date; category: string }) => {
+    return sum + provisionAmountForMonth(p.billingCycle, p.amount, new Date(p.nextRenewal), monthStart, monthEnd)
   }, 0)
+  const monthlyBurn = monthExpenseAgg._sum.amount ?? 0
+  const cacheTotalLimit = currentBudgets.reduce((s: number, b: { limit: number }) => s + b.limit, 0)
 
   return (
     <BasecampClient
@@ -187,6 +208,9 @@ export default async function BasecampPage({ searchParams }: BasecampPageProps) 
         },
         provisionsSummary: {
           monthlyTotal,
+          monthlyBurn,
+          cacheTotalLimit,
+          cacheTotalSpent: monthlyTotal + monthlyBurn,
           activeCount: activeProvisions.length,
           upcomingRenewals,
         },
