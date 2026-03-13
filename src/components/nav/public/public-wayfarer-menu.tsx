@@ -53,7 +53,7 @@ export function PublicWayfarerMenu({ currentUser, terms }: PublicWayfarerMenuPro
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => router.push('/dashboard')}>
+                        <DropdownMenuItem onClick={() => router.push('/basecamp')}>
                             <LayoutDashboard className="h-4 w-4" />
                             {terms?.basecamp ?? 'Basecamp'}
                         </DropdownMenuItem>

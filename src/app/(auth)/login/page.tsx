@@ -19,7 +19,7 @@ export default function LoginPage() {
             'use server'
             await signIn('nodemailer', {
               email: formData.get('email'),
-              redirectTo: '/dashboard',
+              redirectTo: '/basecamp',
             })
           }}
         >
@@ -51,7 +51,7 @@ export default function LoginPage() {
             await signIn('credentials', {
               email: formData.get('email'),
               password: formData.get('password'),
-              redirectTo: '/dashboard',
+              redirectTo: '/basecamp',
             })
           }}
         >
@@ -86,7 +86,7 @@ export default function LoginPage() {
           className="w-full"
           action={async () => {
             'use server'
-            await signIn('github', { redirectTo: '/dashboard' })
+            await signIn('github', { redirectTo: '/basecamp' })
           }}
         >
           <button

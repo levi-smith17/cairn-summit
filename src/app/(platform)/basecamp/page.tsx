@@ -2,7 +2,7 @@ import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import { parseFiltersFromParams, buildFolderOrderBy, buildWaypointOrderBy } from '@/lib/filters'
-import { DashboardClient } from './components/basecamp-client'
+import { BasecampClient } from './components/basecamp-client'
 
 const PAGE_SIZE = 15
 const WAYPOINTS_PER_FOLDER = 10
@@ -154,7 +154,7 @@ export default async function BasecampPage({ searchParams }: BasecampPageProps) 
   }, 0)
 
   return (
-    <DashboardClient
+    <BasecampClient
       initialFolders={folders}
       initialHasMore={PAGE_SIZE < totalFolders}
       tags={tags}

@@ -82,7 +82,7 @@ export default async function HomePage() {
       {/* Content */}
       <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-8 sm:py-12 flex flex-col gap-8">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold">Wayfarer Directory</h1>
+          <h1 className="text-2xl font-semibold">The Outpost</h1>
           <p className="text-sm text-muted-foreground">
             Explore the community of wayfarers on Cairn.
           </p>

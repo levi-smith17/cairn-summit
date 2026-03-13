@@ -47,7 +47,7 @@ interface SnapshotData {
   }
 }
 
-interface DashboardClientProps {
+interface BasecampClientProps {
   initialFolders: any[]
   initialHasMore: boolean
   tags: any[]
@@ -57,7 +57,7 @@ interface DashboardClientProps {
   sidebarData: SnapshotData
 }
 
-export function DashboardClient({
+export function BasecampClient({
   initialFolders,
   initialHasMore,
   tags,
@@ -65,7 +65,7 @@ export function DashboardClient({
   waypoints,
   filteredCountMap,
   sidebarData,
-}: DashboardClientProps) {
+}: BasecampClientProps) {
   const { terms } = useTerminology()
   const searchParams = useSearchParams()
   const searchParamsStr = searchParams.toString()
@@ -104,7 +104,7 @@ export function DashboardClient({
       const nextPage = page + 1
       const params = new URLSearchParams(searchParams.toString())
       params.set('page', nextPage.toString())
-      const res = await fetch(`/api/dashboard?${params.toString()}`)
+      const res = await fetch(`/api/basecamp?${params.toString()}`)
       const data = await res.json()
       setExtraTrails(prev => [...prev, ...data.folders])
       setHasMore(data.hasMore)
