@@ -9,7 +9,7 @@ export default async function AuthLayout({
   const session = await auth()
 
   if (session?.user) {
-    redirect('/dashboard')
+    redirect('/basecamp')
   }
 
   return (
