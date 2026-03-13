@@ -18,10 +18,11 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { EntryActions } from './entry-actions'
 import { FormActions } from '@/components/forms/form-actions'
-import { DatePicker } from '@/components/ui/date-picker'
+import { MonthYearPicker } from '@/components/ui/month-year-picker'
 import { ExternalLink } from 'lucide-react'
 import { RichTextEditor } from '@/components/ui/rich-text-editor'
 import { RichTextContent } from '@/components/ui/rich-text-content'
+import { format } from 'date-fns'
 
 const landmarkSchema = z.object({
   id: z.string().optional(),
@@ -153,7 +154,7 @@ export function LandmarksForm({ landmarks, adding, setAdding, saving, saved, err
                 <FormItem>
                   <FormLabel>Start Date</FormLabel>
                   <FormControl>
-                    <DatePicker value={field.value} onChange={field.onChange} placeholder="Select start date" />
+                    <MonthYearPicker value={field.value} onChange={field.onChange} placeholder="Select start date" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -167,7 +168,7 @@ export function LandmarksForm({ landmarks, adding, setAdding, saving, saved, err
                   <FormItem>
                     <FormLabel>End Date</FormLabel>
                     <FormControl>
-                      <DatePicker value={field.value} onChange={field.onChange} placeholder="Select end date" />
+                      <MonthYearPicker value={field.value} onChange={field.onChange} placeholder="Select end date" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -205,7 +206,7 @@ export function LandmarksForm({ landmarks, adding, setAdding, saving, saved, err
 
           <div className="flex justify-end items-center gap-4">
             <Button type="button" variant="ghost" onClick={cancel}>Cancel</Button>
-            <FormActions saving={saving} saved={saved} error={error} saveLabel={editing ? 'Update Landmark' : 'Add Landmark'} hideAlert />
+            <FormActions saving={saving} saved={saved} error={error} saveLabel={editing ? 'Save Changes' : 'Add Landmark'} hideAlert />
           </div>
         </form>
       </Form>
@@ -237,8 +238,8 @@ export function LandmarksForm({ landmarks, adding, setAdding, saving, saved, err
                     </div>
                     {(entry.startDate || entry.endDate) && (
                       <p className="text-sm text-muted-foreground">
-                        {entry.startDate?.toLocaleDateString()} —{' '}
-                        {entry.current ? 'Present' : entry.endDate?.toLocaleDateString()}
+                        {entry.startDate ? format(new Date(entry.startDate.toISOString().slice(0, 10) + 'T12:00:00'), 'MMM yyyy') : ''} —{' '}
+                        {entry.current ? 'Present' : entry.endDate ? format(new Date(entry.endDate.toISOString().slice(0, 10) + 'T12:00:00'), 'MMM yyyy') : ''}
                       </p>
                     )}
                     {entry.description && <RichTextContent html={entry.description} className="text-muted-foreground" />}

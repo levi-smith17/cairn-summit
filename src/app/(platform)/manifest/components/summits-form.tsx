@@ -21,6 +21,7 @@ import { FormActions } from '@/components/forms/form-actions'
 import { MonthYearPicker } from '@/components/ui/month-year-picker'
 import { RichTextEditor } from '@/components/ui/rich-text-editor'
 import { RichTextContent } from '@/components/ui/rich-text-content'
+import { format } from 'date-fns'
 
 const summitSchema = z.object({
   id: z.string().optional(),
@@ -182,7 +183,7 @@ export function SummitsForm({ summits, adding, setAdding, saving, saved, error, 
 
           <div className="flex justify-end items-center gap-4">
             <Button type="button" variant="ghost" onClick={cancel}>Cancel</Button>
-            <FormActions saving={saving} saved={saved} error={error} saveLabel={editing ? 'Update Summit' : 'Add Summit'} hideAlert />
+            <FormActions saving={saving} saved={saved} error={error} saveLabel={editing ? 'Save Changes' : 'Add Summit'} hideAlert />
           </div>
         </form>
       </Form>
@@ -213,7 +214,7 @@ export function SummitsForm({ summits, adding, setAdding, saving, saved, error, 
                       )}
                     </div>
                     {entry.issuer && <p className="text-sm text-muted-foreground">{entry.issuer}</p>}
-                    {entry.date && <p className="text-sm text-muted-foreground">{entry.date.toLocaleDateString()}</p>}
+                    {entry.date && <p className="text-sm text-muted-foreground">{format(new Date(entry.date.toISOString().slice(0, 10) + 'T12:00:00'), 'MMM yyyy')}</p>}
                     {entry.description && <RichTextContent html={entry.description} className="text-muted-foreground" />}
                   </div>
                   <EntryActions

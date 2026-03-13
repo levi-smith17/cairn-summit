@@ -1,13 +1,11 @@
 'use client'
 
-import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSearchParams } from 'next/navigation'
+import { useState } from 'react'
 import { PlatformHeader } from '@/components/nav/platform/platform-header'
 import { SystemList } from './system-list'
 import { SystemDetail } from './system-detail'
-import { SystemDrawer } from './drawers/system-drawer'
-import { PlanetDrawer } from './drawers/planet-drawer'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,14 +26,8 @@ export function SystemsClient({ systems }: SystemsClientProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const selectedSystemId = searchParams.get('system')
-
   const selectedSystem = systems.find(s => s.id === selectedSystemId) ?? null
 
-  const [systemDrawerOpen, setSystemDrawerOpen] = useState(false)
-  const [editingSystem, setEditingSystem] = useState<any>(null)
-  const [planetDrawerOpen, setPlanetDrawerOpen] = useState(false)
-  const [editingPlanet, setEditingPlanet] = useState<any>(null)
-  const [defaultSystemId, setDefaultSystemId] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'system' | 'planet'; id: string; name: string } | null>(null)
 
   function selectSystem(id: string) {
@@ -48,28 +40,6 @@ export function SystemsClient({ systems }: SystemsClientProps) {
     const params = new URLSearchParams(searchParams.toString())
     params.delete('system')
     router.push(`?${params.toString()}`, { scroll: false })
-  }
-
-  function handleAddPlanet(systemId: string) {
-    setEditingPlanet(null)
-    setDefaultSystemId(systemId)
-    setPlanetDrawerOpen(true)
-  }
-
-  function handleEditPlanet(planet: any) {
-    setEditingPlanet(planet)
-    setDefaultSystemId(null)
-    setPlanetDrawerOpen(true)
-  }
-
-  function handleAddSystem() {
-    setEditingSystem(null)
-    setSystemDrawerOpen(true)
-  }
-
-  function handleEditSystem(system: any) {
-    setEditingSystem(system)
-    setSystemDrawerOpen(true)
   }
 
   async function handleConfirmDelete() {
@@ -88,7 +58,6 @@ export function SystemsClient({ systems }: SystemsClientProps) {
       <PlatformHeader title="Starfield — Systems" />
 
       <div className="flex flex-1 gap-4 p-4 overflow-hidden min-h-0">
-        {/* Left column — system list */}
         <div className={`
           ${selectedSystem ? 'hidden md:flex' : 'flex'}
           flex-col w-full md:w-1/3 rounded-lg border border-border bg-card overflow-hidden
@@ -97,14 +66,10 @@ export function SystemsClient({ systems }: SystemsClientProps) {
             systems={systems}
             selectedSystemId={selectedSystemId}
             onSelect={selectSystem}
-            onNew={handleAddSystem}
-            onEdit={handleEditSystem}
             onDelete={(id, name) => setDeleteTarget({ type: 'system', id, name })}
-            onAddPlanet={handleAddPlanet}
           />
         </div>
 
-        {/* Right column — planet detail */}
         <div className={`
           ${selectedSystem ? 'flex' : 'hidden md:flex'}
           flex-col flex-1 rounded-lg border border-border bg-card overflow-hidden
@@ -112,26 +77,10 @@ export function SystemsClient({ systems }: SystemsClientProps) {
           <SystemDetail
             system={selectedSystem}
             onBack={clearSystem}
-            onEditPlanet={handleEditPlanet}
             onDeletePlanet={(id, name) => setDeleteTarget({ type: 'planet', id, name })}
-            onAddPlanet={handleAddPlanet}
           />
         </div>
       </div>
-
-      <SystemDrawer
-        open={systemDrawerOpen}
-        onClose={() => setSystemDrawerOpen(false)}
-        system={editingSystem}
-      />
-
-      <PlanetDrawer
-        open={planetDrawerOpen}
-        onClose={() => setPlanetDrawerOpen(false)}
-        planet={editingPlanet}
-        systems={systems}
-        defaultSystemId={defaultSystemId}
-      />
 
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
         <AlertDialogContent>

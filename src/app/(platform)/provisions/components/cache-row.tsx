@@ -16,6 +16,8 @@ import {
 import { Pencil, Trash2 } from 'lucide-react'
 import { deleteBudget } from '@/actions/budgets'
 import { InlineCacheForm } from './inline-cache-form'
+import { useTerminology } from '@/contexts/terminology-context'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 export interface BudgetUtilization {
   id: string
@@ -44,6 +46,7 @@ const utilizationColor = (pct: number) => {
 }
 
 export function CacheRow({ budget, categories, month, year, onSaved, onDeleted }: Props) {
+  const { terms } = useTerminology()
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
@@ -66,22 +69,32 @@ export function CacheRow({ budget, categories, month, year, onSaved, onDeleted }
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-sm font-medium">{budget.category}</span>
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={() => setEditing(true)}
-            >
-              <Pencil className="h-3 w-3" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={() => setConfirmDelete(true)}
-            >
-              <Trash2 className="h-3 w-3 text-destructive" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() => setEditing(true)}
+                >
+                  <Pencil className="h-3 w-3" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Edit {terms.cache}</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() => setConfirmDelete(true)}
+                >
+                  <Trash2 className="h-3 w-3 text-destructive" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Remove {terms.cache}</TooltipContent>
+            </Tooltip>
           </div>
           <span className="text-xs text-muted-foreground tabular-nums group-hover:hidden">
             {fmt(budget.spent)} / {fmt(budget.limit)}
@@ -101,9 +114,9 @@ export function CacheRow({ budget, categories, month, year, onSaved, onDeleted }
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete budget?</AlertDialogTitle>
+            <AlertDialogTitle>Remove {terms.cache.toLowerCase()}?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove the &ldquo;{budget.category}&rdquo; budget limit for this month.
+              This will remove the &ldquo;{budget.category}&rdquo; {terms.cache.toLowerCase()} limit for this month. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -112,7 +125,7 @@ export function CacheRow({ budget, categories, month, year, onSaved, onDeleted }
               onClick={async () => { await deleteBudget(budget.id); onDeleted() }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              Remove
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -167,7 +167,7 @@ export function OriginsForm({ defaultValues }: OriginsFormProps) {
           saving={saving}
           saved={saved}
           error={error}
-          saveLabel="Save Origins"
+          saveLabel="Save Changes"
         />
       </form>
     </Form>

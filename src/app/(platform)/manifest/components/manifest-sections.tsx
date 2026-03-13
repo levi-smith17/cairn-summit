@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { OriginsForm } from './origins-form'
 import { ExpeditionsForm } from './expeditions-form'
 import { TrainingForm } from './training-form'
@@ -151,15 +152,17 @@ export function ManifestSections({ origins, expeditions, training, gear, landmar
                         {sections.find(s => s.value === selectedSection)?.label}
                     </span>
                     {showAddButton && (
-                        <div className="ml-auto">
-                            <Button variant="outline" size="sm" onClick={() => {
-                                setAdding(true)
-                                contentScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
-                            }}>
-                                <Plus className="h-4 w-4" />
-                                {addLabels[selectedSection]}
-                            </Button>
-                        </div>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 ml-auto" onClick={() => {
+                                    setAdding(true)
+                                    contentScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+                                }}>
+                                    <Plus className="h-4 w-4" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{addLabels[selectedSection]}</TooltipContent>
+                        </Tooltip>
                     )}
                 </div>
                 <div ref={contentScrollRef} className="flex-1 overflow-y-auto p-6">

@@ -1,7 +1,7 @@
 'use client'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { RadialBarChart, RadialBar, LabelList, Tooltip, ResponsiveContainer } from 'recharts'
+import { RadialBarChart, RadialBar, LabelList, Tooltip, ResponsiveContainer, PolarAngleAxis } from 'recharts'
 
 type GearLevel = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT'
 
@@ -72,9 +72,10 @@ export function GearChart({ category, items }: GearChartProps) {
                                 innerRadius="15%"
                                 outerRadius="85%"
                                 data={data}
-                                startAngle={-90}
-                                endAngle={380}
+                                startAngle={90}
+                                endAngle={-270}
                             >
+                                <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
                                 <Tooltip
                                     cursor={false}
                                     content={({ active, payload }) => {

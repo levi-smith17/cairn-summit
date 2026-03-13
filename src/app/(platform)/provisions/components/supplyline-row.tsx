@@ -25,6 +25,7 @@ import { MoreHorizontal, Pencil, Trash2, ExternalLink } from 'lucide-react'
 import { MarkerBadge } from '@/app/(platform)/waypoints/components/marker-badge'
 import { deleteProvision, toggleProvisionActive } from '@/actions/provisions'
 import { InlineSupplylineForm } from './inline-supplyline-form'
+import { useTerminology } from '@/contexts/terminology-context'
 
 interface Tag {
   tagId: string
@@ -64,6 +65,7 @@ const fmt = (n: number) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n)
 
 export function SupplylineRow({ provision, categories, tags, onSaved, onDeleted }: Props) {
+  const { terms } = useTerminology()
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
@@ -140,7 +142,7 @@ export function SupplylineRow({ provision, categories, tags, onSaved, onDeleted 
               onClick={() => setConfirmDelete(true)}
               className="text-destructive focus:text-destructive"
             >
-              <Trash2 className="h-4 w-4 mr-2" /> Delete
+              <Trash2 className="h-4 w-4 mr-2" /> Remove
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -149,9 +151,9 @@ export function SupplylineRow({ provision, categories, tags, onSaved, onDeleted 
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete subscription?</AlertDialogTitle>
+            <AlertDialogTitle>Remove {terms.supplylines.slice(0, -1).toLowerCase()}?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove &ldquo;{provision.name}&rdquo;.
+              This will permanently remove &ldquo;{provision.name}&rdquo;. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -160,7 +162,7 @@ export function SupplylineRow({ provision, categories, tags, onSaved, onDeleted 
               onClick={async () => { await deleteProvision(provision.id); onDeleted() }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              Remove
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

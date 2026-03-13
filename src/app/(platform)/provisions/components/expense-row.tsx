@@ -22,6 +22,7 @@ import { MoreHorizontal, Pencil, Trash2, Receipt } from 'lucide-react'
 import { MarkerBadge } from '@/app/(platform)/waypoints/components/marker-badge'
 import { deleteExpense } from '@/actions/expenses'
 import { InlineExpenseForm } from './inline-expense-form'
+import { useTerminology } from '@/contexts/terminology-context'
 
 interface Tag {
   tagId: string
@@ -51,6 +52,7 @@ const fmt = (n: number) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n)
 
 export function ExpenseRow({ expense, categories, tags, onSaved, onDeleted }: Props) {
+  const { terms } = useTerminology()
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
@@ -70,7 +72,7 @@ export function ExpenseRow({ expense, categories, tags, onSaved, onDeleted }: Pr
     <>
       <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/30 group">
         <div className="text-xs text-muted-foreground w-14 shrink-0 tabular-nums">
-          {new Date(expense.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          {new Date(expense.date.slice(0, 10).replace(/-/g, '/')).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
@@ -108,7 +110,7 @@ export function ExpenseRow({ expense, categories, tags, onSaved, onDeleted }: Pr
               onClick={() => setConfirmDelete(true)}
               className="text-destructive focus:text-destructive"
             >
-              <Trash2 className="h-4 w-4 mr-2" /> Delete
+              <Trash2 className="h-4 w-4 mr-2" /> Remove
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -117,9 +119,9 @@ export function ExpenseRow({ expense, categories, tags, onSaved, onDeleted }: Pr
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete expense?</AlertDialogTitle>
+            <AlertDialogTitle>Remove {terms.burn.toLowerCase()}?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove &ldquo;{expense.name}&rdquo; and any attached receipt.
+              This will permanently remove &ldquo;{expense.name}&rdquo; and any attached receipt. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -128,7 +130,7 @@ export function ExpenseRow({ expense, categories, tags, onSaved, onDeleted }: Pr
               onClick={async () => { await deleteExpense(expense.id); onDeleted() }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              Remove
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
