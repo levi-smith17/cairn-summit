@@ -62,7 +62,6 @@ interface AboutContentProps {
         email: string | null
         avatar: string | null
     } | null
-    showDirectoryLink: boolean
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -135,7 +134,6 @@ export function AboutContent({
     origins,
     companions,
     currentUser,
-    showDirectoryLink,
 }: AboutContentProps) {
     const headerRef = useRef<HTMLDivElement>(null)
     const [showStickyHeader, setShowStickyHeader] = useState(false)
@@ -190,7 +188,6 @@ export function AboutContent({
                     return next
                 })}
                 showAvatar={showStickyHeader}
-                showDirectoryLink={showDirectoryLink}
                 currentUser={currentUser}
                 backHref={`/manifest/${username}`}
             />
