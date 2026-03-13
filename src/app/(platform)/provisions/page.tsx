@@ -3,7 +3,6 @@ import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import { PlatformHeader } from '@/components/nav/platform/platform-header'
 import { ProvisionsClient } from './components/provisions-client'
-import { ProvisionActions } from './components/provision-actions'
 
 export default async function ProvisionsPage() {
   const session = await auth()
@@ -25,10 +24,7 @@ export default async function ProvisionsPage() {
 
   return (
     <>
-      <PlatformHeader
-        title="Provisions"
-        actions={<ProvisionActions categories={categories} markers={tags} />}
-      />
+      <PlatformHeader title="Provisions"/>
       <div className="flex flex-col flex-1 p-4 min-w-0 overflow-hidden">
         <ProvisionsClient categories={categories} markers={tags} />
       </div>

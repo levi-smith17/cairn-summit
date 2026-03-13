@@ -3,12 +3,10 @@
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { PlatformHeader } from '@/components/nav/platform/platform-header'
-import { Button } from '@/components/ui/button'
 import { FacilityDrawer } from './drawers/facility-drawer'
 import { FacilityList } from './facility-list'
 import { FacilityResourceDrawer } from './drawers/facility-resource-drawer'
-import { HeaderNavActions } from '@/components/nav/header-nav-actions'
-import { Database, Globe, Plus, Search, X } from 'lucide-react'
+import { Search, X } from 'lucide-react'
 import { FacilityDetail } from './facility-detail'
 import {
   AlertDialog,
@@ -86,6 +84,11 @@ export function FacilitiesClient({ facilities, resources, systems }: FacilitiesC
     router.push(`?${params.toString()}`, { scroll: false })
   }
 
+  function handleAddFacility() {
+    setEditingFacility(null)
+    setFacilityDrawerOpen(true)
+  }
+
   function handleAddResource(facilityId: string) {
     setEditingResource(null)
     setDefaultFacilityId(facilityId)
@@ -115,9 +118,10 @@ export function FacilitiesClient({ facilities, resources, systems }: FacilitiesC
 
   return (
     <>
-      <PlatformHeader
-        title="Starfield — Facilities"
-        filters={
+      <PlatformHeader title="Starfield — Facilities" />
+
+      <div className="flex flex-col flex-1 gap-4 p-4 overflow-hidden min-h-0">
+        <div className="rounded-lg border border-border bg-card p-2 shrink-0">
           <div className="flex items-center gap-2 h-8 rounded-md border border-input px-3 text-sm w-full max-w-sm">
             <Search className="h-4 w-4 text-muted-foreground shrink-0" />
             <input
@@ -132,46 +136,31 @@ export function FacilitiesClient({ facilities, resources, systems }: FacilitiesC
               </button>
             )}
           </div>
-        }
-        actions={
-          <HeaderNavActions
-            navActions={[
-              { label: 'Systems', href: '/starfield/systems', icon: Globe },
-              { label: 'Resources', href: '/starfield/resources', icon: Database },
-            ]}
-            primaryAction={
-              <Button
-                size="sm"
-                onClick={() => { setEditingFacility(null); setFacilityDrawerOpen(true) }}
-              >
-                <Plus className="h-4 w-4 mr-1" /> Facility
-              </Button>
-            }
-          />
-        }
-      />
-
-      <div className="flex flex-1 gap-4 p-4 overflow-hidden min-h-0">
-        {/* Left column — facility list */}
-        <div className={`${selectedFacility ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-1/3 rounded-lg border border-border bg-card overflow-hidden`}>
-          <FacilityList
-            facilities={filteredFacilities}
-            selectedFacilityId={selectedFacilityId}
-            onSelect={selectFacility}
-            onEdit={handleEditFacility}
-            onDelete={(id, name) => setDeleteTarget({ type: 'facility', id, name })}
-          />
         </div>
 
-        {/* Right column — resource detail */}
-        <div className={`${selectedFacility ? 'flex' : 'hidden md:flex'} flex-col flex-1 rounded-lg border border-border bg-card overflow-hidden`}>
-          <FacilityDetail
-            facility={selectedFacility}
-            onBack={clearFacility}
-            onAddResource={handleAddResource}
-            onEditResource={handleEditResource}
-            onDeleteResource={(id, name) => setDeleteTarget({ type: 'resource', id, name })}
-          />
+        <div className="flex flex-1 gap-4 overflow-hidden min-h-0">
+          {/* Left column — facility list */}
+          <div className={`${selectedFacility ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-1/3 rounded-lg border border-border bg-card overflow-hidden`}>
+            <FacilityList
+              facilities={filteredFacilities}
+              selectedFacilityId={selectedFacilityId}
+              onSelect={selectFacility}
+              onNew={handleAddFacility}
+              onEdit={handleEditFacility}
+              onDelete={(id, name) => setDeleteTarget({ type: 'facility', id, name })}
+            />
+          </div>
+
+          {/* Right column — resource detail */}
+          <div className={`${selectedFacility ? 'flex' : 'hidden md:flex'} flex-col flex-1 rounded-lg border border-border bg-card overflow-hidden`}>
+            <FacilityDetail
+              facility={selectedFacility}
+              onBack={clearFacility}
+              onAddResource={handleAddResource}
+              onEditResource={handleEditResource}
+              onDeleteResource={(id, name) => setDeleteTarget({ type: 'resource', id, name })}
+            />
+          </div>
         </div>
       </div>
 

@@ -4,7 +4,11 @@ import { useState, useEffect } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Plus } from 'lucide-react'
 import { AlertTriangle, TrendingUp, Wallet, RefreshCw } from 'lucide-react'
+import { ProvisionDrawer } from '@/components/drawers/provision-drawer'
+import { ExpenseDrawer } from '@/components/drawers/expense-drawer'
 import ProvisionsList from './provisions-list'
 import ExpensesList from './expenses-list'
 import Budgets from './budgets'
@@ -46,6 +50,8 @@ export function ProvisionsClient({ categories, markers }: Props) {
   const [summary, setSummary] = useState<Summary | null>(null)
   const [upcomingRenewals, setUpcomingRenewals] = useState<UpcomingRenewal[]>([])
   const [budgetUtilization, setBudgetUtilization] = useState<BudgetUtilization[]>([])
+  const [provisionDrawerOpen, setProvisionDrawerOpen] = useState(false)
+  const [expenseDrawerOpen, setExpenseDrawerOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [refreshKey, setRefreshKey] = useState(0)
 
@@ -168,6 +174,15 @@ export function ProvisionsClient({ categories, markers }: Props) {
 
       <div className="flex flex-col gap-4 rounded-xl bg-muted/50 p-4">
         {/* Tabs */}
+        <div className="flex gap-3">
+          <Button variant="outline" size="sm" onClick={() => setExpenseDrawerOpen(true)}>
+            <Plus className="h-4 w-4 mr-1" /> Log Expense
+          </Button>
+          <Button size="sm" onClick={() => setProvisionDrawerOpen(true)}>
+            <Plus className="h-4 w-4 mr-1" /> Add Subscription
+          </Button>
+        </div>
+
         <Tabs defaultValue="subscriptions">
           <TabsList className="mb-6">
             <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
@@ -207,6 +222,19 @@ export function ProvisionsClient({ categories, markers }: Props) {
           </TabsContent>
         </Tabs>
       </div>
+
+      <ProvisionDrawer
+        open={provisionDrawerOpen}
+        onClose={() => setProvisionDrawerOpen(false)}
+        categories={categories}
+        tags={markers}
+      />
+      <ExpenseDrawer
+        open={expenseDrawerOpen}
+        onClose={() => setExpenseDrawerOpen(false)}
+        categories={categories}
+        tags={markers}
+      />
     </div>
   )
 }

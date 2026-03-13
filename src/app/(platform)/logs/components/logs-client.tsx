@@ -67,46 +67,46 @@ export function LogClient({ logs, folders, waypoints, tags }: LogClientProps) {
         </div>
 
         <div className="flex flex-1 gap-4 overflow-hidden min-h-0">
-        {/* Left — grouped log list */}
-        <div
-          className={`${showRightPanel ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-1/3 rounded-lg border border-border bg-card overflow-hidden`}
-        >
-          <LogList
-            logs={logs}
-            selectedId={selectedId}
-            onSelect={selectLog}
-            onNew={showNew}
-          />
-        </div>
-
-        {/* Right — form */}
-        <div
-          className={`${showRightPanel ? 'flex' : 'hidden md:flex'} flex-col flex-1 rounded-lg border border-border bg-card overflow-hidden`}
-        >
-          {selectedId ? (
-            <LogForm
-              key={selectedId}
-              log={selectedLog}
-              folders={folders}
-              waypoints={waypoints}
-              tags={tags}
-              onBack={clearSelection}
-              onSaved={handleSaved}
-              onDeleted={clearSelection}
+          {/* Left — grouped log list */}
+          <div
+            className={`${showRightPanel ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-1/3 rounded-lg border border-border bg-card overflow-hidden`}
+          >
+            <LogList
+              logs={logs}
+              selectedId={selectedId}
+              onSelect={selectLog}
+              onNew={showNew}
             />
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full px-8 text-center">
-              <NotebookPen className="h-10 w-10 text-muted-foreground/30 mb-3" />
-              <p className="text-sm text-muted-foreground">
-                Select a {terms.logs.slice(0, -1).toLowerCase()} to edit, or{' '}
-                <button onClick={showNew} className="text-primary hover:underline">
-                  add a new one
-                </button>
-                .
-              </p>
-            </div>
-          )}
-        </div>
+          </div>
+
+          {/* Right — form */}
+          <div
+            className={`${showRightPanel ? 'flex' : 'hidden md:flex'} flex-col flex-1 rounded-lg border border-border bg-card overflow-hidden`}
+          >
+            {selectedId ? (
+              <LogForm
+                key={selectedId}
+                log={selectedLog}
+                folders={folders}
+                waypoints={waypoints}
+                tags={tags}
+                onBack={clearSelection}
+                onSaved={handleSaved}
+                onDeleted={clearSelection}
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full px-8 text-center">
+                <NotebookPen className="h-10 w-10 text-muted-foreground/30 mb-3" />
+                <p className="text-sm text-muted-foreground">
+                  Select a {terms.logs.slice(0, -1).toLowerCase()} to edit, or{' '}
+                  <button onClick={showNew} className="text-primary hover:underline">
+                    add a new one
+                  </button>
+                  .
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </>

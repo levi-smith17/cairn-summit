@@ -1,22 +1,35 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Plus, Trash2 } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 interface FacilityListProps {
   facilities: any[]
   selectedFacilityId: string | null
   onSelect: (id: string) => void
+  onNew: () => void
   onEdit: (facility: any) => void
   onDelete: (id: string, name: string) => void
 }
 
-export function FacilityList({ facilities, selectedFacilityId, onSelect, onEdit, onDelete }: FacilityListProps) {
+export function FacilityList({ facilities, selectedFacilityId, onSelect, onNew, onEdit, onDelete }: FacilityListProps) {
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-        <span className="text-sm font-medium">Facilities</span>
-        <span className="text-xs text-muted-foreground">{facilities.length} facilities</span>
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
+        <span className="text-sm font-medium">
+          {facilities.length} {facilities.length !== 1 ? 'facilities' : 'facility'}
+        </span>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onNew}>
+              <Plus className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            Add facility
+          </TooltipContent>
+        </Tooltip>
       </div>
       <div className="flex-1 overflow-y-auto">
         {facilities.map(facility => (
