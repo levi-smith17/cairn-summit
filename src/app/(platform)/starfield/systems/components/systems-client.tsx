@@ -3,10 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSearchParams } from 'next/navigation'
-import { PageHeader } from '@/components/nav/page-header'
-import { Button } from '@/components/ui/button'
-import { HeaderNavActions } from '@/components/nav/header-nav-actions'
-import { Database, Factory, Globe, Plus } from 'lucide-react'
+import { PlatformHeader } from '@/components/nav/platform/platform-header'
 import { SystemList } from './system-list'
 import { SystemDetail } from './system-detail'
 import { SystemDrawer } from './drawers/system-drawer'
@@ -65,6 +62,11 @@ export function SystemsClient({ systems }: SystemsClientProps) {
     setPlanetDrawerOpen(true)
   }
 
+  function handleAddSystem() {
+    setEditingSystem(null)
+    setSystemDrawerOpen(true)
+  }
+
   function handleEditSystem(system: any) {
     setEditingSystem(system)
     setSystemDrawerOpen(true)
@@ -83,30 +85,9 @@ export function SystemsClient({ systems }: SystemsClientProps) {
 
   return (
     <>
-      <PageHeader
-        title="Starfield — Systems"
-        actions={
-          <HeaderNavActions
-            navActions={[
-              { label: 'Facilities', href: '/starfield/facilities', icon: Factory },
-              { label: 'Resources', href: '/starfield/resources', icon: Database },
-            ]}
-            primaryAction={
-              <Button
-                size="sm"
-                onClick={() => { setEditingSystem(null); setSystemDrawerOpen(true) }}
-              >
-                <Plus className="h-4 w-4 mr-1" /> System
-              </Button>
-            }
-          />
-        }
-      />
+      <PlatformHeader title="Starfield — Systems" />
 
       <div className="flex flex-1 gap-4 p-4 overflow-hidden min-h-0">
-        {/* Mobile: show detail if system selected, otherwise show list */}
-        {/* Desktop: always show both */}
-
         {/* Left column — system list */}
         <div className={`
           ${selectedSystem ? 'hidden md:flex' : 'flex'}
@@ -116,6 +97,7 @@ export function SystemsClient({ systems }: SystemsClientProps) {
             systems={systems}
             selectedSystemId={selectedSystemId}
             onSelect={selectSystem}
+            onNew={handleAddSystem}
             onEdit={handleEditSystem}
             onDelete={(id, name) => setDeleteTarget({ type: 'system', id, name })}
             onAddPlanet={handleAddPlanet}

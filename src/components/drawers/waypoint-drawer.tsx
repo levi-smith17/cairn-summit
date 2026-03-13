@@ -29,12 +29,13 @@ import {
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
-import { TagBadge } from '@/app/(platform)/waypoints/components/tag-badge'
+import { MarkerBadge } from '@/app/(platform)/waypoints/components/marker-badge'
 import { FormActions } from '@/components/forms/form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
-import { saveWaypoint, createFolder, createTag } from '@/actions/waypoints'
+import { useRouter } from 'next/navigation'
+import { saveWaypoint, createTrail, createMarker } from '@/actions/waypoints'
 
-const TAG_COLORS = [
+const MARKER_COLORS = [
   '#ef4444', '#f97316', '#eab308', '#22c55e',
   '#3b82f6', '#8b5cf6', '#ec4899', '#64748b',
 ]
@@ -67,26 +68,27 @@ export function WaypointDrawer({
   tags,
   defaultFolderId,
 }: WaypointDrawerProps) {
+  const router = useRouter()
   const { saving, saved, error, handleSubmit } = useFormStatus()
   const [fetching, setFetching] = useState(false)
   const [favicon, setFavicon] = useState<string | null>(waypoint?.favicon ?? null)
 
   // Local copies so inline creation updates are visible immediately
-  const [localFolders, setLocalFolders] = useState(folders)
-  const [localTags, setLocalTags] = useState(tags)
-  useEffect(() => { setLocalFolders(folders) }, [folders])
-  useEffect(() => { setLocalTags(tags) }, [tags])
+  const [localTrails, setLocalTrails] = useState(folders)
+  const [localMarkers, setLocalMarkers] = useState(tags)
+  useEffect(() => { setLocalTrails(folders) }, [folders])
+  useEffect(() => { setLocalMarkers(tags) }, [tags])
 
-  // Inline folder creation
-  const [creatingFolder, setCreatingFolder] = useState(false)
-  const [newFolderName, setNewFolderName] = useState('')
-  const [folderCreating, setFolderCreating] = useState(false)
+  // Inline trail creation
+  const [creatingTrail, setCreatingTrail] = useState(false)
+  const [newTrailName, setNewTrailName] = useState('')
+  const [trailCreating, setTrailCreating] = useState(false)
 
-  // Inline tag creation
-  const [creatingTag, setCreatingTag] = useState(false)
-  const [newTagName, setNewTagName] = useState('')
-  const [newTagColor, setNewTagColor] = useState(TAG_COLORS[4])
-  const [tagCreating, setTagCreating] = useState(false)
+  // Inline marker creation
+  const [creatingMarker, setCreatingMarker] = useState(false)
+  const [newMarkerName, setNewMarkerName] = useState('')
+  const [newMarkerColor, setNewMarkerColor] = useState(MARKER_COLORS[4])
+  const [markerCreating, setMarkerCreating] = useState(false)
 
   const form = useForm<WaypointFormValues>({
     resolver: zodResolver(waypointSchema),
@@ -118,11 +120,11 @@ export function WaypointDrawer({
     if (!isOpen) {
       form.reset()
       setFavicon(null)
-      setCreatingFolder(false)
-      setNewFolderName('')
-      setCreatingTag(false)
-      setNewTagName('')
-      setNewTagColor(TAG_COLORS[4])
+      setCreatingTrail(false)
+      setNewTrailName('')
+      setCreatingMarker(false)
+      setNewMarkerName('')
+      setNewMarkerColor(MARKER_COLORS[4])
       onClose()
     }
   }
@@ -143,35 +145,35 @@ export function WaypointDrawer({
     }
   }
 
-  async function handleCreateFolder() {
-    const name = newFolderName.trim()
+  async function handleCreateTrail() {
+    const name = newTrailName.trim()
     if (!name) return
-    setFolderCreating(true)
+    setTrailCreating(true)
     try {
-      const folder = await createFolder(name)
-      setLocalFolders(prev => [...prev, folder])
-      form.setValue('folderId', folder.id)
-      setCreatingFolder(false)
-      setNewFolderName('')
+      const trail = await createTrail(name)
+      setLocalTrails(prev => [...prev, trail])
+      form.setValue('folderId', trail.id)
+      setCreatingTrail(false)
+      setNewTrailName('')
     } finally {
-      setFolderCreating(false)
+      setTrailCreating(false)
     }
   }
 
-  async function handleCreateTag() {
-    const name = newTagName.trim()
+  async function handleCreateMarker() {
+    const name = newMarkerName.trim()
     if (!name) return
-    setTagCreating(true)
+    setMarkerCreating(true)
     try {
-      const tag = await createTag({ name, color: newTagColor })
-      setLocalTags(prev => [...prev, tag])
+      const marker = await createMarker({ name, color: newMarkerColor })
+      setLocalMarkers(prev => [...prev, marker])
       const current = form.getValues('tagIds')
-      form.setValue('tagIds', [...current, tag.id])
-      setCreatingTag(false)
-      setNewTagName('')
-      setNewTagColor(TAG_COLORS[4])
+      form.setValue('tagIds', [...current, marker.id])
+      setCreatingMarker(false)
+      setNewMarkerName('')
+      setNewMarkerColor(MARKER_COLORS[4])
     } finally {
-      setTagCreating(false)
+      setMarkerCreating(false)
     }
   }
 
@@ -189,11 +191,12 @@ export function WaypointDrawer({
       })
       form.reset()
       setFavicon(null)
+      router.refresh()
       onClose()
     })
   }
 
-  function toggleTag(tagId: string) {
+  function toggleMarker(tagId: string) {
     const current = form.getValues('tagIds')
     form.setValue(
       'tagIds',
@@ -203,7 +206,7 @@ export function WaypointDrawer({
     )
   }
 
-  const selectedTagIds = form.watch('tagIds')
+  const selectedMarkerIds = form.watch('tagIds')
 
   return (
     <Drawer open={open} onOpenChange={handleOpenChange} direction="right">
@@ -311,24 +314,24 @@ export function WaypointDrawer({
                 )}
               />
 
-              {/* Folder */}
+              {/* Trail */}
               <FormField
                 control={form.control}
                 name="folderId"
                 render={({ field }) => (
                   <FormItem>
                     <div className="flex items-center justify-between">
-                      <FormLabel>Folder</FormLabel>
-                      {!creatingFolder && (
+                      <FormLabel>Trail</FormLabel>
+                      {!creatingTrail && (
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
                           className="h-6 gap-1 text-xs px-2"
-                          onClick={() => setCreatingFolder(true)}
+                          onClick={() => setCreatingTrail(true)}
                         >
                           <Plus className="h-3 w-3" />
-                          New folder
+                          New trail
                         </Button>
                       )}
                     </div>
@@ -338,39 +341,39 @@ export function WaypointDrawer({
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="No folder" />
+                          <SelectValue placeholder="No trail" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="none">No folder</SelectItem>
-                        {localFolders.map(f => (
+                        <SelectItem value="none">No trail</SelectItem>
+                        {localTrails.map(f => (
                           <SelectItem key={f.id} value={f.id}>
                             {f.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                    {creatingFolder && (
+                    {creatingTrail && (
                       <div className="flex gap-2 mt-1">
                         <Input
-                          value={newFolderName}
-                          onChange={e => setNewFolderName(e.target.value)}
-                          placeholder="Folder name"
+                          value={newTrailName}
+                          onChange={e => setNewTrailName(e.target.value)}
+                          placeholder="Trail name"
                           className="h-8 text-sm"
                           autoFocus
                           onKeyDown={e => {
-                            if (e.key === 'Enter') { e.preventDefault(); handleCreateFolder() }
-                            if (e.key === 'Escape') { setCreatingFolder(false); setNewFolderName('') }
+                            if (e.key === 'Enter') { e.preventDefault(); handleCreateTrail() }
+                            if (e.key === 'Escape') { setCreatingTrail(false); setNewTrailName('') }
                           }}
                         />
                         <Button
                           type="button"
                           size="sm"
                           className="h-8 w-8 p-0"
-                          onClick={handleCreateFolder}
-                          disabled={!newFolderName.trim() || folderCreating}
+                          onClick={handleCreateTrail}
+                          disabled={!newTrailName.trim() || trailCreating}
                         >
-                          {folderCreating
+                          {trailCreating
                             ? <Loader2 className="h-3 w-3 animate-spin" />
                             : <Check className="h-3 w-3" />}
                         </Button>
@@ -379,7 +382,7 @@ export function WaypointDrawer({
                           size="sm"
                           variant="ghost"
                           className="h-8 w-8 p-0"
-                          onClick={() => { setCreatingFolder(false); setNewFolderName('') }}
+                          onClick={() => { setCreatingTrail(false); setNewTrailName('') }}
                         >
                           <X className="h-3 w-3" />
                         </Button>
@@ -390,67 +393,67 @@ export function WaypointDrawer({
                 )}
               />
 
-              {/* Tags */}
+              {/* Markers */}
               <FormField
                 control={form.control}
                 name="tagIds"
                 render={() => (
                   <FormItem>
                     <div className="flex items-center justify-between">
-                      <FormLabel>Tags</FormLabel>
-                      {!creatingTag && (
+                      <FormLabel>Markers</FormLabel>
+                      {!creatingMarker && (
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
                           className="h-6 gap-1 text-xs px-2"
-                          onClick={() => setCreatingTag(true)}
+                          onClick={() => setCreatingMarker(true)}
                         >
                           <Plus className="h-3 w-3" />
-                          New tag
+                          New marker
                         </Button>
                       )}
                     </div>
-                    {localTags.length > 0 && (
+                    {localMarkers.length > 0 && (
                       <div className="flex flex-wrap gap-2">
-                        {localTags.map(tag => (
+                        {localMarkers.map(marker => (
                           <button
-                            key={tag.id}
+                            key={marker.id}
                             type="button"
-                            onClick={() => toggleTag(tag.id)}
-                            className={`rounded-full transition-opacity ${selectedTagIds.includes(tag.id)
+                            onClick={() => toggleMarker(marker.id)}
+                            className={`rounded-full transition-opacity ${selectedMarkerIds.includes(marker.id)
                                 ? 'opacity-100 ring-2 ring-offset-1'
                                 : 'opacity-50'
                               }`}
                             style={{
-                              ['--tw-ring-color' as any]: tag.color,
+                              ['--tw-ring-color' as any]: marker.color,
                             }}
                           >
-                            <TagBadge tag={tag} />
+                            <MarkerBadge marker={marker} />
                           </button>
                         ))}
                       </div>
                     )}
-                    {creatingTag && (
+                    {creatingMarker && (
                       <div className="flex flex-col gap-2 p-2 border rounded-md">
                         <Input
-                          value={newTagName}
-                          onChange={e => setNewTagName(e.target.value)}
-                          placeholder="Tag name"
+                          value={newMarkerName}
+                          onChange={e => setNewMarkerName(e.target.value)}
+                          placeholder="Marker name"
                           className="h-8 text-sm"
                           autoFocus
                           onKeyDown={e => {
-                            if (e.key === 'Escape') { setCreatingTag(false); setNewTagName('') }
+                            if (e.key === 'Escape') { setCreatingMarker(false); setNewMarkerName('') }
                           }}
                         />
                         <div className="flex gap-1.5 flex-wrap">
-                          {TAG_COLORS.map(color => (
+                          {MARKER_COLORS.map(color => (
                             <button
                               key={color}
                               type="button"
-                              className={`h-5 w-5 rounded-full ring-offset-1 transition-all ${newTagColor === color ? 'ring-2 scale-110' : ''}`}
+                              className={`h-5 w-5 rounded-full ring-offset-1 transition-all ${newMarkerColor === color ? 'ring-2 scale-110' : ''}`}
                               style={{ backgroundColor: color, ['--tw-ring-color' as any]: color }}
-                              onClick={() => setNewTagColor(color)}
+                              onClick={() => setNewMarkerColor(color)}
                             />
                           ))}
                         </div>
@@ -459,18 +462,18 @@ export function WaypointDrawer({
                             type="button"
                             size="sm"
                             className="h-7 text-xs"
-                            onClick={handleCreateTag}
-                            disabled={!newTagName.trim() || tagCreating}
+                            onClick={handleCreateMarker}
+                            disabled={!newMarkerName.trim() || markerCreating}
                           >
-                            {tagCreating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
-                            Add tag
+                            {markerCreating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                            Add marker
                           </Button>
                           <Button
                             type="button"
                             size="sm"
                             variant="ghost"
                             className="h-7 text-xs"
-                            onClick={() => { setCreatingTag(false); setNewTagName(''); setNewTagColor(TAG_COLORS[4]) }}
+                            onClick={() => { setCreatingMarker(false); setNewMarkerName(''); setNewMarkerColor(MARKER_COLORS[4]) }}
                           >
                             Cancel
                           </Button>

@@ -29,7 +29,7 @@ import { BillingCycle } from '@prisma/client'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { FormActions } from '@/components/forms/form-actions'
-import { TagBadge } from '@/app/(platform)/waypoints/components/tag-badge'
+import { MarkerBadge } from '@/app/(platform)/waypoints/components/marker-badge'
 import { useFormStatus } from '@/hooks/use-form-status'
 import { saveProvision } from '@/actions/provisions'
 
@@ -76,7 +76,7 @@ export function ProvisionDrawer({
     resolver: zodResolver(provisionSchema),
     defaultValues: {
       name: provision?.name ?? '',
-      amount: provision?.amount as  number ?? undefined,
+      amount: provision?.amount as number ?? 0,
       billingCycle: provision?.billingCycle ?? 'MONTHLY',
       nextRenewal: provision?.nextRenewal?.split('T')[0] ?? '',
       category: provision?.category ?? '',
@@ -90,7 +90,7 @@ export function ProvisionDrawer({
     if (open) {
       form.reset({
         name: provision?.name ?? '',
-        amount: provision?.amount as  number ?? undefined,
+        amount: provision?.amount as number ?? undefined,
         billingCycle: provision?.billingCycle ?? 'MONTHLY',
         nextRenewal: provision?.nextRenewal?.split('T')[0] ?? '',
         category: provision?.category ?? '',
@@ -170,11 +170,18 @@ export function ProvisionDrawer({
                 <FormField
                   control={form.control}
                   name="amount"
-                  render={({ field }) => (
+                  render={({ field: { onChange, ...field } }) => (
                     <FormItem>
                       <FormLabel>Amount</FormLabel>
                       <FormControl>
-                        <Input type="number" min="0" step="0.01" placeholder="9.99" {...field} />
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          placeholder="9.99"
+                          {...field}
+                          onChange={(e) => onChange(e.target.valueAsNumber)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -286,14 +293,13 @@ export function ProvisionDrawer({
                             key={tag.id}
                             type="button"
                             onClick={() => toggleTag(tag.id)}
-                            className={`rounded-full transition-opacity ${
-                              selectedTagIds.includes(tag.id)
-                                ? 'opacity-100 ring-2 ring-offset-1'
-                                : 'opacity-50'
-                            }`}
+                            className={`rounded-full transition-opacity ${selectedTagIds.includes(tag.id)
+                              ? 'opacity-100 ring-2 ring-offset-1'
+                              : 'opacity-50'
+                              }`}
                             style={{ ['--tw-ring-color' as any]: tag.color }}
                           >
-                            <TagBadge tag={tag} />
+                            <MarkerBadge marker={tag} />
                           </button>
                         ))}
                       </div>

@@ -25,7 +25,7 @@ export function DateRangeFilter({
     <div className="flex items-center gap-1">
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="outline" size="sm" className="h-8 gap-1.5">
+          <Button variant="outline" size="sm" className="h-8 gap-1.5 text-sm">
             <CalendarIcon className="h-3.5 w-3.5" />
             {dateFrom && dateTo
               ? `${format(new Date(dateFrom), 'MMM d')} — ${format(new Date(dateTo), 'MMM d')}`

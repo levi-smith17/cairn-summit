@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import { ManifestSummary } from './components/manifest-summary'
 import { ManifestSections } from './components/manifest-sections'
 import { WayfarerOverview } from './components/wayfarer-overview'
-import { PageHeader } from '@/components/nav/page-header'
+import { PlatformHeader } from '@/components/nav/platform/platform-header'
 
 export default async function ManifestPage() {
     const session = await auth()
@@ -13,7 +13,7 @@ export default async function ManifestPage() {
     const wayfarerId = session?.user?.id!
     const wayfarer = await prisma.wayfarer.findUnique({
         where: { id: wayfarerId },
-        select: { username: true, listed: true, defaultTerminology: true, defaultTheme: true },
+        select: { username: true, listed: true, defaultTerminology: true, defaultTheme: true, customDomain: true },
     })
 
     const [origins, expeditions, training, gear, landmarks, summits, pathfinding, companions] = await Promise.all([
@@ -29,7 +29,7 @@ export default async function ManifestPage() {
 
     return (
         <>
-            <PageHeader title="My Manifest" />
+            <PlatformHeader title="My Manifest" />
             <div className="flex flex-col flex-1 min-h-0 gap-4 p-4 overflow-hidden">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 shrink-0">
                     <WayfarerOverview
@@ -80,6 +80,7 @@ export default async function ManifestPage() {
                         listed: wayfarer?.listed ?? true,
                         defaultTerminology: wayfarer?.defaultTerminology ?? 'CAIRN',
                         defaultTheme: wayfarer?.defaultTheme ?? 'SYSTEM',
+                        customDomain: wayfarer?.customDomain ?? null,
                     }}
                 />
             </div>

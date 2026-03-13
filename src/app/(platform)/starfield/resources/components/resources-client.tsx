@@ -2,17 +2,21 @@
 
 import { useState, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { PageHeader } from '@/components/nav/page-header'
-import { Button } from '@/components/ui/button'
-import { HeaderNavActions } from '@/components/nav/header-nav-actions'
-import { Globe, Factory, Plus, Search, X } from 'lucide-react'
+import { PlatformHeader } from '@/components/nav/platform/platform-header'
+import { Search, X } from 'lucide-react'
 import { ResourceList } from './resource-list'
 import { ResourceInfo } from './resource-detail'
 import { ResourceDrawer } from './drawers/resource-drawer'
 import { deleteResource } from '@/actions/starfield'
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent,
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 
 interface ResourcesClientProps {
@@ -53,6 +57,11 @@ export function ResourcesClient({ resources, resourceTypes }: ResourcesClientPro
     router.push(`?${params.toString()}`, { scroll: false })
   }
 
+  function handleAdd() {
+    setEditingResource(null)
+    setDrawerOpen(true)
+  }
+
   function handleEdit(resource: any) {
     setEditingResource(resource)
     setDrawerOpen(true)
@@ -67,9 +76,10 @@ export function ResourcesClient({ resources, resourceTypes }: ResourcesClientPro
 
   return (
     <>
-      <PageHeader
-        title="Starfield — Resources"
-        filters={
+      <PlatformHeader title="Starfield — Resources" />
+
+      <div className="flex flex-col flex-1 gap-4 p-4 overflow-hidden min-h-0">
+        <div className="rounded-lg border border-border bg-card p-2 shrink-0">
           <div className="flex items-center gap-2 h-8 rounded-md border border-input px-3 text-sm w-full max-w-sm">
             <Search className="h-4 w-4 text-muted-foreground shrink-0" />
             <input
@@ -84,40 +94,28 @@ export function ResourcesClient({ resources, resourceTypes }: ResourcesClientPro
               </button>
             )}
           </div>
-        }
-        actions={
-          <HeaderNavActions
-            navActions={[
-              { label: 'Facilities', href: '/starfield/facilities', icon: Factory },
-              { label: 'Systems', href: '/starfield/systems', icon: Globe },
-            ]}
-            primaryAction={
-              <Button size="sm" onClick={() => { setEditingResource(null); setDrawerOpen(true) }}>
-                <Plus className="h-4 w-4 mr-1" /> Resource
-              </Button>
-            }
-          />
-        }
-      />
-
-      <div className="flex flex-1 gap-4 p-4 overflow-hidden min-h-0">
-        <div className={`${selectedResource ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-1/3 rounded-lg border border-border bg-card overflow-hidden`}>
-          <ResourceList
-            resources={filteredResources}
-            resourceTypes={resourceTypes}
-            selectedResourceId={selectedResourceId}
-            onSelect={selectResource}
-            onEdit={handleEdit}
-            onDelete={(id, name) => setDeleteTarget({ id, name })}
-          />
         </div>
-        <div className={`${selectedResource ? 'flex' : 'hidden md:flex'} flex-col flex-1 rounded-lg border border-border bg-card overflow-hidden`}>
-          <ResourceInfo
-            resource={selectedResource}
-            onBack={clearResource}
-            onEdit={handleEdit}
-            onDelete={(id, name) => setDeleteTarget({ id, name })}
-          />
+
+        <div className="flex flex-1 gap-4 overflow-hidden min-h-0">
+          <div className={`${selectedResource ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-1/3 rounded-lg border border-border bg-card overflow-hidden`}>
+            <ResourceList
+              resources={filteredResources}
+              resourceTypes={resourceTypes}
+              selectedResourceId={selectedResourceId}
+              onSelect={selectResource}
+              onNew={handleAdd}
+              onEdit={handleEdit}
+              onDelete={(id, name) => setDeleteTarget({ id, name })}
+            />
+          </div>
+          <div className={`${selectedResource ? 'flex' : 'hidden md:flex'} flex-col flex-1 rounded-lg border border-border bg-card overflow-hidden`}>
+            <ResourceInfo
+              resource={selectedResource}
+              onBack={clearResource}
+              onEdit={handleEdit}
+              onDelete={(id, name) => setDeleteTarget({ id, name })}
+            />
+          </div>
         </div>
       </div>
 

@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { ExternalLink, Pencil, Trash2, Search } from 'lucide-react'
-import { TagBadge } from '@/app/(platform)/waypoints/components/tag-badge'
+import { MarkerBadge } from '@/app/(platform)/waypoints/components/marker-badge'
 import { ProvisionDrawer } from '@/components/drawers/provision-drawer'
 import { deleteProvision, toggleProvisionActive } from '@/actions/provisions'
 
@@ -173,7 +173,7 @@ export default function ProvisionsList({ refreshKey, onRefresh }: Props) {
                         </Badge>
                       )}
                       {p.tags.map(({ tag }) => (
-                        <TagBadge key={tag.id} tag={tag} />
+                        <MarkerBadge key={tag.id} marker={tag} />
                       ))}
                     </div>
                     <div className="text-sm text-muted-foreground mt-1">

@@ -24,7 +24,7 @@ const DEFAULT_OPTIONS = [
 export function SortFilter({ value, onChange, options = DEFAULT_OPTIONS }: SortFilterProps) {
   return (
     <Select value={value} onValueChange={v => onChange(v as SortOption)}>
-      <SelectTrigger className="h-8 w-36">
+      <SelectTrigger size="sm" className="w-36">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

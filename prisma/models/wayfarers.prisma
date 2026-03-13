@@ -5,6 +5,8 @@ model Wayfarer {
   emailVerified      DateTime?
   image              String?
   username           String?          @unique
+  customDomain       String?          @unique
+  isAdmin            Boolean          @default(false)
   listed             Boolean          @default(true)
   defaultTerminology TerminologyStyle @default(CAIRN)
   defaultTheme       ThemePreference  @default(SYSTEM)

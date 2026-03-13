@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { auth } from '@/auth'
 import { CairnLockup } from '@/components/cairn-lockup'
-import { PublicNav } from '@/components/nav/public-nav'
+import { PublicHeader } from '@/components/nav/public/public-header'
 
 export const metadata = {
     title: 'Terms of Service — Cairn',
@@ -20,7 +20,7 @@ export default async function TermsPage() {
         <div className="min-h-screen flex flex-col">
             <header className="sticky top-0 z-10 flex items-center justify-between bg-header px-6 py-3 border-b">
                 <CairnLockup className="h-8" />
-                <PublicNav currentUser={currentUser} />
+                <PublicHeader currentUser={currentUser} />
             </header>
 
             <div className="max-w-2xl mx-auto w-full px-6 py-12">

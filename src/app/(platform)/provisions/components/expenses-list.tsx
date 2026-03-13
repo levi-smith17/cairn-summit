@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Pencil, Trash2, Search, ChevronLeft, ChevronRight, Receipt } from 'lucide-react'
-import { TagBadge } from '@/app/(platform)/waypoints/components/tag-badge'
+import { MarkerBadge } from '@/app/(platform)/waypoints/components/marker-badge'
 import { ExpenseDrawer } from '@/components/drawers/expense-drawer'
 import { deleteExpense } from '@/actions/expenses'
 
@@ -187,7 +187,7 @@ export default function ExpensesList({
                     <span className="font-medium truncate">{e.name}</span>
                     <Badge variant="secondary">{e.category}</Badge>
                     {e.tags.map(({ tag }) => (
-                      <TagBadge key={tag.id} tag={tag} />
+                      <MarkerBadge key={tag.id} marker={tag} />
                     ))}
                   </div>
                   <div className="text-sm text-muted-foreground mt-1">

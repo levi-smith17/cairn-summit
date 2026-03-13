@@ -22,7 +22,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { FormActions } from '@/components/forms/form-actions'
-import { TagBadge } from '@/app/(platform)/waypoints/components/tag-badge'
+import { MarkerBadge } from '@/app/(platform)/waypoints/components/marker-badge'
 import { useFormStatus } from '@/hooks/use-form-status'
 import { saveExpense } from '@/actions/expenses'
 import { Camera, X, Receipt } from 'lucide-react'
@@ -328,7 +328,7 @@ export function ExpenseDrawer({
                             }`}
                             style={{ ['--tw-ring-color' as any]: tag.color }}
                           >
-                            <TagBadge tag={tag} />
+                            <MarkerBadge marker={tag} />
                           </button>
                         ))}
                       </div>

@@ -1,13 +1,12 @@
 'use client'
 
-import { useState } from 'react'
-import { LayoutGrid, List, Plus } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { WaypointCard } from './waypoint-card'
-import { WaypointDrawer } from '@/components/drawers/waypoint-drawer'
-import { WaypointRow } from './waypoint-row'
-
-type View = 'grid' | 'list'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Bookmark } from 'lucide-react'
+import { PlatformHeader } from '@/components/nav/platform/platform-header'
+import { useTerminology } from '@/contexts/terminology-context'
+import { FilterBar } from '@/components/filters/filter-bar'
+import { WaypointList } from './waypoint-list'
+import { WaypointForm } from './waypoint-form'
 
 interface WaypointsClientProps {
   waypoints: any[]
@@ -16,74 +15,98 @@ interface WaypointsClientProps {
 }
 
 export function WaypointsClient({ waypoints, folders, tags }: WaypointsClientProps) {
-  const [view, setView] = useState<View>('grid')
-  const [showForm, setShowForm] = useState(false)
-  const [editingWaypoint, setEditingWaypoint] = useState<any>(null)
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const { terms } = useTerminology()
+  const selectedId = searchParams.get('id')
 
-  function handleEdit(waypoint: any) {
-    setEditingWaypoint(waypoint)
-    setShowForm(true)
+  const selectedWaypoint = waypoints.find(w => w.id === selectedId) ?? null
+  const showRightPanel = selectedId !== null
+
+  function selectWaypoint(id: string) {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('id', id)
+    router.push(`?${params.toString()}`, { scroll: false })
   }
 
-  function handleCloseForm() {
-    setShowForm(false)
-    setEditingWaypoint(null)
+  function showNew() {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('id', 'new')
+    router.push(`?${params.toString()}`, { scroll: false })
+  }
+
+  function clearSelection() {
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete('id')
+    router.push(`?${params.toString()}`, { scroll: false })
+  }
+
+  function handleSaved(id: string) {
+    selectWaypoint(id)
   }
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl bg-muted/50 p-4">
-      {/* Toolbar */}
-      <div className="flex items-center gap-2">
-        <p className="text-sm text-muted-foreground flex-1">
-          {waypoints.length} waypoint{waypoints.length !== 1 ? 's' : ''}
-        </p>
+    <>
+      <PlatformHeader title={terms.waypoints} />
 
-        <div className="flex items-center rounded-md border divide-x overflow-hidden">
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`rounded-none ${view === 'grid' ? 'bg-muted' : ''}`}
-            onClick={() => setView('grid')}
+      <div className="flex flex-col flex-1 gap-4 p-4 overflow-hidden min-h-0">
+        {/* Filter bar */}
+        <div className="rounded-lg border border-border bg-card p-2 shrink-0">
+          <FilterBar
+            markers={tags}
+            trails={folders}
+            showTrailFilter
+            showMarkerFilter
+            showSort
+            showReadLater
+            showDateRange
+            searchPlaceholder={`${terms.explore} ${terms.waypoints.toLowerCase()}...`}
+            fill
+          />
+        </div>
+
+        <div className="flex flex-1 gap-4 overflow-hidden min-h-0">
+          {/* Left — waypoint list */}
+          <div
+            className={`${showRightPanel ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-1/3 rounded-lg border border-border bg-card overflow-hidden`}
           >
-            <LayoutGrid className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`rounded-none ${view === 'list' ? 'bg-muted' : ''}`}
-            onClick={() => setView('list')}
+            <WaypointList
+              waypoints={waypoints}
+              selectedId={selectedId}
+              onSelect={selectWaypoint}
+              onNew={showNew}
+            />
+          </div>
+
+          {/* Right — form */}
+          <div
+            className={`${showRightPanel ? 'flex' : 'hidden md:flex'} flex-col flex-1 rounded-lg border border-border bg-card overflow-hidden`}
           >
-            <List className="h-4 w-4" />
-          </Button>
+            {selectedId ? (
+              <WaypointForm
+                key={selectedId}
+                waypoint={selectedWaypoint}
+                folders={folders}
+                tags={tags}
+                onBack={clearSelection}
+                onSaved={handleSaved}
+                onDeleted={clearSelection}
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full px-8 text-center">
+                <Bookmark className="h-10 w-10 text-muted-foreground/30 mb-3" />
+                <p className="text-sm text-muted-foreground">
+                  Select a {terms.waypoints.slice(0, -1).toLowerCase()} to edit, or{' '}
+                  <button onClick={showNew} className="text-primary hover:underline">
+                    add a new one
+                  </button>
+                  .
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-
-      {/* Waypoints */}
-      {waypoints.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24">
-          <p className="text-muted-foreground">No waypoints found.</p>
-        </div>
-      ) : view === 'grid' ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {waypoints.map(w => (
-            <WaypointCard key={w.id} waypoint={w} onEdit={handleEdit} />
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-col divide-y rounded-xl border overflow-hidden">
-          {waypoints.map(w => (
-            <WaypointRow key={w.id} waypoint={w} onEdit={handleEdit} />
-          ))}
-        </div>
-      )}
-
-      <WaypointDrawer
-        open={showForm}
-        onClose={handleCloseForm}
-        waypoint={editingWaypoint}
-        folders={folders}
-        tags={tags}
-      />
-    </div>
+    </>
   )
 }

@@ -2,11 +2,13 @@
 
 import { Button } from '@/components/ui/button'
 import { Pencil, Plus, Trash2 } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 interface SystemListProps {
   systems: any[]
   selectedSystemId: string | null
   onSelect: (id: string) => void
+  onNew: () => void
   onEdit: (system: any) => void
   onDelete: (id: string, name: string) => void
   onAddPlanet: (systemId: string) => void
@@ -16,6 +18,7 @@ export function SystemList({
   systems,
   selectedSystemId,
   onSelect,
+  onNew,
   onEdit,
   onDelete,
   onAddPlanet,
@@ -23,8 +26,19 @@ export function SystemList({
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-        <span className="text-sm font-medium">Systems</span>
-        <span className="text-xs text-muted-foreground">{systems.length} systems</span>
+        <span className="text-sm font-medium">
+          {systems.length} system{systems.length !== 1 ? 's' : ''}
+        </span>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onNew}>
+              <Plus className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            Add system
+          </TooltipContent>
+        </Tooltip>
       </div>
       <div className="flex-1 overflow-y-auto">
         {systems.map(system => (

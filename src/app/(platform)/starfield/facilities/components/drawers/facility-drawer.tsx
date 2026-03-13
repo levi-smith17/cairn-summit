@@ -57,7 +57,6 @@ export function FacilityDrawer({ open, onClose, facility, systems }: FacilityDra
     },
   })
 
-  // Reset with existing values when drawer opens — matches TagDrawer pattern
   useEffect(() => {
     if (open) {
       form.reset({
