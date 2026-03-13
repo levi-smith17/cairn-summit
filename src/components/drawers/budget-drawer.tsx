@@ -126,11 +126,17 @@ export function BudgetDrawer({
               <FormField
                 control={form.control}
                 name="limit"
-                render={({ field }) => (
+                render={({ field: { onChange, ...field } }) => (
                   <FormItem>
                     <FormLabel>Monthly Limit</FormLabel>
                     <FormControl>
-                      <Input type="number" min="0" step="0.01" placeholder="500.00" {...field} />
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="500.00"
+                        {...field}
+                        onChange={(e) => onChange(e.target.value === '' ? 0 : parseFloat(e.target.value))} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

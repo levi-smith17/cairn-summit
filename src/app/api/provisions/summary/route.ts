@@ -2,6 +2,39 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 
+// Returns the amount a provision contributes to a given month.
+// WEEKLY/BIWEEKLY/MONTHLY: always prorated monthly equivalent.
+// QUARTERLY/ANNUALLY: full amount only if the subscription actually bills
+// during this month (next renewal is this month, or previous cycle was this month).
+function provisionAmountForMonth(
+  billingCycle: string,
+  amount: number,
+  nextRenewal: Date,
+  monthStart: Date,
+  monthEnd: Date
+): number {
+  if (billingCycle === 'QUARTERLY' || billingCycle === 'ANNUALLY') {
+    // Check upcoming renewal
+    if (nextRenewal >= monthStart && nextRenewal <= monthEnd) return amount
+    // Check previous billing date (already renewed this month)
+    const prev = new Date(nextRenewal)
+    if (billingCycle === 'QUARTERLY') {
+      prev.setMonth(prev.getMonth() - 3)
+    } else {
+      prev.setFullYear(prev.getFullYear() - 1)
+    }
+    if (prev >= monthStart && prev <= monthEnd) return amount
+    return 0
+  }
+
+  const cycleToMonths: Record<string, number> = {
+    WEEKLY: 1 / 4.33,
+    BIWEEKLY: 1 / 2.17,
+    MONTHLY: 1,
+  }
+  return amount * (cycleToMonths[billingCycle] ?? 1)
+}
+
 export async function GET(req: NextRequest) {
   const session = await auth()
   if (!session?.user?.id) {
@@ -28,18 +61,6 @@ export async function GET(req: NextRequest) {
     }),
   ])
 
-  const cycleToMonths: Record<string, number> = {
-    WEEKLY: 1 / 4.33,
-    BIWEEKLY: 1 / 2.17,
-    MONTHLY: 1,
-    QUARTERLY: 1 / 3,
-    ANNUALLY: 1 / 12,
-  }
-
-  const monthlyProvisionCost = provisions.reduce((sum, p) => {
-    return sum + p.amount * (cycleToMonths[p.billingCycle] ?? 1)
-  }, 0)
-
   const expensesByCategory = monthExpenses.reduce<Record<string, number>>((acc, e) => {
     acc[e.category] = (acc[e.category] ?? 0) + e.amount
     return acc
@@ -47,11 +68,28 @@ export async function GET(req: NextRequest) {
 
   const totalExpenses = monthExpenses.reduce((sum, e) => sum + e.amount, 0)
 
-  const budgetUtilization = budgets.map((b) => ({
-    ...b,
-    spent: expensesByCategory[b.category] ?? 0,
-    utilization: ((expensesByCategory[b.category] ?? 0) / b.limit) * 100,
-  }))
+  // Monthly provision cost: QUARTERLY/ANNUALLY only count if billing this month
+  const monthlyProvisionCost = provisions.reduce((sum, p) => {
+    return sum + provisionAmountForMonth(p.billingCycle, p.amount, new Date(p.nextRenewal), monthStart, monthEnd)
+  }, 0)
+
+  // Provision cost per category (same billing-aware logic) for cache utilization
+  const provisionCostByCategory = provisions.reduce<Record<string, number>>((acc, p) => {
+    const contrib = provisionAmountForMonth(p.billingCycle, p.amount, new Date(p.nextRenewal), monthStart, monthEnd)
+    if (contrib > 0) acc[p.category] = (acc[p.category] ?? 0) + contrib
+    return acc
+  }, {})
+
+  const budgetUtilization = budgets.map((b) => {
+    const expenseSpend = expensesByCategory[b.category] ?? 0
+    const provisionSpend = provisionCostByCategory[b.category] ?? 0
+    const spent = expenseSpend + provisionSpend
+    return {
+      ...b,
+      spent,
+      utilization: (spent / b.limit) * 100,
+    }
+  })
 
   return NextResponse.json({
     summary: {

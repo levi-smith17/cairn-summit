@@ -30,6 +30,9 @@ interface SnapshotPanelsProps {
   }
   provisionsSummary: {
     monthlyTotal: number
+    monthlyBurn: number
+    cacheTotalLimit: number
+    cacheTotalSpent: number
     activeCount: number
     upcomingRenewals: number
   }
@@ -210,16 +213,47 @@ export function SnapshotPanels({
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{terms.provisions}</span>
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-lg font-semibold">${provisionsSummary.monthlyTotal.toFixed(2)}</p>
-              <p className="text-xs text-muted-foreground">/ month</p>
+
+          <div className="flex flex-col gap-1.5 mb-3">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">{terms.supplylines}</span>
+              <span className="font-medium tabular-nums">
+                {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(provisionsSummary.monthlyTotal)}
+                <span className="text-muted-foreground font-normal"> / mo · {provisionsSummary.activeCount} active</span>
+              </span>
             </div>
-            <div className="text-right">
-              <p className="text-sm font-medium">{provisionsSummary.activeCount}</p>
-              <p className="text-xs text-muted-foreground">active</p>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">{terms.burn}</span>
+              <span className="font-medium tabular-nums">
+                {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(provisionsSummary.monthlyBurn)}
+              </span>
             </div>
           </div>
+
+          {provisionsSummary.cacheTotalLimit > 0 && (() => {
+            const pct = Math.min((provisionsSummary.cacheTotalSpent / provisionsSummary.cacheTotalLimit) * 100, 100)
+            const color = pct >= 100 ? 'bg-destructive' : pct >= 80 ? 'bg-amber-500' : 'bg-primary'
+            return (
+              <>
+                <div className="border-t mb-3" />
+                <div className="flex items-center justify-between text-xs mb-1.5">
+                  <span className="text-muted-foreground">{terms.cache}</span>
+                  <span className="tabular-nums font-medium">
+                    {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(provisionsSummary.cacheTotalSpent)}
+                    <span className="text-muted-foreground font-normal"> / {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(provisionsSummary.cacheTotalLimit)}</span>
+                  </span>
+                </div>
+                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                  <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${pct}%` }} />
+                </div>
+                <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                  <span>{Math.round(pct)}% used</span>
+                  <span>{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Math.max(provisionsSummary.cacheTotalLimit - provisionsSummary.cacheTotalSpent, 0))} left</span>
+                </div>
+              </>
+            )
+          })()}
+
           {provisionsSummary.upcomingRenewals > 0 && (
             <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
               {provisionsSummary.upcomingRenewals} renewal{provisionsSummary.upcomingRenewals !== 1 ? 's' : ''} in next 7 days
