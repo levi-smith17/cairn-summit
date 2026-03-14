@@ -7,27 +7,23 @@ import { getTerms, type TerminologyStyle } from '@/lib/terminology'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
-import {
-    ExternalLink,
-    Globe,
-    Mail,
-    MapPin,
-} from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
+import { FooterNav } from "@/components/nav/footer";
 import { RichTextContent } from '@/components/ui/rich-text-content'
 import { Timeline } from '@/components/ui/timeline'
 import { format } from 'date-fns'
-import { ManifestStickyHeader } from './sticky-header'
 import { GearChart } from './gear-chart'
-import { ManifestFooter } from './manifest-footer'
+import { ManifestContact } from './manifest-contact'
+import { ManifestHeader } from './manifest-header'
 
 const formatDate = (date: Date) => format(date, 'MMM yyyy')
 
 interface ManifestContentProps {
-    username: string
     wayfarer: {
+        username: string
         name: string | null
         email: string | null
-        image: string | null
+        avatar: string | null
         defaultTerminology: TerminologyStyle
         defaultTheme: 'LIGHT' | 'DARK' | 'SYSTEM'
     }
@@ -92,7 +88,7 @@ interface ManifestContentProps {
         current: boolean
         description: string | null
     }[]
-    currentUser: {
+    currentWayfarer: {
         name: string | null
         email: string | null
         avatar: string | null
@@ -120,7 +116,6 @@ function DateRange({ startDate, endDate, current }: { startDate: Date; endDate: 
 }
 
 export function ManifestContent({
-    username,
     wayfarer,
     origins,
     expeditions,
@@ -129,7 +124,7 @@ export function ManifestContent({
     landmarks,
     summits,
     pathfinding,
-    currentUser,
+    currentWayfarer,
 }: ManifestContentProps) {
 
     const headerRef = useRef<HTMLDivElement>(null)
@@ -149,9 +144,9 @@ export function ManifestContent({
 
     useEffect(() => {
         setMounted(true)
-        const defaultApplied = sessionStorage.getItem(`manifest-theme-init-${username}`)
+        const defaultApplied = sessionStorage.getItem(`manifest-theme-init-${wayfarer.username}`)
         if (!defaultApplied) {
-            sessionStorage.setItem(`manifest-theme-init-${username}`, '1')
+            sessionStorage.setItem(`manifest-theme-init-${wayfarer.username}`, '1')
             if (wayfarer.defaultTheme === 'LIGHT') setTheme('light')
             else if (wayfarer.defaultTheme === 'DARK') setTheme('dark')
         }
@@ -162,7 +157,7 @@ export function ManifestContent({
     )
 
     useEffect(() => {
-        const stored = sessionStorage.getItem(`manifest-terminology-${username}`)
+        const stored = sessionStorage.getItem(`manifest-terminology-${wayfarer.username}`)
         if (stored === 'CAIRN' || stored === 'STANDARD') setTerminology(stored)
     }, [])
     const terms = getTerms(terminology)
@@ -181,17 +176,16 @@ export function ManifestContent({
     return (
         <div className="relative manifest-page">
             {/* Sticky top bar */}
-            <ManifestStickyHeader
-                username={username}
+            <ManifestHeader
                 wayfarer={wayfarer}
                 terminology={terminology}
                 onTerminologyToggle={() => setTerminology(t => {
                     const next = t === 'CAIRN' ? 'STANDARD' : 'CAIRN'
-                    sessionStorage.setItem(`manifest-terminology-${username}`, next)
+                    sessionStorage.setItem(`manifest-terminology-${wayfarer.username}`, next)
                     return next
                 })}
                 showAvatar={showStickyHeader}
-                currentUser={currentUser}
+                currentWayfarer={currentWayfarer}
             />
 
             <div className="max-w-3xl mx-auto px-6 pb-6 flex flex-col gap-12 print:max-w-none print:px-0 print:mx-0 print:pb-0">
@@ -199,7 +193,7 @@ export function ManifestContent({
                     {/* Full header — observed for scroll detection */}
                     <div ref={headerRef} className="flex items-center gap-4 pt-8">
                         <Avatar className="h-20 w-20">
-                            <AvatarImage src={wayfarer.image ?? undefined} />
+                            <AvatarImage src={wayfarer.avatar ?? undefined} />
                             <AvatarFallback className="text-xl">{initials}</AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col gap-1">
@@ -211,39 +205,7 @@ export function ManifestContent({
                     </div>
 
                     {/* Contact info */}
-                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                        {origins?.location && (
-                            <div className="flex items-center gap-1">
-                                <MapPin className="h-4 w-4" />
-                                {origins.location}
-                            </div>
-                        )}
-                        <div className="flex items-center gap-1">
-                            <Mail className="h-4 w-4" />
-                            <Link href={`/manifest/${username}/contact`} className="hover:text-foreground underline underline-offset-4">
-                                Contact {wayfarer.name ?? username}
-                            </Link>
-                        </div>
-                        {origins?.website && (
-                            <div className="flex items-center gap-1">
-                                <Globe className="h-4 w-4" />
-                                <a href={origins.website} target="_blank" rel="noopener noreferrer" className="hover:text-foreground underline underline-offset-4">
-                                    {origins.website}
-                                </a>
-                            </div>
-                        )}
-                        {origins?.linkedin && (
-                            <a href={origins.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-foreground underline underline-offset-4">
-                                LinkedIn
-                            </a>
-                        )}
-                        {origins?.github && (
-                            <a href={origins.github} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-foreground underline underline-offset-4">
-                                <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current shrink-0" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" /></svg>
-                                GitHub
-                            </a>
-                        )}
-                    </div>
+                    <ManifestContact wayfarer={wayfarer} origins={origins} />
 
                     {/* Summary */}
                     {origins?.summary && (
@@ -251,7 +213,7 @@ export function ManifestContent({
                     )}
                     {/* About link */}
                     <div className="flex justify-end print:hidden">
-                        <Link href={`/manifest/${username}/journey`}>
+                        <Link href={`/manifest/${wayfarer.username}/journey`}>
                             <Button variant="outline" size="sm">
                                 {terms.bio_button}
                             </Button>
@@ -411,7 +373,7 @@ export function ManifestContent({
                     </Section>
                 )}
 
-                <ManifestFooter />
+                <FooterNav showCairn={true} />
             </div>
         </div>
     )

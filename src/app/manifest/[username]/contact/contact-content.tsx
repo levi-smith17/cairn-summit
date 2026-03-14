@@ -9,12 +9,12 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { CheckCircle } from 'lucide-react'
 
-interface ContactFormProps {
+interface ContactContentProps {
     username: string
     wayfarerName: string | null
 }
 
-export function ContactForm({ username, wayfarerName }: ContactFormProps) {
+export function ContactContent({ username, wayfarerName }: ContactContentProps) {
     const [state, action, pending] = useActionState(
         async (_prev: unknown, formData: FormData) => sendMessage(username, formData),
         null
