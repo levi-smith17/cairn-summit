@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { MarkerBadge } from '@/app/(platform)/waypoints/components/marker-badge'
+import { Separator } from '@/components/ui/separator'
 import { saveProvision } from '@/actions/provisions'
 import { useFormStatus } from '@/hooks/use-form-status'
 import { BillingCycle } from '@prisma/client'
@@ -108,87 +109,91 @@ export function InlineSupplylineForm({ provision, categories, tags, onSaved, onC
   }
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="px-4 py-3 bg-muted/30 border-b space-y-2">
-      <div className="flex gap-2 flex-wrap">
-        <Input
-          placeholder="Name"
-          className="flex-1 min-w-[140px] h-8 text-sm"
-          {...form.register('name')}
-        />
-        <Input
-          type="number"
-          min="0"
-          step="0.01"
-          placeholder="0.00"
-          className="w-24 h-8 text-sm"
-          {...form.register('amount', {
-            valueAsNumber: true,
-            setValueAs: (v) => (v === '' ? 0 : parseFloat(v)),
-          })}
-        />
-        <Select
-          value={billingCycle}
-          onValueChange={(v) => form.setValue('billingCycle', v as FormValues['billingCycle'])}
-        >
-          <SelectTrigger className="w-32 h-8 text-sm">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {BILLING_CYCLES.map((c) => (
-              <SelectItem key={c} value={c}>{CYCLE_LABELS[c]}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="flex gap-2 flex-wrap">
-        <Input
-          type="date"
-          className="w-36 h-8 text-sm"
-          {...form.register('nextRenewal')}
-        />
-        <Input
-          placeholder="Category"
-          list="inline-supplyline-categories"
-          className="flex-1 min-w-[100px] h-8 text-sm"
-          {...form.register('category')}
-        />
-        <datalist id="inline-supplyline-categories">
-          {categories.map((c) => <option key={c} value={c} />)}
-        </datalist>
-        <Input
-          placeholder="URL (optional)"
-          className="flex-1 min-w-[140px] h-8 text-sm"
-          {...form.register('url')}
-        />
-      </div>
-      <Input
-        placeholder="Notes (optional)"
-        className="h-8 text-sm"
-        {...form.register('notes')}
-      />
-
-      {tags.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {tags.map((tag) => (
-            <button
-              key={tag.id}
-              type="button"
-              onClick={() => toggleTag(tag.id)}
-              className={`rounded-full transition-opacity ${selectedTagIds.includes(tag.id) ? 'opacity-100 ring-2 ring-offset-1' : 'opacity-50'}`}
-              style={{ ['--tw-ring-color' as any]: tag.color }}
+      <form onSubmit={form.handleSubmit(onSubmit)} className="p-4 bg-muted/30 border-b space-y-2">
+        <div className="flex flex-col gap-2 flex-wrap">
+          <Input
+              placeholder="Name"
+              className="grow h-8 text-sm"
+              {...form.register('name')}
+          />
+          <div className="flex flex-col lg:flex-row gap-2">
+            <Input
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                className="h-8 text-sm"
+                {...form.register('amount', {
+                  valueAsNumber: true,
+                  setValueAs: (v) => (v === '' ? 0 : parseFloat(v)),
+                })}
+            />
+            <Select
+                value={billingCycle}
+                onValueChange={(v) => form.setValue('billingCycle', v as FormValues['billingCycle'])}
             >
-              <MarkerBadge marker={tag} />
-            </button>
-          ))}
+              <SelectTrigger size="sm" className="w-full h-8 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {BILLING_CYCLES.map((c) => (
+                    <SelectItem key={c} value={c}>{CYCLE_LABELS[c]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Input
+                type="date"
+                className="h-8 text-sm"
+                {...form.register('nextRenewal')}
+            />
+          </div>
+          <Input
+              placeholder="Category"
+              list="inline-supplyline-categories"
+              className="h-8 text-sm"
+              {...form.register('category')}
+          />
+          <datalist id="inline-supplyline-categories">
+            {categories.map((c) => <option key={c} value={c} />)}
+          </datalist>
+          <Input
+              placeholder="URL (optional)"
+              className="grow h-8 text-sm"
+              {...form.register('url')}
+          />
+          <Input
+              placeholder="Notes (optional)"
+              className="grow h-8 text-sm m-0"
+              {...form.register('notes')}
+          />
         </div>
-      )}
 
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="ghost" size="sm" onClick={onCancel} className="h-7 text-xs">Cancel</Button>
-        <Button type="submit" size="sm" disabled={saving} className="h-7 text-xs">
-          {saving ? 'Saving…' : 'Save'}
-        </Button>
-      </div>
-    </form>
+        <Separator className="my-4" />
+
+        {tags.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {tags.map((tag) => (
+                  <button
+                      key={tag.id}
+                      type="button"
+                      onClick={() => toggleTag(tag.id)}
+                      className={`rounded-full transition-opacity ${selectedTagIds.includes(tag.id) ? 'opacity-100 ring-2 ring-offset-1' : 'opacity-50'}`}
+                      style={{ ['--tw-ring-color' as any]: tag.color }}
+                  >
+                    <MarkerBadge marker={tag} />
+                  </button>
+              ))}
+            </div>
+        )}
+
+        <Separator className="my-4" />
+
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="ghost" size="sm" onClick={onCancel} className="h-7 text-xs">Cancel</Button>
+          <Button type="submit" size="sm" disabled={saving} className="h-7 text-xs">
+            {saving ? 'Saving…' : 'Save'}
+          </Button>
+        </div>
+      </form>
   )
 }

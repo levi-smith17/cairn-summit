@@ -10,7 +10,7 @@ interface ManifestPageProps {
 export default async function ManifestPage({ params }: ManifestPageProps) {
     const { username } = await params
 
-    const [wayfarer, session, wayfarerCount] = await Promise.all([
+    const [wayfarer, session] = await Promise.all([
         prisma.wayfarer.findUnique({
             where: { username },
             include: {
@@ -21,27 +21,28 @@ export default async function ManifestPage({ params }: ManifestPageProps) {
                 landmarks: { orderBy: { startDate: 'desc' } },
                 summits: { orderBy: { date: 'desc' } },
                 pathfinding: { orderBy: { startDate: 'desc' } },
-            },
+            }
         }),
         auth(),
-        prisma.wayfarer.count({ where: { listed: true, username: { not: null } } }),
     ])
 
     if (!wayfarer) notFound()
 
-    const isLoggedIn = !!session?.user
-    const showDirectoryLink = isLoggedIn || wayfarerCount > 1
-
     return (
         <ManifestContent
-            username={username}
             wayfarer={{
+                username: username,
                 name: wayfarer.name,
                 email: wayfarer.email,
-                image: wayfarer.image,
+                avatar: wayfarer.image,
                 defaultTerminology: wayfarer.defaultTerminology,
                 defaultTheme: wayfarer.defaultTheme,
             }}
+            currentWayfarer={session?.user ? {
+                name: session.user.name ?? null,
+                email: session.user.email ?? null,
+                avatar: session.user.image ?? null,
+            } : null}
             origins={wayfarer.origins}
             expeditions={wayfarer.expeditions}
             training={wayfarer.training}
@@ -49,11 +50,6 @@ export default async function ManifestPage({ params }: ManifestPageProps) {
             landmarks={wayfarer.landmarks}
             summits={wayfarer.summits}
             pathfinding={wayfarer.pathfinding}
-            currentUser={session?.user ? {
-                name: session.user.name ?? null,
-                email: session.user.email ?? null,
-                avatar: session.user.image ?? null,
-            } : null}
         />
     )
 }

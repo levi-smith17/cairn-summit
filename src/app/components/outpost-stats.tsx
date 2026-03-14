@@ -1,6 +1,6 @@
 import { MapPin, Users, Wrench } from 'lucide-react'
 
-interface DirectoryStatsProps {
+interface OutpostStatsProps {
   totalWayfarers: number
   topGear: { name: string; count: number }[]
   topLocations: { location: string; count: number }[]
@@ -18,7 +18,7 @@ function StatCard({ title, icon, children }: { title: string; icon: React.ReactN
   )
 }
 
-export function DirectoryStats({ totalWayfarers, topGear, topLocations }: DirectoryStatsProps) {
+export function OutpostStats({ totalWayfarers, topGear, topLocations }: OutpostStatsProps) {
   return (
     <div className="flex flex-col gap-4">
       <StatCard title="Wayfarers" icon={<Users className="h-4 w-4" />}>

@@ -2,8 +2,8 @@ import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import { CairnLockup } from '@/components/cairn-lockup'
-import { DirectoryTable } from './components/directory-table'
-import { DirectoryStats } from './components/directory-stats'
+import { OutpostTable } from './components/outpost-table'
+import { OutpostStats } from './components/outpost-stats'
 import { ManifestFooter } from './manifest/[username]/components/manifest-footer'
 import { PublicHeader } from '@/components/nav/public/public-header'
 
@@ -90,10 +90,10 @@ export default async function HomePage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           <div className="lg:col-span-3 bg-card rounded-xl p-4">
-            <DirectoryTable data={tableData} />
+            <OutpostTable data={tableData} />
           </div>
           <div className="lg:col-span-1">
-            <DirectoryStats
+            <OutpostStats
               totalWayfarers={wayfarers.length}
               topGear={topGear}
               topLocations={topLocations}

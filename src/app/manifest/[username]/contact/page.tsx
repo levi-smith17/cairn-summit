@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/auth'
-import { ManifestStickyHeader } from '../components/sticky-header'
-import { ContactForm } from './contact-form'
+import { ManifestHeader } from '../components/manifest-header'
+import { ContactContent } from './contact-content'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { ManifestFooter } from '../components/manifest-footer'
 
@@ -13,13 +13,12 @@ interface ContactPageProps {
 export default async function ContactPage({ params }: ContactPageProps) {
     const { username } = await params
 
-    const [wayfarer, session, wayfarerCount] = await Promise.all([
+    const [wayfarer, session] = await Promise.all([
         prisma.wayfarer.findUnique({
             where: { username },
             select: { name: true, email: true, image: true, defaultTerminology: true, defaultTheme: true, listed: true },
         }),
         auth(),
-        prisma.wayfarer.count({ where: { listed: true, username: { not: null } } }),
     ])
 
     if (!wayfarer || !wayfarer.listed) notFound()
@@ -28,7 +27,14 @@ export default async function ContactPage({ params }: ContactPageProps) {
         ? wayfarer.name.split(' ').map((n) => n[0]).join('').toUpperCase()
         : wayfarer.email?.[0].toUpperCase() ?? '?'
 
-    const currentUser = session?.user ? {
+    const selectedWayfarer = {
+        username: username,
+        name: wayfarer.name ?? null,
+        email: wayfarer.email ?? null,
+        avatar: wayfarer.image ?? null,
+    }
+
+    const currentWayfarer = session?.user ? {
         name: session.user.name ?? null,
         email: session.user.email ?? null,
         avatar: session.user.image ?? null,
@@ -36,12 +42,11 @@ export default async function ContactPage({ params }: ContactPageProps) {
 
     return (
         <div className="relative">
-            <ManifestStickyHeader
-                username={username}
-                wayfarer={wayfarer}
+            <ManifestHeader
+                wayfarer={selectedWayfarer}
                 terminology={wayfarer.defaultTerminology}
                 showAvatar={false}
-                currentUser={currentUser}
+                currentWayfarer={currentWayfarer}
                 backHref={`/manifest/${username}`}
             />
 
@@ -61,7 +66,7 @@ export default async function ContactPage({ params }: ContactPageProps) {
                     </div>
                 </div>
 
-                <ContactForm username={username} wayfarerName={wayfarer.name} />
+                <ContactContent username={username} wayfarerName={wayfarer.name} />
 
                 <ManifestFooter />
             </div>

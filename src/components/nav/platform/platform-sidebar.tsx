@@ -5,9 +5,9 @@ import {
   Bookmark,
   ChevronRight,
   Database,
+  Earth,
   Factory,
   Folder,
-  Globe,
   LayoutDashboard,
   LayoutList,
   Mail,
@@ -19,6 +19,7 @@ import {
 import { useRouter, usePathname } from "next/navigation"
 import { CairnLockup } from '@/components/cairn-lockup'
 import { CairnLogo } from '@/components/cairn-logo'
+import { NavFooter } from '@/components/nav/footer'
 import { PlatformWayfarerMenu } from "@/components/nav/platform/platform-wayfarer-menu"
 import { useTerminology } from '@/contexts/terminology-context'
 import {
@@ -42,6 +43,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import { type LucideIcon } from "lucide-react"
+import { type Terms } from '@/lib/terminology'
 
 interface NavSubItem {
   title: string
@@ -57,7 +59,7 @@ interface NavItem {
   children?: NavSubItem[]
 }
 
-function buildNavItems(terms: import('@/lib/terminology').Terms): { group: string; items: NavItem[] }[] {
+function buildNavItems(terms: Terms): { group: string; items: NavItem[] }[] {
   return [
     {
       group: 'Navigation',
@@ -88,7 +90,7 @@ function buildNavItems(terms: import('@/lib/terminology').Terms): { group: strin
           children: [
             { title: 'Facilities', url: '/starfield/facilities', icon: Factory },
             { title: 'Resources', url: '/starfield/resources', icon: Database },
-            { title: 'Systems', url: '/starfield/systems', icon: Globe },
+            { title: 'Systems', url: '/starfield/systems', icon: Earth },
           ],
         },
       ],
@@ -96,95 +98,106 @@ function buildNavItems(terms: import('@/lib/terminology').Terms): { group: strin
   ]
 }
 
-interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
-  isAdmin?: boolean
+interface PlatformSidebarProps extends React.ComponentProps<typeof Sidebar> {
   wayfarer: {
+    username: string | null
     name: string | null
     email: string | null
     avatar: string | null
+    isAdmin: boolean
   }
+  terms?: Terms
 }
 
-export function AppSidebar({ wayfarer, isAdmin = false, ...props }: AppSidebarProps) {
+export function PlatformSidebar({ wayfarer, terms, ...props }: PlatformSidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
   const { state } = useSidebar()
+  const { isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === 'collapsed'
   const navItems = buildNavItems(useTerminology().terms)
 
-  return (
-    <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
-        <div className="flex items-center justify-center py-2">
-          {collapsed ? (
-            <CairnLogo className="h-8 w-8" />
-          ) : (
-            <CairnLockup className="w-full" />
-          )}
-        </div>
-      </SidebarHeader>
-      <SidebarContent>
-        {navItems.filter(({ group }) => group !== 'Apps' || isAdmin).map(({ group, items }) => (
-          <SidebarGroup key={group}>
-            <SidebarGroupLabel>{group}</SidebarGroupLabel>
-            <SidebarMenu>
-              {items.map(({ title, url, icon: Icon, tooltip, children }) => {
-                const isActive = children
-                  ? pathname.startsWith(url)
-                  : pathname === url
+  const handleClick = (url : string) => {
+    router.push(url);
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
 
-                if (children) {
-                  return (
-                    <Collapsible key={url} defaultOpen={isActive} className="group/collapsible">
-                      <SidebarMenuItem>
-                        <CollapsibleTrigger asChild>
-                          <SidebarMenuButton tooltip={tooltip} isActive={isActive}>
+  return (
+      <Sidebar collapsible="icon" {...props}>
+        <SidebarHeader>
+          <div className="flex items-center justify-center py-2">
+            {collapsed ? (
+                <CairnLogo className="h-8 w-8" />
+            ) : (
+                <CairnLockup className="w-full" />
+            )}
+          </div>
+        </SidebarHeader>
+        <SidebarContent>
+          {navItems.filter(({ group }) => group !== 'Apps' || wayfarer.isAdmin).map(({ group, items }) => (
+              <SidebarGroup key={group}>
+                <SidebarGroupLabel>{group}</SidebarGroupLabel>
+                <SidebarMenu>
+                  {items.map(({ title, url, icon: Icon, tooltip, children }) => {
+                    const isActive = children
+                        ? pathname.startsWith(url)
+                        : pathname === url
+
+                    if (children) {
+                      return (
+                          <Collapsible key={url} defaultOpen={isActive} className="group/collapsible">
+                            <SidebarMenuItem>
+                              <CollapsibleTrigger asChild>
+                                <SidebarMenuButton tooltip={tooltip} isActive={isActive}>
+                                  <Icon className="h-4 w-4" />
+                                  <span>{title}</span>
+                                  <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                                </SidebarMenuButton>
+                              </CollapsibleTrigger>
+                              <CollapsibleContent>
+                                <SidebarMenuSub>
+                                  {children.map(child => (
+                                      <SidebarMenuSubItem key={child.url}>
+                                        <SidebarMenuSubButton
+                                            onClick={() => handleClick(child.url)}
+                                            isActive={pathname === child.url}
+                                        >
+                                          {child.icon && <child.icon className="h-4 w-4" />}
+                                          {child.title}
+                                        </SidebarMenuSubButton>
+                                      </SidebarMenuSubItem>
+                                  ))}
+                                </SidebarMenuSub>
+                              </CollapsibleContent>
+                            </SidebarMenuItem>
+                          </Collapsible>
+                      )
+                    }
+
+                    return (
+                        <SidebarMenuItem key={url}>
+                          <SidebarMenuButton
+                              onClick={() => handleClick(url)}
+                              tooltip={tooltip}
+                              isActive={isActive}
+                          >
                             <Icon className="h-4 w-4" />
                             <span>{title}</span>
-                            <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
                           </SidebarMenuButton>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent>
-                          <SidebarMenuSub>
-                            {children.map(child => (
-                              <SidebarMenuSubItem key={child.url}>
-                                <SidebarMenuSubButton
-                                  onClick={() => router.push(child.url)}
-                                  isActive={pathname === child.url}
-                                >
-                                  {child.icon && <child.icon className="h-4 w-4" />}
-                                  {child.title}
-                                </SidebarMenuSubButton>
-                              </SidebarMenuSubItem>
-                            ))}
-                          </SidebarMenuSub>
-                        </CollapsibleContent>
-                      </SidebarMenuItem>
-                    </Collapsible>
-                  )
-                }
-
-                return (
-                  <SidebarMenuItem key={url}>
-                    <SidebarMenuButton
-                      onClick={() => router.push(url)}
-                      tooltip={tooltip}
-                      isActive={isActive}
-                    >
-                      <Icon className="h-4 w-4" />
-                      <span>{title}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )
-              })}
-            </SidebarMenu>
-          </SidebarGroup>
-        ))}
-      </SidebarContent>
-      <SidebarFooter>
-        <PlatformWayfarerMenu wayfarer={wayfarer} />
-      </SidebarFooter>
-      <SidebarRail />
-    </Sidebar>
+                        </SidebarMenuItem>
+                    )
+                  })}
+                </SidebarMenu>
+              </SidebarGroup>
+          ))}
+        </SidebarContent>
+        <SidebarFooter>
+          <PlatformWayfarerMenu wayfarer={wayfarer} terms={terms} />
+          <NavFooter />
+        </SidebarFooter>
+        <SidebarRail />
+      </Sidebar>
   )
 }

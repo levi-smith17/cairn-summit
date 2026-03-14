@@ -16,7 +16,7 @@ import {
 import { type Terms } from '@/lib/terminology'
 
 interface PublicWayfarerMenuProps {
-    currentUser: {
+    wayfarer: {
         name: string | null
         email: string | null
         avatar: string | null
@@ -24,21 +24,21 @@ interface PublicWayfarerMenuProps {
     terms?: Terms
 }
 
-export function PublicWayfarerMenu({ currentUser, terms }: PublicWayfarerMenuProps) {
+export function PublicWayfarerMenu({ wayfarer, terms }: PublicWayfarerMenuProps) {
     const router = useRouter()
 
-    const initials = currentUser?.name
-        ? currentUser.name.split(' ').map(n => n[0]).join('').toUpperCase()
-        : currentUser?.email?.[0].toUpperCase() ?? '?'
+    const initials = wayfarer?.name
+        ? wayfarer.name.split(' ').map(n => n[0]).join('').toUpperCase()
+        : wayfarer?.email?.[0].toUpperCase() ?? '?'
 
     return (
         <>
-            {currentUser ? (
+            {wayfarer ? (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="rounded-full">
                             <Avatar className="h-8 w-8">
-                                <AvatarImage src={currentUser.avatar ?? undefined} />
+                                <AvatarImage src={wayfarer.avatar ?? undefined} />
                                 <AvatarFallback className="text-xs">{initials}</AvatarFallback>
                             </Avatar>
                         </Button>
@@ -46,9 +46,9 @@ export function PublicWayfarerMenu({ currentUser, terms }: PublicWayfarerMenuPro
                     <DropdownMenuContent align="end" className="w-64">
                         <DropdownMenuLabel>
                             <div className="flex flex-col gap-1">
-                                <span className="font-medium">{currentUser.name ?? 'Wayfarer'}</span>
+                                <span className="font-medium">{wayfarer.name ?? 'Wayfarer'}</span>
                                 <span className="text-xs text-muted-foreground font-normal truncate">
-                                    {currentUser.email}
+                                    {wayfarer.email}
                                 </span>
                             </div>
                         </DropdownMenuLabel>

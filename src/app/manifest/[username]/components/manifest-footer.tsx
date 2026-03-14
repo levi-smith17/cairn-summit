@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { NavFooter } from '@/components/nav/footer'
 
 export function ManifestFooter() {
     return (
@@ -9,19 +10,7 @@ export function ManifestFooter() {
                     Cairn
                 </Link>
             </p>
-            <p className="text-xs text-muted-foreground">
-                <Link href="/privacy" className="underline underline-offset-4 hover:text-foreground">
-                    Privacy Policy
-                </Link>
-                {' · '}
-                <Link href="/terms" className="underline underline-offset-4 hover:text-foreground">
-                    Terms of Service
-                </Link>
-                {' · '}
-                <Link href="/privacy-contact" className="underline underline-offset-4 hover:text-foreground">
-                    Privacy Request
-                </Link>
-            </p>
+            <NavFooter />
         </div>
     )
 }

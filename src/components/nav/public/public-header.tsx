@@ -9,7 +9,7 @@ import { type Terms } from '@/lib/terminology'
 import Link from "next/link";
 
 interface PublicHeaderProps {
-    currentUser: {
+    wayfarer: {
         name: string | null
         email: string | null
         avatar: string | null
@@ -18,7 +18,7 @@ interface PublicHeaderProps {
     terms?: Terms
 }
 
-export function PublicHeader({ currentUser, terminologyToggle, terms }: PublicHeaderProps) {
+export function PublicHeader({ wayfarer, terminologyToggle, terms }: PublicHeaderProps) {
     return (
         <div className="flex items-center gap-2">
             {/* Button group */}
@@ -46,7 +46,7 @@ export function PublicHeader({ currentUser, terminologyToggle, terms }: PublicHe
             </div>
 
             {/* User menu or login button */}
-            <PublicWayfarerMenu currentUser={currentUser} terms={terms} />
+            <PublicWayfarerMenu wayfarer={wayfarer} terms={terms} />
         </div>
     )
 }
