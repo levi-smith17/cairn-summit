@@ -6,7 +6,7 @@ interface FooterNavProps {
 
 export function FooterNav({ showCairn = false }: FooterNavProps) {
     return (
-        <div className="flex flex-col items-center gap-1.5 pt-8 print:hidden">
+        <div className={`flex flex-col gap-1.5 ${showCairn ? 'pt-8 items-center' : ''} print:hidden`}>
             {showCairn &&
                 <p className="text-xs text-muted-foreground">
                     Built with{' '}
