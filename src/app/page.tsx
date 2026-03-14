@@ -28,7 +28,7 @@ export default async function HomePage() {
     redirect(`/manifest/${wayfarers[0].username}`)
   }
 
-  const currentUser = session?.user ? {
+  const currentWayfarer = session?.user ? {
     name: session.user.name ?? null,
     email: session.user.email ?? null,
     avatar: session.user.image ?? null,
@@ -76,7 +76,7 @@ export default async function HomePage() {
       {/* Nav bar */}
       <header className="sticky top-0 z-10 flex items-center justify-between bg-header px-6 py-3 border-b">
         <CairnLockup className="h-8" />
-        <PublicHeader currentUser={currentUser} />
+        <PublicHeader wayfarer={currentWayfarer} />
       </header>
 
       {/* Content */}
