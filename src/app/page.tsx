@@ -2,9 +2,9 @@ import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import { CairnLockup } from '@/components/cairn-lockup'
+import { FooterNav } from '@/components/nav/footer'
 import { OutpostTable } from './components/outpost-table'
 import { OutpostStats } from './components/outpost-stats'
-import { ManifestFooter } from './manifest/[username]/components/manifest-footer'
 import { PublicHeader } from '@/components/nav/public/public-header'
 
 export default async function HomePage() {
@@ -101,7 +101,7 @@ export default async function HomePage() {
           </div>
         </div>
       </div>
-      <ManifestFooter />
+      <FooterNav showCairn={true} />
     </div>
   )
 }

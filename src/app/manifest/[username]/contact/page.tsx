@@ -1,10 +1,10 @@
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/auth'
-import { ManifestHeader } from '../components/manifest-header'
 import { ContactContent } from './contact-content'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { ManifestFooter } from '../components/manifest-footer'
+import { FooterNav } from '@/components/nav/footer'
+import { ManifestHeader } from '../components/manifest-header'
 
 interface ContactPageProps {
     params: Promise<{ username: string }>
@@ -68,7 +68,7 @@ export default async function ContactPage({ params }: ContactPageProps) {
 
                 <ContactContent username={username} wayfarerName={wayfarer.name} />
 
-                <ManifestFooter />
+                <FooterNav showCairn={true} />
             </div>
         </div>
     )

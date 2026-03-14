@@ -3,12 +3,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTheme } from 'next-themes'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { FooterNav } from '@/components/nav/footer'
 import { Separator } from '@/components/ui/separator'
 import { RichTextContent } from '@/components/ui/rich-text-content'
 import { getTerms, type TerminologyStyle } from '@/lib/terminology'
 import { ManifestContact } from "../components/manifest-contact";
 import { ManifestHeader } from '../components/manifest-header'
-import { ManifestFooter } from '../components/manifest-footer'
 import { format } from 'date-fns'
 import { formatAge } from '@/lib/format-age'
 import {
@@ -271,7 +271,7 @@ export function JourneyContent({
                     )
                 })()}
 
-                <ManifestFooter />
+                <FooterNav showCairn={true} />
             </div>
         </div>
     )

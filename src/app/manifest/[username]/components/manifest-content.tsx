@@ -8,13 +8,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import { ExternalLink } from 'lucide-react'
+import { FooterNav } from "@/components/nav/footer";
 import { RichTextContent } from '@/components/ui/rich-text-content'
 import { Timeline } from '@/components/ui/timeline'
 import { format } from 'date-fns'
 import { GearChart } from './gear-chart'
 import { ManifestContact } from './manifest-contact'
 import { ManifestHeader } from './manifest-header'
-import { ManifestFooter } from './manifest-footer'
 
 const formatDate = (date: Date) => format(date, 'MMM yyyy')
 
@@ -373,7 +373,7 @@ export function ManifestContent({
                     </Section>
                 )}
 
-                <ManifestFooter />
+                <FooterNav showCairn={true} />
             </div>
         </div>
     )

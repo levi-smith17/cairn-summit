@@ -19,7 +19,7 @@ import {
 import { useRouter, usePathname } from "next/navigation"
 import { CairnLockup } from '@/components/cairn-lockup'
 import { CairnLogo } from '@/components/cairn-logo'
-import { NavFooter } from '@/components/nav/footer'
+import { FooterNav } from '@/components/nav/footer'
 import { PlatformWayfarerMenu } from "@/components/nav/platform/platform-wayfarer-menu"
 import { useTerminology } from '@/contexts/terminology-context'
 import {
@@ -195,7 +195,7 @@ export function PlatformSidebar({ wayfarer, terms, ...props }: PlatformSidebarPr
         </SidebarContent>
         <SidebarFooter>
           <PlatformWayfarerMenu wayfarer={wayfarer} terms={terms} />
-          <NavFooter />
+          <FooterNav />
         </SidebarFooter>
         <SidebarRail />
       </Sidebar>
