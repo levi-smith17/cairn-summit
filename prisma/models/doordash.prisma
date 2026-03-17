@@ -1,0 +1,26 @@
+// ─── Doordash ─────────────────────────────────────────────────────────────────
+
+model DdSession {
+  id             String    @id @default(cuid())
+  userId         String
+  date           DateTime
+  gasPrice       Decimal   @db.Decimal(10, 4)
+  mpg            Decimal   @db.Decimal(10, 2)
+  startOdometer  Decimal?  @db.Decimal(10, 1)
+  endOdometer    Decimal?  @db.Decimal(10, 1)
+  notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  orders         DdOrder[]
+}
+
+model DdOrder {
+  id            String    @id @default(cuid())
+  sessionId     String
+  deliveryMiles Decimal   @db.Decimal(10, 2)
+  pickupMiles   Decimal?  @db.Decimal(10, 2)
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  session       DdSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}

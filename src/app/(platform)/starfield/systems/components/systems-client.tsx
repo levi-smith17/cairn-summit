@@ -86,11 +86,11 @@ export function SystemsClient({ systems }: SystemsClientProps) {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {deleteTarget?.type === 'system' ? 'Delete System' : 'Delete Planet'}
+              {deleteTarget?.type === 'system' ? 'Remove System' : 'Remove Planet'}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{deleteTarget?.name}"?
-              {deleteTarget?.type === 'system' && ' All planets in this system will also be deleted.'}
+              Are you sure you want to remove "{deleteTarget?.name}"?
+              {deleteTarget?.type === 'system' && ' All planets in this system will also be removed.'}
               {' '}This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -100,7 +100,7 @@ export function SystemsClient({ systems }: SystemsClientProps) {
               onClick={handleConfirmDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              Remove
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

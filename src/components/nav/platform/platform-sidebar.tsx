@@ -3,6 +3,7 @@
 import { useSidebar } from "@/components/ui/sidebar"
 import {
   Bookmark,
+  Car,
   ChevronRight,
   Database,
   Factory,
@@ -80,6 +81,12 @@ function buildNavItems(terms: import('@/lib/terminology').Terms): { group: strin
     {
       group: 'Apps',
       items: [
+        {
+          title: 'Doordash',
+          url: '/doordash',
+          icon: Car,
+          tooltip: 'Doordash',
+        },
         {
           title: 'Starfield',
           url: '/starfield',

@@ -6,16 +6,16 @@ import { PlatformHeader } from '@/components/nav/platform/platform-header'
 import { Search, X } from 'lucide-react'
 import { ResourceList } from './resource-list'
 import { ResourceInfo } from './resource-detail'
-import { ResourceDrawer } from './drawers/resource-drawer'
+import { ResourceForm } from './resource-form'
 import { deleteResource } from '@/actions/starfield'
 import {
-  AlertDialog, 
-  AlertDialogAction, 
-  AlertDialogCancel, 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription, 
-  AlertDialogFooter, 
-  AlertDialogHeader, 
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 
@@ -28,7 +28,7 @@ export function ResourcesClient({ resources, resourceTypes }: ResourcesClientPro
   const router = useRouter()
   const searchParams = useSearchParams()
   const [search, setSearch] = useState('')
-  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [mode, setMode] = useState<'view' | 'add' | 'edit'>('view')
   const [editingResource, setEditingResource] = useState<any>(null)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
 
@@ -49,6 +49,7 @@ export function ResourcesClient({ resources, resourceTypes }: ResourcesClientPro
     const params = new URLSearchParams(searchParams.toString())
     params.set('resource', id)
     router.push(`?${params.toString()}`, { scroll: false })
+    setMode('view')
   }
 
   function clearResource() {
@@ -59,12 +60,17 @@ export function ResourcesClient({ resources, resourceTypes }: ResourcesClientPro
 
   function handleAdd() {
     setEditingResource(null)
-    setDrawerOpen(true)
+    setMode('add')
   }
 
   function handleEdit(resource: any) {
     setEditingResource(resource)
-    setDrawerOpen(true)
+    setMode('edit')
+  }
+
+  function handleFormDone() {
+    setMode('view')
+    setEditingResource(null)
   }
 
   async function handleConfirmDelete() {
@@ -73,6 +79,8 @@ export function ResourcesClient({ resources, resourceTypes }: ResourcesClientPro
     if (selectedResourceId === deleteTarget.id) clearResource()
     setDeleteTarget(null)
   }
+
+  const showForm = mode === 'add' || mode === 'edit'
 
   return (
     <>
@@ -97,7 +105,7 @@ export function ResourcesClient({ resources, resourceTypes }: ResourcesClientPro
         </div>
 
         <div className="flex flex-1 gap-4 overflow-hidden min-h-0">
-          <div className={`${selectedResource ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-1/3 rounded-lg border border-border bg-card overflow-hidden`}>
+          <div className={`${(selectedResource || showForm) ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-1/3 rounded-lg border border-border bg-card overflow-hidden`}>
             <ResourceList
               resources={filteredResources}
               resourceTypes={resourceTypes}
@@ -108,31 +116,33 @@ export function ResourcesClient({ resources, resourceTypes }: ResourcesClientPro
               onDelete={(id, name) => setDeleteTarget({ id, name })}
             />
           </div>
-          <div className={`${selectedResource ? 'flex' : 'hidden md:flex'} flex-col flex-1 rounded-lg border border-border bg-card overflow-hidden`}>
-            <ResourceInfo
-              resource={selectedResource}
-              onBack={clearResource}
-              onEdit={handleEdit}
-              onDelete={(id, name) => setDeleteTarget({ id, name })}
-            />
+          <div className={`${(selectedResource || showForm) ? 'flex' : 'hidden md:flex'} flex-col flex-1 rounded-lg border border-border bg-card overflow-hidden`}>
+            {showForm ? (
+              <ResourceForm
+                key={editingResource?.id ?? 'new'}
+                resource={editingResource}
+                resources={resources}
+                resourceTypes={resourceTypes}
+                onDone={handleFormDone}
+              />
+            ) : (
+              <ResourceInfo
+                resource={selectedResource}
+                onBack={clearResource}
+                onEdit={handleEdit}
+                onDelete={(id, name) => setDeleteTarget({ id, name })}
+              />
+            )}
           </div>
         </div>
       </div>
 
-      <ResourceDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        resource={editingResource}
-        resources={resources}
-        resourceTypes={resourceTypes}
-      />
-
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Resource</AlertDialogTitle>
+            <AlertDialogTitle>Remove Resource</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{deleteTarget?.name}"? This cannot be undone.
+              Are you sure you want to remove "{deleteTarget?.name}"? This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -141,7 +151,7 @@ export function ResourcesClient({ resources, resourceTypes }: ResourcesClientPro
               onClick={handleConfirmDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              Remove
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
