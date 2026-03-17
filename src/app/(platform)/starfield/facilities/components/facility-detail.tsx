@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 function planetDisplay(planet: any) {
   return `${planet.name} (${planet.system.name})`
@@ -249,9 +250,16 @@ export function FacilityDetail({ facility, onBack, onAddResource, onEditResource
             <p className="text-xs text-muted-foreground">{facility.planet.name} ({facility.planet.system.name})</p>
           </div>
         </div>
-        <Button size="sm" variant="outline" onClick={() => onAddResource(facility.id)}>
-          <Plus className="h-3.5 w-3.5 mr-1" /> Resource
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onAddResource(facility.id)}>
+              <Plus className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            Add resource
+          </TooltipContent>
+        </Tooltip>
       </div>
 
       <div className="flex-1 overflow-y-auto">

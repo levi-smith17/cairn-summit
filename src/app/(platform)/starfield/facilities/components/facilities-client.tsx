@@ -1,13 +1,13 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { PlatformHeader } from '@/components/nav/platform/platform-header'
-import { FacilityDrawer } from './drawers/facility-drawer'
 import { FacilityList } from './facility-list'
-import { FacilityResourceDrawer } from './drawers/facility-resource-drawer'
-import { Search, X } from 'lucide-react'
 import { FacilityDetail } from './facility-detail'
+import { FacilityForm } from './facility-form'
+import { FacilityResourceForm } from './facility-resource-form'
+import { Search, X } from 'lucide-react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,7 +19,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { deleteFacility, deleteFacilityResource } from '@/actions/starfield'
-import { useSearchParams } from 'next/navigation'
+
+type Mode = 'view' | 'add-facility' | 'edit-facility' | 'add-resource' | 'edit-resource'
 
 interface FacilitiesClientProps {
   facilities: any[]
@@ -29,10 +30,10 @@ interface FacilitiesClientProps {
 
 export function FacilitiesClient({ facilities, resources, systems }: FacilitiesClientProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [search, setSearch] = useState('')
-  const [facilityDrawerOpen, setFacilityDrawerOpen] = useState(false)
+  const [mode, setMode] = useState<Mode>('view')
   const [editingFacility, setEditingFacility] = useState<any>(null)
-  const [resourceDrawerOpen, setResourceDrawerOpen] = useState(false)
   const [editingResource, setEditingResource] = useState<any>(null)
   const [defaultFacilityId, setDefaultFacilityId] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'facility' | 'resource'; id: string; name: string } | null>(null)
@@ -42,14 +43,11 @@ export function FacilitiesClient({ facilities, resources, systems }: FacilitiesC
     const q = search.toLowerCase()
     return facilities
       .map(facility => {
-        // Check if facility itself matches
         const facilityMatches =
           facility.name.toLowerCase().includes(q) ||
           facility.abbreviation.toLowerCase().includes(q) ||
           facility.planet.name.toLowerCase().includes(q) ||
           facility.planet.system.name.toLowerCase().includes(q)
-
-        // Filter resources that match
         const matchingResources = facility.resources.filter((fr: any) =>
           fr.resource.name.toLowerCase().includes(q) ||
           fr.resource.abbreviation.toLowerCase().includes(q) ||
@@ -60,7 +58,6 @@ export function FacilitiesClient({ facilities, resources, systems }: FacilitiesC
           fr.subfacility3?.name.toLowerCase().includes(q) ||
           fr.relay?.name.toLowerCase().includes(q)
         )
-
         if (facilityMatches) return { ...facility, _forceOpen: true }
         if (matchingResources.length > 0) return { ...facility, resources: matchingResources, _forceOpen: true }
         return null
@@ -68,7 +65,6 @@ export function FacilitiesClient({ facilities, resources, systems }: FacilitiesC
       .filter(Boolean)
   }, [facilities, search])
 
-  const searchParams = useSearchParams()
   const selectedFacilityId = searchParams.get('facility')
   const selectedFacility = filteredFacilities.find((f: any) => f.id === selectedFacilityId) ?? null
 
@@ -76,6 +72,7 @@ export function FacilitiesClient({ facilities, resources, systems }: FacilitiesC
     const params = new URLSearchParams(searchParams.toString())
     params.set('facility', id)
     router.push(`?${params.toString()}`, { scroll: false })
+    setMode('view')
   }
 
   function clearFacility() {
@@ -86,35 +83,46 @@ export function FacilitiesClient({ facilities, resources, systems }: FacilitiesC
 
   function handleAddFacility() {
     setEditingFacility(null)
-    setFacilityDrawerOpen(true)
+    setMode('add-facility')
+  }
+
+  function handleEditFacility(facility: any) {
+    setEditingFacility(facility)
+    setMode('edit-facility')
   }
 
   function handleAddResource(facilityId: string) {
     setEditingResource(null)
     setDefaultFacilityId(facilityId)
-    setResourceDrawerOpen(true)
+    setMode('add-resource')
   }
 
   function handleEditResource(resource: any) {
     setEditingResource(resource)
     setDefaultFacilityId(null)
-    setResourceDrawerOpen(true)
+    setMode('edit-resource')
   }
 
-  function handleEditFacility(facility: any) {
-    setEditingFacility(facility)
-    setFacilityDrawerOpen(true)
+  function handleFormDone() {
+    setMode('view')
+    setEditingFacility(null)
+    setEditingResource(null)
+    setDefaultFacilityId(null)
   }
 
   async function handleConfirmDelete() {
     if (!deleteTarget) return
     if (deleteTarget.type === 'facility') {
       await deleteFacility(deleteTarget.id)
+      if (selectedFacilityId === deleteTarget.id) clearFacility()
     } else {
       await deleteFacilityResource(deleteTarget.id)
     }
     setDeleteTarget(null)
   }
+
+  const showForm = mode !== 'view'
+  const showRight = !!selectedFacility || showForm
 
   return (
     <>
@@ -139,8 +147,7 @@ export function FacilitiesClient({ facilities, resources, systems }: FacilitiesC
         </div>
 
         <div className="flex flex-1 gap-4 overflow-hidden min-h-0">
-          {/* Left column — facility list */}
-          <div className={`${selectedFacility ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-1/3 rounded-lg border border-border bg-card overflow-hidden`}>
+          <div className={`${showRight ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-1/3 rounded-lg border border-border bg-card overflow-hidden`}>
             <FacilityList
               facilities={filteredFacilities}
               selectedFacilityId={selectedFacilityId}
@@ -151,46 +158,47 @@ export function FacilitiesClient({ facilities, resources, systems }: FacilitiesC
             />
           </div>
 
-          {/* Right column — resource detail */}
-          <div className={`${selectedFacility ? 'flex' : 'hidden md:flex'} flex-col flex-1 rounded-lg border border-border bg-card overflow-hidden`}>
-            <FacilityDetail
-              facility={selectedFacility}
-              onBack={clearFacility}
-              onAddResource={handleAddResource}
-              onEditResource={handleEditResource}
-              onDeleteResource={(id, name) => setDeleteTarget({ type: 'resource', id, name })}
-            />
+          <div className={`${showRight ? 'flex' : 'hidden md:flex'} flex-col flex-1 rounded-lg border border-border bg-card overflow-hidden`}>
+            {mode === 'add-facility' || mode === 'edit-facility' ? (
+              <FacilityForm
+                key={editingFacility?.id ?? 'new'}
+                facility={editingFacility}
+                systems={systems}
+                onDone={handleFormDone}
+              />
+            ) : mode === 'add-resource' || mode === 'edit-resource' ? (
+              <FacilityResourceForm
+                key={editingResource?.id ?? defaultFacilityId ?? 'new'}
+                facilityResource={editingResource}
+                facilities={facilities}
+                resources={resources}
+                systems={systems}
+                defaultFacilityId={defaultFacilityId}
+                onDone={handleFormDone}
+              />
+            ) : (
+              <FacilityDetail
+                facility={selectedFacility}
+                onBack={clearFacility}
+                onAddResource={handleAddResource}
+                onEditResource={handleEditResource}
+                onDeleteResource={(id, name) => setDeleteTarget({ type: 'resource', id, name })}
+              />
+            )}
           </div>
         </div>
       </div>
-
-
-      <FacilityDrawer
-        open={facilityDrawerOpen}
-        onClose={() => setFacilityDrawerOpen(false)}
-        facility={editingFacility}
-        systems={systems}
-      />
-
-      <FacilityResourceDrawer
-        open={resourceDrawerOpen}
-        onClose={() => setResourceDrawerOpen(false)}
-        facilityResource={editingResource}
-        facilities={facilities}
-        resources={resources}
-        systems={systems}
-        defaultFacilityId={defaultFacilityId}
-      />
 
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {deleteTarget?.type === 'facility' ? 'Delete Facility' : 'Remove Resource'}
+              {deleteTarget?.type === 'facility' ? 'Remove Facility' : 'Remove Resource'}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to {deleteTarget?.type === 'facility' ? 'delete' : 'remove'} "{deleteTarget?.name}"?
-              {deleteTarget?.type === 'facility' && ' All resources in this facility will be deleted.'} This cannot be undone.
+              Are you sure you want to remove "{deleteTarget?.name}"?
+              {deleteTarget?.type === 'facility' && ' All resources in this facility will also be removed.'}
+              {' '}This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -199,7 +207,7 @@ export function FacilitiesClient({ facilities, resources, systems }: FacilitiesC
               onClick={handleConfirmDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              Remove
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

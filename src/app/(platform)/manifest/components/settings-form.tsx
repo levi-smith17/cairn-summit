@@ -65,9 +65,10 @@ interface SettingsFormProps {
         listed: boolean
         customDomain: string | null
     }
+    isAdmin?: boolean
 }
 
-export function SettingsForm({ defaultValues }: SettingsFormProps) {
+export function SettingsForm({ defaultValues, isAdmin }: SettingsFormProps) {
     const { saving, saved, error, handleSubmit } = useFormStatus()
     const [deleteOpen, setDeleteOpen] = useState(false)
     const [confirmText, setConfirmText] = useState('')
@@ -139,6 +140,7 @@ export function SettingsForm({ defaultValues }: SettingsFormProps) {
                     )}
                 />
 
+                {isAdmin && (
                 <FormField
                     control={form.control}
                     name="customDomain"
@@ -160,6 +162,7 @@ export function SettingsForm({ defaultValues }: SettingsFormProps) {
                         </FormItem>
                     )}
                 />
+                )}
 
                 <FormField
                     control={form.control}

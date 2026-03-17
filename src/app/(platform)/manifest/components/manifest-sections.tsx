@@ -54,9 +54,10 @@ interface ManifestSectionsProps {
         defaultTheme: 'LIGHT' | 'DARK' | 'SYSTEM'
         customDomain: string | null
     }
+    isAdmin?: boolean
 }
 
-export function ManifestSections({ origins, expeditions, training, gear, landmarks, summits, pathfinding, companions, settings }: ManifestSectionsProps) {
+export function ManifestSections({ origins, expeditions, training, gear, landmarks, summits, pathfinding, companions, settings, isAdmin }: ManifestSectionsProps) {
     const [active, setActive] = useState<string | null>(null)
     const [adding, setAdding] = useState(false)
     const { saving, saved, error, handleSubmit } = useFormStatus()
@@ -102,7 +103,7 @@ export function ManifestSections({ origins, expeditions, training, gear, landmar
             case 'summits':     return <SummitsForm summits={summits} adding={adding} setAdding={setAdding} saving={saving} saved={saved} error={error} handleSubmit={handleSubmit} />
             case 'pathfinding': return <PathfindingForm pathfinding={pathfinding} adding={adding} setAdding={setAdding} saving={saving} saved={saved} error={error} handleSubmit={handleSubmit} />
             case 'companions':  return <CompanionsForm companions={companions} adding={adding} setAdding={setAdding} saving={saving} saved={saved} error={error} handleSubmit={handleSubmit} />
-            case 'settings':    return <SettingsForm defaultValues={settings} />
+            case 'settings':    return <SettingsForm defaultValues={settings} isAdmin={isAdmin} />
         }
     }
 
