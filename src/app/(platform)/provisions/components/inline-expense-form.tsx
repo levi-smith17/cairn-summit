@@ -7,13 +7,14 @@ import { z } from 'zod'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { MarkerBadge } from '@/app/(platform)/waypoints/components/marker-badge'
+import { Separator } from '@/components/ui/separator'
 import { saveExpense } from '@/actions/expenses'
 import { useFormStatus } from '@/hooks/use-form-status'
 import { Paperclip, X } from 'lucide-react'
 
 const schema = z.object({
   name: z.string().min(1, 'Required'),
-  amount: z.number().positive('Must be > 0'),
+  amount: z.number().min(0, 'Must be ≥ 0'),
   category: z.string().min(1, 'Required'),
   date: z.string().min(1, 'Required'),
   notes: z.string().optional(),
@@ -58,7 +59,7 @@ export function InlineExpenseForm({ expense, defaultCategory, categories, tags, 
     resolver: zodResolver(schema),
     defaultValues: {
       name: expense?.name ?? '',
-      amount: expense?.amount ?? undefined,
+      amount: expense?.amount ?? 0,
       category: expense?.category ?? defaultCategory ?? '',
       date: expense?.date?.split('T')[0] ?? new Date().toISOString().split('T')[0],
       notes: expense?.notes ?? '',
@@ -106,32 +107,35 @@ export function InlineExpenseForm({ expense, defaultCategory, categories, tags, 
   }
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="px-4 py-3 bg-muted/30 border-b space-y-2">
-      <div className="flex gap-2 flex-wrap">
+    <form onSubmit={form.handleSubmit(onSubmit)} className="p-4 bg-muted/30 border-b space-y-2">
+      <div className="flex flex-col gap-2 flex-wrap">
         <Input
           placeholder="Description"
-          className="flex-1 min-w-[140px] h-8 text-sm"
+          className="grow h-8 text-sm"
           {...form.register('name')}
         />
-        <Input
-          type="number"
-          min="0"
-          step="0.01"
-          placeholder="0.00"
-          className="w-24 h-8 text-sm"
-          {...form.register('amount', { valueAsNumber: true })}
-        />
-        <Input
-          type="date"
-          className="w-36 h-8 text-sm"
-          {...form.register('date')}
-        />
-      </div>
-      <div className="flex gap-2 flex-wrap">
+        <div className="flex flex-col lg:flex-row gap-2">
+          <Input
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              className="grow h-8 text-sm"
+              {...form.register('amount', {
+                valueAsNumber: true,
+                setValueAs: (v) => (v === '' ? 0 : parseFloat(v)),
+              })}
+          />
+          <Input
+              type="date"
+              className="grow h-8 text-sm"
+              {...form.register('date')}
+          />
+        </div>
         <Input
           placeholder="Category"
           list="inline-expense-categories"
-          className="flex-1 min-w-[120px] h-8 text-sm"
+          className="grow h-8 text-sm"
           {...form.register('category')}
         />
         <datalist id="inline-expense-categories">
@@ -139,10 +143,12 @@ export function InlineExpenseForm({ expense, defaultCategory, categories, tags, 
         </datalist>
         <Input
           placeholder="Notes (optional)"
-          className="flex-1 min-w-[120px] h-8 text-sm"
+          className="grow h-8 text-sm"
           {...form.register('notes')}
         />
       </div>
+
+      <Separator className="my-4" />
 
       {tags.length > 0 && (
         <div className="flex flex-wrap gap-1">
@@ -159,6 +165,8 @@ export function InlineExpenseForm({ expense, defaultCategory, categories, tags, 
           ))}
         </div>
       )}
+
+      <Separator className="my-4" />
 
       <div className="flex items-center gap-2">
         {receiptPreview || receiptKey ? (

@@ -27,7 +27,7 @@ import { ArrowUpDown, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
 
-export interface DirectoryWayfarer {
+export interface OutpostWayfarer {
   id: string
   name: string | null
   email: string | null
@@ -39,7 +39,7 @@ export interface DirectoryWayfarer {
   memberSince: Date
 }
 
-export const columns: ColumnDef<DirectoryWayfarer>[] = [
+export const columns: ColumnDef<OutpostWayfarer>[] = [
   {
     accessorKey: 'name',
     header: ({ column }) => (
@@ -130,7 +130,7 @@ export const columns: ColumnDef<DirectoryWayfarer>[] = [
   },
 ]
 
-export function DirectoryTable({ data }: { data: DirectoryWayfarer[] }) {
+export function OutpostTable({ data }: { data: OutpostWayfarer[] }) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [globalFilter, setGlobalFilter] = useState('')

@@ -1,16 +1,16 @@
 import { auth } from '@/auth'
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
-import { AboutContent } from '../components/about-content'
+import { JourneyContent } from './journey-content'
 
-interface AboutPageProps {
+interface JourneyPageProps {
     params: Promise<{ username: string }>
 }
 
-export default async function AboutPage({ params }: AboutPageProps) {
+export default async function JourneyPage({ params }: JourneyPageProps) {
     const { username } = await params
 
-    const [wayfarer, session, wayfarerCount] = await Promise.all([
+    const [wayfarer, session] = await Promise.all([
         prisma.wayfarer.findUnique({
             where: { username },
             include: {
@@ -22,24 +22,23 @@ export default async function AboutPage({ params }: AboutPageProps) {
             },
         }),
         auth(),
-        prisma.wayfarer.count({ where: { listed: true, username: { not: null } } }),
     ])
 
     if (!wayfarer || !wayfarer.listed) notFound()
 
     return (
-        <AboutContent
-            username={username}
+        <JourneyContent
             wayfarer={{
+                username: username,
                 name: wayfarer.name,
                 email: wayfarer.email,
-                image: wayfarer.image,
+                avatar: wayfarer.image,
                 defaultTerminology: wayfarer.defaultTerminology,
                 defaultTheme: wayfarer.defaultTheme,
             }}
             origins={wayfarer.origins}
             companions={wayfarer.companions}
-            currentUser={session?.user ? {
+            currentWayfarer={session?.user ? {
                 name: session.user.name ?? null,
                 email: session.user.email ?? null,
                 avatar: session.user.image ?? null,
@@ -48,7 +47,7 @@ export default async function AboutPage({ params }: AboutPageProps) {
     )
 }
 
-export async function generateMetadata({ params }: AboutPageProps) {
+export async function generateMetadata({ params }: JourneyPageProps) {
     const { username } = await params
 
     const wayfarer = await prisma.wayfarer.findUnique({

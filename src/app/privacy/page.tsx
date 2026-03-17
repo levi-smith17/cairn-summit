@@ -1,6 +1,6 @@
-import Link from 'next/link'
 import { auth } from '@/auth'
 import { CairnLockup } from '@/components/cairn-lockup'
+import { FooterNav } from '@/components/nav/footer'
 import { PublicHeader } from '@/components/nav/public/public-header'
 
 export const metadata = {
@@ -10,7 +10,7 @@ export const metadata = {
 
 export default async function PrivacyPage() {
     const session = await auth()
-    const currentUser = session?.user ? {
+    const wayfarer = session?.user ? {
         name: session.user.name ?? null,
         email: session.user.email ?? null,
         avatar: session.user.image ?? null,
@@ -20,7 +20,7 @@ export default async function PrivacyPage() {
         <div className="min-h-screen flex flex-col">
             <header className="sticky top-0 z-10 flex items-center justify-between bg-header px-6 py-3 border-b">
                 <CairnLockup className="h-8" />
-                <PublicHeader currentUser={currentUser} />
+                <PublicHeader wayfarer={wayfarer} />
             </header>
 
             <div className="max-w-3xl mx-auto w-full px-6 py-12">
@@ -33,21 +33,7 @@ Cairn also provides a private dashboard where Wayfarers can manage their profile
       <br><div><span data-custom-class='body_text'>` }}
                 />
 
-                <div className="flex justify-center pt-12">
-                    <p className="text-xs text-muted-foreground">
-                        <Link href="/terms" className="underline underline-offset-4 hover:text-foreground">
-                            Terms of Service
-                        </Link>
-                        {' · '}
-                        <Link href="/privacy-contact" className="underline underline-offset-4 hover:text-foreground">
-                            Privacy Request
-                        </Link>
-                        {' · '}
-                        <Link href="/" className="underline underline-offset-4 hover:text-foreground">
-                            Cairn
-                        </Link>
-                    </p>
-                </div>
+                <FooterNav showCairn={true} />
             </div>
         </div>
     )

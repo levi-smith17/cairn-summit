@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
 import { saveBudget } from '@/actions/budgets'
 import { useFormStatus } from '@/hooks/use-form-status'
 
@@ -57,7 +58,7 @@ export function InlineCacheForm({ budget, categories, month, year, onSaved, onCa
   }
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="px-3 py-2.5 bg-muted/30 border-b space-y-2">
+    <form onSubmit={form.handleSubmit(onSubmit)} className="p-4 bg-muted/30 border-b space-y-2">
       <div className="flex gap-2">
         <Input
           placeholder="Category"
@@ -80,6 +81,7 @@ export function InlineCacheForm({ budget, categories, month, year, onSaved, onCa
           })}
         />
       </div>
+      <Separator className="my-4" />
       <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" size="sm" onClick={onCancel} className="h-7 text-xs">Cancel</Button>
         <Button type="submit" size="sm" disabled={saving} className="h-7 text-xs">

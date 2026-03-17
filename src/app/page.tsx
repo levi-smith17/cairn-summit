@@ -2,9 +2,9 @@ import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import { CairnLockup } from '@/components/cairn-lockup'
-import { DirectoryTable } from './components/directory-table'
-import { DirectoryStats } from './components/directory-stats'
-import { ManifestFooter } from './manifest/[username]/components/manifest-footer'
+import { FooterNav } from '@/components/nav/footer'
+import { OutpostTable } from './components/outpost-table'
+import { OutpostStats } from './components/outpost-stats'
 import { PublicHeader } from '@/components/nav/public/public-header'
 
 export default async function HomePage() {
@@ -28,7 +28,7 @@ export default async function HomePage() {
     redirect(`/manifest/${wayfarers[0].username}`)
   }
 
-  const currentUser = session?.user ? {
+  const currentWayfarer = session?.user ? {
     name: session.user.name ?? null,
     email: session.user.email ?? null,
     avatar: session.user.image ?? null,
@@ -76,7 +76,7 @@ export default async function HomePage() {
       {/* Nav bar */}
       <header className="sticky top-0 z-10 flex items-center justify-between bg-header px-6 py-3 border-b">
         <CairnLockup className="h-8" />
-        <PublicHeader currentUser={currentUser} />
+        <PublicHeader wayfarer={currentWayfarer} />
       </header>
 
       {/* Content */}
@@ -90,10 +90,10 @@ export default async function HomePage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           <div className="lg:col-span-3 bg-card rounded-xl p-4">
-            <DirectoryTable data={tableData} />
+            <OutpostTable data={tableData} />
           </div>
           <div className="lg:col-span-1">
-            <DirectoryStats
+            <OutpostStats
               totalWayfarers={wayfarers.length}
               topGear={topGear}
               topLocations={topLocations}
@@ -101,7 +101,7 @@ export default async function HomePage() {
           </div>
         </div>
       </div>
-      <ManifestFooter />
+      <FooterNav showCairn={true} />
     </div>
   )
 }

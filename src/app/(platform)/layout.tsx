@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
-import { AppSidebar } from '@/components/nav/platform/platform-sidebar'
+import { PlatformSidebar } from '@/components/nav/platform/platform-sidebar'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { TerminologyProvider } from '@/contexts/terminology-context'
 
@@ -16,19 +16,20 @@ export default async function PlatformLayout({
 
   const wayfarer = await prisma.wayfarer.findUnique({
     where: { id: user.id! },
-    select: { isAdmin: true },
+    select: { username: true, isAdmin: true },
   })
 
   return (
     <TerminologyProvider>
       <SidebarProvider>
-        <AppSidebar
+        <PlatformSidebar
           wayfarer={{
+            username: wayfarer?.username ?? null,
             name: user.name ?? null,
             email: user.email ?? null,
             avatar: user.image ?? null,
+            isAdmin: wayfarer?.isAdmin ?? false,
           }}
-          isAdmin={wayfarer?.isAdmin ?? false}
         />
         <SidebarInset className="min-w-0 h-svh overflow-hidden">
           <div className="flex flex-col h-full min-w-0 overflow-y-auto">
