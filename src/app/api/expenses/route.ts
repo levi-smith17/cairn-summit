@@ -18,13 +18,13 @@ export async function GET(req: NextRequest) {
     const dateTo = searchParams.get('dateTo')
     const month = searchParams.get('month')
     const year = searchParams.get('year')
-    const tagId = searchParams.get('tagId')
+    const markerId = searchParams.get('markerId')
     const page = parseInt(searchParams.get('page') ?? '1')
     const skip = (page - 1) * PAGE_SIZE
 
     const where: any = { wayfarerId }
     if (category) where.category = category
-    if (tagId) where.tags = { some: { tagId } }
+    if (markerId) where.markers = { some: { markerId } }
     if (search) {
         where.OR = [
             { name: { contains: search, mode: 'insensitive' } },
@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
             orderBy: { date: 'desc' },
             skip,
             take: PAGE_SIZE,
-            include: { tags: { include: { tag: true } } },
+            include: { markers: { include: { marker: true } } },
         }),
         prisma.expense.count({ where }),
     ])
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
     const wayfarerId = session.user.id
 
     const body = await req.json()
-    const { name, amount, category, date, notes, tagIds } = body
+    const { name, amount, category, date, notes, markerIds } = body
 
     if (!name || !amount || !category || !date) {
         return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -78,11 +78,11 @@ export async function POST(req: NextRequest) {
             date: new Date(date),
             notes: notes ?? null,
             wayfarerId,
-            tags: {
-                create: (tagIds ?? []).map((tagId: string) => ({ tagId })),
+            markers: {
+                create: (markerIds ?? []).map((markerId: string) => ({ markerId })),
             },
         },
-        include: { tags: { include: { tag: true } } },
+        include: { markers: { include: { marker: true } } },
     })
 
     return NextResponse.json({ expense }, { status: 201 })

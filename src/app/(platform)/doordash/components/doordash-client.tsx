@@ -9,6 +9,7 @@ import { SessionList } from './session-list'
 import { SessionDetail } from './session-detail'
 import { SessionForm } from './session-form'
 import { deleteSession, deleteOrder } from '@/actions/doordash'
+import { orderTotalMiles, sessionFuelCost } from '@/lib/doordash'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -78,13 +79,12 @@ export function DoordashClient({ sessions }: DoordashClientProps) {
 
   // Snapshot calculations
   const allOrders = sessions.flatMap(s => s.orders)
-  const oMiles = (o: any) => toNum(o.deliveryMiles) + (o.pickupMiles != null ? toNum(o.pickupMiles) : 0)
-  const totalMiles = allOrders.reduce((sum, o) => sum + oMiles(o), 0)
-  const totalFuelCost = sessions.reduce((sum, s) => {
-    const mpg = toNum(s.mpg)
-    const price = toNum(s.gasPrice)
-    return sum + s.orders.reduce((oSum: number, o: any) => oSum + (oMiles(o) / mpg) * price, 0)
-  }, 0)
+  const totalMiles = allOrders.reduce((sum, o) => sum + orderTotalMiles(toNum(o.deliveryMiles), o.pickupMiles != null ? toNum(o.pickupMiles) : null), 0)
+  const totalFuelCost = sessions.reduce((sum, s) => sum + sessionFuelCost(
+    s.orders.map((o: any) => ({ deliveryMiles: toNum(o.deliveryMiles), pickupMiles: o.pickupMiles != null ? toNum(o.pickupMiles) : null })),
+    toNum(s.mpg),
+    toNum(s.gasPrice),
+  ), 0)
   const avgCostPerOrder = allOrders.length > 0 ? totalFuelCost / allOrders.length : 0
 
   const showForm = mode === 'add' || mode === 'edit'

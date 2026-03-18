@@ -8,7 +8,7 @@ export default async function TrailsPage() {
   if (!session?.user?.id) redirect('/login')
   const wayfarerId = session.user.id
 
-  const trails = await prisma.folder.findMany({
+  const trails = await prisma.trail.findMany({
     where: { wayfarerId },
     orderBy: { name: 'asc' },
     include: { _count: { select: { waypoints: true } } },

@@ -6,15 +6,12 @@ import { Input } from '@/components/ui/input'
 import { ArrowLeft, Check, Gauge, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { saveOrder } from '@/actions/doordash'
+import { orderTotalMiles } from '@/lib/doordash'
 
 function toNum(v: any) { return parseFloat(String(v)) }
 const fmt = (n: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n)
 const fmtDate = (d: Date | string) =>
   new Date(d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
-
-function orderTotalMiles(order: any) {
-  return toNum(order.deliveryMiles) + (order.pickupMiles != null ? toNum(order.pickupMiles) : 0)
-}
 
 interface SessionDetailProps {
   session: any | null
@@ -83,8 +80,8 @@ export function SessionDetail({ session, onBack, onEdit, onDelete, onDeleteOrder
   const gasPrice = toNum(session.gasPrice)
 
   // Per-order totals
-  const orderMilesTotal = session.orders.reduce((s: number, o: any) => s + orderTotalMiles(o), 0)
-  const orderCostTotal = session.orders.reduce((s: number, o: any) => s + (orderTotalMiles(o) / mpg) * gasPrice, 0)
+  const orderMilesTotal = session.orders.reduce((s: number, o: any) => s + orderTotalMiles(toNum(o.deliveryMiles), o.pickupMiles != null ? toNum(o.pickupMiles) : null), 0)
+  const orderCostTotal = session.orders.reduce((s: number, o: any) => s + (orderTotalMiles(toNum(o.deliveryMiles), o.pickupMiles != null ? toNum(o.pickupMiles) : null) / mpg) * gasPrice, 0)
 
   // Odometer-based totals (more accurate when available)
   const hasOdometer = session.startOdometer != null && session.endOdometer != null

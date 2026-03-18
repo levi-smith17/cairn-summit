@@ -11,7 +11,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const provision = await prisma.provision.findFirst({
     where: { id: id, wayfarerId: session.user.id },
-    include: { tags: { include: { tag: true } } },
+    include: { markers: { include: { marker: true } } },
   })
 
   if (!provision) return NextResponse.json({ error: 'Not found' }, { status: 404 })
@@ -32,7 +32,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const body = await req.json()
-  const { name, amount, billingCycle, nextRenewal, category, url, notes, active, tagIds } = body
+  const { name, amount, billingCycle, nextRenewal, category, url, notes, active, markerIds } = body
 
   const provision = await prisma.provision.update({
     where: { id: id },
@@ -45,15 +45,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       ...(url !== undefined && { url }),
       ...(notes !== undefined && { notes }),
       ...(active !== undefined && { active }),
-      ...(tagIds !== undefined && {
-        tags: {
+      ...(markerIds !== undefined && {
+        markers: {
           deleteMany: {},
-          create: tagIds.map((tagId: string) => ({ tagId })),
+          create: markerIds.map((markerId: string) => ({ markerId })),
         },
       }),
     },
     include: {
-      tags: { include: { tag: true } },
+      markers: { include: { marker: true } },
     },
   })
 

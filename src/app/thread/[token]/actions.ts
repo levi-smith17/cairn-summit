@@ -7,7 +7,7 @@ export async function sendThreadReply(token: string, html: string) {
     const trimmed = html.replace(/<[^>]+>/g, '').trim()
     if (!trimmed) return { error: 'Message cannot be empty.' }
 
-    const message = await prisma.message.findUnique({
+    const message = await prisma.signal.findUnique({
         where: { token },
         select: {
             id: true,
@@ -23,9 +23,9 @@ export async function sendThreadReply(token: string, html: string) {
         return { error: 'This conversation link has expired. Please use the contact form to send a new message.' }
     }
 
-    await prisma.messageReply.create({
+    await prisma.signalReply.create({
         data: {
-            messageId: message.id,
+            signalId: message.id,
             body: html,
             direction: 'INBOUND',
             senderName: message.senderName,

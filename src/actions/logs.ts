@@ -7,24 +7,27 @@ import { revalidatePath } from 'next/cache'
 export async function saveLog(data: {
   id?: string
   content: string
-  folderId?: string | null
+  trailId?: string | null
   waypointId?: string | null
-  tagIds?: string[]
+  markerIds?: string[]
 }) {
   const session = await auth()
   if (!session?.user?.id) throw new Error('Unauthorized')
   const wayfarerId = session.user.id
 
   if (data.id) {
+    const existing = await prisma.log.findFirst({ where: { id: data.id, wayfarerId } })
+    if (!existing) throw new Error('Not found')
+
     const log = await prisma.log.update({
       where: { id: data.id },
       data: {
         content: data.content,
-        folderId: data.folderId,
+        trailId: data.trailId,
         waypointId: data.waypointId,
-        tags: {
+        markers: {
           deleteMany: {},
-          create: data.tagIds?.map(tagId => ({ tagId })) ?? [],
+          create: data.markerIds?.map(markerId => ({ markerId })) ?? [],
         },
       },
     })
@@ -35,11 +38,11 @@ export async function saveLog(data: {
     const log = await prisma.log.create({
       data: {
         content: data.content,
-        folderId: data.folderId,
+        trailId: data.trailId,
         waypointId: data.waypointId,
         wayfarerId,
-        tags: {
-          create: data.tagIds?.map(tagId => ({ tagId })) ?? [],
+        markers: {
+          create: data.markerIds?.map(markerId => ({ markerId })) ?? [],
         },
       },
     })
@@ -52,7 +55,8 @@ export async function saveLog(data: {
 export async function deleteLog(id: string) {
   const session = await auth()
   if (!session?.user?.id) throw new Error('Unauthorized')
-  await prisma.log.delete({ where: { id } })
+
+  await prisma.log.deleteMany({ where: { id, wayfarerId: session.user.id } })
   revalidatePath('/dashboard')
   revalidatePath('/log')
 }

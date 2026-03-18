@@ -1,4 +1,4 @@
-model Message {
+model Signal {
   id             String         @id @default(cuid())
   senderName     String
   senderEmail    String
@@ -9,20 +9,20 @@ model Message {
   createdAt      DateTime       @default(now())
   wayfarerId     String
   wayfarer       Wayfarer       @relation(fields: [wayfarerId], references: [id], onDelete: Cascade)
-  replies        MessageReply[]
+  replies        SignalReply[]
 
   @@map("messages")
 }
 
-model MessageReply {
+model SignalReply {
   id          String         @id @default(cuid())
   body        String
   direction   ReplyDirection @default(OUTBOUND)
   senderName  String?
   senderEmail String?
   createdAt   DateTime       @default(now())
-  messageId   String
-  message     Message        @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  signalId    String         @map("messageId")
+  signal      Signal         @relation(fields: [signalId], references: [id], onDelete: Cascade)
 
   @@map("message_replies")
 }

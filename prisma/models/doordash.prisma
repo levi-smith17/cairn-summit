@@ -2,7 +2,7 @@
 
 model DdSession {
   id             String    @id @default(cuid())
-  userId         String
+  wayfarerId     String    @map("userId")
   date           DateTime
   gasPrice       Decimal   @db.Decimal(10, 4)
   mpg            Decimal   @db.Decimal(10, 2)

@@ -60,9 +60,9 @@ type LogFormValues = z.infer<typeof logSchema>
 interface LogItem {
   id: string
   content: string
-  folderId: string | null
+  trailId: string | null
   waypointId: string | null
-  tags: { tagId: string }[]
+  markers: { markerId: string }[]
 }
 
 interface LogFormProps {
@@ -103,9 +103,9 @@ export function LogForm({ log, folders, waypoints, tags, onBack, onSaved, onDele
     resolver: zodResolver(logSchema),
     defaultValues: {
       content: log?.content ?? '',
-      folderId: log?.folderId ?? '',
+      folderId: log?.trailId ?? '',
       waypointId: log?.waypointId ?? '',
-      tagIds: log?.tags?.map(t => t.tagId) ?? [],
+      tagIds: log?.markers?.map(t => t.markerId) ?? [],
     },
   })
 
@@ -115,15 +115,15 @@ export function LogForm({ log, folders, waypoints, tags, onBack, onSaved, onDele
 
   // Filter waypoints by selected trail
   const filteredWaypoints = selectedTrailId && selectedTrailId !== 'none'
-    ? waypoints.filter(w => w.folderId === selectedTrailId)
+    ? waypoints.filter(w => w.trailId === selectedTrailId)
     : waypoints
 
   // Auto-set trail when waypoint is chosen
   useEffect(() => {
     if (selectedWaypointId && selectedWaypointId !== 'none') {
       const waypoint = waypoints.find(w => w.id === selectedWaypointId)
-      if (waypoint?.folderId) {
-        form.setValue('folderId', waypoint.folderId)
+      if (waypoint?.trailId) {
+        form.setValue('folderId', waypoint.trailId)
       }
     }
   }, [selectedWaypointId])
@@ -174,9 +174,9 @@ export function LogForm({ log, folders, waypoints, tags, onBack, onSaved, onDele
       const result = await saveLog({
         id: log?.id,
         content: values.content,
-        folderId: values.folderId || null,
+        trailId: values.folderId || null,
         waypointId: values.waypointId || null,
-        tagIds: values.tagIds,
+        markerIds: values.tagIds,
       })
       router.refresh()
       onSaved(result.id)

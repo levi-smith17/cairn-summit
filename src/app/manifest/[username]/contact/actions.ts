@@ -33,7 +33,7 @@ export async function sendMessage(username: string, formData: FormData) {
     const token = crypto.randomUUID()
     const tokenExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
 
-    await prisma.message.create({
+    await prisma.signal.create({
         data: {
             senderName,
             senderEmail,

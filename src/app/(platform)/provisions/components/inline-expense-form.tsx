@@ -23,9 +23,9 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>
 
-interface Tag {
-  tagId: string
-  tag: { id: string; name: string; color: string; icon?: string }
+interface Marker {
+  markerId: string
+  marker: { id: string; name: string; color: string; icon?: string }
 }
 
 interface Expense {
@@ -36,7 +36,7 @@ interface Expense {
   date: string
   notes?: string
   receiptUrl?: string | null
-  tags: Tag[]
+  markers: Marker[]
 }
 
 interface Props {
@@ -63,7 +63,7 @@ export function InlineExpenseForm({ expense, defaultCategory, categories, tags, 
       category: expense?.category ?? defaultCategory ?? '',
       date: expense?.date?.split('T')[0] ?? new Date().toISOString().split('T')[0],
       notes: expense?.notes ?? '',
-      tagIds: expense?.tags?.map((t: any) => t.tagId) ?? [],
+      tagIds: expense?.markers?.map((t: any) => t.markerId) ?? [],
     },
   })
 
@@ -99,7 +99,7 @@ export function InlineExpenseForm({ expense, defaultCategory, categories, tags, 
         category: values.category,
         date: values.date,
         notes: values.notes || null,
-        tagIds: values.tagIds,
+        markerIds: values.tagIds,
         receiptUrl: receiptKey,
       })
       onSaved()

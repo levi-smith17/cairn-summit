@@ -89,9 +89,9 @@ export function WaypointRow({ waypoint, folders, tags, allWaypoints }: WaypointR
         <div className="flex flex-col gap-0.5 min-w-0 flex-1">
           <p className="text-sm font-medium leading-tight truncate">{waypoint.title}</p>
           <p className="text-xs text-muted-foreground truncate">{waypoint.url}</p>
-          {waypoint.tags?.length > 0 && (
+          {waypoint.markers?.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-0.5">
-              {waypoint.tags.map((t: any) => <MarkerBadge key={t.tagId} marker={t.tag} />)}
+              {waypoint.markers.map((t: any) => <MarkerBadge key={t.markerId} marker={t.marker} />)}
             </div>
           )}
         </div>
@@ -161,7 +161,7 @@ export function WaypointRow({ waypoint, folders, tags, allWaypoints }: WaypointR
           <div className="border rounded-lg overflow-hidden">
             <InlineLogForm
               defaultWaypointId={waypoint.id}
-              defaultFolderId={waypoint.folderId}
+              defaultFolderId={waypoint.trailId}
               folders={folders}
               waypoints={allWaypoints}
               tags={tags}

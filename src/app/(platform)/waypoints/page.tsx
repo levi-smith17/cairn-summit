@@ -18,18 +18,18 @@ export default async function WaypointsPage({ searchParams }: WaypointsPageProps
   const where = buildWaypointWhere(filters, wayfarerId)
   const orderBy = buildWaypointOrderBy(filters.sort)
 
-  const [waypoints, tags, folders] = await Promise.all([
+  const [waypoints, markers, trails] = await Promise.all([
     prisma.waypoint.findMany({
       where,
       include: {
-        folder: true,
-        tags: { include: { tag: true } },
+        trail: true,
+        markers: { include: { marker: true } },
       },
       orderBy,
     }),
-    prisma.tag.findMany({ where: { wayfarerId }, orderBy: { name: 'asc' } }),
-    prisma.folder.findMany({ where: { wayfarerId }, orderBy: { name: 'asc' } }),
+    prisma.marker.findMany({ where: { wayfarerId }, orderBy: { name: 'asc' } }),
+    prisma.trail.findMany({ where: { wayfarerId }, orderBy: { name: 'asc' } }),
   ])
 
-  return <WaypointsClient waypoints={waypoints} folders={folders} tags={tags} />
+  return <WaypointsClient waypoints={waypoints} trails={trails} markers={markers} />
 }

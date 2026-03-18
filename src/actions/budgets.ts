@@ -22,8 +22,8 @@ export async function saveBudget({
   const wayfarerId = session.user.id
 
   if (id) {
-    await prisma.budget.update({
-      where: { id },
+    await prisma.budget.updateMany({
+      where: { id, wayfarerId },
       data: { category, limit },
     })
   } else {

@@ -13,7 +13,7 @@ export async function saveExpense({
   category,
   date,
   notes,
-  tagIds,
+  markerIds,
   receiptUrl,
 }: {
   id?: string
@@ -22,7 +22,7 @@ export async function saveExpense({
   category: string
   date: string
   notes?: string | null
-  tagIds: string[]
+  markerIds: string[]
   receiptUrl?: string | null
 }) {
   const session = await auth()
@@ -30,6 +30,9 @@ export async function saveExpense({
   const wayfarerId = session.user.id
 
   if (id) {
+    const existing = await prisma.expense.findFirst({ where: { id, wayfarerId } })
+    if (!existing) throw new Error('Not found')
+
     await prisma.expense.update({
       where: { id },
       data: {
@@ -39,9 +42,9 @@ export async function saveExpense({
         date: new Date(date),
         notes: notes ?? null,
         ...(receiptUrl !== undefined && { receiptUrl }),
-        tags: {
+        markers: {
           deleteMany: {},
-          create: tagIds.map((tagId) => ({ tagId })),
+          create: markerIds.map((markerId) => ({ markerId })),
         },
       },
     })
@@ -55,8 +58,8 @@ export async function saveExpense({
         notes: notes ?? null,
         receiptUrl: receiptUrl ?? null,
         wayfarerId,
-        tags: {
-          create: tagIds.map((tagId) => ({ tagId })),
+        markers: {
+          create: markerIds.map((markerId) => ({ markerId })),
         },
       },
     })

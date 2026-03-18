@@ -9,7 +9,7 @@ export async function markMessageRead(messageId: string) {
     const session = await auth()
     if (!session?.user?.id) return
 
-    await prisma.message.updateMany({
+    await prisma.signal.updateMany({
         where: { id: messageId, wayfarerId: session.user.id },
         data: { read: true },
     })
@@ -21,7 +21,7 @@ export async function deleteMessage(messageId: string) {
     const session = await auth()
     if (!session?.user?.id) return
 
-    await prisma.message.deleteMany({
+    await prisma.signal.deleteMany({
         where: { id: messageId, wayfarerId: session.user.id },
     })
 
@@ -32,15 +32,15 @@ export async function sendReply(messageId: string, html: string) {
     const session = await auth()
     if (!session?.user?.id) return
 
-    const message = await prisma.message.findFirst({
+    const message = await prisma.signal.findFirst({
         where: { id: messageId, wayfarerId: session.user.id },
         select: { senderName: true, senderEmail: true, token: true },
     })
 
     if (!message) return
 
-    await prisma.messageReply.create({
-        data: { messageId, body: html, direction: 'OUTBOUND' },
+    await prisma.signalReply.create({
+        data: { signalId: messageId, body: html, direction: 'OUTBOUND' },
     })
 
     const baseUrl = process.env.NEXTAUTH_URL ?? ''
