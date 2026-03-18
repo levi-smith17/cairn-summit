@@ -8,18 +8,18 @@ export default async function ProvisionsPage() {
   if (!session?.user?.id) redirect('/login')
   const wayfarerId = session.user.id
 
-  const [categories, tags] = await Promise.all([
+  const [categories, markers] = await Promise.all([
     prisma.provision.findMany({
       where: { wayfarerId },
       select: { category: true },
       distinct: ['category'],
       orderBy: { category: 'asc' },
     }).then((rows) => rows.map((r) => r.category)),
-    prisma.tag.findMany({
+    prisma.marker.findMany({
       where: { wayfarerId },
       orderBy: { name: 'asc' },
     }),
   ])
 
-  return <ProvisionsClient categories={categories} markers={tags} />
+  return <ProvisionsClient categories={categories} markers={markers} />
 }

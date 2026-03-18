@@ -10,12 +10,12 @@ import { LogForm } from './log-form'
 
 interface LogClientProps {
   logs: any[]
-  folders: any[]
+  trails: any[]
   waypoints: any[]
-  tags: any[]
+  markers: any[]
 }
 
-export function LogClient({ logs, folders, waypoints, tags }: LogClientProps) {
+export function LogClient({ logs, trails, waypoints, markers }: LogClientProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { terms } = useTerminology()
@@ -54,8 +54,8 @@ export function LogClient({ logs, folders, waypoints, tags }: LogClientProps) {
         {/* Filter bar */}
         <div className="rounded-lg border border-border bg-card p-2 shrink-0">
           <FilterBar
-            markers={tags}
-            trails={folders}
+            markers={markers}
+            trails={trails}
             showTrailFilter
             showMarkerFilter
             showSort
@@ -87,9 +87,9 @@ export function LogClient({ logs, folders, waypoints, tags }: LogClientProps) {
               <LogForm
                 key={selectedId}
                 log={selectedLog}
-                folders={folders}
+                folders={trails}
                 waypoints={waypoints}
-                tags={tags}
+                tags={markers}
                 onBack={clearSelection}
                 onSaved={handleSaved}
                 onDeleted={clearSelection}

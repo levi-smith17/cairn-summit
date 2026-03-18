@@ -2,8 +2,8 @@ export type SortOption = 'newest' | 'oldest' | 'alpha'
 
 export interface FilterState {
   search: string
-  tagId: string
-  folderId: string
+  markerId: string
+  trailId: string
   sort: SortOption
   readLater: boolean
   unattached: boolean
@@ -13,8 +13,8 @@ export interface FilterState {
 
 export const DEFAULT_FILTERS: FilterState = {
   search: '',
-  tagId: 'all',
-  folderId: 'all',
+  markerId: 'all',
+  trailId: 'all',
   sort: 'alpha',
   readLater: false,
   unattached: false,
@@ -25,8 +25,8 @@ export const DEFAULT_FILTERS: FilterState = {
 export function parseFiltersFromParams(params: URLSearchParams): FilterState {
   return {
     search: params.get('search') ?? DEFAULT_FILTERS.search,
-    tagId: params.get('tagId') ?? DEFAULT_FILTERS.tagId,
-    folderId: params.get('folderId') ?? DEFAULT_FILTERS.folderId,
+    markerId: params.get('markerId') ?? DEFAULT_FILTERS.markerId,
+    trailId: params.get('trailId') ?? DEFAULT_FILTERS.trailId,
     sort: (params.get('sort') as SortOption) ?? DEFAULT_FILTERS.sort,
     readLater: params.get('readLater') === 'true',
     unattached: params.get('unattached') === 'true',
@@ -40,8 +40,8 @@ export function filtersToParams(filters: Partial<FilterState>): URLSearchParams 
   const merged = { ...DEFAULT_FILTERS, ...filters }
 
   if (merged.search) params.set('search', merged.search)
-  if (merged.tagId !== 'all') params.set('tagId', merged.tagId)
-  if (merged.folderId !== 'all') params.set('folderId', merged.folderId)
+  if (merged.markerId !== 'all') params.set('markerId', merged.markerId)
+  if (merged.trailId !== 'all') params.set('trailId', merged.trailId)
   if (merged.sort !== 'alpha') params.set('sort', merged.sort)
   if (merged.readLater) params.set('readLater', 'true')
   if (merged.unattached) params.set('unattached', 'true')
@@ -54,8 +54,8 @@ export function filtersToParams(filters: Partial<FilterState>): URLSearchParams 
 export function hasActiveFilters(filters: FilterState): boolean {
   return (
     filters.search !== DEFAULT_FILTERS.search ||
-    filters.tagId !== DEFAULT_FILTERS.tagId ||
-    filters.folderId !== DEFAULT_FILTERS.folderId ||
+    filters.markerId !== DEFAULT_FILTERS.markerId ||
+    filters.trailId !== DEFAULT_FILTERS.trailId ||
     filters.sort !== DEFAULT_FILTERS.sort ||
     filters.readLater !== DEFAULT_FILTERS.readLater ||
     filters.unattached !== DEFAULT_FILTERS.unattached ||
@@ -76,12 +76,12 @@ export function buildWaypointWhere(filters: FilterState, wayfarerId: string) {
     ]
   }
 
-  if (filters.tagId !== 'all') {
-    where.tags = { some: { tagId: filters.tagId } }
+  if (filters.markerId !== 'all') {
+    where.markers = { some: { markerId: filters.markerId } }
   }
 
-  if (filters.folderId !== 'all') {
-    where.folderId = filters.folderId
+  if (filters.trailId !== 'all') {
+    where.trailId = filters.trailId
   }
 
   if (filters.readLater) {
@@ -105,17 +105,17 @@ export function buildLogWhere(filters: FilterState, wayfarerId: string) {
     where.content = { contains: filters.search, mode: 'insensitive' }
   }
 
-  if (filters.tagId !== 'all') {
-    where.tags = { some: { tagId: filters.tagId } }
+  if (filters.markerId !== 'all') {
+    where.markers = { some: { markerId: filters.markerId } }
   }
 
-  if (filters.folderId !== 'all') {
-    where.folderId = filters.folderId
+  if (filters.trailId !== 'all') {
+    where.trailId = filters.trailId
   }
 
   if (filters.unattached) {
     where.waypointId = null
-    where.folderId = null
+    where.trailId = null
   }
 
   if (filters.dateFrom || filters.dateTo) {

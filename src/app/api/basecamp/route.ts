@@ -22,13 +22,13 @@ export async function GET(req: NextRequest) {
   const page = parseInt(searchParams.get('page') ?? '1')
   const skip = (page - 1) * PAGE_SIZE
 
-  // Build folder where
-  const folderWhere: any = { wayfarerId }
-  if (filters.folderId !== 'all') {
-    folderWhere.id = filters.folderId
+  // Build trail where
+  const trailWhere: any = { wayfarerId }
+  if (filters.trailId !== 'all') {
+    trailWhere.id = filters.trailId
   }
 
-  // Build waypoint where for filtering folders
+  // Build waypoint where for filtering trails
   const waypointWhere: any = { wayfarerId }
   if (filters.search) {
     waypointWhere.OR = [
@@ -36,8 +36,8 @@ export async function GET(req: NextRequest) {
       { url: { contains: filters.search, mode: 'insensitive' } },
     ]
   }
-  if (filters.tagId !== 'all') {
-    waypointWhere.tags = { some: { tagId: filters.tagId } }
+  if (filters.markerId !== 'all') {
+    waypointWhere.markers = { some: { markerId: filters.markerId } }
   }
   if (filters.readLater) {
     waypointWhere.readLater = true
@@ -53,8 +53,8 @@ export async function GET(req: NextRequest) {
   const waypointOrderBy = buildWaypointOrderBy(filters.sort)
 
   const [folders, total] = await Promise.all([
-    prisma.folder.findMany({
-      where: folderWhere,
+    prisma.trail.findMany({
+      where: trailWhere,
       orderBy,
       skip,
       take: PAGE_SIZE,
@@ -64,9 +64,9 @@ export async function GET(req: NextRequest) {
           orderBy: waypointOrderBy,
           take: WAYPOINTS_PER_FOLDER,
           include: {
-            tags: { include: { tag: true } },
+            markers: { include: { marker: true } },
             logs: {
-              include: { tags: { include: { tag: true } } },
+              include: { markers: { include: { marker: true } } },
               orderBy: { createdAt: 'desc' },
             },
           },
@@ -78,17 +78,17 @@ export async function GET(req: NextRequest) {
             ...(filters.search
               ? { content: { contains: filters.search, mode: 'insensitive' } }
               : {}),
-            ...(filters.tagId !== 'all'
-              ? { tags: { some: { tagId: filters.tagId } } }
+            ...(filters.markerId !== 'all'
+              ? { markers: { some: { markerId: filters.markerId } } }
               : {}),
           },
-          include: { tags: { include: { tag: true } } },
+          include: { markers: { include: { marker: true } } },
           orderBy: { createdAt: 'desc' },
         },
         _count: { select: { waypoints: true } },
       },
     }),
-    prisma.folder.count({ where: folderWhere }),
+    prisma.trail.count({ where: trailWhere }),
   ])
 
   return NextResponse.json({

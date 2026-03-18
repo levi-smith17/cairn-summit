@@ -2,23 +2,12 @@
 
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { saveSession } from '@/actions/doordash'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { FormActions } from '@/components/forms/form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
-
-const schema = z.object({
-  date: z.string().min(1, 'Date is required'),
-  gasPrice: z.string().min(1, 'Gas price is required').refine(v => parseFloat(v) > 0, 'Must be a positive number'),
-  mpg: z.string().min(1, 'MPG is required').refine(v => parseFloat(v) > 0, 'Must be a positive number'),
-  startOdometer: z.string().optional(),
-  endOdometer: z.string().optional(),
-  notes: z.string().optional(),
-})
-
-type FormValues = z.infer<typeof schema>
+import { sessionFormSchema, type SessionFormValues } from '@/lib/schemas/doordash'
 
 function toDateInput(date: Date | string | null | undefined): string {
   if (!date) return new Date().toISOString().slice(0, 10)
@@ -38,8 +27,8 @@ interface SessionFormProps {
 export function SessionForm({ session, onDone }: SessionFormProps) {
   const { saving, saved, error, handleSubmit } = useFormStatus()
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(schema),
+  const form = useForm<SessionFormValues>({
+    resolver: zodResolver(sessionFormSchema),
     defaultValues: {
       date: toDateInput(session?.date),
       gasPrice: session ? String(parseFloat(String(session.gasPrice))) : '',
@@ -50,7 +39,7 @@ export function SessionForm({ session, onDone }: SessionFormProps) {
     },
   })
 
-  async function onSubmit(values: FormValues) {
+  async function onSubmit(values: SessionFormValues) {
     await handleSubmit(async () => {
       await saveSession({
         id: session?.id,

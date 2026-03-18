@@ -10,11 +10,11 @@ import { WaypointForm } from './waypoint-form'
 
 interface WaypointsClientProps {
   waypoints: any[]
-  folders: any[]
-  tags: any[]
+  trails: any[]
+  markers: any[]
 }
 
-export function WaypointsClient({ waypoints, folders, tags }: WaypointsClientProps) {
+export function WaypointsClient({ waypoints, trails, markers }: WaypointsClientProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { terms } = useTerminology()
@@ -53,8 +53,8 @@ export function WaypointsClient({ waypoints, folders, tags }: WaypointsClientPro
         {/* Filter bar */}
         <div className="rounded-lg border border-border bg-card p-2 shrink-0">
           <FilterBar
-            markers={tags}
-            trails={folders}
+            markers={markers}
+            trails={trails}
             showTrailFilter
             showMarkerFilter
             showSort
@@ -86,8 +86,8 @@ export function WaypointsClient({ waypoints, folders, tags }: WaypointsClientPro
               <WaypointForm
                 key={selectedId}
                 waypoint={selectedWaypoint}
-                folders={folders}
-                tags={tags}
+                folders={trails}
+                tags={markers}
                 onBack={clearSelection}
                 onSaved={handleSaved}
                 onDeleted={clearSelection}

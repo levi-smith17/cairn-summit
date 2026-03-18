@@ -1,26 +1,27 @@
 model Waypoint {
-  id          String            @id @default(cuid())
+  id          String               @id @default(cuid())
   url         String
   title       String
   description String?
   favicon     String?
   notes       String?
-  read        Boolean           @default(false)
-  readLater   Boolean           @default(false)
-  createdAt   DateTime          @default(now())
+  read        Boolean              @default(false)
+  readLater   Boolean              @default(false)
+  createdAt   DateTime             @default(now())
   wayfarerId  String
-  wayfarer    Wayfarer          @relation(fields: [wayfarerId], references: [id])
-  tags        TagsOnWaypoints[]
-  folder      Folder?           @relation(fields: [folderId], references: [id])
-  folderId    String?
+  wayfarer    Wayfarer             @relation(fields: [wayfarerId], references: [id])
+  markers     MarkersOnWaypoints[]
+  trail       Trail?               @relation(fields: [trailId], references: [id])
+  trailId     String?              @map("folderId")
   logs        Log[]
 }
 
-model TagsOnWaypoints {
+model MarkersOnWaypoints {
   waypoint   Waypoint @relation(fields: [waypointId], references: [id])
   waypointId String
-  tag        Tag      @relation(fields: [tagId], references: [id])
-  tagId      String
+  marker     Marker   @relation(fields: [markerId], references: [id])
+  markerId   String   @map("tagId")
 
-  @@id([waypointId, tagId])
+  @@id([waypointId, markerId])
+  @@map("TagsOnWaypoints")
 }

@@ -18,20 +18,20 @@ export default async function LogPage({ searchParams }: LogPageProps) {
   const where = buildLogWhere(filters, wayfarerId)
   const orderBy = buildLogOrderBy(filters.sort)
 
-  const [logs, tags, folders, waypoints] = await Promise.all([
+  const [logs, markers, trails, waypoints] = await Promise.all([
     prisma.log.findMany({
       where,
       include: {
-        folder: true,
+        trail: true,
         waypoint: true,
-        tags: { include: { tag: true } },
+        markers: { include: { marker: true } },
       },
       orderBy,
     }),
-    prisma.tag.findMany({ where: { wayfarerId }, orderBy: { name: 'asc' } }),
-    prisma.folder.findMany({ where: { wayfarerId }, orderBy: { name: 'asc' } }),
+    prisma.marker.findMany({ where: { wayfarerId }, orderBy: { name: 'asc' } }),
+    prisma.trail.findMany({ where: { wayfarerId }, orderBy: { name: 'asc' } }),
     prisma.waypoint.findMany({ where: { wayfarerId }, orderBy: { title: 'asc' } }),
   ])
 
-  return <LogClient logs={logs} tags={tags} folders={folders} waypoints={waypoints} />
+  return <LogClient logs={logs} markers={markers} trails={trails} waypoints={waypoints} />
 }

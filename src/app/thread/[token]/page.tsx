@@ -11,7 +11,7 @@ interface ThreadPageProps {
 export default async function ThreadPage({ params }: ThreadPageProps) {
     const { token } = await params
 
-    const message = await prisma.message.findUnique({
+    const message = await prisma.signal.findUnique({
         where: { token },
         select: {
             id: true,
@@ -147,7 +147,7 @@ export default async function ThreadPage({ params }: ThreadPageProps) {
 
 export async function generateMetadata({ params }: ThreadPageProps) {
     const { token } = await params
-    const message = await prisma.message.findUnique({
+    const message = await prisma.signal.findUnique({
         where: { token },
         select: { wayfarer: { select: { name: true } } },
     })

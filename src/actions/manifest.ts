@@ -49,8 +49,8 @@ export async function saveExpedition(data: {
   if (!session?.user?.id) throw new Error('Unauthorized')
 
   if (data.id) {
-    await prisma.expedition.update({
-      where: { id: data.id },
+    await prisma.expedition.updateMany({
+      where: { id: data.id, wayfarerId: session.user.id },
       data: {
         title: data.title,
         company: data.company,
@@ -77,7 +77,7 @@ export async function deleteExpedition(id: string) {
   const session = await auth()
   if (!session?.user?.id) throw new Error('Unauthorized')
 
-  await prisma.expedition.delete({ where: { id } })
+  await prisma.expedition.deleteMany({ where: { id, wayfarerId: session.user.id } })
   revalidatePath('/manifest')
 }
 
@@ -95,8 +95,8 @@ export async function saveTraining(data: {
   if (!session?.user?.id) throw new Error('Unauthorized')
 
   if (data.id) {
-    await prisma.training.update({
-      where: { id: data.id },
+    await prisma.training.updateMany({
+      where: { id: data.id, wayfarerId: session.user.id },
       data: {
         institution: data.institution,
         degree: data.degree,
@@ -123,7 +123,7 @@ export async function deleteTraining(id: string) {
   const session = await auth()
   if (!session?.user?.id) throw new Error('Unauthorized')
 
-  await prisma.training.delete({ where: { id } })
+  await prisma.training.deleteMany({ where: { id, wayfarerId: session.user.id } })
   revalidatePath('/manifest')
 }
 
@@ -137,8 +137,8 @@ export async function saveGear(data: {
   if (!session?.user?.id) throw new Error('Unauthorized')
 
   if (data.id) {
-    await prisma.gear.update({
-      where: { id: data.id },
+    await prisma.gear.updateMany({
+      where: { id: data.id, wayfarerId: session.user.id },
       data: {
         name: data.name,
         category: data.category,
@@ -161,7 +161,7 @@ export async function deleteGear(id: string) {
   const session = await auth()
   if (!session?.user?.id) throw new Error('Unauthorized')
 
-  await prisma.gear.delete({ where: { id } })
+  await prisma.gear.deleteMany({ where: { id, wayfarerId: session.user.id } })
   revalidatePath('/manifest')
 }
 
@@ -178,8 +178,8 @@ export async function saveLandmark(data: {
   if (!session?.user?.id) throw new Error('Unauthorized')
 
   if (data.id) {
-    await prisma.landmark.update({
-      where: { id: data.id },
+    await prisma.landmark.updateMany({
+      where: { id: data.id, wayfarerId: session.user.id },
       data: {
         name: data.name,
         description: data.description,
@@ -205,7 +205,7 @@ export async function deleteLandmark(id: string) {
   const session = await auth()
   if (!session?.user?.id) throw new Error('Unauthorized')
 
-  await prisma.landmark.delete({ where: { id } })
+  await prisma.landmark.deleteMany({ where: { id, wayfarerId: session.user.id } })
   revalidatePath('/manifest')
 }
 
@@ -221,8 +221,8 @@ export async function saveSummit(data: {
   if (!session?.user?.id) throw new Error('Unauthorized')
 
   if (data.id) {
-    await prisma.summit.update({
-      where: { id: data.id },
+    await prisma.summit.updateMany({
+      where: { id: data.id, wayfarerId: session.user.id },
       data: {
         title: data.title,
         issuer: data.issuer,
@@ -247,7 +247,7 @@ export async function deleteSummit(id: string) {
   const session = await auth()
   if (!session?.user?.id) throw new Error('Unauthorized')
 
-  await prisma.summit.delete({ where: { id } })
+  await prisma.summit.deleteMany({ where: { id, wayfarerId: session.user.id } })
   revalidatePath('/manifest')
 }
 
@@ -265,8 +265,8 @@ export async function savePathfinding(data: {
   if (!session?.user?.id) throw new Error('Unauthorized')
 
   if (data.id) {
-    await prisma.pathfinding.update({
-      where: { id: data.id },
+    await prisma.pathfinding.updateMany({
+      where: { id: data.id, wayfarerId: session.user.id },
       data: {
         organization: data.organization,
         role: data.role,
@@ -293,7 +293,7 @@ export async function deletePathfinding(id: string) {
   const session = await auth()
   if (!session?.user?.id) throw new Error('Unauthorized')
 
-  await prisma.pathfinding.delete({ where: { id } })
+  await prisma.pathfinding.deleteMany({ where: { id, wayfarerId: session.user.id } })
   revalidatePath('/manifest')
 }
 
@@ -361,8 +361,8 @@ export async function saveCompanion({
   const wayfarerId = session.user.id
 
   if (id) {
-    await prisma.companion.update({
-      where: { id },
+    await prisma.companion.updateMany({
+      where: { id, wayfarerId },
       data: { name, species, breed: breed ?? null, birthday: birthday ?? null, bio: bio ?? null, passed: passed ?? false },
     })
   } else {

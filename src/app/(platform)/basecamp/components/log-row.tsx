@@ -69,9 +69,9 @@ export function LogRow({ log, folders, tags, allWaypoints }: LogRowProps) {
           <span className="text-xs text-muted-foreground">
             {format(new Date(log.createdAt), 'MMM d, yyyy')}
           </span>
-          {log.tags?.length > 0 && (
+          {log.markers?.length > 0 && (
             <div className="flex flex-wrap gap-1">
-              {log.tags.map((t: any) => <MarkerBadge key={t.tagId} marker={t.tag} />)}
+              {log.markers.map((t: any) => <MarkerBadge key={t.markerId} marker={t.marker} />)}
             </div>
           )}
         </div>

@@ -40,9 +40,9 @@ const CYCLE_LABELS: Record<string, string> = {
   ANNUALLY: 'Annually',
 }
 
-interface Tag {
-  tagId: string
-  tag: { id: string; name: string; color: string; icon?: string }
+interface Marker {
+  markerId: string
+  marker: { id: string; name: string; color: string; icon?: string }
 }
 
 interface Provision {
@@ -55,7 +55,7 @@ interface Provision {
   url?: string
   notes?: string
   active: boolean
-  tags: Tag[]
+  markers: Marker[]
 }
 
 interface Props {
@@ -79,7 +79,7 @@ export function InlineSupplylineForm({ provision, categories, tags, onSaved, onC
       category: provision?.category ?? '',
       url: provision?.url ?? '',
       notes: provision?.notes ?? '',
-      tagIds: provision?.tags?.map((t: any) => t.tagId) ?? [],
+      tagIds: provision?.markers?.map((t: any) => t.markerId) ?? [],
     },
   })
 
@@ -102,7 +102,7 @@ export function InlineSupplylineForm({ provision, categories, tags, onSaved, onC
         category: values.category,
         url: values.url || null,
         notes: values.notes || null,
-        tagIds: values.tagIds,
+        markerIds: values.tagIds,
       })
       onSaved()
     })

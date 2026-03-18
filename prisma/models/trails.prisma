@@ -1,4 +1,4 @@
-model Folder {
+model Trail {
   id         String     @id @default(cuid())
   name       String
   createdAt  DateTime   @default(now())

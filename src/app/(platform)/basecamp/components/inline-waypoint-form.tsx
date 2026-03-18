@@ -61,8 +61,8 @@ export function InlineWaypointForm({
     defaultValues: {
       url: waypoint?.url ?? '',
       title: waypoint?.title ?? '',
-      folderId: waypoint?.folderId ?? defaultFolderId ?? '',
-      tagIds: waypoint?.tags?.map((t: any) => t.tagId) ?? [],
+      folderId: waypoint?.trailId ?? defaultFolderId ?? '',
+      tagIds: waypoint?.markers?.map((t: any) => t.markerId) ?? [],
     },
   })
 
@@ -99,8 +99,8 @@ export function InlineWaypointForm({
         title: values.title,
         url: values.url,
         favicon,
-        folderId: values.folderId || null,
-        tagIds: values.tagIds,
+        trailId: values.folderId || null,
+        markerIds: values.tagIds,
       })
       router.refresh()
       onSaved()

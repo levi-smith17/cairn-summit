@@ -12,11 +12,11 @@ interface LogItem {
   id: string
   content: string
   createdAt: Date | string
-  folderId: string | null
+  trailId: string | null
   waypointId: string | null
-  folder: { id: string; name: string } | null
+  trail: { id: string; name: string } | null
   waypoint: { id: string; title: string } | null
-  tags: { tagId: string; tag: { id: string; name: string; color: string; icon: string | null } }[]
+  markers: { markerId: string; marker: { id: string; name: string; color: string; icon: string | null } }[]
 }
 
 interface LogListProps {
@@ -26,31 +26,31 @@ interface LogListProps {
   onNew: () => void
 }
 
-interface FolderGroup {
-  folderId: string | null
-  folderName: string
+interface TrailGroup {
+  trailId: string | null
+  trailName: string
   logs: LogItem[]
 }
 
-function groupByFolder(logs: LogItem[]): FolderGroup[] {
-  const map = new Map<string | null, FolderGroup>()
+function groupByTrail(logs: LogItem[]): TrailGroup[] {
+  const map = new Map<string | null, TrailGroup>()
 
   for (const log of logs) {
-    const key = log.folderId
+    const key = log.trailId
     if (!map.has(key)) {
       map.set(key, {
-        folderId: key,
-        folderName: log.folder?.name ?? 'Unfiled',
+        trailId: key,
+        trailName: log.trail?.name ?? 'Unfiled',
         logs: [],
       })
     }
     map.get(key)!.logs.push(log)
   }
 
-  // Named folders first (sorted), Unfiled at the end
+  // Named trails first (sorted), Unfiled at the end
   const named = [...map.entries()]
     .filter(([k]) => k !== null)
-    .sort((a, b) => a[1].folderName.localeCompare(b[1].folderName))
+    .sort((a, b) => a[1].trailName.localeCompare(b[1].trailName))
     .map(([, v]) => v)
 
   const unfiled = map.get(null)
@@ -60,7 +60,7 @@ function groupByFolder(logs: LogItem[]): FolderGroup[] {
 
 export function LogList({ logs, selectedId, onSelect, onNew }: LogListProps) {
   const { terms } = useTerminology()
-  const groups = groupByFolder(logs)
+  const groups = groupByTrail(logs)
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -91,11 +91,11 @@ export function LogList({ logs, selectedId, onSelect, onNew }: LogListProps) {
           </div>
         ) : (
           groups.map(group => (
-            <div key={group.folderId ?? '__unfiled__'}>
-              {/* Folder header */}
+            <div key={group.trailId ?? '__unfiled__'}>
+              {/* Trail header */}
               <div className="sticky top-0 z-10 px-4 py-1.5 bg-muted/80 backdrop-blur-sm border-b">
                 <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  {group.folderName}
+                  {group.trailName}
                   <span className="ml-1.5 font-normal normal-case">({group.logs.length})</span>
                 </span>
               </div>
@@ -124,10 +124,10 @@ export function LogList({ logs, selectedId, onSelect, onNew }: LogListProps) {
                           · {log.waypoint.title}
                         </span>
                       )}
-                      {log.tags.length > 0 && (
+                      {log.markers.length > 0 && (
                         <div className="flex flex-wrap gap-1">
-                          {log.tags.map(t => (
-                            <MarkerBadge key={t.tagId} marker={t.tag} />
+                          {log.markers.map(t => (
+                            <MarkerBadge key={t.markerId} marker={t.marker} />
                           ))}
                         </div>
                       )}

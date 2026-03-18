@@ -15,9 +15,9 @@ interface WaypointItem {
   favicon: string | null
   read: boolean
   readLater: boolean
-  folderId: string | null
-  folder: { id: string; name: string } | null
-  tags: { tagId: string; tag: { id: string; name: string; color: string; icon: string | null } }[]
+  trailId: string | null
+  trail: { id: string; name: string } | null
+  markers: { markerId: string; marker: { id: string; name: string; color: string; icon: string | null } }[]
 }
 
 interface WaypointListProps {
@@ -28,7 +28,7 @@ interface WaypointListProps {
 }
 
 interface TrailGroup {
-  folderId: string | null
+  trailId: string | null
   trailName: string
   waypoints: WaypointItem[]
 }
@@ -37,11 +37,11 @@ function groupByTrail(waypoints: WaypointItem[], noTrailLabel: string): TrailGro
   const map = new Map<string | null, TrailGroup>()
 
   for (const waypoint of waypoints) {
-    const key = waypoint.folderId
+    const key = waypoint.trailId
     if (!map.has(key)) {
       map.set(key, {
-        folderId: key,
-        trailName: waypoint.folder?.name ?? noTrailLabel,
+        trailId: key,
+        trailName: waypoint.trail?.name ?? noTrailLabel,
         waypoints: [],
       })
     }
@@ -106,7 +106,7 @@ export function WaypointList({ waypoints, selectedId, onSelect, onNew }: Waypoin
           </div>
         ) : (
           groups.map(group => (
-            <div key={group.folderId ?? '__notrail__'}>
+            <div key={group.trailId ?? '__notrail__'}>
               {/* Trail header */}
               <div className="sticky top-0 z-10 px-4 py-1.5 bg-muted/80 backdrop-blur-sm border-b">
                 <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
@@ -142,10 +142,10 @@ export function WaypointList({ waypoints, selectedId, onSelect, onNew }: Waypoin
                     <div className="flex flex-col gap-0.5 min-w-0 flex-1">
                       <p className="text-sm font-medium truncate leading-snug">{waypoint.title}</p>
                       <p className="text-xs text-muted-foreground truncate">{waypoint.url}</p>
-                      {waypoint.tags.length > 0 && (
+                      {waypoint.markers.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1">
-                          {waypoint.tags.slice(0, 3).map(t => (
-                            <MarkerBadge key={t.tagId} marker={t.tag} />
+                          {waypoint.markers.slice(0, 3).map(t => (
+                            <MarkerBadge key={t.markerId} marker={t.marker} />
                           ))}
                         </div>
                       )}

@@ -23,21 +23,25 @@ export async function saveSession({
   endOdometer?: number | null
   notes?: string | null
 }) {
-  const session = await auth()
-  if (!session?.user?.id) throw new Error('Unauthorized')
+  const authSession = await auth()
+  if (!authSession?.user?.id) throw new Error('Unauthorized')
+  const wayfarerId = authSession.user.id
 
   const data = { date, gasPrice, mpg, startOdometer, endOdometer, notes }
 
   if (id) {
-    await prisma.ddSession.update({ where: { id }, data })
+    await prisma.ddSession.updateMany({ where: { id, wayfarerId }, data })
   } else {
-    await prisma.ddSession.create({ data: { ...data, userId: session.user.id } })
+    await prisma.ddSession.create({ data: { ...data, wayfarerId } })
   }
   revalidatePath('/doordash')
 }
 
 export async function deleteSession(id: string) {
-  await prisma.ddSession.delete({ where: { id } })
+  const authSession = await auth()
+  if (!authSession?.user?.id) throw new Error('Unauthorized')
+
+  await prisma.ddSession.deleteMany({ where: { id, wayfarerId: authSession.user.id } })
   revalidatePath('/doordash')
 }
 
@@ -56,17 +60,31 @@ export async function saveOrder({
   pickupMiles?: number | null
   notes?: string | null
 }) {
+  const authSession = await auth()
+  if (!authSession?.user?.id) throw new Error('Unauthorized')
+  const wayfarerId = authSession.user.id
+
   const data = { deliveryMiles, pickupMiles, notes }
 
   if (id) {
-    await prisma.ddOrder.update({ where: { id }, data })
+    await prisma.ddOrder.updateMany({
+      where: { id, session: { wayfarerId } },
+      data,
+    })
   } else {
+    const ownerSession = await prisma.ddSession.findFirst({ where: { id: sessionId, wayfarerId } })
+    if (!ownerSession) throw new Error('Not found')
     await prisma.ddOrder.create({ data: { ...data, sessionId } })
   }
   revalidatePath('/doordash')
 }
 
 export async function deleteOrder(id: string) {
-  await prisma.ddOrder.delete({ where: { id } })
+  const authSession = await auth()
+  if (!authSession?.user?.id) throw new Error('Unauthorized')
+
+  await prisma.ddOrder.deleteMany({
+    where: { id, session: { wayfarerId: authSession.user.id } },
+  })
   revalidatePath('/doordash')
 }

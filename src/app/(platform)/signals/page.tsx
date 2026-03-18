@@ -9,7 +9,7 @@ export default async function SignalsPage() {
     if (!session?.user?.id) redirect('/login')
     const wayfarerId = session.user.id
 
-    const signals = await prisma.message.findMany({
+    const signals = await prisma.signal.findMany({
         where: { wayfarerId },
         orderBy: { createdAt: 'desc' },
         include: { replies: { orderBy: { createdAt: 'asc' } } },

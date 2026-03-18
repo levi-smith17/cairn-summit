@@ -14,13 +14,13 @@ export async function GET(req: NextRequest) {
   const active = searchParams.get('active')
   const billingCycle = searchParams.get('billingCycle')
   const search = searchParams.get('search')
-  const tagId = searchParams.get('tagId')
+  const markerId = searchParams.get('markerId')
 
   const where: any = { wayfarerId }
   if (category) where.category = category
   if (active !== null && active !== undefined) where.active = active === 'true'
   if (billingCycle) where.billingCycle = billingCycle
-  if (tagId) where.tags = { some: { tagId } }
+  if (markerId) where.markers = { some: { markerId } }
   if (search) {
     where.OR = [
       { name: { contains: search, mode: 'insensitive' } },
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
     where,
     orderBy: { nextRenewal: 'asc' },
     include: {
-      tags: { include: { tag: true } },
+      markers: { include: { marker: true } },
     },
   })
 
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
   const wayfarerId = session.user.id
 
   const body = await req.json()
-  const { name, amount, billingCycle, nextRenewal, category, url, notes, active, tagIds } = body
+  const { name, amount, billingCycle, nextRenewal, category, url, notes, active, markerIds } = body
 
   if (!name || !amount || !billingCycle || !nextRenewal || !category) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -65,12 +65,12 @@ export async function POST(req: NextRequest) {
       notes: notes ?? null,
       active: active ?? true,
       wayfarerId,
-      tags: {
-        create: (tagIds ?? []).map((tagId: string) => ({ tagId })),
+      markers: {
+        create: (markerIds ?? []).map((markerId: string) => ({ markerId })),
       },
     },
     include: {
-      tags: { include: { tag: true } },
+      markers: { include: { marker: true } },
     },
   })
 

@@ -14,9 +14,9 @@ model Wayfarer {
   accounts           Account[]
   sessions           Session[]
   waypoints          Waypoint[]
-  folders            Folder[]
+  trails             Trail[]
   logs               Log[]
-  tags               Tag[]
+  markers            Marker[]
   provisions         Provision[]
   expenses           Expense[]
   budget             Budget[]
@@ -28,7 +28,7 @@ model Wayfarer {
   summits            Summit[]
   pathfinding        Pathfinding[]
   companions         Companion[]
-  messages           Message[]
+  signals            Signal[]
 
   @@map("wayfarers")
 }

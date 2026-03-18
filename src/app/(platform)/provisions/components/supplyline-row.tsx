@@ -27,9 +27,9 @@ import { deleteProvision, toggleProvisionActive } from '@/actions/provisions'
 import { InlineSupplylineForm } from './inline-supplyline-form'
 import { useTerminology } from '@/contexts/terminology-context'
 
-interface Tag {
-  tagId: string
-  tag: { id: string; name: string; color: string; icon?: string }
+interface Marker {
+  markerId: string
+  marker: { id: string; name: string; color: string; icon?: string }
 }
 
 export interface Provision {
@@ -42,7 +42,7 @@ export interface Provision {
   url?: string
   notes?: string
   active: boolean
-  tags: Tag[]
+  markers: Marker[]
 }
 
 interface Props {
@@ -106,7 +106,7 @@ export function SupplylineRow({ provision, categories, tags, onSaved, onDeleted 
                 {daysUntil}d
               </Badge>
             )}
-            {provision.tags.map(({ tag }) => <MarkerBadge key={tag.id} marker={tag} />)}
+            {provision.markers.map(({ marker }) => <MarkerBadge key={marker.id} marker={marker} />)}
           </div>
           <div className="text-xs text-muted-foreground">
             renews {new Date(provision.nextRenewal).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}

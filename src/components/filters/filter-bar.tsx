@@ -53,16 +53,16 @@ export function FilterBar({
 
       {showMarkerFilter && (
         <MarkerFilter
-          value={filters.tagId}
-          onChange={v => setFilter('tagId', v)}
+          value={filters.markerId}
+          onChange={v => setFilter('markerId', v)}
           markers={markers}
         />
       )}
 
       {showTrailFilter && (
         <TrailFilter
-          value={filters.folderId}
-          onChange={v => setFilter('folderId', v)}
+          value={filters.trailId}
+          onChange={v => setFilter('trailId', v)}
           trails={trails}
         />
       )}

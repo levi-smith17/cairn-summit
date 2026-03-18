@@ -11,25 +11,25 @@ export async function GET(req: NextRequest) {
   const wayfarerId = session.user.id
 
   const searchParams = req.nextUrl.searchParams
-  const folderId = searchParams.get('folderId')
+  const trailId = searchParams.get('trailId')
   const page = parseInt(searchParams.get('page') ?? '1')
   const pageSize = parseInt(searchParams.get('pageSize') ?? '5')
 
-  if (!folderId) {
-    return NextResponse.json({ error: 'folderId required' }, { status: 400 })
+  if (!trailId) {
+    return NextResponse.json({ error: 'trailId required' }, { status: 400 })
   }
 
   const filters = parseFiltersFromParams(searchParams)
-  const where = { ...buildWaypointWhere(filters, wayfarerId), folderId }
+  const where = { ...buildWaypointWhere(filters, wayfarerId), trailId }
   const orderBy = buildWaypointOrderBy(filters.sort)
 
   const [waypoints, filteredCount] = await Promise.all([
     prisma.waypoint.findMany({
       where,
       include: {
-        tags: { include: { tag: true } },
+        markers: { include: { marker: true } },
         logs: {
-          include: { tags: { include: { tag: true } } },
+          include: { markers: { include: { marker: true } } },
           orderBy: { createdAt: 'desc' },
         },
       },

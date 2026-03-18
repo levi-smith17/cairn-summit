@@ -99,8 +99,8 @@ export function WaypointForm({ waypoint, folders, tags, onBack, onSaved, onDelet
       url: waypoint?.url ?? '',
       description: waypoint?.description ?? '',
       notes: waypoint?.notes ?? '',
-      folderId: waypoint?.folderId ?? '',
-      tagIds: waypoint?.tags?.map((t: any) => t.tagId) ?? [],
+      folderId: waypoint?.trailId ?? '',
+      tagIds: waypoint?.markers?.map((t: any) => t.markerId) ?? [],
     },
   })
 
@@ -171,8 +171,8 @@ export function WaypointForm({ waypoint, folders, tags, onBack, onSaved, onDelet
         description: values.description || null,
         notes: values.notes || null,
         favicon,
-        folderId: values.folderId || null,
-        tagIds: values.tagIds,
+        trailId: values.folderId || null,
+        markerIds: values.tagIds,
       })
       router.refresh()
       onSaved(result.id)

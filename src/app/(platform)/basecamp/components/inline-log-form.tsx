@@ -60,9 +60,9 @@ export function InlineLogForm({
     resolver: zodResolver(schema),
     defaultValues: {
       content: log?.content ?? '',
-      folderId: log?.folderId ?? defaultFolderId ?? '',
+      folderId: log?.trailId ?? defaultFolderId ?? '',
       waypointId: log?.waypointId ?? defaultWaypointId ?? '',
-      tagIds: log?.tags?.map((t: any) => t.tagId) ?? [],
+      tagIds: log?.markers?.map((t: any) => t.markerId) ?? [],
     },
   })
 
@@ -70,7 +70,7 @@ export function InlineLogForm({
   const selectedFolderId = form.watch('folderId')
 
   const filteredWaypoints = selectedFolderId && selectedFolderId !== 'none'
-    ? waypoints.filter(w => w.folderId === selectedFolderId)
+    ? waypoints.filter(w => w.trailId === selectedFolderId)
     : waypoints
 
   function toggleMarker(tagId: string) {
@@ -86,9 +86,9 @@ export function InlineLogForm({
       await saveLog({
         id: log?.id,
         content: values.content,
-        folderId: values.folderId || null,
+        trailId: values.folderId || null,
         waypointId: values.waypointId || null,
-        tagIds: values.tagIds,
+        markerIds: values.tagIds,
       })
       router.refresh()
       onSaved()

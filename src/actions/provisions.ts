@@ -15,7 +15,7 @@ export async function saveProvision({
   url,
   notes,
   active,
-  tagIds,
+  markerIds,
 }: {
   id?: string
   name: string
@@ -26,15 +26,15 @@ export async function saveProvision({
   url?: string | null
   notes?: string | null
   active?: boolean
-  tagIds: string[]
+  markerIds: string[]
 }) {
   const session = await auth()
   if (!session?.user?.id) throw new Error('Unauthorized')
   const wayfarerId = session.user.id
 
   if (id) {
-    await prisma.provision.update({
-      where: { id },
+    await prisma.provision.updateMany({
+      where: { id, wayfarerId },
       data: {
         name,
         amount,
@@ -44,12 +44,21 @@ export async function saveProvision({
         url: url ?? null,
         notes: notes ?? null,
         ...(active !== undefined && { active }),
-        tags: {
-          deleteMany: {},
-          create: tagIds.map((tagId) => ({ tagId })),
-        },
       },
     })
+    // Update markers separately since updateMany doesn't support nested writes
+    const existing = await prisma.provision.findFirst({ where: { id, wayfarerId } })
+    if (existing) {
+      await prisma.provision.update({
+        where: { id },
+        data: {
+          markers: {
+            deleteMany: {},
+            create: markerIds.map((markerId) => ({ markerId })),
+          },
+        },
+      })
+    }
   } else {
     await prisma.provision.create({
       data: {
@@ -62,8 +71,8 @@ export async function saveProvision({
         notes: notes ?? null,
         active: true,
         wayfarerId,
-        tags: {
-          create: tagIds.map((tagId) => ({ tagId })),
+        markers: {
+          create: markerIds.map((markerId) => ({ markerId })),
         },
       },
     })
@@ -76,8 +85,8 @@ export async function toggleProvisionActive(id: string, active: boolean) {
   const session = await auth()
   if (!session?.user?.id) throw new Error('Unauthorized')
 
-  await prisma.provision.update({
-    where: { id },
+  await prisma.provision.updateMany({
+    where: { id, wayfarerId: session.user.id },
     data: { active },
   })
 

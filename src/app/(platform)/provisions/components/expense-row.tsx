@@ -24,9 +24,9 @@ import { deleteExpense } from '@/actions/expenses'
 import { InlineExpenseForm } from './inline-expense-form'
 import { useTerminology } from '@/contexts/terminology-context'
 
-interface Tag {
-  tagId: string
-  tag: { id: string; name: string; color: string; icon?: string }
+interface Marker {
+  markerId: string
+  marker: { id: string; name: string; color: string; icon?: string }
 }
 
 export interface Expense {
@@ -37,7 +37,7 @@ export interface Expense {
   date: string
   notes?: string
   receiptUrl?: string | null
-  tags: Tag[]
+  markers: Marker[]
 }
 
 interface Props {
@@ -77,7 +77,7 @@ export function ExpenseRow({ expense, categories, tags, onSaved, onDeleted }: Pr
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-sm font-medium truncate">{expense.name}</span>
-            {expense.tags.map(({ tag }) => <MarkerBadge key={tag.id} marker={tag} />)}
+            {expense.markers.map(({ marker }) => <MarkerBadge key={marker.id} marker={marker} />)}
           </div>
           {expense.notes && (
             <div className="text-xs text-muted-foreground truncate">{expense.notes}</div>

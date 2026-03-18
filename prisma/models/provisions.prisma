@@ -1,5 +1,5 @@
 model Provision {
-  id           String       @id @default(cuid())
+  id           String               @id @default(cuid())
   name         String
   amount       Float
   billingCycle BillingCycle
@@ -7,25 +7,25 @@ model Provision {
   category     String
   url          String?
   notes        String?
-  active       Boolean      @default(true)
-  createdAt    DateTime     @default(now())
+  active       Boolean              @default(true)
+  createdAt    DateTime             @default(now())
   wayfarerId   String
-  wayfarer     Wayfarer     @relation(fields: [wayfarerId], references: [id])
-  tags         TagsOnProvisions[]
+  wayfarer     Wayfarer             @relation(fields: [wayfarerId], references: [id])
+  markers      MarkersOnProvisions[]
 }
 
 model Expense {
-  id         String   @id @default(cuid())
+  id         String             @id @default(cuid())
   name       String
   amount     Float
   category   String
   date       DateTime
   notes      String?
   receiptUrl String?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime           @default(now())
   wayfarerId String
-  wayfarer   Wayfarer @relation(fields: [wayfarerId], references: [id])
-  tags       TagsOnExpenses[]
+  wayfarer   Wayfarer           @relation(fields: [wayfarerId], references: [id])
+  markers    MarkersOnExpenses[]
 }
 
 model Budget {
@@ -36,7 +36,7 @@ model Budget {
   year       Int
   wayfarerId String
   wayfarer   Wayfarer @relation(fields: [wayfarerId], references: [id])
-  
+
   @@unique([wayfarerId, category, month, year])
 }
 
@@ -48,22 +48,22 @@ enum BillingCycle {
   ANNUALLY
 }
 
-model TagsOnProvisions {
+model MarkersOnProvisions {
   provision   Provision @relation(fields: [provisionId], references: [id], onDelete: Cascade)
   provisionId String
-  tag         Tag       @relation(fields: [tagId], references: [id], onDelete: Cascade)
-  tagId       String
+  marker      Marker    @relation(fields: [markerId], references: [id], onDelete: Cascade)
+  markerId    String @map("tagId")
 
-  @@id([provisionId, tagId])
-  @@map("tags_on_provisions")
+  @@id([provisionId, markerId])
+  @@map("TagsOnProvisions")
 }
 
-model TagsOnExpenses {
+model MarkersOnExpenses {
   expense   Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
   expenseId String
-  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
-  tagId     String
+  marker    Marker  @relation(fields: [markerId], references: [id], onDelete: Cascade)
+  markerId  String @map("tagId")
 
-  @@id([expenseId, tagId])
-  @@map("tags_on_expenses")
+  @@id([expenseId, markerId])
+  @@map("TagsOnExpenses")
 }

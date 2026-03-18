@@ -47,9 +47,9 @@ export default async function BasecampPage({ searchParams }: BasecampPageProps) 
       { url: { contains: filters.search, mode: 'insensitive' } },
     ]
   }
-  if (filters.tagId !== 'all') waypointWhere.tags = { some: { tagId: filters.tagId } }
+  if (filters.markerId !== 'all') waypointWhere.markers = { some: { markerId: filters.markerId } }
   if (filters.readLater) waypointWhere.readLater = true
-  const hasWaypointFilter = !!(filters.search || filters.tagId !== 'all' || filters.readLater || filters.dateFrom || filters.dateTo)
+  const hasWaypointFilter = !!(filters.search || filters.markerId !== 'all' || filters.readLater || filters.dateFrom || filters.dateTo)
 
   const now = new Date()
   const in7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
@@ -59,10 +59,10 @@ export default async function BasecampPage({ searchParams }: BasecampPageProps) 
   const monthEnd = new Date(currentYear, currentMonth, 0, 23, 59, 59)
 
   const [
-    folders,
-    totalFolders,
-    tags,
-    allFolders,
+    trails,
+    totalTrails,
+    markers,
+    allTrails,
     allWaypoints,
     wayfarer,
     expeditions,
@@ -80,10 +80,10 @@ export default async function BasecampPage({ searchParams }: BasecampPageProps) 
     latestSignals,
   ] = await Promise.all([
     // Main waypoint data
-    prisma.folder.findMany({
+    prisma.trail.findMany({
       where: {
         wayfarerId,
-        ...(filters.folderId !== 'all' ? { id: filters.folderId } : {}),
+        ...(filters.trailId !== 'all' ? { id: filters.trailId } : {}),
         ...(hasWaypointFilter ? { waypoints: { some: waypointWhere } } : {}),
       },
       orderBy,
@@ -94,31 +94,31 @@ export default async function BasecampPage({ searchParams }: BasecampPageProps) 
           orderBy: waypointOrderBy,
           take: WAYPOINTS_PER_FOLDER,
           include: {
-            tags: { include: { tag: true } },
+            markers: { include: { marker: true } },
             logs: {
-              include: { tags: { include: { tag: true } } },
+              include: { markers: { include: { marker: true } } },
               orderBy: { createdAt: 'desc' },
             },
           },
         },
         logs: {
           where: { wayfarerId, waypointId: null },
-          include: { tags: { include: { tag: true } } },
+          include: { markers: { include: { marker: true } } },
           orderBy: { createdAt: 'desc' },
         },
         _count: { select: { waypoints: true } },
       },
     }),
-    prisma.folder.count({
+    prisma.trail.count({
       where: {
         wayfarerId,
-        ...(filters.folderId !== 'all' ? { id: filters.folderId } : {}),
+        ...(filters.trailId !== 'all' ? { id: filters.trailId } : {}),
         ...(hasWaypointFilter ? { waypoints: { some: waypointWhere } } : {}),
       },
     }),
-    prisma.tag.findMany({ where: { wayfarerId }, orderBy: { name: 'asc' } }),
-    prisma.folder.findMany({ where: { wayfarerId }, orderBy: { name: 'asc' }, select: { id: true, name: true } }),
-    prisma.waypoint.findMany({ where: { wayfarerId }, orderBy: { title: 'asc' }, select: { id: true, title: true, folderId: true } }),
+    prisma.marker.findMany({ where: { wayfarerId }, orderBy: { name: 'asc' } }),
+    prisma.trail.findMany({ where: { wayfarerId }, orderBy: { name: 'asc' }, select: { id: true, name: true } }),
+    prisma.waypoint.findMany({ where: { wayfarerId }, orderBy: { title: 'asc' }, select: { id: true, title: true, trailId: true } }),
 
     // Sidebar: Wayfarer + origins
     prisma.wayfarer.findUnique({
@@ -147,8 +147,8 @@ export default async function BasecampPage({ searchParams }: BasecampPageProps) 
     prisma.budget.findMany({ where: { wayfarerId, month: currentMonth, year: currentYear }, select: { limit: true } }),
 
     // Sidebar: Signals
-    prisma.message.count({ where: { wayfarerId, read: false } }),
-    prisma.message.findMany({
+    prisma.signal.count({ where: { wayfarerId, read: false } }),
+    prisma.signal.findMany({
       where: { wayfarerId },
       orderBy: { createdAt: 'desc' },
       take: 3,
@@ -158,14 +158,14 @@ export default async function BasecampPage({ searchParams }: BasecampPageProps) 
 
   const filteredCounts = hasWaypointFilter
     ? await prisma.waypoint.groupBy({
-        by: ['folderId'],
+        by: ['trailId'],
         where: waypointWhere,
         _count: true,
       })
     : null
 
   const filteredCountMap = filteredCounts
-    ? Object.fromEntries(filteredCounts.map(r => [r.folderId, r._count]))
+    ? Object.fromEntries(filteredCounts.map(r => [r.trailId, r._count]))
     : null
 
   const monthlyTotal = activeProvisions.reduce((sum: number, p: { amount: number; billingCycle: string; nextRenewal: Date; category: string }) => {
@@ -176,10 +176,10 @@ export default async function BasecampPage({ searchParams }: BasecampPageProps) 
 
   return (
     <BasecampClient
-      initialFolders={folders}
-      initialHasMore={PAGE_SIZE < totalFolders}
-      tags={tags}
-      folders={allFolders}
+      initialFolders={trails}
+      initialHasMore={PAGE_SIZE < totalTrails}
+      tags={markers}
+      folders={allTrails}
       waypoints={allWaypoints}
       filteredCountMap={filteredCountMap}
       sidebarData={{

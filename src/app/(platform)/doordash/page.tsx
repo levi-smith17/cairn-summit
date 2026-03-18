@@ -8,7 +8,7 @@ export default async function DoordashPage() {
   if (!session?.user?.id) redirect('/login')
 
   const sessions = await prisma.ddSession.findMany({
-    where: { userId: session.user.id },
+    where: { wayfarerId: session.user.id },
     orderBy: { date: 'desc' },
     include: {
       orders: { orderBy: { createdAt: 'asc' } },
