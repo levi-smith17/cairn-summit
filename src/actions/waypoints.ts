@@ -112,13 +112,13 @@ export async function saveTrail(data: { id?: string; name: string }) {
   const wayfarerId = session.user.id
 
   if (data.id) {
-    const trail = await prisma.trail.updateMany({
+    await prisma.trail.updateMany({
       where: { id: data.id, wayfarerId },
       data: { name: data.name },
     })
     revalidatePath('/waypoints')
     revalidatePath('/trails')
-    return trail
+    return { id: data.id, name: data.name }
   } else {
     const trail = await prisma.trail.create({ data: { name: data.name, wayfarerId } })
     revalidatePath('/waypoints')
@@ -149,13 +149,13 @@ export async function saveMarker(data: {
   const wayfarerId = session.user.id
 
   if (data.id) {
-    const marker = await prisma.marker.updateMany({
+    await prisma.marker.updateMany({
       where: { id: data.id, wayfarerId },
       data: { name: data.name, color: data.color, icon: data.icon },
     })
     revalidatePath('/waypoints')
     revalidatePath('/markers')
-    return marker
+    return { id: data.id, name: data.name, color: data.color, icon: data.icon ?? null }
   } else {
     const marker = await prisma.marker.create({
       data: { name: data.name, color: data.color, icon: data.icon, wayfarerId },
