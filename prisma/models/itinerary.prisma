@@ -1,0 +1,41 @@
+// Itinerary — calendar stops/events
+
+model Stop {
+  id         String          @id @default(cuid())
+  title      String
+  notes      String?
+  location   String?
+  startDate  DateTime
+  endDate    DateTime?
+  allDay     Boolean         @default(false)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  // Recurrence
+  recurrenceRule String? // RRULE value e.g. "FREQ=WEEKLY;BYDAY=MO,WE"
+  exceptionDates String? // JSON: ISO date strings excluded ["2026-04-07", ...]
+  masterStopId   String? // If this is a recurrence exception, points to master
+
+  wayfarerId      String
+  wayfarer        Wayfarer        @relation(fields: [wayfarerId], references: [id], onDelete: Cascade)
+  markers         MarkersOnStops[]
+  icloudEventUid   String?
+  icloudEventUrl   String?
+  icloudCalendarId String?
+  icloudCalendar   ICloudCalendar? @relation(fields: [icloudCalendarId], references: [id], onDelete: SetNull)
+
+  masterStop Stop?  @relation("StopExceptions", fields: [masterStopId], references: [id], onDelete: Cascade)
+  exceptions Stop[] @relation("StopExceptions")
+
+  @@map("stops")
+}
+
+model MarkersOnStops {
+  stop     Stop   @relation(fields: [stopId], references: [id], onDelete: Cascade)
+  stopId   String
+  marker   Marker @relation(fields: [markerId], references: [id], onDelete: Cascade)
+  markerId String
+
+  @@id([stopId, markerId])
+  @@map("markers_on_stops")
+}

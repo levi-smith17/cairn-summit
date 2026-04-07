@@ -4,8 +4,9 @@ import { useState, useTransition } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { signOut } from 'next-auth/react'
-import { saveManifestSettings, deleteAccount } from '@/actions/manifest'
-import { settingsSchema, type SettingsFormValues } from '@/lib/schemas/manifest'
+import { saveAccountSettings } from '@/actions/settings'
+import { deleteAccount } from '@/actions/manifest'
+import { accountSchema, type AccountFormValues } from '@/lib/schemas/settings'
 import {
     Form,
     FormControl,
@@ -37,19 +38,19 @@ import {
     AlertDialogCancel,
 } from '@/components/ui/alert-dialog'
 
-
-interface SettingsFormProps {
+interface AccountFormProps {
     defaultValues: {
         username: string | null
         defaultTerminology: 'CAIRN' | 'STANDARD'
         defaultTheme: 'SYSTEM' | 'LIGHT' | 'DARK'
+        timeFormat: 'TWELVE' | 'TWENTYFOUR'
         listed: boolean
         customDomain: string | null
     }
     isAdmin?: boolean
 }
 
-export function SettingsForm({ defaultValues, isAdmin }: SettingsFormProps) {
+export function AccountForm({ defaultValues, isAdmin }: AccountFormProps) {
     const { saving, saved, error, handleSubmit } = useFormStatus()
     const [deleteOpen, setDeleteOpen] = useState(false)
     const [confirmText, setConfirmText] = useState('')
@@ -62,22 +63,24 @@ export function SettingsForm({ defaultValues, isAdmin }: SettingsFormProps) {
         })
     }
 
-    const form = useForm<SettingsFormValues>({
-        resolver: zodResolver(settingsSchema),
+    const form = useForm<AccountFormValues>({
+        resolver: zodResolver(accountSchema),
         defaultValues: {
             username: defaultValues.username ?? '',
             defaultTerminology: defaultValues.defaultTerminology,
             defaultTheme: defaultValues.defaultTheme,
+            timeFormat: defaultValues.timeFormat,
             listed: defaultValues.listed,
             customDomain: defaultValues.customDomain ?? '',
         },
     })
 
-    async function onSubmit(values: SettingsFormValues) {
-        await handleSubmit(() => saveManifestSettings({
+    async function onSubmit(values: AccountFormValues) {
+        await handleSubmit(() => saveAccountSettings({
             username: values.username || null,
             defaultTerminology: values.defaultTerminology,
             defaultTheme: values.defaultTheme,
+            timeFormat: values.timeFormat,
             listed: values.listed,
             customDomain: values.customDomain || null,
         }))
@@ -97,10 +100,7 @@ export function SettingsForm({ defaultValues, isAdmin }: SettingsFormProps) {
                         <FormItem>
                             <FormLabel>Username</FormLabel>
                             <FormControl>
-                                <Input
-                                    placeholder="e.g. levi"
-                                    {...field}
-                                />
+                                <Input placeholder="e.g. levi" {...field} />
                             </FormControl>
                             <FormDescription>
                                 {username
@@ -122,27 +122,24 @@ export function SettingsForm({ defaultValues, isAdmin }: SettingsFormProps) {
                 />
 
                 {isAdmin && (
-                <FormField
-                    control={form.control}
-                    name="customDomain"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Custom Domain</FormLabel>
-                            <FormControl>
-                                <Input
-                                    placeholder="e.g. mysite.com"
-                                    {...field}
-                                />
-                            </FormControl>
-                            <FormDescription>
-                                {customDomain
-                                    ? <>Point your domain's DNS to Cairn's IP, then visitors can reach your Manifest at <strong>{customDomain}</strong>.</>
-                                    : 'Optionally serve your Manifest from your own domain. Point its DNS to Cairn first.'}
-                            </FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                    <FormField
+                        control={form.control}
+                        name="customDomain"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Custom Domain</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="e.g. mysite.com" {...field} />
+                                </FormControl>
+                                <FormDescription>
+                                    {customDomain
+                                        ? <>Point your domain's DNS to Cairn's IP, then visitors can reach your Manifest at <strong>{customDomain}</strong>.</>
+                                        : 'Optionally serve your Manifest from your own domain. Point its DNS to Cairn first.'}
+                                </FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                 )}
 
                 <FormField
@@ -184,7 +181,7 @@ export function SettingsForm({ defaultValues, isAdmin }: SettingsFormProps) {
                                 </SelectContent>
                             </Select>
                             <FormDescription>
-                                This sets the default section labels on your public Manifest. Visitors can toggle between both.
+                                Sets the default section labels on your public Manifest. Visitors can toggle between both.
                             </FormDescription>
                             <FormMessage />
                         </FormItem>
@@ -218,6 +215,30 @@ export function SettingsForm({ defaultValues, isAdmin }: SettingsFormProps) {
                     )}
                 />
 
+                <FormField
+                    control={form.control}
+                    name="timeFormat"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Time Format</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    <SelectItem value="TWELVE">12-hour (e.g. 2:30 PM)</SelectItem>
+                                    <SelectItem value="TWENTYFOUR">24-hour (e.g. 14:30)</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <FormDescription>
+                                Controls how times are displayed across the Itinerary and other areas.
+                            </FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
 
                 <FormActions
                     saving={saving}

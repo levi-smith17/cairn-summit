@@ -13,7 +13,7 @@ export default async function ManifestPage() {
     const wayfarerId = session?.user?.id!
     const wayfarer = await prisma.wayfarer.findUnique({
         where: { id: wayfarerId },
-        select: { username: true, listed: true, defaultTerminology: true, defaultTheme: true, customDomain: true, isAdmin: true },
+        select: { username: true, isAdmin: true },
     })
 
     const [origins, expeditions, training, gear, landmarks, summits, pathfinding, companions] = await Promise.all([
@@ -75,13 +75,6 @@ export default async function ManifestPage() {
                     summits={summits}
                     pathfinding={pathfinding}
                     companions={companions}
-                    settings={{
-                        username: wayfarer?.username ?? null,
-                        listed: wayfarer?.listed ?? true,
-                        defaultTerminology: wayfarer?.defaultTerminology ?? 'CAIRN',
-                        defaultTheme: wayfarer?.defaultTheme ?? 'SYSTEM',
-                        customDomain: wayfarer?.customDomain ?? null,
-                    }}
                     isAdmin={wayfarer?.isAdmin ?? false}
                 />
             </div>

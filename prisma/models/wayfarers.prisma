@@ -10,6 +10,7 @@ model Wayfarer {
   listed             Boolean          @default(true)
   defaultTerminology TerminologyStyle @default(CAIRN)
   defaultTheme       ThemePreference  @default(SYSTEM)
+  timeFormat         TimeFormat       @default(TWELVE)
   createdAt          DateTime         @default(now())
   accounts           Account[]
   sessions           Session[]
@@ -29,6 +30,11 @@ model Wayfarer {
   pathfinding        Pathfinding[]
   companions         Companion[]
   signals            Signal[]
+  stops              Stop[]
+  icloudCalendars    ICloudCalendar[]
+  calendarSubscriptions CalendarSubscription[]
+  imapAccounts       ImapAccount[]
+  signalSettings     SignalSettings?
 
   @@map("wayfarers")
 }
@@ -42,6 +48,11 @@ enum ThemePreference {
   LIGHT
   DARK
   SYSTEM
+}
+
+enum TimeFormat {
+  TWELVE
+  TWENTYFOUR
 }
 
 // Origins — personal summary/bio

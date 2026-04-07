@@ -1,0 +1,50 @@
+model ImapAccount {
+  id           String        @id @default(cuid())
+  label        String
+  emailAddress String
+  imapHost     String
+  imapPort     Int           @default(993)
+  imapSecure   Boolean       @default(true)
+  smtpHost     String
+  smtpPort     Int           @default(587)
+  smtpSecure   Boolean       @default(false)
+  username     String
+  passwordEnc  String
+  isDefault    Boolean       @default(false)
+  createdAt    DateTime      @default(now())
+  wayfarerId   String
+  wayfarer     Wayfarer      @relation(fields: [wayfarerId], references: [id], onDelete: Cascade)
+  cachedEmails CachedEmail[]
+
+  @@map("imap_accounts")
+}
+
+model CachedEmail {
+  id             String      @id @default(cuid())
+  uid            String
+  mailbox        String      @default("INBOX")
+  messageId      String?
+  inReplyTo      String?
+  subject        String?
+  fromName       String?
+  fromAddress    String
+  toAddresses    String[]
+  ccAddresses    String[]
+  date           DateTime?
+  snippet        String?
+  bodyHtml       String?
+  bodyText       String?
+  isRead         Boolean     @default(false)
+  isStarred      Boolean     @default(false)
+  hasAttachments Boolean     @default(false)
+  attachmentMeta Json?
+  bodyFetched    Boolean     @default(false)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  accountId      String
+  account        ImapAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, mailbox, uid])
+  @@index([accountId, mailbox, date])
+  @@map("cached_emails")
+}

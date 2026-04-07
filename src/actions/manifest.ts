@@ -308,21 +308,13 @@ export async function saveManifestSettings(data: {
   if (!session?.user?.id) throw new Error('Unauthorized')
 
   if (data.username) {
-    const existing = await prisma.wayfarer.findUnique({
-      where: { username: data.username },
-    })
-    if (existing && existing.id !== session.user.id) {
-      throw new Error('Username already taken')
-    }
+    const existing = await prisma.wayfarer.findUnique({ where: { username: data.username } })
+    if (existing && existing.id !== session.user.id) throw new Error('Username already taken')
   }
 
   if (data.customDomain) {
-    const existing = await prisma.wayfarer.findUnique({
-      where: { customDomain: data.customDomain },
-    })
-    if (existing && existing.id !== session.user.id) {
-      throw new Error('Custom domain already in use')
-    }
+    const existing = await prisma.wayfarer.findUnique({ where: { customDomain: data.customDomain } })
+    if (existing && existing.id !== session.user.id) throw new Error('Custom domain already in use')
   }
 
   await prisma.wayfarer.update({
