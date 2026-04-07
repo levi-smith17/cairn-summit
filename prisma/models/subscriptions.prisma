@@ -1,0 +1,13 @@
+// Calendar subscriptions — read-only iCal feed URLs
+
+model CalendarSubscription {
+  id         String   @id @default(cuid())
+  name       String
+  url        String
+  color      String   @default("#6b7280")
+  createdAt  DateTime @default(now())
+  wayfarerId String
+  wayfarer   Wayfarer @relation(fields: [wayfarerId], references: [id], onDelete: Cascade)
+
+  @@map("calendar_subscriptions")
+}

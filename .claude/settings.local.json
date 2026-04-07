@@ -2,7 +2,19 @@
   "permissions": {
     "allow": [
       "Bash(npx prisma:*)",
-      "Bash(npm test:*)"
+      "Bash(npm test:*)",
+      "Bash(find \"/c/Users/Levi/NextJS/cairn/src/app/\\(platform\\)/trails\" -type f)",
+      "Bash(find \"/c/Users/Levi/NextJS/cairn/src/app/\\(platform\\)/markers\" -type f)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:levismith.us)",
+      "WebSearch",
+      "WebFetch(domain:api.github.com)",
+      "Bash(curl -s https://raw.githubusercontent.com/lsmith2-edison/luvi/master/lib/Luvi.php)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(ls -la \"c:\\\\Users\\\\Levi\\\\NextJS\\\\cairn\\\\src\\\\app\\\\\\(platform\\)\\\\settings\")",
+      "Bash(grep -A 15 '$StopPayload' node_modules/.prisma/client/index.d.ts)"
     ]
   }
 }

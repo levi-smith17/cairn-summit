@@ -1,9 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { User, BookOpen, CreditCard, Mail, ChevronRight, MapPin, Globe, Linkedin, Github } from 'lucide-react'
-import { format } from 'date-fns'
+import { User, BookOpen, CreditCard, Mail, ChevronRight, MapPin, Globe, Linkedin, Github, Pencil } from 'lucide-react'
+import { formatDistanceToNow } from 'date-fns'
 import { useTerminology } from '@/contexts/terminology-context'
+import { ItinerarySnapshotPanel } from './itinerary-snapshot-panel'
 
 interface SnapshotPanelsProps {
   wayfarer: {
@@ -38,9 +39,14 @@ interface SnapshotPanelsProps {
   }
   signalsSummary: {
     unreadCount: number
-    latestMessages: { id: string; senderName: string; body: string; createdAt: Date | string }[]
+    latestMessages: { id: string; senderName: string; body: string; createdAt: Date | string; read: boolean }[]
+    emailAccounts: { id: string; label: string; emailAddress: string; unreadCount: number }[]
+  }
+  itinerarySummary: {
+    stops: { id: string; title: string; startDate: Date | string; endDate: Date | string | null; allDay: boolean; color: string }[]
   }
 }
+
 
 export function SnapshotPanels({
   wayfarer,
@@ -48,6 +54,7 @@ export function SnapshotPanels({
   manifestHighlights,
   provisionsSummary,
   signalsSummary,
+  itinerarySummary,
 }: SnapshotPanelsProps) {
   const { terms, terminology } = useTerminology()
 
@@ -55,65 +62,150 @@ export function SnapshotPanels({
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Wayfarer / Profile */}
-      <Link href="/manifest" className="block group">
+      {/* Signals / Messages */}
+      <div className="rounded-lg border bg-card overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center gap-2 px-4 py-3 border-b">
+          <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{terms.signals}</span>
+          {signalsSummary.unreadCount > 0 && (
+            <span className="bg-primary text-primary-foreground text-[10px] font-medium px-1.5 py-0.5 rounded-full leading-none">
+              {signalsSummary.unreadCount} unread
+            </span>
+          )}
+          <div className="ml-auto flex items-center gap-1">
+            <Link
+              href="/signals?compose=new"
+              className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors px-1.5 py-0.5 rounded hover:bg-muted"
+            >
+              <Pencil className="h-3 w-3" />
+              Compose
+            </Link>
+            <Link
+              href="/signals"
+              className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors px-1.5 py-0.5 rounded hover:bg-muted"
+            >
+              View all
+              <ChevronRight className="h-3 w-3" />
+            </Link>
+          </div>
+        </div>
+
+        {/* Signal rows */}
+        {signalsSummary.latestMessages.length === 0 ? (
+          <p className="text-xs text-muted-foreground px-4 py-3">No {terms.signals.toLowerCase()} yet.</p>
+        ) : (
+          <div className="divide-y">
+            {signalsSummary.latestMessages.map(msg => (
+              <Link
+                key={msg.id}
+                href={`/signals?tab=signals&signal=${msg.id}`}
+                className="flex flex-col gap-0.5 px-4 py-2.5 hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    {!msg.read && <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />}
+                    <span className={`text-xs truncate ${!msg.read ? 'font-semibold' : 'font-medium'}`}>
+                      {msg.senderName}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground shrink-0">
+                    {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: false })}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground line-clamp-1 pl-3">{msg.body}</p>
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {/* Email accounts */}
+        {signalsSummary.emailAccounts.length > 0 && (
+          <>
+            <div className="border-t px-4 py-2 flex items-center gap-2">
+              <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Email</span>
+            </div>
+            <div className="divide-y">
+              {signalsSummary.emailAccounts.map(acct => (
+                <Link
+                  key={acct.id}
+                  href={`/signals?tab=email&account=${acct.id}&folder=INBOX`}
+                  className="flex items-center justify-between gap-2 px-4 py-2.5 hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    {acct.unreadCount > 0 && <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />}
+                    <span className="text-xs truncate font-medium">{acct.label || acct.emailAddress}</span>
+                  </div>
+                  {acct.unreadCount > 0 ? (
+                    <span className="text-[10px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full leading-none font-medium shrink-0">
+                      {acct.unreadCount}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-muted-foreground shrink-0">0 unread</span>
+                  )}
+                </Link>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Itinerary */}
+      <ItinerarySnapshotPanel stops={itinerarySummary.stops} />
+
+      {/* Provisions / Finance */}
+      <Link href="/provisions" className="block group">
         <div className="rounded-lg border bg-card p-4 hover:bg-muted/40 transition-colors">
           <div className="flex items-center gap-2 mb-3">
-            <User className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{wayfarerLabel}</span>
+            <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{terms.provisions}</span>
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
-          <div className="flex items-center gap-3 mb-3">
-            {wayfarer.image ? (
-              <img src={wayfarer.image} alt="" className="h-10 w-10 rounded-full shrink-0" />
-            ) : (
-              <div className="h-10 w-10 rounded-full bg-muted-foreground/20 shrink-0 flex items-center justify-center">
-                <User className="h-4 w-4 text-muted-foreground" />
-              </div>
-            )}
-            <div className="min-w-0">
-              <p className="text-sm font-medium truncate">{wayfarer.name ?? 'No name set'}</p>
-              {wayfarer.origins?.headline && (
-                <p className="text-xs text-muted-foreground truncate">{wayfarer.origins.headline}</p>
-              )}
+
+          <div className="flex flex-col gap-1.5 mb-3">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">{terms.supplylines}</span>
+              <span className="font-medium tabular-nums">
+                {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(provisionsSummary.monthlyTotal)}
+                <span className="text-muted-foreground font-normal"> / mo · {provisionsSummary.activeCount} active</span>
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">{terms.burn}</span>
+              <span className="font-medium tabular-nums">
+                {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(provisionsSummary.monthlyBurn)}
+              </span>
             </div>
           </div>
-          <div className="border-t mb-3" />
-          
-          {/* Contact block */}
-          {(wayfarer.email || wayfarer.origins?.location || wayfarer.origins?.website || wayfarer.origins?.linkedin || wayfarer.origins?.github) && (
-            <div className="flex flex-col gap-1.5">
-              {wayfarer.email && (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Mail className="h-3 w-3 shrink-0" />
-                  <span className="truncate">{wayfarer.email}</span>
+
+          {provisionsSummary.cacheTotalLimit > 0 && (() => {
+            const pct = Math.min((provisionsSummary.cacheTotalSpent / provisionsSummary.cacheTotalLimit) * 100, 100)
+            const color = pct >= 100 ? 'bg-destructive' : pct >= 80 ? 'bg-amber-500' : 'bg-primary'
+            return (
+              <>
+                <div className="border-t mb-3" />
+                <div className="flex items-center justify-between text-xs mb-1.5">
+                  <span className="text-muted-foreground">{terms.cache}</span>
+                  <span className="tabular-nums font-medium">
+                    {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(provisionsSummary.cacheTotalSpent)}
+                    <span className="text-muted-foreground font-normal"> / {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(provisionsSummary.cacheTotalLimit)}</span>
+                  </span>
                 </div>
-              )}
-              {wayfarer.origins?.location && (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <MapPin className="h-3 w-3 shrink-0" />
-                  <span className="truncate">{wayfarer.origins.location}</span>
+                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                  <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${pct}%` }} />
                 </div>
-              )}
-              {wayfarer.origins?.website && (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Globe className="h-3 w-3 shrink-0" />
-                  <span className="truncate">{wayfarer.origins.website}</span>
+                <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                  <span>{Math.round(pct)}% used</span>
+                  <span>{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Math.max(provisionsSummary.cacheTotalLimit - provisionsSummary.cacheTotalSpent, 0))} left</span>
                 </div>
-              )}
-              {wayfarer.origins?.linkedin && (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Linkedin className="h-3 w-3 shrink-0" />
-                  <span className="truncate">{wayfarer.origins.linkedin}</span>
-                </div>
-              )}
-              {wayfarer.origins?.github && (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Github className="h-3 w-3 shrink-0" />
-                  <span className="truncate">{wayfarer.origins.github}</span>
-                </div>
-              )}
-            </div>
+              </>
+            )
+          })()}
+
+          {provisionsSummary.upcomingRenewals > 0 && (
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+              {provisionsSummary.upcomingRenewals} renewal{provisionsSummary.upcomingRenewals !== 1 ? 's' : ''} in next 7 days
+            </p>
           )}
         </div>
       </Link>
@@ -205,91 +297,64 @@ export function SnapshotPanels({
         </div>
       </Link>
 
-      {/* Provisions / Finance */}
-      <Link href="/provisions" className="block group">
+      {/* Wayfarer / Profile */}
+      <Link href="/manifest" className="block group">
         <div className="rounded-lg border bg-card p-4 hover:bg-muted/40 transition-colors">
           <div className="flex items-center gap-2 mb-3">
-            <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{terms.provisions}</span>
+            <User className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{wayfarerLabel}</span>
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
-
-          <div className="flex flex-col gap-1.5 mb-3">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">{terms.supplylines}</span>
-              <span className="font-medium tabular-nums">
-                {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(provisionsSummary.monthlyTotal)}
-                <span className="text-muted-foreground font-normal"> / mo · {provisionsSummary.activeCount} active</span>
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">{terms.burn}</span>
-              <span className="font-medium tabular-nums">
-                {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(provisionsSummary.monthlyBurn)}
-              </span>
-            </div>
-          </div>
-
-          {provisionsSummary.cacheTotalLimit > 0 && (() => {
-            const pct = Math.min((provisionsSummary.cacheTotalSpent / provisionsSummary.cacheTotalLimit) * 100, 100)
-            const color = pct >= 100 ? 'bg-destructive' : pct >= 80 ? 'bg-amber-500' : 'bg-primary'
-            return (
-              <>
-                <div className="border-t mb-3" />
-                <div className="flex items-center justify-between text-xs mb-1.5">
-                  <span className="text-muted-foreground">{terms.cache}</span>
-                  <span className="tabular-nums font-medium">
-                    {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(provisionsSummary.cacheTotalSpent)}
-                    <span className="text-muted-foreground font-normal"> / {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(provisionsSummary.cacheTotalLimit)}</span>
-                  </span>
-                </div>
-                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                  <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${pct}%` }} />
-                </div>
-                <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>{Math.round(pct)}% used</span>
-                  <span>{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Math.max(provisionsSummary.cacheTotalLimit - provisionsSummary.cacheTotalSpent, 0))} left</span>
-                </div>
-              </>
-            )
-          })()}
-
-          {provisionsSummary.upcomingRenewals > 0 && (
-            <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
-              {provisionsSummary.upcomingRenewals} renewal{provisionsSummary.upcomingRenewals !== 1 ? 's' : ''} in next 7 days
-            </p>
-          )}
-        </div>
-      </Link>
-
-      {/* Signals / Messages */}
-      <Link href="/signals" className="block group">
-        <div className="rounded-lg border bg-card p-4 hover:bg-muted/40 transition-colors">
-          <div className="flex items-center gap-2 mb-3">
-            <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{terms.signals}</span>
-            {signalsSummary.unreadCount > 0 && (
-              <span className="ml-0.5 bg-primary text-primary-foreground text-[10px] font-medium px-1.5 py-0.5 rounded-full leading-none">
-                {signalsSummary.unreadCount}
-              </span>
+          <div className="flex items-center gap-3 mb-3">
+            {wayfarer.image ? (
+              <img src={wayfarer.image} alt="" className="h-10 w-10 rounded-full shrink-0" />
+            ) : (
+              <div className="h-10 w-10 rounded-full bg-muted-foreground/20 shrink-0 flex items-center justify-center">
+                <User className="h-4 w-4 text-muted-foreground" />
+              </div>
             )}
-            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="min-w-0">
+              <p className="text-sm font-medium truncate">{wayfarer.name ?? 'No name set'}</p>
+              {wayfarer.origins?.headline && (
+                <p className="text-xs text-muted-foreground truncate">{wayfarer.origins.headline}</p>
+              )}
+            </div>
           </div>
-          {signalsSummary.latestMessages.length === 0 ? (
-            <p className="text-xs text-muted-foreground">No {terms.signals.toLowerCase()} yet.</p>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {signalsSummary.latestMessages.map(msg => (
-                <div key={msg.id} className="flex flex-col gap-0.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-medium truncate">{msg.senderName}</span>
-                    <span className="text-[10px] text-muted-foreground shrink-0">
-                      {format(new Date(msg.createdAt), 'MMM d')}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground line-clamp-1">{msg.body}</p>
+          <div className="border-t mb-3" />
+          
+          {/* Contact block */}
+          {(wayfarer.email || wayfarer.origins?.location || wayfarer.origins?.website || wayfarer.origins?.linkedin || wayfarer.origins?.github) && (
+            <div className="flex flex-col gap-1.5">
+              {wayfarer.email && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Mail className="h-3 w-3 shrink-0" />
+                  <span className="truncate">{wayfarer.email}</span>
                 </div>
-              ))}
+              )}
+              {wayfarer.origins?.location && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <MapPin className="h-3 w-3 shrink-0" />
+                  <span className="truncate">{wayfarer.origins.location}</span>
+                </div>
+              )}
+              {wayfarer.origins?.website && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Globe className="h-3 w-3 shrink-0" />
+                  <span className="truncate">{wayfarer.origins.website}</span>
+                </div>
+              )}
+              {wayfarer.origins?.linkedin && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Linkedin className="h-3 w-3 shrink-0" />
+                  <span className="truncate">{wayfarer.origins.linkedin}</span>
+                </div>
+              )}
+              {wayfarer.origins?.github && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Github className="h-3 w-3 shrink-0" />
+                  <span className="truncate">{wayfarer.origins.github}</span>
+                </div>
+              )}
             </div>
           )}
         </div>

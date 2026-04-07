@@ -3,6 +3,7 @@
 import { useSidebar } from "@/components/ui/sidebar"
 import {
   Bookmark,
+  CalendarDays,
   Car,
   ChevronRight,
   Database,
@@ -43,6 +44,12 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { type LucideIcon } from "lucide-react"
 import { type Terms } from '@/lib/terminology'
 
@@ -67,6 +74,7 @@ function buildNavItems(terms: Terms): { group: string; items: NavItem[] }[] {
       items: [
         { title: terms.outpost, url: '/', icon: LayoutList, tooltip: terms.outpost },
         { title: terms.basecamp, url: '/basecamp', icon: LayoutDashboard, tooltip: terms.basecamp },
+        { title: terms.itinerary, url: '/itinerary', icon: CalendarDays, tooltip: terms.itinerary },
         { title: terms.signals, url: '/signals', icon: Mail, tooltip: terms.signals },
       ],
     },
@@ -113,16 +121,26 @@ interface PlatformSidebarProps extends React.ComponentProps<typeof Sidebar> {
     avatar: string | null
     isAdmin: boolean
   }
+  badges?: {
+    signals: number
+    itinerary: number
+  }
   terms?: Terms
 }
 
-export function PlatformSidebar({ wayfarer, terms, ...props }: PlatformSidebarProps) {
+export function PlatformSidebar({ wayfarer, badges, terms, ...props }: PlatformSidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
   const { state } = useSidebar()
   const { isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === 'collapsed'
   const navItems = buildNavItems(useTerminology().terms)
+
+  function getBadge(url: string): number {
+    if (url === '/signals')   return badges?.signals   ?? 0
+    if (url === '/itinerary') return badges?.itinerary ?? 0
+    return 0
+  }
 
   const handleClick = (url : string) => {
     router.push(url);
@@ -153,6 +171,35 @@ export function PlatformSidebar({ wayfarer, terms, ...props }: PlatformSidebarPr
                         : pathname === url
 
                     if (children) {
+                      // When collapsed the collapsible sub-items are invisible.
+                      // Show a right-anchored dropdown with all sub-items instead.
+                      if (collapsed) {
+                        return (
+                          <SidebarMenuItem key={url}>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <SidebarMenuButton tooltip={tooltip} isActive={isActive}>
+                                  <Icon className="h-4 w-4" />
+                                  <span>{title}</span>
+                                </SidebarMenuButton>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent side="right" align="start" className="min-w-40">
+                                {children.map(child => (
+                                  <DropdownMenuItem
+                                    key={child.url}
+                                    onClick={() => handleClick(child.url)}
+                                    className={pathname === child.url ? 'bg-accent' : ''}
+                                  >
+                                    {child.icon && <child.icon className="h-4 w-4 mr-2" />}
+                                    {child.title}
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </SidebarMenuItem>
+                        )
+                      }
+
                       return (
                           <Collapsible key={url} defaultOpen={isActive} className="group/collapsible">
                             <SidebarMenuItem>
@@ -183,6 +230,7 @@ export function PlatformSidebar({ wayfarer, terms, ...props }: PlatformSidebarPr
                       )
                     }
 
+                    const badge = getBadge(url)
                     return (
                         <SidebarMenuItem key={url}>
                           <SidebarMenuButton
@@ -190,8 +238,18 @@ export function PlatformSidebar({ wayfarer, terms, ...props }: PlatformSidebarPr
                               tooltip={tooltip}
                               isActive={isActive}
                           >
-                            <Icon className="h-4 w-4" />
+                            <div className="relative shrink-0">
+                              <Icon className="h-4 w-4" />
+                              {collapsed && badge > 0 && (
+                                <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-primary" />
+                              )}
+                            </div>
                             <span>{title}</span>
+                            {!collapsed && badge > 0 && (
+                              <span className="ml-auto text-[10px] font-semibold bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 leading-none tabular-nums">
+                                {badge > 99 ? '99+' : badge}
+                              </span>
+                            )}
                           </SidebarMenuButton>
                         </SidebarMenuItem>
                     )
@@ -202,7 +260,7 @@ export function PlatformSidebar({ wayfarer, terms, ...props }: PlatformSidebarPr
         </SidebarContent>
         <SidebarFooter>
           <PlatformWayfarerMenu wayfarer={wayfarer} terms={terms} />
-          <FooterNav />
+          {!collapsed && <FooterNav />}
         </SidebarFooter>
         <SidebarRail />
       </Sidebar>

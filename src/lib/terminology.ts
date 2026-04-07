@@ -27,6 +27,11 @@ export const CAIRN_TERMS = {
   companions: 'Companions',
   summit_reached: 'Summit Reached',
   explore: 'Explore',
+  itinerary: 'Itinerary',
+  stops: 'Stops',
+  legs: 'Legs',
+  on_the_trail: 'On the Trail',
+  footprints: 'Footprints',
 }
 
 export const STANDARD_TERMS = {
@@ -58,6 +63,11 @@ export const STANDARD_TERMS = {
   companions: 'Pets',
   summit_reached: 'In Memoriam',
   explore: 'Search',
+  itinerary: 'Calendar',
+  stops: 'Events',
+  legs: 'Days',
+  on_the_trail: 'Upcoming Events',
+  footprints: 'Past Events',
 }
 
 export type Terms = typeof CAIRN_TERMS

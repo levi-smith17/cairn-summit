@@ -1,267 +1,289 @@
 'use client'
 
-import { useState, useRef, useEffect, useTransition } from 'react'
-import { format, formatDistanceToNow } from 'date-fns'
-import { MailOpen, Trash2, Send, ArrowLeft } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Star, X, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
-import { useEditor, EditorContent } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
-import Underline from '@tiptap/extension-underline'
-import Link from '@tiptap/extension-link'
-import Highlight from '@tiptap/extension-highlight'
-import TextAlign from '@tiptap/extension-text-align'
-import { markMessageRead, deleteMessage, sendReply } from '../actions'
-import { TipTapToolbar } from '@/components/ui/tiptap-toolbar'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { SearchInput } from '@/components/filters/search-input'
+import { ToggleFilter } from '@/components/filters/toggle-filter'
+import { PlatformHeader } from '@/components/nav/platform/platform-header'
+import { useTerminology } from '@/contexts/terminology-context'
+import { SourcePicker, type Source } from './source-picker'
+import { EmailClient } from './email-client'
+import { SignalsInbox } from './signals-inbox'
+import type { CachedEmailSummary } from './email-detail'
+import { syncEmails } from '@/actions/email'
 
 interface SignalReply {
-    id: string
-    body: string
-    direction: 'INBOUND' | 'OUTBOUND'
-    senderName: string | null
-    createdAt: Date
+  id: string
+  body: string
+  direction: 'INBOUND' | 'OUTBOUND'
+  senderName: string | null
+  createdAt: Date
 }
 
 interface Signal {
-    id: string
-    senderName: string
-    senderEmail: string
-    body: string
-    read: boolean
-    createdAt: Date
-    replies: SignalReply[]
+  id: string
+  senderName: string
+  senderEmail: string
+  body: string
+  read: boolean
+  createdAt: Date
+  replies: SignalReply[]
+}
+
+interface ImapAccountSummary {
+  id: string
+  label: string
+  emailAddress: string
+  isDefault: boolean
+}
+
+interface SignalSettings {
+  messagesPerPage: number
+  autoMarkRead: boolean
+  autoRefreshInterval: number
+  compactView: boolean
+  showSnippets: boolean
 }
 
 interface SignalsClientProps {
-    signals: Signal[]
+  signals: Signal[]
+  imapAccounts: ImapAccountSummary[]
+  cachedEmails: CachedEmailSummary[]
+  initialTab: string
+  initialAccountId: string | null
+  initialFolder: string
+  initialEmailId: string | null
+  initialSignalId: string | null
+  initialCompose: string | null
+  signalSettings: SignalSettings
 }
 
-function ReplyEditor({ signalId }: { signalId: string }) {
-    const [pending, startTransition] = useTransition()
+export function SignalsClient({
+  signals,
+  imapAccounts,
+  cachedEmails,
+  initialTab,
+  initialAccountId,
+  initialFolder,
+  initialEmailId,
+  initialSignalId,
+  initialCompose,
+  signalSettings,
+}: SignalsClientProps) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const { terms } = useTerminology()
 
-    const editor = useEditor({
-        immediatelyRender: false,
-        extensions: [
-            StarterKit,
-            Underline,
-            Link.configure({ openOnClick: false }),
-            Highlight,
-            TextAlign.configure({ types: ['heading', 'paragraph'] }),
-        ],
-        editorProps: {
-            attributes: {
-                class: 'min-h-[60px] max-h-[160px] overflow-y-auto px-3 py-2 text-sm focus:outline-none prose prose-sm dark:prose-invert max-w-none',
-            },
-            handleKeyDown(_view, event) {
-                if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
-                    handleSend()
-                    return true
-                }
-                return false
-            },
-        },
-    })
+  // ── Source state ───────────────────────────────────────────────────────────
+  const tabParam    = searchParams.get('tab')
+  const accountParam = searchParams.get('account')
+  const folderParam  = searchParams.get('folder')
 
-    function handleSend() {
-        const html = editor?.getHTML()
-        if (!html || html === '<p></p>') return
-        startTransition(async () => {
-            await sendReply(signalId, html)
-            editor?.commands.clearContent()
-        })
+  const resolvedSource: Source = (() => {
+    if (tabParam === 'signals') return { type: 'signals' }
+    if (tabParam === 'email' && (accountParam ?? initialAccountId)) {
+      return {
+        type: 'email',
+        accountId: accountParam ?? initialAccountId!,
+        folder: folderParam ?? initialFolder,
+      }
     }
+    if (initialTab === 'email' && initialAccountId) {
+      return { type: 'email', accountId: initialAccountId, folder: initialFolder }
+    }
+    return { type: 'signals' }
+  })()
 
-    return (
-        <div className="border-t bg-card p-3 flex flex-col gap-2 shrink-0">
-            <div className="rounded-lg border border-input bg-background overflow-hidden">
-                <TipTapToolbar editor={editor} />
-                <EditorContent editor={editor} />
-            </div>
-            <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">⌘ Enter to send</span>
-                <Button size="sm" onClick={handleSend} disabled={pending}>
-                    <Send className="h-3.5 w-3.5" />
-                    {pending ? 'Sending…' : 'Send'}
-                </Button>
-            </div>
+  // ── Filter state (client-side) ─────────────────────────────────────────────
+  const [search,      setSearch]      = useState('')
+  const [onlyUnread,  setOnlyUnread]  = useState(false)
+  const [onlyStarred, setOnlyStarred] = useState(false)
+  const [compose, setCompose] = useState<'new' | null>(
+    initialCompose === 'new' ? 'new' : null,
+  )
+
+  const isEmail   = resolvedSource.type === 'email'
+  const isSignals = resolvedSource.type === 'signals'
+
+  // Stable primitives for the polling effect
+  const activeAccountId = resolvedSource.type === 'email' ? resolvedSource.accountId : null
+  const activeFolder    = resolvedSource.type === 'email' ? resolvedSource.folder    : null
+
+  // Auto-refresh on both tabs at the configured interval.
+  // Signals tab: router.refresh() picks up new contact-form submissions.
+  // Email tab: syncEmails pulls from IMAP first, then router.refresh() updates the list.
+  useEffect(() => {
+    const ms = signalSettings.autoRefreshInterval * 1_000
+    if (ms === 0) return
+
+    const id = setInterval(async () => {
+      if (isEmail && activeAccountId && activeFolder) {
+        await syncEmails(activeAccountId, activeFolder)
+      }
+      router.refresh()
+    }, ms)
+
+    return () => clearInterval(id)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEmail, activeAccountId, activeFolder, router, signalSettings.autoRefreshInterval])
+
+  const hasActiveFilters = search !== '' || onlyUnread || onlyStarred
+
+  // ── Source change → update URL ─────────────────────────────────────────────
+  function setSource(source: Source) {
+    const params = new URLSearchParams()
+    if (source.type === 'signals') {
+      params.set('tab', 'signals')
+    } else {
+      params.set('tab', 'email')
+      params.set('account', source.accountId)
+      params.set('folder', source.folder)
+    }
+    router.push(`/signals?${params.toString()}`, { scroll: false })
+    // Reset filters on source change
+    setSearch('')
+    setOnlyUnread(false)
+    setOnlyStarred(false)
+    setCompose(null)
+  }
+
+  // ── Derived: filtered signals ─────────────────────────────────────────────
+  const filteredSignals = signals.filter(s => {
+    if (onlyUnread && s.read)   return false
+    if (search) {
+      const q = search.toLowerCase()
+      if (!s.senderName?.toLowerCase().includes(q) && !s.body?.toLowerCase().includes(q)) return false
+    }
+    return true
+  })
+
+  // ── Derived: filtered emails ──────────────────────────────────────────────
+  const filteredEmails = cachedEmails.filter(e => {
+    if (onlyUnread  && e.isRead)    return false
+    if (onlyStarred && !e.isStarred) return false
+    if (search) {
+      const q = search.toLowerCase()
+      const inSubject = e.subject?.toLowerCase().includes(q)
+      const inFrom    = e.fromAddress.toLowerCase().includes(q) || e.fromName?.toLowerCase().includes(q)
+      const inSnippet = e.snippet?.toLowerCase().includes(q)
+      if (!inSubject && !inFrom && !inSnippet) return false
+    }
+    return true
+  })
+
+  const unreadSignals = signals.filter(s => !s.read).length
+  const singularSignal = terms.signals.endsWith('s')
+    ? terms.signals.slice(0, -1)
+    : terms.signals
+
+  return (
+    <>
+    <PlatformHeader title={terms.signals} />
+    <div className="flex flex-col flex-1 min-h-0 gap-4 p-4 overflow-hidden w-full">
+
+      {/* ── Filter bar ── */}
+      <div className="rounded-lg border border-border bg-card p-2 shrink-0">
+        <div className="flex items-center gap-1.5 flex-wrap">
+
+          {/* Source picker */}
+          <SourcePicker
+            accounts={imapAccounts}
+            value={resolvedSource}
+            onChange={setSource}
+            signalsLabel={terms.signals}
+            unreadSignals={unreadSignals}
+          />
+
+          {/* Search */}
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder={`Search ${terms.signals.toLowerCase()}…`}
+          />
+
+          {/* Unread toggle */}
+          <ToggleFilter
+            active={onlyUnread}
+            onToggle={() => setOnlyUnread(v => !v)}
+            label="Unread"
+            tooltip={`Show unread ${singularSignal.toLowerCase()}s only`}
+          />
+
+          {/* Starred toggle — email only */}
+          {isEmail && (
+            <ToggleFilter
+              active={onlyStarred}
+              onToggle={() => setOnlyStarred(v => !v)}
+              label="Starred"
+              icon={<Star className={`h-3.5 w-3.5 ${onlyStarred ? 'fill-current' : ''}`} />}
+            />
+          )}
+
+          {/* Clear */}
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 gap-1.5 text-sm"
+              onClick={() => { setSearch(''); setOnlyUnread(false); setOnlyStarred(false) }}
+            >
+              <X className="h-3.5 w-3.5" />
+              Clear
+            </Button>
+          )}
+
+          {/* Settings — far right */}
+          <div className="flex-1" />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                onClick={() => router.push('/settings?section=signals')}
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{terms.signals} Settings</TooltipContent>
+          </Tooltip>
         </div>
-    )
-}
+      </div>
 
-export function SignalsClient({ signals }: SignalsClientProps) {
-    const [selected, setSelected] = useState<string | null>(null)
-    const chatEndRef = useRef<HTMLDivElement>(null)
+      {/* ── Content ── */}
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        {isSignals ? (
+          <SignalsInbox
+            signals={filteredSignals}
+            singularTerm={singularSignal}
+            pluralTerm={terms.signals}
+            messagesPerPage={signalSettings.messagesPerPage}
+            autoMarkRead={signalSettings.autoMarkRead}
+            initialSelectedId={initialSignalId}
+          />
+        ) : (
+          <EmailClient
+            accounts={imapAccounts}
+            emails={filteredEmails}
+            activeAccountId={resolvedSource.type === 'email' ? resolvedSource.accountId : null}
+            activeFolder={resolvedSource.type === 'email' ? resolvedSource.folder : 'INBOX'}
+            initialEmailId={initialEmailId}
+            compose={compose}
+            onComposeClose={() => setCompose(null)}
+            onCompose={() => setCompose('new')}
+            messageTerm={singularSignal}
+            messagesPerPage={signalSettings.messagesPerPage}
+            autoMarkRead={signalSettings.autoMarkRead}
+            compactView={signalSettings.compactView}
+            showSnippets={signalSettings.showSnippets}
+          />
+        )}
+      </div>
 
-    const selectedSignal = signals.find((s) => s.id === selected)
-
-    useEffect(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-    }, [selectedSignal?.replies.length])
-
-    const handleSelect = async (signal: Signal) => {
-        setSelected(signal.id)
-        if (!signal.read) await markMessageRead(signal.id)
-    }
-
-    if (signals.length === 0) {
-        return (
-            <div className="flex flex-col items-center justify-center flex-1 gap-2 text-center py-24 text-muted-foreground">
-                <MailOpen className="h-10 w-10" />
-                <p className="font-medium">No signals yet</p>
-                <p className="text-sm">Messages sent via your contact page will appear here.</p>
-            </div>
-        )
-    }
-
-    return (
-        <div className="flex flex-1 h-full min-h-0 gap-4 overflow-hidden">
-            {/* Left — inbox list */}
-            <div className={`${selected !== null ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-72 shrink-0 rounded-lg border border-border bg-card overflow-hidden`}>
-                <div className="px-4 min-h-[48px] flex items-center border-b border-border shrink-0">
-                    <span className="text-sm font-medium">Inbox</span>
-                </div>
-                <div className="flex-1 overflow-y-auto">
-                    {signals.map((signal, i) => (
-                        <div key={signal.id}>
-                            <button
-                                onClick={() => handleSelect(signal)}
-                                className={`w-full text-left px-4 py-3 flex flex-col gap-1 hover:bg-muted transition-colors ${selected === signal.id ? 'bg-muted' : ''}`}
-                            >
-                                <div className="flex items-center justify-between gap-2">
-                                    <span className={`text-sm truncate ${!signal.read ? 'font-semibold' : 'font-medium'}`}>
-                                        {signal.senderName}
-                                    </span>
-                                    {!signal.read && (
-                                        <span className="h-2 w-2 rounded-full bg-header shrink-0" />
-                                    )}
-                                </div>
-                                <p className="text-xs text-muted-foreground truncate">{signal.body}</p>
-                                <p className="text-xs text-muted-foreground">
-                                    {formatDistanceToNow(new Date(signal.createdAt), { addSuffix: true })}
-                                </p>
-                            </button>
-                            {i < signals.length - 1 && <Separator />}
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* Right — chat view */}
-            <div className={`${selected !== null ? 'flex' : 'hidden md:flex'} flex-col flex-1 min-w-0 rounded-lg border border-border bg-card overflow-hidden`}>
-                {selectedSignal ? (
-                    <>
-                        {/* Header */}
-                        <div className="flex items-center gap-2 px-4 min-h-[48px] border-b border-border shrink-0">
-                            <Button variant="ghost" size="icon" className="h-7 w-7 md:hidden" onClick={() => setSelected(null)}>
-                                <ArrowLeft className="h-4 w-4" />
-                            </Button>
-                            <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                                <span className="text-sm font-medium">{selectedSignal.senderName}</span>
-                                <a
-                                    href={`mailto:${selectedSignal.senderEmail}`}
-                                    className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
-                                >
-                                    {selectedSignal.senderEmail}
-                                </a>
-                            </div>
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="text-destructive hover:text-destructive"
-                                        title="Delete signal"
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>Delete signal?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This will permanently delete this signal and all replies. This cannot be undone.
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction
-                                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                            onClick={async () => {
-                                                await deleteMessage(selectedSignal.id)
-                                                setSelected(signals.find((s) => s.id !== selectedSignal.id)?.id ?? null)
-                                            }}
-                                        >
-                                            Delete
-                                        </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
-                        </div>
-
-                        {/* Chat bubbles */}
-                        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
-                            {/* Original signal — incoming (left) */}
-                            <div className="flex flex-col gap-1 items-start max-w-[70%]">
-                                <span className="text-xs text-muted-foreground px-1">{selectedSignal.senderName}</span>
-                                <div className="rounded-2xl rounded-tl-none bg-muted px-4 py-2.5 text-sm whitespace-pre-wrap">
-                                    {selectedSignal.body}
-                                </div>
-                                <span className="text-xs text-muted-foreground px-1">
-                                    {format(new Date(selectedSignal.createdAt), 'MMM d, h:mm a')}
-                                </span>
-                            </div>
-
-                            {/* Replies */}
-                            {selectedSignal.replies.map((reply) => {
-                                const isOutbound = reply.direction === 'OUTBOUND'
-                                return (
-                                    <div
-                                        key={reply.id}
-                                        className={`flex flex-col gap-1 max-w-[70%] ${isOutbound ? 'items-end self-end' : 'items-start'}`}
-                                    >
-                                        <span className="text-xs text-muted-foreground px-1">
-                                            {isOutbound ? 'You' : (reply.senderName ?? selectedSignal.senderName)}
-                                        </span>
-                                        {isOutbound ? (
-                                            <div
-                                                className="rounded-2xl rounded-tr-none bg-primary text-primary-foreground px-4 py-2.5 text-sm prose prose-sm max-w-none [&_*]:text-primary-foreground [&_p:last-child]:mb-0"
-                                                dangerouslySetInnerHTML={{ __html: reply.body }}
-                                            />
-                                        ) : (
-                                            <div className="rounded-2xl rounded-tl-none bg-muted px-4 py-2.5 text-sm whitespace-pre-wrap">
-                                                {reply.body}
-                                            </div>
-                                        )}
-                                        <span className="text-xs text-muted-foreground px-1">
-                                            {format(new Date(reply.createdAt), 'MMM d, h:mm a')}
-                                        </span>
-                                    </div>
-                                )
-                            })}
-
-                            <div ref={chatEndRef} />
-                        </div>
-
-                        {/* Reply composer */}
-                        <ReplyEditor signalId={selectedSignal.id} />
-                    </>
-                ) : (
-                    <div className="flex items-center justify-center flex-1 text-muted-foreground text-sm">
-                        Select a signal
-                    </div>
-                )}
-            </div>
-        </div>
-    )
+    </div>
+    </>
+  )
 }

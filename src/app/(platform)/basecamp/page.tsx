@@ -76,8 +76,10 @@ export default async function BasecampPage({ searchParams }: BasecampPageProps) 
     upcomingRenewals,
     monthExpenseAgg,
     currentBudgets,
+    itineraryStops,
     unreadSignals,
     latestSignals,
+    imapAccountsWithCounts,
   ] = await Promise.all([
     // Main waypoint data
     prisma.trail.findMany({
@@ -146,13 +148,38 @@ export default async function BasecampPage({ searchParams }: BasecampPageProps) 
     prisma.expense.aggregate({ where: { wayfarerId, date: { gte: monthStart, lte: monthEnd } }, _sum: { amount: true } }),
     prisma.budget.findMany({ where: { wayfarerId, month: currentMonth, year: currentYear }, select: { limit: true } }),
 
+    // Sidebar: Itinerary (today + next 3 days)
+    prisma.stop.findMany({
+      where: {
+        wayfarerId,
+        startDate: { lte: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 4) },
+        OR: [
+          { endDate: { gte: new Date(now.getFullYear(), now.getMonth(), now.getDate()) } },
+          { endDate: null, startDate: { gte: new Date(now.getFullYear(), now.getMonth(), now.getDate()) } },
+        ],
+      },
+      orderBy: { startDate: 'asc' },
+      select: {
+        id: true, title: true, startDate: true, endDate: true, allDay: true,
+        recurrenceRule: true, masterStopId: true,
+        markers: { select: { marker: { select: { color: true } } } },
+      },
+    }),
+
     // Sidebar: Signals
     prisma.signal.count({ where: { wayfarerId, read: false } }),
     prisma.signal.findMany({
       where: { wayfarerId },
       orderBy: { createdAt: 'desc' },
-      take: 3,
-      select: { id: true, senderName: true, body: true, createdAt: true },
+      take: 5,
+      select: { id: true, senderName: true, body: true, createdAt: true, read: true },
+    }),
+    prisma.imapAccount.findMany({
+      where: { wayfarerId },
+      orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
+      select: { id: true, label: true, emailAddress: true, isDefault: true,
+        cachedEmails: { where: { isRead: false, mailbox: 'INBOX' }, select: { id: true } },
+      },
     }),
   ])
 
@@ -217,6 +244,22 @@ export default async function BasecampPage({ searchParams }: BasecampPageProps) 
         signalsSummary: {
           unreadCount: unreadSignals,
           latestMessages: latestSignals,
+          emailAccounts: imapAccountsWithCounts.map(a => ({
+            id: a.id,
+            label: a.label,
+            emailAddress: a.emailAddress,
+            unreadCount: a.cachedEmails.length,
+          })),
+        },
+        itinerarySummary: {
+          stops: itineraryStops.map(s => ({
+            id: s.id,
+            title: s.title,
+            startDate: s.startDate,
+            endDate: s.endDate,
+            allDay: s.allDay,
+            color: s.markers[0]?.marker.color ?? '#6b7280',
+          })),
         },
       }}
     />

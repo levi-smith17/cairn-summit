@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import {
     ArrowLeft,
     Award,
@@ -25,7 +26,6 @@ import { LandmarksForm } from './landmarks-form'
 import { SummitsForm } from './summits-form'
 import { PathfindingForm } from './pathfinding-form'
 import { CompanionsForm } from './companions-form'
-import { SettingsForm } from './settings-form'
 import { useFormStatus } from '@/hooks/use-form-status'
 import type { Prisma } from '@prisma/client'
 
@@ -47,17 +47,11 @@ interface ManifestSectionsProps {
     summits: Summit[]
     pathfinding: Pathfinding[]
     companions: Companion[]
-    settings: {
-        username: string | null
-        listed: boolean
-        defaultTerminology: 'CAIRN' | 'STANDARD'
-        defaultTheme: 'LIGHT' | 'DARK' | 'SYSTEM'
-        customDomain: string | null
-    }
     isAdmin?: boolean
 }
 
-export function ManifestSections({ origins, expeditions, training, gear, landmarks, summits, pathfinding, companions, settings, isAdmin }: ManifestSectionsProps) {
+export function ManifestSections({ origins, expeditions, training, gear, landmarks, summits, pathfinding, companions, isAdmin }: ManifestSectionsProps) {
+    const router = useRouter()
     const [active, setActive] = useState<string | null>(null)
     const [adding, setAdding] = useState(false)
     const { saving, saved, error, handleSubmit } = useFormStatus()
@@ -76,6 +70,10 @@ export function ManifestSections({ origins, expeditions, training, gear, landmar
     ]
 
     function handleSectionChange(value: string) {
+        if (value === 'settings') {
+            router.push('/settings?section=account')
+            return
+        }
         setActive(value)
         setAdding(false)
     }
@@ -103,7 +101,6 @@ export function ManifestSections({ origins, expeditions, training, gear, landmar
             case 'summits':     return <SummitsForm summits={summits} adding={adding} setAdding={setAdding} saving={saving} saved={saved} error={error} handleSubmit={handleSubmit} />
             case 'pathfinding': return <PathfindingForm pathfinding={pathfinding} adding={adding} setAdding={setAdding} saving={saving} saved={saved} error={error} handleSubmit={handleSubmit} />
             case 'companions':  return <CompanionsForm companions={companions} adding={adding} setAdding={setAdding} saving={saving} saved={saved} error={error} handleSubmit={handleSubmit} />
-            case 'settings':    return <SettingsForm defaultValues={settings} isAdmin={isAdmin} />
         }
     }
 

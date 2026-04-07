@@ -46,7 +46,11 @@ interface SnapshotData {
   }
   signalsSummary: {
     unreadCount: number
-    latestMessages: { id: string; senderName: string; body: string; createdAt: Date | string }[]
+    latestMessages: { id: string; senderName: string; body: string; createdAt: Date | string; read: boolean }[]
+    emailAccounts: { id: string; label: string; emailAddress: string; unreadCount: number }[]
+  }
+  itinerarySummary: {
+    stops: { id: string; title: string; startDate: Date; endDate: Date | null; allDay: boolean; color: string }[]
   }
 }
 

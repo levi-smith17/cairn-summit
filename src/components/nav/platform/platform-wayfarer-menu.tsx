@@ -6,6 +6,7 @@ import {
   BookUser,
   ChevronsUpDown,
   LogOut,
+  Settings,
 } from "lucide-react"
 import {
   Avatar,
@@ -94,6 +95,13 @@ export function PlatformWayfarerMenu({ wayfarer, terms }: PlatformWayfarerMenuPr
                 <DropdownMenuItem onClick={() => router.push('/manifest/' + wayfarer.username)}>
                   <BookUser className="h-4 w-4" />
                   View Public
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuItem onClick={() => router.push('/settings')}>
+                  <Settings className="h-4 w-4" />
+                  Settings
                 </DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
