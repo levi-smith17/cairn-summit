@@ -2,6 +2,7 @@ export const CAIRN_TERMS = {
   outpost: 'The Outpost',
   basecamp: 'Basecamp',
   signals: 'Signals',
+  relays: 'Relays',
   waymark: 'Waymark',
   waypoints: 'Waypoints',
   logs: 'Logs',
@@ -37,7 +38,8 @@ export const CAIRN_TERMS = {
 export const STANDARD_TERMS = {
   outpost: 'Directory',
   basecamp: 'Dashboard',
-  signals: 'Messages',
+  signals: 'Email',
+  relays: 'Messages',
   waymark: 'Profile',
   waypoints: 'Bookmarks',
   logs: 'Notes',

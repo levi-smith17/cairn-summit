@@ -54,6 +54,7 @@ export default async function SignalsPage({
       id: true,
       uid: true,
       messageId: true,
+      inReplyTo: true,
       subject: true,
       fromName: true,
       fromAddress: true,
