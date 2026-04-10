@@ -178,6 +178,9 @@ export function SignalsClient({
   const singularSignal = terms.signals.endsWith('s')
     ? terms.signals.slice(0, -1)
     : terms.signals
+  const singularRelay = terms.relays.endsWith('s')
+    ? terms.relays.slice(0, -1)
+    : terms.relays
 
   return (
     <>
@@ -193,7 +196,7 @@ export function SignalsClient({
             accounts={imapAccounts}
             value={resolvedSource}
             onChange={setSource}
-            signalsLabel={terms.signals}
+            signalsLabel={terms.relays}
             unreadSignals={unreadSignals}
           />
 
@@ -258,8 +261,8 @@ export function SignalsClient({
         {isSignals ? (
           <SignalsInbox
             signals={filteredSignals}
-            singularTerm={singularSignal}
-            pluralTerm={terms.signals}
+            singularTerm={singularRelay}
+            pluralTerm={terms.relays}
             messagesPerPage={signalSettings.messagesPerPage}
             autoMarkRead={signalSettings.autoMarkRead}
             initialSelectedId={initialSignalId}

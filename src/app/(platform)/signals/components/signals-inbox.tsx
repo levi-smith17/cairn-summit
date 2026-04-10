@@ -15,7 +15,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
@@ -85,9 +84,9 @@ function ReplyEditor({ signalId }: { signalId: string }) {
   function handleSend() {
     const html = editor?.getHTML()
     if (!html || html === '<p></p>') return
+    editor?.commands.clearContent()
     startTransition(async () => {
       await sendReply(signalId, html)
-      editor?.commands.clearContent()
       router.refresh()
     })
   }
@@ -112,6 +111,7 @@ function ReplyEditor({ signalId }: { signalId: string }) {
 export function SignalsInbox({ signals, singularTerm, pluralTerm, messagesPerPage = 25, autoMarkRead = true, initialSelectedId = null, onBack, showBackButton }: SignalsInboxProps) {
   const [selected, setSelected] = useState<string | null>(initialSelectedId)
   const [page, setPage] = useState(1)
+  const [removingId, setRemovingId] = useState<string | null>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
 
   const totalPages = Math.max(1, Math.ceil(signals.length / messagesPerPage))
@@ -124,9 +124,9 @@ export function SignalsInbox({ signals, singularTerm, pluralTerm, messagesPerPag
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [selectedSignal?.replies.length])
 
-  const handleSelect = async (signal: Signal) => {
+  const handleSelect = (signal: Signal) => {
     setSelected(signal.id)
-    if (autoMarkRead && !signal.read) await markMessageRead(signal.id)
+    if (autoMarkRead && !signal.read) markMessageRead(signal.id)
   }
 
   if (signals.length === 0) {
@@ -160,21 +160,30 @@ export function SignalsInbox({ signals, singularTerm, pluralTerm, messagesPerPag
         <div className="flex-1 overflow-y-auto">
           {pageSignals.map((signal, i) => (
             <div key={signal.id}>
-              <button
-                onClick={() => handleSelect(signal)}
-                className={`w-full text-left px-4 py-3 flex flex-col gap-1 hover:bg-muted transition-colors ${selected === signal.id ? 'bg-muted' : ''}`}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className={`text-sm truncate ${!signal.read ? 'font-semibold' : 'font-medium'}`}>
-                    {signal.senderName}
-                  </span>
-                  {!signal.read && <span className="h-2 w-2 rounded-full bg-header shrink-0" />}
-                </div>
-                <p className="text-xs text-muted-foreground truncate">{signal.body}</p>
-                <p className="text-xs text-muted-foreground">
-                  {formatDistanceToNow(new Date(signal.createdAt), { addSuffix: true })}
-                </p>
-              </button>
+              <div className={`flex items-stretch hover:bg-muted transition-colors ${selected === signal.id ? 'bg-muted' : ''}`}>
+                <button
+                  onClick={() => handleSelect(signal)}
+                  className="flex-1 text-left px-4 py-3 flex flex-col gap-1 min-w-0"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={`text-sm truncate flex-1 ${!signal.read ? 'font-semibold' : 'font-medium'}`}>
+                      {signal.senderName}
+                    </span>
+                    {!signal.read && <span className="h-2 w-2 rounded-full bg-header shrink-0" />}
+                  </div>
+                  <p className="text-xs text-muted-foreground truncate">{signal.body}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatDistanceToNow(new Date(signal.createdAt), { addSuffix: true })}
+                  </p>
+                </button>
+                <button
+                  onClick={e => { e.stopPropagation(); setRemovingId(signal.id) }}
+                  className="shrink-0 flex items-center px-2 text-muted-foreground hover:text-destructive transition-colors"
+                  title={`Remove ${singularTerm.toLowerCase()}`}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
               {i < pageSignals.length - 1 && <Separator />}
             </div>
           ))}
@@ -211,6 +220,35 @@ export function SignalsInbox({ signals, singularTerm, pluralTerm, messagesPerPag
         )}
       </div>
 
+      {/* Remove confirmation dialog — shared by list row and header button */}
+      <AlertDialog open={removingId !== null} onOpenChange={open => { if (!open) setRemovingId(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove {singularTerm.toLowerCase()}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove this {singularTerm.toLowerCase()} and all replies. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (!removingId) return
+                const nextId = selected === removingId
+                  ? (signals.find(s => s.id !== removingId)?.id ?? null)
+                  : selected
+                setSelected(nextId)
+                setRemovingId(null)
+                deleteMessage(removingId)
+              }}
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Right — chat view */}
       <div className={`${selected !== null ? 'flex' : 'hidden md:flex'} flex-col flex-1 min-w-0 rounded-lg border border-border bg-card overflow-hidden`}>
         {selectedSignal ? (
@@ -228,33 +266,15 @@ export function SignalsInbox({ signals, singularTerm, pluralTerm, messagesPerPag
                   {selectedSignal.senderEmail}
                 </a>
               </div>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" title={`Delete ${singularTerm.toLowerCase()}`}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete {singularTerm.toLowerCase()}?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will permanently delete this {singularTerm.toLowerCase()} and all replies. This cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      onClick={async () => {
-                        await deleteMessage(selectedSignal.id)
-                        setSelected(signals.find((s) => s.id !== selectedSignal.id)?.id ?? null)
-                      }}
-                    >
-                      Remove
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-destructive hover:text-destructive"
+                title={`Remove ${singularTerm.toLowerCase()}`}
+                onClick={() => setRemovingId(selectedSignal.id)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">

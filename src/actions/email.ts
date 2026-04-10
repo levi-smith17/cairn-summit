@@ -83,6 +83,17 @@ export async function syncEmails(
       50,
     )
 
+    const serverUids = new Set(headers.map(h => h.uid))
+
+    // Remove cached rows whose UIDs are no longer present on the server (deleted elsewhere)
+    await prisma.cachedEmail.deleteMany({
+      where: {
+        accountId,
+        mailbox,
+        uid: { notIn: [...serverUids] },
+      },
+    })
+
     for (const h of headers) {
       await prisma.cachedEmail.upsert({
         where: { accountId_mailbox_uid: { accountId, mailbox, uid: h.uid } },
@@ -309,6 +320,91 @@ export async function moveEmail(emailId: string, targetMailbox: string) {
   } catch { /* non-fatal */ }
 
   revalidatePath('/signals')
+}
+
+// ── Fetch full conversation (across all mailboxes) ───────────────────────────
+
+const emailSummarySelect = {
+  id: true,
+  uid: true,
+  messageId: true,
+  inReplyTo: true,
+  subject: true,
+  fromName: true,
+  fromAddress: true,
+  toAddresses: true,
+  date: true,
+  snippet: true,
+  isRead: true,
+  isStarred: true,
+  hasAttachments: true,
+  bodyFetched: true,
+  mailbox: true,
+} as const
+
+export async function fetchConversation(emailId: string): Promise<{
+  ok: boolean
+  messages?: {
+    id: string; uid: string; messageId: string | null; inReplyTo: string | null
+    subject: string | null; fromName: string | null; fromAddress: string
+    toAddresses: string[]; date: Date | null; snippet: string | null
+    isRead: boolean; isStarred: boolean; hasAttachments: boolean
+    bodyFetched: boolean; mailbox: string
+  }[]
+  error?: string
+}> {
+  const session = await auth()
+  if (!session?.user?.id) return { ok: false, error: 'Unauthorized' }
+
+  const seed = await prisma.cachedEmail.findUnique({
+    where: { id: emailId },
+    select: { id: true, accountId: true, messageId: true, inReplyTo: true },
+  })
+  if (!seed) return { ok: false, error: 'Not found' }
+
+  const own = await prisma.imapAccount.findFirst({
+    where: { id: seed.accountId, wayfarerId: session.user.id },
+  })
+  if (!own) return { ok: false, error: 'Unauthorized' }
+
+  // BFS: walk inReplyTo chains in both directions across ALL mailboxes for this account
+  const collectedIds = new Set<string>([seed.id])
+  const pendingMsgIds = new Set<string>()
+  const doneMsgIds = new Set<string>()
+
+  if (seed.messageId) pendingMsgIds.add(seed.messageId)
+  if (seed.inReplyTo) pendingMsgIds.add(seed.inReplyTo)
+
+  for (let i = 0; i < 10 && pendingMsgIds.size > 0; i++) {
+    const batch = [...pendingMsgIds].filter(id => !doneMsgIds.has(id))
+    if (!batch.length) break
+    batch.forEach(id => doneMsgIds.add(id))
+    pendingMsgIds.clear()
+
+    const rows = await prisma.cachedEmail.findMany({
+      where: {
+        accountId: seed.accountId,
+        OR: [{ messageId: { in: batch } }, { inReplyTo: { in: batch } }],
+      },
+      select: { id: true, messageId: true, inReplyTo: true },
+    })
+
+    for (const r of rows) {
+      if (!collectedIds.has(r.id)) {
+        collectedIds.add(r.id)
+        if (r.messageId && !doneMsgIds.has(r.messageId)) pendingMsgIds.add(r.messageId)
+        if (r.inReplyTo && !doneMsgIds.has(r.inReplyTo)) pendingMsgIds.add(r.inReplyTo)
+      }
+    }
+  }
+
+  const messages = await prisma.cachedEmail.findMany({
+    where: { id: { in: [...collectedIds] } },
+    select: emailSummarySelect,
+    orderBy: { date: 'asc' },
+  })
+
+  return { ok: true, messages }
 }
 
 // ── Send email ───────────────────────────────────────────────────────────────
