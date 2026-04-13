@@ -1,7 +1,9 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Bookmark } from 'lucide-react'
+import { Bookmark, Settings } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { PlatformHeader } from '@/components/nav/platform/platform-header'
 import { useTerminology } from '@/contexts/terminology-context'
 import { FilterBar } from '@/components/filters/filter-bar'
@@ -52,17 +54,33 @@ export function WaypointsClient({ waypoints, trails, markers }: WaypointsClientP
       <div className="flex flex-col flex-1 gap-4 p-4 overflow-hidden min-h-0">
         {/* Filter bar */}
         <div className="rounded-lg border border-border bg-card p-2 shrink-0">
-          <FilterBar
-            markers={markers}
-            trails={trails}
-            showTrailFilter
-            showMarkerFilter
-            showSort
-            showReadLater
-            showDateRange
-            searchPlaceholder={`${terms.explore} ${terms.waypoints.toLowerCase()}...`}
-            fill
-          />
+          <div className="flex items-center gap-1.5">
+            <FilterBar
+              markers={markers}
+              trails={trails}
+              showTrailFilter
+              showMarkerFilter
+              showSort
+              showReadLater
+              showDateRange
+              searchPlaceholder={`${terms.explore} ${terms.waypoints.toLowerCase()}...`}
+              fill
+            />
+            <div className="flex-1" />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 shrink-0"
+                  onClick={() => router.push('/settings?section=waypoints')}
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{terms.waypoints} Settings</TooltipContent>
+            </Tooltip>
+          </div>
         </div>
 
         <div className="flex flex-1 gap-4 overflow-hidden min-h-0">

@@ -15,6 +15,8 @@ import {
   Mail,
   NotebookPen,
   Rocket,
+  Search,
+  Shield,
   Tag,
   Wallet,
 } from "lucide-react"
@@ -89,6 +91,12 @@ function buildNavItems(terms: Terms): { group: string; items: NavItem[] }[] {
       ],
     },
     {
+      group: 'Admin',
+      items: [
+        { title: 'Wayfarers', url: '/admin', icon: Shield, tooltip: 'Wayfarer Management' },
+      ],
+    },
+    {
       group: 'Apps',
       items: [
         {
@@ -159,9 +167,30 @@ export function PlatformSidebar({ wayfarer, badges, terms, ...props }: PlatformS
                 <CairnLockup className="w-full" />
             )}
           </div>
+          {/* Global search trigger */}
+          <div className="px-2 pb-1">
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('cairn:open-search'))}
+              className={`
+                flex items-center gap-2 w-full rounded-md border border-border/60
+                px-2.5 py-1.5 text-xs text-muted-foreground
+                hover:text-foreground hover:bg-muted/50 transition-colors
+                ${collapsed ? 'justify-center' : ''}
+              `}
+              title="Search (⌘K)"
+            >
+              <Search className="h-3.5 w-3.5 shrink-0" />
+              {!collapsed && (
+                <>
+                  <span className="flex-1 text-left">Search…</span>
+                  <kbd className="text-[10px] font-mono opacity-50">⌘K</kbd>
+                </>
+              )}
+            </button>
+          </div>
         </SidebarHeader>
         <SidebarContent>
-          {navItems.filter(({ group }) => group !== 'Apps' || wayfarer.isAdmin).map(({ group, items }) => (
+          {navItems.filter(({ group }) => (group !== 'Apps' && group !== 'Admin') || wayfarer.isAdmin).map(({ group, items }) => (
               <SidebarGroup key={group}>
                 <SidebarGroupLabel>{group}</SidebarGroupLabel>
                 <SidebarMenu>

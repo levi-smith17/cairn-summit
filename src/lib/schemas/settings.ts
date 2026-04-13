@@ -10,8 +10,6 @@ export const accountSchema = z.object({
     .or(z.literal('')),
   defaultTerminology: z.enum(['CAIRN', 'STANDARD']),
   defaultTheme: z.enum(['LIGHT', 'DARK', 'SYSTEM']),
-  timeFormat: z.enum(['TWELVE', 'TWENTYFOUR']),
-  listed: z.boolean(),
   customDomain: z
     .string()
     .regex(/^[a-zA-Z0-9][a-zA-Z0-9-_.]+\.[a-zA-Z]{2,}$/, 'Enter a valid domain (e.g. mysite.com)')

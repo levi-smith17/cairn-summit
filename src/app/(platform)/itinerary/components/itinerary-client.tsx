@@ -394,11 +394,11 @@ export function ItineraryClient({ stops, markers, calendars }: ItineraryClientPr
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => router.push('/settings?section=calendar')}>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => router.push('/settings?section=itinerary')}>
                     <Settings className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Calendar settings</TooltipContent>
+                <TooltipContent>Itinerary settings</TooltipContent>
               </Tooltip>
             </div>
           </div>
