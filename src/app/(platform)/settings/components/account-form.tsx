@@ -16,7 +16,6 @@ import {
     FormMessage,
     FormDescription,
 } from '@/components/ui/form'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { FormActions } from '@/components/forms/form-actions'
@@ -43,8 +42,6 @@ interface AccountFormProps {
         username: string | null
         defaultTerminology: 'CAIRN' | 'STANDARD'
         defaultTheme: 'SYSTEM' | 'LIGHT' | 'DARK'
-        timeFormat: 'TWELVE' | 'TWENTYFOUR'
-        listed: boolean
         customDomain: string | null
     }
     isAdmin?: boolean
@@ -69,8 +66,6 @@ export function AccountForm({ defaultValues, isAdmin }: AccountFormProps) {
             username: defaultValues.username ?? '',
             defaultTerminology: defaultValues.defaultTerminology,
             defaultTheme: defaultValues.defaultTheme,
-            timeFormat: defaultValues.timeFormat,
-            listed: defaultValues.listed,
             customDomain: defaultValues.customDomain ?? '',
         },
     })
@@ -80,8 +75,6 @@ export function AccountForm({ defaultValues, isAdmin }: AccountFormProps) {
             username: values.username || null,
             defaultTerminology: values.defaultTerminology,
             defaultTheme: values.defaultTheme,
-            timeFormat: values.timeFormat,
-            listed: values.listed,
             customDomain: values.customDomain || null,
         }))
     }
@@ -144,27 +137,6 @@ export function AccountForm({ defaultValues, isAdmin }: AccountFormProps) {
 
                 <FormField
                     control={form.control}
-                    name="listed"
-                    render={({ field }) => (
-                        <FormItem className="flex items-start gap-3 space-y-0 rounded-lg border p-4">
-                            <FormControl>
-                                <Checkbox
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                />
-                            </FormControl>
-                            <div className="flex flex-col gap-1">
-                                <FormLabel>List me in the Wayfarer Directory</FormLabel>
-                                <FormDescription>
-                                    When enabled your Manifest will appear in the public directory on the homepage.
-                                </FormDescription>
-                            </div>
-                        </FormItem>
-                    )}
-                />
-
-                <FormField
-                    control={form.control}
                     name="defaultTerminology"
                     render={({ field }) => (
                         <FormItem>
@@ -209,31 +181,6 @@ export function AccountForm({ defaultValues, isAdmin }: AccountFormProps) {
                             <FormDescription>
                                 Sets the default theme when visitors view your public Manifest page.
                                 Visitors can still toggle it themselves.
-                            </FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                <FormField
-                    control={form.control}
-                    name="timeFormat"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Time Format</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                    <SelectTrigger className="w-full">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    <SelectItem value="TWELVE">12-hour (e.g. 2:30 PM)</SelectItem>
-                                    <SelectItem value="TWENTYFOUR">24-hour (e.g. 14:30)</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <FormDescription>
-                                Controls how times are displayed across the Itinerary and other areas.
                             </FormDescription>
                             <FormMessage />
                         </FormItem>

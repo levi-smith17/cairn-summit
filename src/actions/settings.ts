@@ -8,8 +8,6 @@ export async function saveAccountSettings(data: {
   username: string | null
   defaultTerminology: 'CAIRN' | 'STANDARD'
   defaultTheme: 'LIGHT' | 'DARK' | 'SYSTEM'
-  timeFormat: 'TWELVE' | 'TWENTYFOUR'
-  listed: boolean
   customDomain: string | null
 }) {
   const session = await auth()
@@ -31,14 +29,26 @@ export async function saveAccountSettings(data: {
       username: data.username,
       defaultTerminology: data.defaultTerminology,
       defaultTheme: data.defaultTheme,
-      timeFormat: data.timeFormat,
-      listed: data.listed,
       customDomain: data.customDomain,
     },
   })
 
   revalidatePath('/settings')
   revalidatePath('/manifest')
+}
+
+export async function updateListedSetting(listed: boolean) {
+  const session = await auth()
+  if (!session?.user?.id) return
+  await prisma.wayfarer.update({ where: { id: session.user.id }, data: { listed } })
+  revalidatePath('/settings')
+}
+
+export async function updateTimeFormat(timeFormat: 'TWELVE' | 'TWENTYFOUR') {
+  const session = await auth()
+  if (!session?.user?.id) return
+  await prisma.wayfarer.update({ where: { id: session.user.id }, data: { timeFormat } })
+  revalidatePath('/settings')
 }
 
 export async function addICloudCalendar(data: {
@@ -244,6 +254,92 @@ export async function updateSignalSettings(data: {
 
   revalidatePath('/settings')
   revalidatePath('/signals')
+}
+
+// ── Appearance Settings ──────────────────────────────────────────────────────
+
+export async function updateAppearanceSettings(data: {
+  sidebarDefault: 'EXPANDED' | 'COLLAPSED'
+  defaultLandingPage: string
+  dateFormat: 'MDY' | 'DMY' | 'YMD'
+}) {
+  const session = await auth()
+  if (!session?.user?.id) return
+  await prisma.appearanceSettings.upsert({
+    where:  { wayfarerId: session.user.id },
+    update: data,
+    create: { wayfarerId: session.user.id, ...data },
+  })
+  revalidatePath('/settings')
+}
+
+// ── Notification Settings ────────────────────────────────────────────────────
+
+export async function updateNotificationSettings(data: {
+  browserNotifications: boolean
+  notificationSound: boolean
+  emailDigest: 'NEVER' | 'DAILY' | 'WEEKLY'
+}) {
+  const session = await auth()
+  if (!session?.user?.id) return
+  await prisma.notificationSettings.upsert({
+    where:  { wayfarerId: session.user.id },
+    update: data,
+    create: { wayfarerId: session.user.id, ...data },
+  })
+  revalidatePath('/settings')
+}
+
+// ── Privacy Settings ─────────────────────────────────────────────────────────
+
+export async function updatePrivacySettings(data: {
+  manifestVisibility: 'PUBLIC' | 'UNLISTED' | 'PRIVATE'
+  contactFormEnabled: boolean
+}) {
+  const session = await auth()
+  if (!session?.user?.id) return
+  await prisma.privacySettings.upsert({
+    where:  { wayfarerId: session.user.id },
+    update: data,
+    create: { wayfarerId: session.user.id, ...data },
+  })
+  revalidatePath('/settings')
+}
+
+// ── Itinerary Settings ───────────────────────────────────────────────────────
+
+export async function updateItinerarySettings(data: {
+  defaultView: 'MONTH' | 'WEEK' | 'DAY'
+  firstDayOfWeek: 'SUNDAY' | 'MONDAY'
+  defaultEventDuration: number
+  showWeekNumbers: boolean
+}) {
+  const session = await auth()
+  if (!session?.user?.id) return
+  await prisma.itinerarySettings.upsert({
+    where:  { wayfarerId: session.user.id },
+    update: data,
+    create: { wayfarerId: session.user.id, ...data },
+  })
+  revalidatePath('/settings')
+  revalidatePath('/itinerary')
+}
+
+// ── Waypoint Settings ────────────────────────────────────────────────────────
+
+export async function updateWaypointSettings(data: {
+  defaultSort: 'NEWEST' | 'OLDEST' | 'TITLE_ASC' | 'TITLE_DESC'
+  openInNewTab: boolean
+}) {
+  const session = await auth()
+  if (!session?.user?.id) return
+  await prisma.waypointSettings.upsert({
+    where:  { wayfarerId: session.user.id },
+    update: data,
+    create: { wayfarerId: session.user.id, ...data },
+  })
+  revalidatePath('/settings')
+  revalidatePath('/waypoints')
 }
 
 export async function deleteImapAccount(id: string) {

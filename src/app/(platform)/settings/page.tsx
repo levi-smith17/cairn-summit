@@ -14,7 +14,18 @@ export default async function SettingsPage({
 
   const { section } = await searchParams
 
-  const [wayfarer, calendars, subscriptions, imapAccounts, signalSettings] = await Promise.all([
+  const [
+    wayfarer,
+    calendars,
+    subscriptions,
+    imapAccounts,
+    signalSettings,
+    appearanceSettings,
+    notificationSettings,
+    privacySettings,
+    itinerarySettings,
+    waypointSettings,
+  ] = await Promise.all([
     prisma.wayfarer.findUnique({
       where: { id: session.user.id },
       select: {
@@ -46,6 +57,26 @@ export default async function SettingsPage({
       where: { wayfarerId: session.user.id },
       select: { messagesPerPage: true, autoMarkRead: true, autoRefreshInterval: true, defaultView: true, compactView: true, showSnippets: true },
     }),
+    prisma.appearanceSettings.findUnique({
+      where: { wayfarerId: session.user.id },
+      select: { sidebarDefault: true, defaultLandingPage: true, dateFormat: true },
+    }),
+    prisma.notificationSettings.findUnique({
+      where: { wayfarerId: session.user.id },
+      select: { browserNotifications: true, notificationSound: true, emailDigest: true },
+    }),
+    prisma.privacySettings.findUnique({
+      where: { wayfarerId: session.user.id },
+      select: { manifestVisibility: true, contactFormEnabled: true },
+    }),
+    prisma.itinerarySettings.findUnique({
+      where: { wayfarerId: session.user.id },
+      select: { defaultView: true, firstDayOfWeek: true, defaultEventDuration: true, showWeekNumbers: true },
+    }),
+    prisma.waypointSettings.findUnique({
+      where: { wayfarerId: session.user.id },
+      select: { defaultSort: true, openInNewTab: true },
+    }),
   ])
 
   return (
@@ -55,13 +86,13 @@ export default async function SettingsPage({
         <SettingsClient
           initialSection={section ?? 'account'}
           account={{
-            username: wayfarer?.username ?? null,
-            listed: wayfarer?.listed ?? true,
+            username:           wayfarer?.username ?? null,
+            listed:             wayfarer?.listed ?? true,
             defaultTerminology: wayfarer?.defaultTerminology ?? 'CAIRN',
-            defaultTheme: wayfarer?.defaultTheme ?? 'SYSTEM',
-            timeFormat: wayfarer?.timeFormat ?? 'TWELVE',
-            customDomain: wayfarer?.customDomain ?? null,
-            isAdmin: wayfarer?.isAdmin ?? false,
+            defaultTheme:       wayfarer?.defaultTheme ?? 'SYSTEM',
+            timeFormat:         wayfarer?.timeFormat ?? 'TWELVE',
+            customDomain:       wayfarer?.customDomain ?? null,
+            isAdmin:            wayfarer?.isAdmin ?? false,
           }}
           calendars={calendars}
           subscriptions={subscriptions}
@@ -73,6 +104,30 @@ export default async function SettingsPage({
             defaultView:         signalSettings?.defaultView         ?? 'SIGNALS',
             compactView:         signalSettings?.compactView         ?? false,
             showSnippets:        signalSettings?.showSnippets        ?? true,
+          }}
+          appearanceSettings={{
+            sidebarDefault:    appearanceSettings?.sidebarDefault    ?? 'EXPANDED',
+            defaultLandingPage: appearanceSettings?.defaultLandingPage ?? '/basecamp',
+            dateFormat:        appearanceSettings?.dateFormat        ?? 'MDY',
+          }}
+          notificationSettings={{
+            browserNotifications: notificationSettings?.browserNotifications ?? false,
+            notificationSound:    notificationSettings?.notificationSound    ?? true,
+            emailDigest:          notificationSettings?.emailDigest          ?? 'NEVER',
+          }}
+          privacySettings={{
+            manifestVisibility: privacySettings?.manifestVisibility ?? 'PUBLIC',
+            contactFormEnabled: privacySettings?.contactFormEnabled ?? true,
+          }}
+          itinerarySettings={{
+            defaultView:          itinerarySettings?.defaultView          ?? 'MONTH',
+            firstDayOfWeek:       itinerarySettings?.firstDayOfWeek       ?? 'SUNDAY',
+            defaultEventDuration: itinerarySettings?.defaultEventDuration ?? 60,
+            showWeekNumbers:      itinerarySettings?.showWeekNumbers       ?? false,
+          }}
+          waypointSettings={{
+            defaultSort:  waypointSettings?.defaultSort  ?? 'NEWEST',
+            openInNewTab: waypointSettings?.openInNewTab ?? true,
           }}
         />
       </div>

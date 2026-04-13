@@ -33,8 +33,15 @@ model Wayfarer {
   stops              Stop[]
   icloudCalendars    ICloudCalendar[]
   calendarSubscriptions CalendarSubscription[]
-  imapAccounts       ImapAccount[]
-  signalSettings     SignalSettings?
+  imapAccounts          ImapAccount[]
+  signalSettings        SignalSettings?
+  appearanceSettings    AppearanceSettings?
+  notificationSettings  NotificationSettings?
+  privacySettings       PrivacySettings?
+  itinerarySettings     ItinerarySettings?
+  waypointSettings      WaypointSettings?
+  sentInvitations       Invitation[]     @relation("SentInvitations")
+  adminActivities       AdminActivity[]  @relation("AdminActivities")
 
   @@map("wayfarers")
 }
