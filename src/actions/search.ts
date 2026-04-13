@@ -91,7 +91,7 @@ export async function globalSearch(
     prisma.trail.findMany({
       where: {
         wayfarerId,
-        OR: deep ? [{ name: ci }, { description: ci }] : [{ name: ci }],
+        name: ci,
       },
       select: { id: true, name: true },
       take: 20,
