@@ -150,27 +150,39 @@ export function EmailClient({
     if (unfetched.length === 0) return
     let cancelled = false
     const run = async () => {
-      for (const e of unfetched) {
-        if (cancelled || bodyCache.has(e.id)) continue
-        const result = await fetchEmailBody(e.id)
-        if (!cancelled && result.ok) {
-          bodyCache.set(e.id, {
-            bodyHtml: result.bodyHtml ?? null,
-            bodyText: result.bodyText ?? null,
-            attachmentMeta: result.attachmentMeta ?? [],
-          })
-        }
+      const BATCH = 3
+      for (let i = 0; i < unfetched.length; i += BATCH) {
+        if (cancelled) break
+        const batch = unfetched.slice(i, i + BATCH).filter(e => !bodyCache.has(e.id))
+        await Promise.all(batch.map(async e => {
+          const result = await fetchEmailBody(e.id)
+          if (!cancelled && result.ok) {
+            bodyCache.set(e.id, {
+              bodyHtml: result.bodyHtml ?? null,
+              bodyText: result.bodyText ?? null,
+              attachmentMeta: result.attachmentMeta ?? [],
+            })
+          }
+        }))
       }
     }
-    const timer = setTimeout(run, 600)
+    const timer = setTimeout(run, 100)
     return () => { cancelled = true; clearTimeout(timer) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clampedPage, activeAccountId, activeFolder])
 
   async function loadConversation(emailId: string) {
     setSelectedEmailId(emailId)
-    setConversation(null)
-    setConversationLoading(true)
+
+    // Optimistic: show the clicked email immediately from local state
+    const optimistic = localEmails.find(e => e.id === emailId)
+    if (optimistic) {
+      setConversation([optimistic])
+      setConversationLoading(false)
+    } else {
+      setConversation(null)
+      setConversationLoading(true)
+    }
 
     const result = await fetchConversation(emailId)
     if (result.ok && result.messages) {
@@ -183,8 +195,8 @@ export function EmailClient({
           unread.some(u => u.id === e.id) ? { ...e, isRead: true } : e
         ))
       }
-    } else {
-      // Fallback: show just the selected email
+    } else if (!optimistic) {
+      // Fallback: show just the selected email if we had nothing to show optimistically
       const email = localEmails.find(e => e.id === emailId)
       if (email) setConversation([email])
     }

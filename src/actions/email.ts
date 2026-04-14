@@ -367,35 +367,47 @@ export async function fetchConversation(emailId: string): Promise<{
   })
   if (!own) return { ok: false, error: 'Unauthorized' }
 
-  // BFS: walk inReplyTo chains in both directions across ALL mailboxes for this account
-  const collectedIds = new Set<string>([seed.id])
-  const pendingMsgIds = new Set<string>()
-  const doneMsgIds = new Set<string>()
+  // Fast path: no threading info — return just this email immediately
+  if (!seed.messageId && !seed.inReplyTo) {
+    const messages = await prisma.cachedEmail.findMany({
+      where: { id: emailId },
+      select: emailSummarySelect,
+    })
+    return { ok: true, messages }
+  }
 
-  if (seed.messageId) pendingMsgIds.add(seed.messageId)
-  if (seed.inReplyTo) pendingMsgIds.add(seed.inReplyTo)
+  // Round 1: fetch all emails directly connected to the seed's messageId / inReplyTo
+  const seedMsgIds = [seed.messageId, seed.inReplyTo].filter(Boolean) as string[]
+  const round1 = await prisma.cachedEmail.findMany({
+    where: {
+      accountId: seed.accountId,
+      OR: [
+        { messageId: { in: seedMsgIds } },
+        { inReplyTo: { in: seedMsgIds } },
+      ],
+    },
+    select: { id: true, messageId: true, inReplyTo: true },
+  })
 
-  for (let i = 0; i < 10 && pendingMsgIds.size > 0; i++) {
-    const batch = [...pendingMsgIds].filter(id => !doneMsgIds.has(id))
-    if (!batch.length) break
-    batch.forEach(id => doneMsgIds.add(id))
-    pendingMsgIds.clear()
+  const collectedIds = new Set<string>([seed.id, ...round1.map(r => r.id)])
 
-    const rows = await prisma.cachedEmail.findMany({
+  // Round 2: expand one level further for any new message IDs discovered
+  const newMsgIds = round1
+    .flatMap(r => [r.messageId, r.inReplyTo])
+    .filter((id): id is string => !!id && !seedMsgIds.includes(id))
+
+  if (newMsgIds.length > 0) {
+    const round2 = await prisma.cachedEmail.findMany({
       where: {
         accountId: seed.accountId,
-        OR: [{ messageId: { in: batch } }, { inReplyTo: { in: batch } }],
+        OR: [
+          { messageId: { in: newMsgIds } },
+          { inReplyTo: { in: newMsgIds } },
+        ],
       },
-      select: { id: true, messageId: true, inReplyTo: true },
+      select: { id: true },
     })
-
-    for (const r of rows) {
-      if (!collectedIds.has(r.id)) {
-        collectedIds.add(r.id)
-        if (r.messageId && !doneMsgIds.has(r.messageId)) pendingMsgIds.add(r.messageId)
-        if (r.inReplyTo && !doneMsgIds.has(r.inReplyTo)) pendingMsgIds.add(r.inReplyTo)
-      }
-    }
+    round2.forEach(r => collectedIds.add(r.id))
   }
 
   const messages = await prisma.cachedEmail.findMany({
