@@ -6,6 +6,7 @@ model Trail {
   wayfarer   Wayfarer   @relation(fields: [wayfarerId], references: [id], onDelete: Cascade)
   waypoints  Waypoint[]
   logs       Log[]
+  guides     Guide[]
 
   @@map("folders")
 }

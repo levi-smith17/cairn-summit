@@ -1,0 +1,43 @@
+enum StonePlacement {
+  UNPLACED
+  PLACED
+  SET
+  SEATED
+}
+
+model Guide {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  trailId     String?
+  trail       Trail?    @relation(fields: [trailId], references: [id], onDelete: SetNull)
+  wayfarerId  String
+  wayfarer    Wayfarer  @relation(fields: [wayfarerId], references: [id], onDelete: Cascade)
+  stones      Stone[]
+  createdAt   DateTime  @default(now())
+
+  @@map("guides")
+}
+
+model Stone {
+  id        String           @id @default(cuid())
+  face      String
+  core      String
+  placement StonePlacement   @default(UNPLACED)
+  guideId   String
+  guide     Guide            @relation(fields: [guideId], references: [id], onDelete: Cascade)
+  markers   MarkersOnStones[]
+  createdAt DateTime         @default(now())
+
+  @@map("stones")
+}
+
+model MarkersOnStones {
+  stone    Stone  @relation(fields: [stoneId], references: [id], onDelete: Cascade)
+  stoneId  String
+  marker   Marker @relation(fields: [markerId], references: [id], onDelete: Cascade)
+  markerId String
+
+  @@id([stoneId, markerId])
+  @@map("markers_on_stones")
+}
