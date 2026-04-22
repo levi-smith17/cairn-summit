@@ -42,6 +42,7 @@ model Wayfarer {
   waypointSettings      WaypointSettings?
   sentInvitations       Invitation[]     @relation("SentInvitations")
   adminActivities       AdminActivity[]  @relation("AdminActivities")
+  guides                Guide[]
 
   @@map("wayfarers")
 }

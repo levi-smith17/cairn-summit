@@ -33,6 +33,18 @@ export const CAIRN_TERMS = {
   legs: 'Legs',
   on_the_trail: 'On the Trail',
   footprints: 'Footprints',
+  guides: 'Guides',
+  guide: 'Guide',
+  stones: 'Stones',
+  stone: 'Stone',
+  stoneFace: 'Stone Face',
+  stoneCore: 'Stone Core',
+  guidePass: 'Guide Pass',
+  scatter: 'Scatter',
+  unplaced: 'Unplaced',
+  placed: 'Placed',
+  setStone: 'Set',
+  seated: 'Seated',
 }
 
 export const STANDARD_TERMS = {
@@ -70,6 +82,18 @@ export const STANDARD_TERMS = {
   legs: 'Days',
   on_the_trail: 'Upcoming Events',
   footprints: 'Past Events',
+  guides: 'Flashcard Decks',
+  guide: 'Flashcard Deck',
+  stones: 'Flashcards',
+  stone: 'Flashcard',
+  stoneFace: 'Prompt',
+  stoneCore: 'Response',
+  guidePass: 'Deck Run-through',
+  scatter: 'Shuffle',
+  unplaced: 'Unseen',
+  placed: 'Still Learning',
+  setStone: 'Reinforced',
+  seated: 'Mastered',
 }
 
 export type Terms = typeof CAIRN_TERMS
