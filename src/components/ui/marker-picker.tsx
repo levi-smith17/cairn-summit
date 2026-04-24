@@ -148,8 +148,6 @@ export function MarkerPicker({
     )
   })()
 
-  const minPathDepth = 0
-
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>

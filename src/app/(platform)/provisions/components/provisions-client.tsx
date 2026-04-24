@@ -257,7 +257,7 @@ export function ProvisionsClient({ markers }: Props) {
         <div className="rounded-lg border border-border bg-card p-2 shrink-0">
           <div className="flex flex-col md:flex-row flex-wrap items-center gap-1.5">
             {/* Month Navigation */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 bg-muted/70 rounded-md border border-border h-9 md:h-8">
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={prevMonth}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
