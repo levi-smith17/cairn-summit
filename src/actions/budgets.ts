@@ -6,13 +6,13 @@ import { revalidatePath } from 'next/cache'
 
 export async function saveBudget({
   id,
-  category,
+  markerId,
   limit,
   month,
   year,
 }: {
   id?: string
-  category: string
+  markerId: string
   limit: number
   month: number
   year: number
@@ -24,13 +24,13 @@ export async function saveBudget({
   if (id) {
     await prisma.budget.updateMany({
       where: { id, wayfarerId },
-      data: { category, limit },
+      data: { markerId, limit },
     })
   } else {
     await prisma.budget.upsert({
-      where: { wayfarerId_category_month_year: { wayfarerId, category, month, year } },
+      where: { wayfarerId_markerId_month_year: { wayfarerId, markerId, month, year } },
       update: { limit },
-      create: { category, limit, month, year, wayfarerId },
+      create: { markerId, limit, month, year, wayfarerId },
     })
   }
 
@@ -60,9 +60,9 @@ export async function carryOverBudgets({
   await Promise.all(
     previous.map((b) =>
       prisma.budget.upsert({
-        where: { wayfarerId_category_month_year: { wayfarerId, category: b.category, month, year } },
+        where: { wayfarerId_markerId_month_year: { wayfarerId, markerId: b.markerId, month, year } },
         update: {},
-        create: { category: b.category, limit: b.limit, month, year, wayfarerId },
+        create: { markerId: b.markerId, limit: b.limit, month, year, wayfarerId },
       })
     )
   )

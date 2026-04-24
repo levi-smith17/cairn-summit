@@ -10,21 +10,18 @@ export async function GET(req: NextRequest) {
   const wayfarerId = session.user.id
   const searchParams = req.nextUrl.searchParams
 
-  const category = searchParams.get('category')
   const active = searchParams.get('active')
   const billingCycle = searchParams.get('billingCycle')
   const search = searchParams.get('search')
   const markerId = searchParams.get('markerId')
 
   const where: any = { wayfarerId }
-  if (category) where.category = category
   if (active !== null && active !== undefined) where.active = active === 'true'
   if (billingCycle) where.billingCycle = billingCycle
   if (markerId) where.markers = { some: { markerId } }
   if (search) {
     where.OR = [
       { name: { contains: search, mode: 'insensitive' } },
-      { category: { contains: search, mode: 'insensitive' } },
       { notes: { contains: search, mode: 'insensitive' } },
     ]
   }
@@ -48,9 +45,9 @@ export async function POST(req: NextRequest) {
   const wayfarerId = session.user.id
 
   const body = await req.json()
-  const { name, amount, billingCycle, nextRenewal, category, url, notes, active, markerIds } = body
+  const { name, amount, billingCycle, nextRenewal, url, notes, active, markerIds } = body
 
-  if (!name || !amount || !billingCycle || !nextRenewal || !category) {
+  if (!name || !amount || !billingCycle || !nextRenewal) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
   }
 
@@ -60,7 +57,6 @@ export async function POST(req: NextRequest) {
       amount,
       billingCycle,
       nextRenewal: new Date(nextRenewal),
-      category,
       url: url ?? null,
       notes: notes ?? null,
       active: active ?? true,

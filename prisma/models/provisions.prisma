@@ -4,7 +4,6 @@ model Provision {
   amount       Float
   billingCycle BillingCycle
   nextRenewal  DateTime
-  category     String
   url          String?
   notes        String?
   active       Boolean              @default(true)
@@ -18,7 +17,6 @@ model Expense {
   id         String             @id @default(cuid())
   name       String
   amount     Float
-  category   String
   date       DateTime
   notes      String?
   receiptUrl String?
@@ -30,14 +28,15 @@ model Expense {
 
 model Budget {
   id         String   @id @default(cuid())
-  category   String
+  markerId   String
+  marker     Marker   @relation(fields: [markerId], references: [id])
   limit      Float
   month      Int
   year       Int
   wayfarerId String
   wayfarer   Wayfarer @relation(fields: [wayfarerId], references: [id])
 
-  @@unique([wayfarerId, category, month, year])
+  @@unique([wayfarerId, markerId, month, year])
 }
 
 enum BillingCycle {

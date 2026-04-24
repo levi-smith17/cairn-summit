@@ -12,10 +12,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Plus, Search, ChevronLeft, ChevronRight, AlertTriangle, TrendingUp, Wallet, RefreshCw, Copy } from 'lucide-react'
+import { Plus, Search, ChevronLeft, ChevronRight, AlertTriangle, TrendingUp, Wallet, RefreshCw, Copy, X } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { PlatformHeader } from '@/components/nav/platform/platform-header'
 import { useTerminology } from '@/contexts/terminology-context'
+import { useDebounce } from '@/hooks/use-debounce'
+import { MarkerPicker } from '@/components/ui/marker-picker'
 import { ExpenseRow, type Expense } from './expense-row'
 import { InlineExpenseForm } from './inline-expense-form'
 import { SupplylineRow, type Provision } from './supplyline-row'
@@ -37,24 +39,35 @@ interface UpcomingRenewal {
   amount: number
   nextRenewal: string
   billingCycle: string
-  category: string
 }
 
 interface Props {
-  categories: string[]
   markers: any[]
 }
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n)
 
-export function ProvisionsClient({ categories: initialCategories, markers }: Props) {
+export function ProvisionsClient({ markers }: Props) {
   const { terms } = useTerminology()
   const now = new Date()
   const [month, setMonth] = useState(now.getMonth() + 1)
   const [year, setYear] = useState(now.getFullYear())
   const [refreshKey, setRefreshKey] = useState(0)
   const refresh = () => setRefreshKey((k) => k + 1)
+
+  // Global filters
+  const [search, setSearch] = useState('')
+  const [markerFilter, setMarkerFilter] = useState('all')
+  const [activeFilter, setActiveFilter] = useState('all')
+  const debouncedSearch = useDebounce(search, 300)
+  const filtersActive = search !== '' || markerFilter !== 'all' || activeFilter !== 'all'
+
+  function clearFilters() {
+    setSearch('')
+    setMarkerFilter('all')
+    setActiveFilter('all')
+  }
 
   // Summary data
   const [summary, setSummary] = useState<Summary | null>(null)
@@ -64,20 +77,12 @@ export function ProvisionsClient({ categories: initialCategories, markers }: Pro
 
   // Expense panel state
   const [expenses, setExpenses] = useState<Expense[]>([])
-  const [expenseCategories, setExpenseCategories] = useState<string[]>(initialCategories)
-  const expenseTags = markers
   const [expenseLoading, setExpenseLoading] = useState(true)
-  const [expenseSearch, setExpenseSearch] = useState('')
-  const [expenseCategoryFilter, setExpenseCategoryFilter] = useState('all')
   const [addingExpense, setAddingExpense] = useState(false)
 
   // Supplyline panel state
   const [provisions, setProvisions] = useState<Provision[]>([])
-  const [provisionCategories, setProvisionCategories] = useState<string[]>(initialCategories)
   const [provisionLoading, setProvisionLoading] = useState(true)
-  const [provisionSearch, setProvisionSearch] = useState('')
-  const [provisionCategoryFilter, setProvisionCategoryFilter] = useState('all')
-  const [provisionActiveFilter, setProvisionActiveFilter] = useState('all')
   const [addingProvision, setAddingProvision] = useState(false)
 
   // Cache (budget) panel state
@@ -107,17 +112,12 @@ export function ProvisionsClient({ categories: initialCategories, markers }: Pro
     const fetchExpenses = async () => {
       setExpenseLoading(true)
       const params = new URLSearchParams({ month: String(month), year: String(year) })
-      if (expenseSearch) params.set('search', expenseSearch)
-      if (expenseCategoryFilter !== 'all') params.set('category', expenseCategoryFilter)
+      if (debouncedSearch) params.set('search', debouncedSearch)
+      if (markerFilter !== 'all') params.set('markerId', markerFilter)
       try {
-        const [expRes, catRes] = await Promise.all([
-          fetch(`/api/expenses?${params}`),
-          fetch('/api/provisions/categories'),
-        ])
-        const expData = await expRes.json()
-        const catData = await catRes.json()
-        setExpenses(expData.expenses ?? [])
-        setExpenseCategories(catData.categories ?? [])
+        const res = await fetch(`/api/expenses?${params}`)
+        const data = await res.json()
+        setExpenses(data.expenses ?? [])
       } catch (err) {
         console.error('Failed to load expenses', err)
       } finally {
@@ -125,25 +125,20 @@ export function ProvisionsClient({ categories: initialCategories, markers }: Pro
       }
     }
     fetchExpenses()
-  }, [month, year, expenseSearch, expenseCategoryFilter, refreshKey])
+  }, [month, year, debouncedSearch, markerFilter, refreshKey])
 
   // Fetch provisions/supplylines
   useEffect(() => {
     const fetchProvisions = async () => {
       setProvisionLoading(true)
       const params = new URLSearchParams()
-      if (provisionSearch) params.set('search', provisionSearch)
-      if (provisionCategoryFilter !== 'all') params.set('category', provisionCategoryFilter)
-      if (provisionActiveFilter !== 'all') params.set('active', provisionActiveFilter)
+      if (debouncedSearch) params.set('search', debouncedSearch)
+      if (markerFilter !== 'all') params.set('markerId', markerFilter)
+      if (activeFilter !== 'all') params.set('active', activeFilter)
       try {
-        const [provRes, catRes] = await Promise.all([
-          fetch(`/api/provisions?${params}`),
-          fetch('/api/provisions/categories'),
-        ])
-        const provData = await provRes.json()
-        const catData = await catRes.json()
-        setProvisions(provData.provisions ?? [])
-        setProvisionCategories(catData.categories ?? [])
+        const res = await fetch(`/api/provisions?${params}`)
+        const data = await res.json()
+        setProvisions(data.provisions ?? [])
       } catch (err) {
         console.error('Failed to load provisions', err)
       } finally {
@@ -151,7 +146,12 @@ export function ProvisionsClient({ categories: initialCategories, markers }: Pro
       }
     }
     fetchProvisions()
-  }, [provisionSearch, provisionCategoryFilter, provisionActiveFilter, refreshKey])
+  }, [debouncedSearch, markerFilter, activeFilter, refreshKey])
+
+  // Filter budgets client-side by marker
+  const visibleBudgets = markerFilter === 'all'
+    ? budgetUtilization
+    : budgetUtilization.filter(b => b.markerId === markerFilter)
 
   // Month navigation
   const prevMonth = () => {
@@ -164,15 +164,16 @@ export function ProvisionsClient({ categories: initialCategories, markers }: Pro
   }
   const monthName = new Date(year, month - 1).toLocaleString('default', { month: 'long', year: 'numeric' })
 
-  // Group expenses by category
+  // Group expenses by marker (last segment of marker name, or 'Uncategorized')
   const groupedExpenses = expenses.reduce<Record<string, Expense[]>>((acc, e) => {
-    if (!acc[e.category]) acc[e.category] = []
-    acc[e.category].push(e)
+    const label = e.markers[0]?.marker?.name.split('/').pop() ?? 'Uncategorized'
+    if (!acc[label]) acc[label] = []
+    acc[label].push(e)
     return acc
   }, {})
-  const sortedExpenseCategories = Object.keys(groupedExpenses).sort()
-  const categoryTotals = sortedExpenseCategories.reduce<Record<string, number>>((acc, cat) => {
-    acc[cat] = groupedExpenses[cat].reduce((sum, e) => sum + e.amount, 0)
+  const sortedExpenseGroups = Object.keys(groupedExpenses).sort()
+  const groupTotals = sortedExpenseGroups.reduce<Record<string, number>>((acc, label) => {
+    acc[label] = groupedExpenses[label].reduce((sum, e) => sum + e.amount, 0)
     return acc
   }, {})
 
@@ -252,6 +253,77 @@ export function ProvisionsClient({ categories: initialCategories, markers }: Pro
           </div>
         )}
 
+        {/* Global filter bar */}
+        <div className="rounded-lg border border-border bg-card p-2 shrink-0">
+          <div className="flex flex-col md:flex-row flex-wrap items-center gap-1.5">
+            {/* Month Navigation */}
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={prevMonth}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-sm font-medium w-36 text-center">{monthName}</span>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={nextMonth}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Search */}
+            <div className="relative h-9 md:h-8 min-w-48 max-w-96 w-full">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+              <Input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder={`Search ${terms.burn.toLowerCase()} & ${terms.supplylines.toLowerCase()}…`}
+                className="pl-8 pr-8 h-9 md:h-8 text-sm"
+              />
+              {search && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6"
+                  onClick={() => setSearch('')}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
+
+            {/* Marker filter */}
+            <div className="flex flex-col md:flex-row items-center gap-1.5 w-full md:w-auto">
+              {markers.length > 0 && (
+                <MarkerPicker
+                  markers={markers}
+                  selected={markerFilter !== 'all' ? [markerFilter] : []}
+                  onChange={ids => setMarkerFilter(ids[0] ?? 'all')}
+                  singleSelect
+                  placeholder={`All ${terms.markers}`}
+                  align="start"
+                  initialPath={['Provisions']}
+                />
+              )}
+
+              {/* Active filter — supplylines only */}
+              <Select value={activeFilter} onValueChange={setActiveFilter}>
+                <SelectTrigger className="w-full md:w-28 h-9 md:h-8 text-sm w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All status</SelectItem>
+                  <SelectItem value="true">Active</SelectItem>
+                  <SelectItem value="false">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {filtersActive && (
+                <Button variant="ghost" size="sm" className="h-9 md:h-8 gap-1.5 text-sm" onClick={clearFilters}>
+                  <X className="h-3.5 w-3.5" />
+                  Clear
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Two-column layout */}
         <div className="flex flex-col lg:flex-row lg:flex-1 gap-4 lg:overflow-hidden lg:min-h-0">
 
@@ -259,15 +331,7 @@ export function ProvisionsClient({ categories: initialCategories, markers }: Pro
           <div className="flex flex-col flex-1 min-w-0 rounded-lg border border-border bg-card lg:overflow-hidden">
             {/* Panel header */}
             <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={prevMonth}>
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="text-sm font-medium w-36 text-center">{monthName}</span>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={nextMonth}>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
+              <span className="text-sm font-semibold">{terms.burn}</span>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -283,41 +347,18 @@ export function ProvisionsClient({ categories: initialCategories, markers }: Pro
               </Tooltip>
             </div>
 
-            {/* Filter bar */}
-            <div className="flex gap-2 px-4 py-2 border-b shrink-0">
-              <div className="relative flex-1">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                <Input
-                  placeholder={`${terms.explore} ${terms.burn.toLowerCase()}…`}
-                  className="pl-8 h-8 text-xs"
-                  value={expenseSearch}
-                  onChange={(e) => setExpenseSearch(e.target.value)}
-                />
-              </div>
-              <Select value={expenseCategoryFilter} onValueChange={setExpenseCategoryFilter}>
-                <SelectTrigger size="sm" className="w-36 text-xs">
-                  <SelectValue placeholder="Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All categories</SelectItem>
-                  {expenseCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-
             {/* Inline add form */}
             {addingExpense && (
               <div className="shrink-0">
                 <InlineExpenseForm
-                  categories={expenseCategories}
-                  tags={expenseTags}
+                  tags={markers}
                   onSaved={() => { setAddingExpense(false); refresh() }}
                   onCancel={() => setAddingExpense(false)}
                 />
               </div>
             )}
 
-            {/* Expense list grouped by category */}
+            {/* Expense list grouped by marker */}
             <div className="flex-1 lg:overflow-y-auto">
               {expenseLoading ? (
                 <div className="px-4 py-6 text-sm text-muted-foreground">Loading…</div>
@@ -325,26 +366,25 @@ export function ProvisionsClient({ categories: initialCategories, markers }: Pro
                 <div className="px-4 py-6 text-sm text-muted-foreground">No {terms.burn.toLowerCase()} found.</div>
               ) : (
                 <div className="flex flex-col divide-y">
-                  {sortedExpenseCategories.map((category) => (
-                    <div key={category}>
+                  {sortedExpenseGroups.map((label) => (
+                    <div key={label}>
                       <div className="lg:sticky top-0 z-10 px-4 py-1.5 bg-muted/80 backdrop-blur-sm border-b flex items-center justify-between">
                         <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                          {category}
+                          {label}
                           <span className="ml-2 font-normal normal-case">
-                            ({groupedExpenses[category].length})
+                            ({groupedExpenses[label].length})
                           </span>
                         </span>
                         <span className="text-xs font-medium tabular-nums">
-                          {fmt(categoryTotals[category])}
+                          {fmt(groupTotals[label])}
                         </span>
                       </div>
                       <div className="divide-y">
-                        {groupedExpenses[category].map((expense) => (
+                        {groupedExpenses[label].map((expense) => (
                           <ExpenseRow
                             key={expense.id}
                             expense={expense}
-                            categories={expenseCategories}
-                            tags={expenseTags}
+                            tags={markers}
                             onSaved={refresh}
                             onDeleted={refresh}
                           />
@@ -379,41 +419,9 @@ export function ProvisionsClient({ categories: initialCategories, markers }: Pro
                 </Tooltip>
               </div>
 
-              <div className="flex gap-2 px-3 py-2 border-b shrink-0">
-                <div className="relative flex-1">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                  <Input
-                    placeholder={`${terms.explore} ${terms.supplylines.toLowerCase()}…`}
-                    className="pl-8 h-8 text-xs"
-                    value={provisionSearch}
-                    onChange={(e) => setProvisionSearch(e.target.value)}
-                  />
-                </div>
-                <Select value={provisionCategoryFilter} onValueChange={setProvisionCategoryFilter}>
-                  <SelectTrigger size="sm" className="w-28 text-xs">
-                    <SelectValue placeholder="Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All categories</SelectItem>
-                    {provisionCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <Select value={provisionActiveFilter} onValueChange={setProvisionActiveFilter}>
-                  <SelectTrigger size="sm" className="w-24 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="true">Active</SelectItem>
-                    <SelectItem value="false">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
               {addingProvision && (
                 <InlineSupplylineForm
-                  categories={provisionCategories}
-                  tags={expenseTags}
+                  tags={markers}
                   onSaved={() => { setAddingProvision(false); refresh() }}
                   onCancel={() => setAddingProvision(false)}
                 />
@@ -429,8 +437,7 @@ export function ProvisionsClient({ categories: initialCategories, markers }: Pro
                     <SupplylineRow
                       key={p.id}
                       provision={p}
-                      categories={provisionCategories}
-                      tags={expenseTags}
+                      tags={markers}
                       onSaved={refresh}
                       onDeleted={refresh}
                     />
@@ -475,7 +482,7 @@ export function ProvisionsClient({ categories: initialCategories, markers }: Pro
 
               {addingBudget && (
                 <InlineCacheForm
-                  categories={expenseCategories}
+                  markers={markers}
                   month={month}
                   year={year}
                   onSaved={() => { setAddingBudget(false); refresh() }}
@@ -484,14 +491,14 @@ export function ProvisionsClient({ categories: initialCategories, markers }: Pro
               )}
 
               <div className="divide-y overflow-y-auto max-h-96">
-                {budgetUtilization.length === 0 ? (
+                {visibleBudgets.length === 0 ? (
                   <div className="px-3 py-4 text-sm text-muted-foreground">No {terms.cache.toLowerCase()} set for this month.</div>
                 ) : (
-                  budgetUtilization.map((b) => (
+                  visibleBudgets.map((b) => (
                     <CacheRow
                       key={b.id}
                       budget={b}
-                      categories={expenseCategories}
+                      markers={markers}
                       month={month}
                       year={year}
                       onSaved={refresh}
@@ -501,9 +508,9 @@ export function ProvisionsClient({ categories: initialCategories, markers }: Pro
                 )}
               </div>
 
-              {budgetUtilization.length > 0 && (() => {
-                const totalSpent = budgetUtilization.reduce((s, b) => s + b.spent, 0)
-                const totalLimit = budgetUtilization.reduce((s, b) => s + b.limit, 0)
+              {visibleBudgets.length > 0 && (() => {
+                const totalSpent = visibleBudgets.reduce((s, b) => s + b.spent, 0)
+                const totalLimit = visibleBudgets.reduce((s, b) => s + b.limit, 0)
                 const totalPct = totalLimit > 0 ? (totalSpent / totalLimit) * 100 : 0
                 return (
                   <div className="px-3 py-2 border-t bg-muted/30">
@@ -515,11 +522,10 @@ export function ProvisionsClient({ categories: initialCategories, markers }: Pro
                     </div>
                     <div className="h-1.5 rounded-full bg-muted overflow-hidden">
                       <div
-                        className={`h-full rounded-full transition-all ${
-                          totalPct >= 100 ? 'bg-destructive' :
+                        className={`h-full rounded-full transition-all ${totalPct >= 100 ? 'bg-destructive' :
                           totalPct >= 80 ? 'bg-amber-500' :
-                          'bg-primary'
-                        }`}
+                            'bg-primary'
+                          }`}
                         style={{ width: `${Math.min(totalPct, 100)}%` }}
                       />
                     </div>

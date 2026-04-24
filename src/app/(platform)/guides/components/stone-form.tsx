@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { useTerminology } from '@/contexts/terminology-context'
 import { saveStone, deleteStone } from '@/actions/guides'
+import { MarkerPicker } from '@/components/ui/marker-picker'
 
 type StoneWithMarkers = {
   id: string
@@ -45,10 +46,6 @@ export function StoneForm({ stone, guideId, markers, onBack, onSaved, onDeleted 
   const { saving, saved, error, handleSubmit } = useFormStatus()
   const [deleting, setDeleting] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-
-  function toggleMarker(id: string) {
-    setMarkerIds(prev => prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id])
-  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -133,24 +130,12 @@ export function StoneForm({ stone, guideId, markers, onBack, onSaved, onDeleted 
           {markers.length > 0 && (
             <div className="space-y-1.5">
               <label className="text-sm font-medium">{terms.markers}</label>
-              <div className="flex flex-wrap gap-2">
-                {markers.map(marker => (
-                  <button
-                    key={marker.id}
-                    type="button"
-                    onClick={() => toggleMarker(marker.id)}
-                    className={`text-xs font-medium px-2.5 py-1 rounded-full text-white transition-opacity ${
-                      markerIds.includes(marker.id) ? 'opacity-100 ring-2 ring-offset-1' : 'opacity-40'
-                    }`}
-                    style={{
-                      backgroundColor: marker.color,
-                      ['--tw-ring-color' as any]: marker.color,
-                    }}
-                  >
-                    {marker.name}
-                  </button>
-                ))}
-              </div>
+              <MarkerPicker
+                markers={markers}
+                selected={markerIds}
+                onChange={setMarkerIds}
+                placeholder={`Select ${terms.markers.toLowerCase()}…`}
+              />
             </div>
           )}
 

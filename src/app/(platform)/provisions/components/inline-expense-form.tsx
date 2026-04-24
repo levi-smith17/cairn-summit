@@ -6,16 +6,14 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { MarkerBadge } from '@/app/(platform)/waypoints/components/marker-badge'
-import { Separator } from '@/components/ui/separator'
+import { MarkerPicker } from '@/components/ui/marker-picker'
 import { saveExpense } from '@/actions/expenses'
 import { useFormStatus } from '@/hooks/use-form-status'
-import { Paperclip, X } from 'lucide-react'
+import { ImagePlus, X } from 'lucide-react'
 
 const schema = z.object({
   name: z.string().min(1, 'Required'),
   amount: z.number().min(0, 'Must be ≥ 0'),
-  category: z.string().min(1, 'Required'),
   date: z.string().min(1, 'Required'),
   notes: z.string().optional(),
   tagIds: z.array(z.string()),
@@ -32,7 +30,6 @@ interface Expense {
   id: string
   name: string
   amount: number
-  category: string
   date: string
   notes?: string
   receiptUrl?: string | null
@@ -41,26 +38,24 @@ interface Expense {
 
 interface Props {
   expense?: Expense
-  defaultCategory?: string
-  categories: string[]
   tags: any[]
   onSaved: () => void
   onCancel: () => void
 }
 
-export function InlineExpenseForm({ expense, defaultCategory, categories, tags, onSaved, onCancel }: Props) {
+export function InlineExpenseForm({ expense, tags, onSaved, onCancel }: Props) {
   const { saving, handleSubmit } = useFormStatus()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [receiptKey, setReceiptKey] = useState<string | null>(expense?.receiptUrl ?? null)
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [dragging, setDragging] = useState(false)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       name: expense?.name ?? '',
       amount: expense?.amount ?? 0,
-      category: expense?.category ?? defaultCategory ?? '',
       date: expense?.date?.split('T')[0] ?? new Date().toISOString().split('T')[0],
       notes: expense?.notes ?? '',
       tagIds: expense?.markers?.map((t: any) => t.markerId) ?? [],
@@ -69,14 +64,7 @@ export function InlineExpenseForm({ expense, defaultCategory, categories, tags, 
 
   const selectedTagIds = form.watch('tagIds')
 
-  function toggleTag(tagId: string) {
-    const current = form.getValues('tagIds')
-    form.setValue('tagIds', current.includes(tagId) ? current.filter((id) => id !== tagId) : [...current, tagId])
-  }
-
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
+  async function uploadFile(file: File) {
     setReceiptPreview(URL.createObjectURL(file))
     setUploading(true)
     try {
@@ -90,13 +78,24 @@ export function InlineExpenseForm({ expense, defaultCategory, categories, tags, 
     }
   }
 
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (file) uploadFile(file)
+  }
+
+  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    setDragging(false)
+    const file = e.dataTransfer.files?.[0]
+    if (file && file.type.startsWith('image/')) uploadFile(file)
+  }
+
   async function onSubmit(values: FormValues) {
     await handleSubmit(async () => {
       await saveExpense({
         id: expense?.id,
         name: values.name,
         amount: values.amount,
-        category: values.category,
         date: values.date,
         notes: values.notes || null,
         markerIds: values.tagIds,
@@ -106,98 +105,102 @@ export function InlineExpenseForm({ expense, defaultCategory, categories, tags, 
     })
   }
 
+  const receiptSrc = receiptPreview ?? (receiptKey ? `/api/receipts/${receiptKey.split('/').pop()}` : null)
+
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="p-4 bg-muted/30 border-b space-y-2">
-      <div className="flex flex-col gap-2 flex-wrap">
+    <form onSubmit={form.handleSubmit(onSubmit)} className="bg-muted/30 border-b">
+      <div className="flex flex-col gap-2 p-4">
         <Input
           placeholder="Description"
-          className="grow h-8 text-sm"
+          className="h-9 md:h-8 text-sm"
           {...form.register('name')}
         />
         <div className="flex flex-col lg:flex-row gap-2">
           <Input
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="0.00"
-              className="grow h-8 text-sm"
-              {...form.register('amount', {
-                valueAsNumber: true,
-                setValueAs: (v) => (v === '' ? 0 : parseFloat(v)),
-              })}
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="0.00"
+            className="grow h-9 md:h-8 text-sm"
+            {...form.register('amount', {
+              valueAsNumber: true,
+              setValueAs: (v) => (v === '' ? 0 : parseFloat(v)),
+            })}
           />
           <Input
-              type="date"
-              className="grow h-8 text-sm"
-              {...form.register('date')}
+            type="date"
+            className="grow h-9 md:h-8 text-sm"
+            {...form.register('date')}
           />
         </div>
-        <Input
-          placeholder="Category"
-          list="inline-expense-categories"
-          className="grow h-8 text-sm"
-          {...form.register('category')}
+        <MarkerPicker
+          markers={tags}
+          selected={selectedTagIds}
+          onChange={ids => form.setValue('tagIds', ids)}
+          placeholder="Select marker…"
+          singleSelect
+          initialPath={['Provisions']}
         />
-        <datalist id="inline-expense-categories">
-          {categories.map((c) => <option key={c} value={c} />)}
-        </datalist>
         <Input
           placeholder="Notes (optional)"
-          className="grow h-8 text-sm"
+          className="h-9 md:h-8 text-sm"
           {...form.register('notes')}
         />
       </div>
 
-      <Separator className="my-4" />
-
-      {tags.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {tags.map((tag) => (
-            <button
-              key={tag.id}
-              type="button"
-              onClick={() => toggleTag(tag.id)}
-              className={`rounded-full transition-opacity ${selectedTagIds.includes(tag.id) ? 'opacity-100 ring-2 ring-offset-1' : 'opacity-50'}`}
-              style={{ ['--tw-ring-color' as any]: tag.color }}
-            >
-              <MarkerBadge marker={tag} />
-            </button>
-          ))}
-        </div>
-      )}
-
-      <Separator className="my-4" />
-
-      <div className="flex items-center gap-2">
-        {receiptPreview || receiptKey ? (
-          <div className="flex items-center gap-1.5">
+      <div className="p-4 border-t">
+        {/* Receipt */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+        {receiptSrc ? (
+          <div className="relative w-full rounded-lg overflow-hidden border bg-muted">
             <img
-              src={receiptPreview ?? `/api/receipts/${receiptKey?.split('/').pop()}`}
+              src={receiptSrc}
               alt="Receipt"
-              className="h-7 w-7 object-cover rounded border"
+              className="w-full max-h-64 object-contain"
             />
             <button
               type="button"
               onClick={() => { setReceiptKey(null); setReceiptPreview(null) }}
-              className="text-muted-foreground hover:text-foreground"
+              className="absolute top-2 right-2 rounded-full bg-background/80 backdrop-blur p-1 text-muted-foreground hover:text-foreground border"
             >
-              <X className="h-3 w-3" />
+              <X className="h-3.5 w-3.5" />
             </button>
+            {uploading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-sm text-xs text-muted-foreground">
+                Uploading…
+              </div>
+            )}
           </div>
         ) : (
-          <button
-            type="button"
+          <div
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+            onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={handleDrop}
+            className={`flex flex-col items-center justify-center gap-2 w-full rounded-lg border-2 border-dashed py-6 cursor-pointer transition-colors text-center
+              ${dragging
+                ? 'border-primary bg-primary/5 text-primary'
+                : 'border-border hover:border-muted-foreground/50 hover:bg-muted/50 text-muted-foreground'
+              }`}
           >
-            <Paperclip className="h-3 w-3" />
-            {uploading ? 'Uploading…' : 'Attach receipt'}
-          </button>
+            <ImagePlus className="h-6 w-6" />
+            <div className="text-xs">
+              <span className="font-medium">Click to upload</span> or drag &amp; drop
+            </div>
+            <p className="text-xs opacity-60">PNG, JPG, HEIC up to 10MB</p>
+          </div>
         )}
-        <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
-        <div className="flex-1" />
-        <Button type="button" variant="ghost" size="sm" onClick={onCancel} className="h-7 text-xs">Cancel</Button>
-        <Button type="submit" size="sm" disabled={saving || uploading} className="h-7 text-xs">
+      </div>
+
+      <div className="flex flex-col-reverse md:flex-row justify-end gap-2 p-4 md:py-2 border-t">
+        <Button type="button" variant="ghost" size="sm" onClick={onCancel} className="h-9 md:h-7 text-xs">Cancel</Button>
+        <Button type="submit" size="sm" disabled={saving || uploading} className="h-9 md:h-7 text-xs">
           {saving ? 'Saving…' : 'Save'}
         </Button>
       </div>
