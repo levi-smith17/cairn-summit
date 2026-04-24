@@ -2,7 +2,7 @@ export type SortOption = 'newest' | 'oldest' | 'alpha'
 
 export interface FilterState {
   search: string
-  markerId: string
+  markerIds: string[]
   trailId: string
   sort: SortOption
   readLater: boolean
@@ -13,7 +13,7 @@ export interface FilterState {
 
 export const DEFAULT_FILTERS: FilterState = {
   search: '',
-  markerId: 'all',
+  markerIds: [],
   trailId: 'all',
   sort: 'alpha',
   readLater: false,
@@ -25,7 +25,7 @@ export const DEFAULT_FILTERS: FilterState = {
 export function parseFiltersFromParams(params: URLSearchParams): FilterState {
   return {
     search: params.get('search') ?? DEFAULT_FILTERS.search,
-    markerId: params.get('markerId') ?? DEFAULT_FILTERS.markerId,
+    markerIds: params.get('markerId')?.split(',').filter(Boolean) ?? [],
     trailId: params.get('trailId') ?? DEFAULT_FILTERS.trailId,
     sort: (params.get('sort') as SortOption) ?? DEFAULT_FILTERS.sort,
     readLater: params.get('readLater') === 'true',
@@ -40,7 +40,7 @@ export function filtersToParams(filters: Partial<FilterState>): URLSearchParams 
   const merged = { ...DEFAULT_FILTERS, ...filters }
 
   if (merged.search) params.set('search', merged.search)
-  if (merged.markerId !== 'all') params.set('markerId', merged.markerId)
+  if (merged.markerIds.length > 0) params.set('markerId', merged.markerIds.join(','))
   if (merged.trailId !== 'all') params.set('trailId', merged.trailId)
   if (merged.sort !== 'alpha') params.set('sort', merged.sort)
   if (merged.readLater) params.set('readLater', 'true')
@@ -54,7 +54,7 @@ export function filtersToParams(filters: Partial<FilterState>): URLSearchParams 
 export function hasActiveFilters(filters: FilterState): boolean {
   return (
     filters.search !== DEFAULT_FILTERS.search ||
-    filters.markerId !== DEFAULT_FILTERS.markerId ||
+    filters.markerIds.length > 0 ||
     filters.trailId !== DEFAULT_FILTERS.trailId ||
     filters.sort !== DEFAULT_FILTERS.sort ||
     filters.readLater !== DEFAULT_FILTERS.readLater ||
@@ -76,8 +76,8 @@ export function buildWaypointWhere(filters: FilterState, wayfarerId: string) {
     ]
   }
 
-  if (filters.markerId !== 'all') {
-    where.markers = { some: { markerId: filters.markerId } }
+  if (filters.markerIds.length > 0) {
+    where.markers = { some: { markerId: { in: filters.markerIds } } }
   }
 
   if (filters.trailId !== 'all') {
@@ -105,8 +105,8 @@ export function buildLogWhere(filters: FilterState, wayfarerId: string) {
     where.content = { contains: filters.search, mode: 'insensitive' }
   }
 
-  if (filters.markerId !== 'all') {
-    where.markers = { some: { markerId: filters.markerId } }
+  if (filters.markerIds.length > 0) {
+    where.markers = { some: { markerId: { in: filters.markerIds } } }
   }
 
   if (filters.trailId !== 'all') {

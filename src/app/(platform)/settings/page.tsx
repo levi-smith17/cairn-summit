@@ -1,7 +1,6 @@
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
-import { PlatformHeader } from '@/components/nav/platform/platform-header'
 import { SettingsClient } from './components/settings-client'
 
 export default async function SettingsPage({
@@ -81,9 +80,7 @@ export default async function SettingsPage({
 
   return (
     <>
-      <PlatformHeader title="Settings" />
-      <div className="flex flex-1 min-h-0 p-4 overflow-hidden">
-        <SettingsClient
+      <SettingsClient
           initialSection={section ?? 'account'}
           account={{
             username:           wayfarer?.username ?? null,
@@ -130,7 +127,6 @@ export default async function SettingsPage({
             openInNewTab: waypointSettings?.openInNewTab ?? true,
           }}
         />
-      </div>
     </>
   )
 }

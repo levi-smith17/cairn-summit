@@ -1,8 +1,9 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ArrowLeft, Bell, Bookmark, CalendarDays, Mail, Monitor, Shield, User } from 'lucide-react'
+import { ArrowLeft, Bell, Bookmark, CalendarDays, ChevronLeft, Mail, Monitor, Shield, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { PlatformHeader } from '@/components/nav/platform/platform-header'
 import { useTerminology } from '@/contexts/terminology-context'
 import { AccountForm } from './account-form'
 import { AppearanceForm } from './appearance-form'
@@ -157,7 +158,21 @@ export function SettingsClient({
   const groups = ['Profile', 'Platform']
 
   return (
-    <div className="flex flex-1 min-h-0 gap-4 overflow-hidden w-full">
+    <>
+      <PlatformHeader
+        title="Settings"
+        actions={
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 md:hidden"
+            onClick={() => router.back()}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+        }
+      />
+      <div className="flex flex-1 min-h-0 gap-4 p-4 overflow-hidden w-full">
       {/* Left — section nav */}
       <div className={`
         ${mobileShowNav ? 'flex' : 'hidden md:flex'}
@@ -209,5 +224,6 @@ export function SettingsClient({
         </div>
       </div>
     </div>
+    </>
   )
 }

@@ -129,7 +129,7 @@ export function InlineExpenseForm({ expense, tags, onSaved, onCancel }: Props) {
           />
           <Input
             type="date"
-            className="grow h-9 md:h-8 text-sm"
+            className="grow w-full min-w-0 h-9 md:h-8 text-sm"
             {...form.register('date')}
           />
         </div>

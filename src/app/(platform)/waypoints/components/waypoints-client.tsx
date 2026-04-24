@@ -65,14 +65,25 @@ export function WaypointsClient({ waypoints, trails, markers }: WaypointsClientP
               showDateRange
               searchPlaceholder={`${terms.explore} ${terms.waypoints.toLowerCase()}...`}
               fill
+              trailingAction={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="md:hidden h-8 gap-1.5 text-sm"
+                  onClick={() => router.push('/settings?section=waypoints')}
+                >
+                  <Settings className="h-3.5 w-3.5" />
+                  Settings
+                </Button>
+              }
             />
-            <div className="flex-1" />
+            <div className="hidden md:block flex-1" />
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 shrink-0"
+                  className="hidden md:flex h-8 w-8 shrink-0"
                   onClick={() => router.push('/settings?section=waypoints')}
                 >
                   <Settings className="h-4 w-4" />

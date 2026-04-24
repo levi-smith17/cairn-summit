@@ -1,4 +1,4 @@
-import { icons } from 'lucide-react'
+import * as lucide from 'lucide-react'
 
 interface MarkerBadgeProps {
   marker: {
@@ -9,7 +9,7 @@ interface MarkerBadgeProps {
 }
 
 export function MarkerBadge({ marker }: MarkerBadgeProps) {
-  const Icon = marker.icon ? icons[marker.icon as keyof typeof icons] : null
+  const Icon = marker.icon ? (lucide as any)[marker.icon] as lucide.LucideIcon | undefined : null
 
   return (
     <span
