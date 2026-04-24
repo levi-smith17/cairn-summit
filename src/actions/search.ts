@@ -171,7 +171,7 @@ export async function globalSearch(
     results.push({
       id: p.id, type: 'provision',
       title: p.name,
-      subtitle: p.markers[0]?.marker?.name.split('/').pop() ?? undefined,
+      subtitle: p.markers[0]?.marker?.name.split('/').pop() ?? "",
       url: `/provisions?id=${p.id}`,
       score: ts || 30,
     })
