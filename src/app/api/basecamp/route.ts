@@ -36,8 +36,8 @@ export async function GET(req: NextRequest) {
       { url: { contains: filters.search, mode: 'insensitive' } },
     ]
   }
-  if (filters.markerId !== 'all') {
-    waypointWhere.markers = { some: { markerId: filters.markerId } }
+  if (filters.markerIds.length > 0) {
+    waypointWhere.markers = { some: { markerId: { in: filters.markerIds } } }
   }
   if (filters.readLater) {
     waypointWhere.readLater = true
@@ -78,8 +78,8 @@ export async function GET(req: NextRequest) {
             ...(filters.search
               ? { content: { contains: filters.search, mode: 'insensitive' } }
               : {}),
-            ...(filters.markerId !== 'all'
-              ? { markers: { some: { markerId: filters.markerId } } }
+            ...(filters.markerIds.length > 0
+              ? { markers: { some: { markerId: { in: filters.markerIds } } } }
               : {}),
           },
           include: { markers: { include: { marker: true } } },
