@@ -143,7 +143,7 @@ export default async function BasecampPage({ searchParams }: BasecampPageProps) 
     prisma.companion.count({ where: { wayfarerId } }),
 
     // Sidebar: Provisions
-    prisma.provision.findMany({ where: { wayfarerId, active: true }, select: { amount: true, billingCycle: true, nextRenewal: true, category: true } }),
+    prisma.provision.findMany({ where: { wayfarerId, active: true }, select: { amount: true, billingCycle: true, nextRenewal: true } }),
     prisma.provision.count({ where: { wayfarerId, active: true, nextRenewal: { gte: now, lte: in7Days } } }),
     prisma.expense.aggregate({ where: { wayfarerId, date: { gte: monthStart, lte: monthEnd } }, _sum: { amount: true } }),
     prisma.budget.findMany({ where: { wayfarerId, month: currentMonth, year: currentYear }, select: { limit: true } }),
@@ -195,7 +195,7 @@ export default async function BasecampPage({ searchParams }: BasecampPageProps) 
     ? Object.fromEntries(filteredCounts.map(r => [r.trailId, r._count]))
     : null
 
-  const monthlyTotal = activeProvisions.reduce((sum: number, p: { amount: number; billingCycle: string; nextRenewal: Date; category: string }) => {
+  const monthlyTotal = activeProvisions.reduce((sum: number, p: { amount: number; billingCycle: string; nextRenewal: Date }) => {
     return sum + provisionAmountForMonth(p.billingCycle, p.amount, new Date(p.nextRenewal), monthStart, monthEnd)
   }, 0)
   const monthlyBurn = monthExpenseAgg._sum.amount ?? 0

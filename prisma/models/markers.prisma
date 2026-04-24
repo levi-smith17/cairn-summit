@@ -12,6 +12,7 @@ model Marker {
   expenses   MarkersOnExpenses[]
   stops      MarkersOnStops[]
   stones     MarkersOnStones[]
+  budgets    Budget[]
 
   @@map("tags")
 }

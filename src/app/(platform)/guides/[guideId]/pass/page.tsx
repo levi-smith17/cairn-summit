@@ -30,5 +30,13 @@ export default async function GuidePassPage({ params }: GuidePassPageProps) {
 
   if (!guide) notFound()
 
-  return <GuidePassClient guide={guide} allMarkers={markers} />
+  return (
+    <GuidePassClient
+      title={guide.name}
+      stones={guide.stones}
+      allMarkers={markers}
+      backUrl={`/guides?guide=${guideId}`}
+      guideIds={[guideId]}
+    />
+  )
 }

@@ -38,7 +38,6 @@ export interface Provision {
   amount: number
   billingCycle: string
   nextRenewal: string
-  category: string
   url?: string
   notes?: string
   active: boolean
@@ -47,7 +46,6 @@ export interface Provision {
 
 interface Props {
   provision: Provision
-  categories: string[]
   tags: any[]
   onSaved: () => void
   onDeleted: () => void
@@ -64,7 +62,7 @@ const CYCLE_LABELS: Record<string, string> = {
 const fmt = (n: number) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n)
 
-export function SupplylineRow({ provision, categories, tags, onSaved, onDeleted }: Props) {
+export function SupplylineRow({ provision, tags, onSaved, onDeleted }: Props) {
   const { terms } = useTerminology()
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -78,7 +76,6 @@ export function SupplylineRow({ provision, categories, tags, onSaved, onDeleted 
     return (
       <InlineSupplylineForm
         provision={provision}
-        categories={categories}
         tags={tags}
         onSaved={() => { setEditing(false); onSaved() }}
         onCancel={() => setEditing(false)}
@@ -100,7 +97,6 @@ export function SupplylineRow({ provision, categories, tags, onSaved, onDeleted 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-sm font-medium truncate">{provision.name}</span>
-            <Badge variant="secondary" className="text-xs py-0 px-1.5">{provision.category}</Badge>
             {renewingSoon && (
               <Badge className="text-xs py-0 px-1.5 bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30">
                 {daysUntil}d

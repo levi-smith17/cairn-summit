@@ -52,17 +52,30 @@ export async function GET(req: NextRequest) {
   const in7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
 
   const [provisions, monthExpenses, budgets, upcomingRenewals] = await Promise.all([
-    prisma.provision.findMany({ where: { wayfarerId, active: true }, orderBy: { nextRenewal: 'asc' } }),
-    prisma.expense.findMany({ where: { wayfarerId, date: { gte: monthStart, lte: monthEnd } } }),
-    prisma.budget.findMany({ where: { wayfarerId, month, year } }),
+    prisma.provision.findMany({
+      where: { wayfarerId, active: true },
+      orderBy: { nextRenewal: 'asc' },
+      include: { markers: { include: { marker: true } } },
+    }),
+    prisma.expense.findMany({
+      where: { wayfarerId, date: { gte: monthStart, lte: monthEnd } },
+      include: { markers: { include: { marker: true } } },
+    }),
+    prisma.budget.findMany({
+      where: { wayfarerId, month, year },
+      include: { marker: true },
+    }),
     prisma.provision.findMany({
       where: { wayfarerId, active: true, nextRenewal: { gte: now, lte: in7Days } },
       orderBy: { nextRenewal: 'asc' },
+      include: { markers: { include: { marker: true } } },
     }),
   ])
 
-  const expensesByCategory = monthExpenses.reduce<Record<string, number>>((acc, e) => {
-    acc[e.category] = (acc[e.category] ?? 0) + e.amount
+  // Group expenses by markerId (first marker, if any)
+  const expensesByMarker = monthExpenses.reduce<Record<string, number>>((acc, e) => {
+    const markerId = e.markers[0]?.markerId ?? '__none__'
+    acc[markerId] = (acc[markerId] ?? 0) + e.amount
     return acc
   }, {})
 
@@ -73,16 +86,19 @@ export async function GET(req: NextRequest) {
     return sum + provisionAmountForMonth(p.billingCycle, p.amount, new Date(p.nextRenewal), monthStart, monthEnd)
   }, 0)
 
-  // Provision cost per category (same billing-aware logic) for cache utilization
-  const provisionCostByCategory = provisions.reduce<Record<string, number>>((acc, p) => {
+  // Provision cost per markerId (same billing-aware logic) for budget utilization
+  const provisionCostByMarker = provisions.reduce<Record<string, number>>((acc, p) => {
     const contrib = provisionAmountForMonth(p.billingCycle, p.amount, new Date(p.nextRenewal), monthStart, monthEnd)
-    if (contrib > 0) acc[p.category] = (acc[p.category] ?? 0) + contrib
+    if (contrib > 0) {
+      const markerId = p.markers[0]?.markerId ?? '__none__'
+      acc[markerId] = (acc[markerId] ?? 0) + contrib
+    }
     return acc
   }, {})
 
   const budgetUtilization = budgets.map((b) => {
-    const expenseSpend = expensesByCategory[b.category] ?? 0
-    const provisionSpend = provisionCostByCategory[b.category] ?? 0
+    const expenseSpend = expensesByMarker[b.markerId] ?? 0
+    const provisionSpend = provisionCostByMarker[b.markerId] ?? 0
     const spent = expenseSpend + provisionSpend
     return {
       ...b,
@@ -97,7 +113,7 @@ export async function GET(req: NextRequest) {
       totalExpenses,
       totalMonthSpend: monthlyProvisionCost + totalExpenses,
       activeProvisions: provisions.length,
-      expensesByCategory,
+      expensesByMarker,
     },
     upcomingRenewals,
     budgetUtilization,

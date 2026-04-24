@@ -15,14 +15,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
     const body = await req.json()
-    const { name, amount, category, date, notes, markerIds } = body
+    const { name, amount, date, notes, markerIds } = body
 
     const expense = await prisma.expense.update({
         where: { id: id },
         data: {
             ...(name !== undefined && { name }),
             ...(amount !== undefined && { amount }),
-            ...(category !== undefined && { category }),
             ...(date !== undefined && { date: new Date(date) }),
             ...(notes !== undefined && { notes }),
             ...(markerIds !== undefined && {

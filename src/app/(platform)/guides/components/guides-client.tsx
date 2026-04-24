@@ -87,6 +87,18 @@ export function GuidesClient({ guides, trails, markers }: GuidesClientProps) {
   const [editingStone, setEditingStone] = useState<StoneWithMarkers | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'guide' | 'stone'; id: string; name: string } | null>(null)
 
+  // Traverse selection
+  const [traverseIds, setTraverseIds] = useState<string[]>([])
+
+  function toggleTraverse(id: string) {
+    setTraverseIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+  }
+
+  function handleLaunchTraverse() {
+    if (traverseIds.length < 2) return
+    router.push(`/guides/traverse?guides=${traverseIds.join(',')}`)
+  }
+
   const selectedGuideId = searchParams.get('guide')
   const selectedGuide = guides.find(g => g.id === selectedGuideId) ?? null
 
@@ -196,10 +208,13 @@ export function GuidesClient({ guides, trails, markers }: GuidesClientProps) {
             <GuideList
               guides={filteredGuides}
               selectedGuideId={selectedGuideId}
+              selectedForTraverse={traverseIds}
               onSelect={selectGuide}
+              onToggleTraverse={toggleTraverse}
               onNew={handleAddGuide}
               onEdit={handleEditGuide}
               onLaunch={handleLaunchPass}
+              onLaunchTraverse={handleLaunchTraverse}
               onDelete={(id, name) => setDeleteTarget({ type: 'guide', id, name })}
             />
           </div>
@@ -246,6 +261,7 @@ export function GuidesClient({ guides, trails, markers }: GuidesClientProps) {
                 onAddStone={handleAddStone}
                 onEditStone={handleEditStone}
                 onDeleteStone={(id, face) => setDeleteTarget({ type: 'stone', id, name: face })}
+                onImported={() => router.refresh()}
               />
             ) : (
               <div className="flex flex-col items-center justify-center flex-1 gap-2 text-muted-foreground text-sm">

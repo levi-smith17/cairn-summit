@@ -33,7 +33,6 @@ export interface Expense {
   id: string
   name: string
   amount: number
-  category: string
   date: string
   notes?: string
   receiptUrl?: string | null
@@ -42,7 +41,6 @@ export interface Expense {
 
 interface Props {
   expense: Expense
-  categories: string[]
   tags: any[]
   onSaved: () => void
   onDeleted: () => void
@@ -51,7 +49,7 @@ interface Props {
 const fmt = (n: number) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n)
 
-export function ExpenseRow({ expense, categories, tags, onSaved, onDeleted }: Props) {
+export function ExpenseRow({ expense, tags, onSaved, onDeleted }: Props) {
   const { terms } = useTerminology()
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -60,7 +58,6 @@ export function ExpenseRow({ expense, categories, tags, onSaved, onDeleted }: Pr
     return (
       <InlineExpenseForm
         expense={expense}
-        categories={categories}
         tags={tags}
         onSaved={() => { setEditing(false); onSaved() }}
         onCancel={() => setEditing(false)}

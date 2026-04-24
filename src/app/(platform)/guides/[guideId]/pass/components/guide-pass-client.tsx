@@ -24,10 +24,8 @@ import {
   CheckCircle2,
   Shuffle,
   RotateCcw,
-  Check,
-  Tag,
 } from 'lucide-react'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { MarkerPicker } from '@/components/ui/marker-picker'
 
 type StonePlacement = 'UNPLACED' | 'PLACED' | 'SET' | 'SEATED'
 
@@ -39,12 +37,6 @@ type StoneWithMarkers = {
   core: string
   placement: StonePlacement
   markers: { markerId: string; marker: { id: string; name: string; color: string } }[]
-}
-
-type Guide = {
-  id: string
-  name: string
-  stones: StoneWithMarkers[]
 }
 
 const PLACEMENT_STYLES: Record<StonePlacement, { badge: string; button: string; active: string }> = {
@@ -71,19 +63,22 @@ const PLACEMENT_STYLES: Record<StonePlacement, { badge: string; button: string; 
 }
 
 interface GuidePassClientProps {
-  guide: Guide
+  title: string
+  stones: StoneWithMarkers[]
   allMarkers: { id: string; name: string; color: string }[]
+  backUrl: string
+  guideIds: string[]
 }
 
-export function GuidePassClient({ guide, allMarkers }: GuidePassClientProps) {
+export function GuidePassClient({ title, stones: initialStones, allMarkers, backUrl, guideIds }: GuidePassClientProps) {
   const router = useRouter()
   const { terms } = useTerminology()
   const [, startTransition] = useTransition()
 
   // Stone state (mutable — updated when placements change)
-  const [stones, setStones] = useState<StoneWithMarkers[]>(guide.stones)
+  const [stones, setStones] = useState<StoneWithMarkers[]>(initialStones)
   // Display order (separate so scatter doesn't lose placement updates)
-  const [stoneOrder, setStoneOrder] = useState<StoneWithMarkers[]>(guide.stones)
+  const [stoneOrder, setStoneOrder] = useState<StoneWithMarkers[]>(initialStones)
   const [isScattered, setIsScattered] = useState(false)
 
   // Navigation
@@ -198,7 +193,7 @@ export function GuidePassClient({ guide, allMarkers }: GuidePassClientProps) {
   async function handleReset() {
     setResetting(true)
     try {
-      await resetGuidePlacements(guide.id)
+      await Promise.all(guideIds.map(id => resetGuidePlacements(id)))
       const reset = stones.map(s => ({ ...s, placement: 'UNPLACED' as StonePlacement }))
       setStones(reset)
       setStoneOrder(isScattered ? [...reset].sort(() => Math.random() - 0.5) : reset)
@@ -209,12 +204,6 @@ export function GuidePassClient({ guide, allMarkers }: GuidePassClientProps) {
       setResetting(false)
       setResetDialogOpen(false)
     }
-  }
-
-  function toggleMarkerFilter(markerId: string) {
-    setMarkerFilter(prev =>
-      prev.includes(markerId) ? prev.filter(id => id !== markerId) : [...prev, markerId]
-    )
   }
 
   // Only show markers that appear on at least one stone in this guide
@@ -242,14 +231,14 @@ export function GuidePassClient({ guide, allMarkers }: GuidePassClientProps) {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-7 shrink-0"
-                    onClick={() => router.push(`/guides?guide=${guide.id}`)}
+                    onClick={() => router.push(backUrl)}
                   >
                     <ArrowLeft className="h-3.5 w-3.5" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Back to {terms.guide.toLowerCase()}</TooltipContent>
               </Tooltip>
-              <h2 className="text-sm font-semibold truncate flex-1 min-w-0">{guide.name}</h2>
+              <h2 className="text-sm font-semibold truncate flex-1 min-w-0">{title}</h2>
             </div>
             <div className="flex items-center gap-3 md:gap-1.5 shrink-0 w-full md:w-auto">
               <Tooltip>
@@ -307,53 +296,15 @@ export function GuidePassClient({ guide, allMarkers }: GuidePassClientProps) {
 
             {/* Marker filter — multi-select dropdown */}
             {relevantMarkers.length > 0 && (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={markerFilter.length > 0 ? 'secondary' : 'outline'}
-                    size="sm"
-                    className="h-8 gap-1.5 text-xs shrink-0 w-full md:w-auto md:ml-auto"
-                  >
-                    <Tag className="h-3 w-3" />
-                    {markerFilter.length === 0
-                      ? `All ${terms.markers}`
-                      : `${markerFilter.length} ${markerFilter.length === 1 ? terms.markers.replace(/s$/, '') : terms.markers}`}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-52 p-1.5" align="start">
-                  <div className="flex flex-col gap-0.5">
-                    {relevantMarkers.map(marker => {
-                      const selected = markerFilter.includes(marker.id)
-                      return (
-                        <button
-                          key={marker.id}
-                          onClick={() => toggleMarkerFilter(marker.id)}
-                          className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-colors text-left w-full ${selected ? 'bg-muted' : 'hover:bg-muted/60'
-                            }`}
-                        >
-                          <span
-                            className="h-2.5 w-2.5 rounded-full shrink-0"
-                            style={{ backgroundColor: marker.color }}
-                          />
-                          <span className="flex-1 truncate">{marker.name}</span>
-                          {selected && <Check className="h-3 w-3 shrink-0 text-foreground" />}
-                        </button>
-                      )
-                    })}
-                    {markerFilter.length > 0 && (
-                      <>
-                        <div className="-mx-1.5 my-1 border-t" />
-                        <button
-                          onClick={() => setMarkerFilter([])}
-                          className="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-colors text-left w-full text-muted-foreground hover:bg-muted/60"
-                        >
-                          Clear selection
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </PopoverContent>
-              </Popover>
+              <div className="md:ml-auto w-full md:w-auto">
+                <MarkerPicker
+                  markers={relevantMarkers}
+                  selected={markerFilter}
+                  onChange={setMarkerFilter}
+                  placeholder={`All ${terms.markers}`}
+                  align="end"
+                />
+              </div>
             )}
           </div>
 
@@ -392,7 +343,7 @@ export function GuidePassClient({ guide, allMarkers }: GuidePassClientProps) {
 
                   {/* Actions */}
                   <div className="flex flex-col gap-2 w-full">
-                    <Button onClick={() => router.push(`/guides?guide=${guide.id}`)} variant="outline" className="w-full gap-2">
+                    <Button onClick={() => router.push(backUrl)} variant="outline" className="w-full gap-2">
                       <ArrowLeft className="h-3.5 w-3.5" />
                       Back to {terms.guide.toLowerCase()}
                     </Button>
@@ -464,7 +415,7 @@ export function GuidePassClient({ guide, allMarkers }: GuidePassClientProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Reset all placements</AlertDialogTitle>
             <AlertDialogDescription>
-              This will reset all {terms.stones.toLowerCase()} in &ldquo;{guide.name}&rdquo; back to{' '}
+              This will reset all {terms.stones.toLowerCase()} in &ldquo;{title}&rdquo; back to{' '}
               <strong>{terms.unplaced}</strong>. This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>

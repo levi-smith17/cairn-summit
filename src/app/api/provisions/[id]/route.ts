@@ -32,7 +32,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const body = await req.json()
-  const { name, amount, billingCycle, nextRenewal, category, url, notes, active, markerIds } = body
+  const { name, amount, billingCycle, nextRenewal, url, notes, active, markerIds } = body
 
   const provision = await prisma.provision.update({
     where: { id: id },
@@ -41,7 +41,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       ...(amount !== undefined && { amount }),
       ...(billingCycle !== undefined && { billingCycle }),
       ...(nextRenewal !== undefined && { nextRenewal: new Date(nextRenewal) }),
-      ...(category !== undefined && { category }),
       ...(url !== undefined && { url }),
       ...(notes !== undefined && { notes }),
       ...(active !== undefined && { active }),

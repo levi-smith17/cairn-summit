@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { MarkerBadge } from '@/app/(platform)/waypoints/components/marker-badge'
+import { MarkerPicker } from '@/components/ui/marker-picker'
 import { RichTextEditor } from '@/components/ui/rich-text-editor'
 import { saveLog } from '@/actions/logs'
 import { useFormStatus } from '@/hooks/use-form-status'
@@ -72,14 +72,6 @@ export function InlineLogForm({
   const filteredWaypoints = selectedFolderId && selectedFolderId !== 'none'
     ? waypoints.filter(w => w.trailId === selectedFolderId)
     : waypoints
-
-  function toggleMarker(tagId: string) {
-    const current = form.getValues('tagIds')
-    form.setValue(
-      'tagIds',
-      current.includes(tagId) ? current.filter(id => id !== tagId) : [...current, tagId]
-    )
-  }
 
   async function onSubmit(values: FormValues) {
     await handleSubmit(async () => {
@@ -144,17 +136,13 @@ export function InlineLogForm({
           </SelectContent>
         </Select>
 
-        {localMarkers.map((marker: any) => (
-          <button
-            key={marker.id}
-            type="button"
-            onClick={() => toggleMarker(marker.id)}
-            className={`rounded-full transition-opacity ${selectedMarkerIds.includes(marker.id) ? 'opacity-100 ring-2 ring-offset-1' : 'opacity-40'}`}
-            style={{ ['--tw-ring-color' as any]: marker.color }}
-          >
-            <MarkerBadge marker={marker} />
-          </button>
-        ))}
+        <MarkerPicker
+          markers={localMarkers}
+          selected={selectedMarkerIds}
+          onChange={ids => form.setValue('tagIds', ids)}
+          placeholder="Markers"
+          compact
+        />
       </div>
 
       {/* Actions */}

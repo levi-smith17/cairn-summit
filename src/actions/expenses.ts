@@ -10,7 +10,6 @@ export async function saveExpense({
   id,
   name,
   amount,
-  category,
   date,
   notes,
   markerIds,
@@ -19,7 +18,6 @@ export async function saveExpense({
   id?: string
   name: string
   amount: number
-  category: string
   date: string
   notes?: string | null
   markerIds: string[]
@@ -38,7 +36,6 @@ export async function saveExpense({
       data: {
         name,
         amount,
-        category,
         date: new Date(date),
         notes: notes ?? null,
         ...(receiptUrl !== undefined && { receiptUrl }),
@@ -53,7 +50,6 @@ export async function saveExpense({
       data: {
         name,
         amount,
-        category,
         date: new Date(date),
         notes: notes ?? null,
         receiptUrl: receiptUrl ?? null,

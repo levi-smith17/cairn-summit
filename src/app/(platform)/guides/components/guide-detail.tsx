@@ -1,10 +1,11 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useTerminology } from '@/contexts/terminology-context'
-import { ChevronLeft, Pencil, Play, Plus, Trash2 } from 'lucide-react'
+import { ChevronLeft, Pencil, Play, Plus, Trash2, Upload } from 'lucide-react'
+import { ImportDialog } from './import-dialog'
 
 type StonePlacement = 'UNPLACED' | 'PLACED' | 'SET' | 'SEATED'
 
@@ -42,10 +43,12 @@ interface GuideDetailProps {
   onAddStone: () => void
   onEditStone: (stone: StoneWithMarkers) => void
   onDeleteStone: (id: string, face: string) => void
+  onImported?: () => void
 }
 
 export function GuideDetail({
   guide,
+  markers,
   stoneSearch = '',
   stoneMarkerId = 'all',
   onBack,
@@ -54,8 +57,10 @@ export function GuideDetail({
   onAddStone,
   onEditStone,
   onDeleteStone,
+  onImported,
 }: GuideDetailProps) {
   const { terms } = useTerminology()
+  const [importOpen, setImportOpen] = useState(false)
 
   const filteredStones = useMemo(() => {
     let result = guide.stones
@@ -134,14 +139,24 @@ export function GuideDetail({
             ? `${filteredStones.length} of ${guide.stones.length} ${guide.stones.length === 1 ? terms.stone : terms.stones}`
             : `${guide.stones.length} ${guide.stones.length === 1 ? terms.stone : terms.stones}`}
         </span>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onAddStone}>
-              <Plus className="h-3.5 w-3.5" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Add {terms.stone.toLowerCase()}</TooltipContent>
-        </Tooltip>
+        <div className="flex items-center gap-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setImportOpen(true)}>
+                <Upload className="h-3.5 w-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Import {terms.stones.toLowerCase()}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onAddStone}>
+                <Plus className="h-3.5 w-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Add {terms.stone.toLowerCase()}</TooltipContent>
+          </Tooltip>
+        </div>
       </div>
 
       {/* Stone list */}
@@ -198,6 +213,18 @@ export function GuideDetail({
           ))
         )}
       </div>
+
+      <ImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        guideId={guide.id}
+        guideName={guide.name}
+        markers={markers as { id: string; name: string; color: string; icon: string | null }[]}
+        onImported={() => {
+          setImportOpen(false)
+          onImported?.()
+        }}
+      />
     </div>
   )
 }

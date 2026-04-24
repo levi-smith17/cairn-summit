@@ -41,9 +41,32 @@ const PRESET_COLORS = [
 ]
 
 const ICON_OPTIONS = [
-  'Tag', 'Star', 'Heart', 'Bookmark', 'Flag', 'Zap',
-  'Globe', 'Lock', 'Mail', 'Music', 'Camera', 'Code',
-  'Coffee', 'Book', 'Briefcase', 'Home', 'Leaf', 'Trophy',
+  // General / UI
+  'Tag', 'Star', 'Bookmark', 'Flag', 'Zap', 'Bell', 'Pin',
+  'Check', 'AlertTriangle', 'Info', 'HelpCircle', 'Sparkles',
+  // People & Social
+  'User', 'Users', 'UserCheck', 'Contact', 'MessageCircle', 'Mail', 'Phone',
+  // Places & Travel
+  'Home', 'Building', 'Building2', 'MapPin', 'Globe', 'Compass', 'Navigation',
+  'Plane', 'Car', 'Train', 'Ship', 'Bike',
+  // Nature & Outdoors
+  'Leaf', 'Trees', 'Flower2', 'Mountain', 'Sun', 'Moon', 'Cloud', 'Umbrella', 'Wind', 'Flame',
+  // Food & Drink
+  'Coffee', 'Wine', 'UtensilsCrossed', 'ShoppingCart', 'ShoppingBag', 'Apple',
+  // Work & Finance
+  'Briefcase', 'BarChart2', 'TrendingUp', 'DollarSign', 'CreditCard',
+  'Receipt', 'Wallet', 'PiggyBank', 'Landmark',
+  // Tech & Media
+  'Code', 'Monitor', 'Smartphone', 'Wifi', 'Lock', 'Key', 'Camera', 'Music',
+  'Headphones', 'Video', 'Radio', 'Tv',
+  // Health & Fitness
+  'Heart', 'Activity', 'Stethoscope', 'Dumbbell',
+  // Education & Knowledge
+  'Book', 'BookOpen', 'GraduationCap', 'Pencil', 'FileText', 'Clipboard',
+  // Fun & Hobbies
+  'Trophy', 'Gamepad2', 'Palette', 'Scissors',
+  // Tools & Organization
+  'Wrench', 'Settings', 'Package', 'Box', 'Archive', 'Layers', 'Grid', 'LayoutGrid', 'FolderOpen',
 ]
 
 const markerSchema = z.object({

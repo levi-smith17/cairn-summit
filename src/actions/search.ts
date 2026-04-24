@@ -71,7 +71,7 @@ export async function globalSearch(
         wayfarerId,
         OR: deep ? [{ name: ci }, { notes: ci }] : [{ name: ci }],
       },
-      select: { id: true, name: true, category: true },
+      select: { id: true, name: true, markers: { include: { marker: true }, take: 1 } },
       take: 20,
       orderBy: { createdAt: 'desc' },
     }),
@@ -171,7 +171,7 @@ export async function globalSearch(
     results.push({
       id: p.id, type: 'provision',
       title: p.name,
-      subtitle: p.category,
+      subtitle: p.markers[0]?.marker?.name.split('/').pop() ?? "",
       url: `/provisions?id=${p.id}`,
       score: ts || 30,
     })

@@ -5,12 +5,12 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
+import { MarkerPicker } from '@/components/ui/marker-picker'
 import { saveBudget } from '@/actions/budgets'
 import { useFormStatus } from '@/hooks/use-form-status'
 
 const schema = z.object({
-  category: z.string().min(1, 'Required'),
+  markerId: z.string().min(1, 'Required'),
   limit: z.number().positive('Must be > 0'),
 })
 
@@ -18,7 +18,7 @@ type FormValues = z.infer<typeof schema>
 
 interface Budget {
   id: string
-  category: string
+  markerId: string
   limit: number
   spent: number
   utilization: number
@@ -26,29 +26,31 @@ interface Budget {
 
 interface Props {
   budget?: Budget
-  categories: string[]
+  markers: any[]
   month: number
   year: number
   onSaved: () => void
   onCancel: () => void
 }
 
-export function InlineCacheForm({ budget, categories, month, year, onSaved, onCancel }: Props) {
+export function InlineCacheForm({ budget, markers, month, year, onSaved, onCancel }: Props) {
   const { saving, handleSubmit } = useFormStatus()
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      category: budget?.category ?? '',
+      markerId: budget?.markerId ?? '',
       limit: budget?.limit ?? undefined,
     },
   })
+
+  const markerId = form.watch('markerId')
 
   async function onSubmit(values: FormValues) {
     await handleSubmit(async () => {
       await saveBudget({
         id: budget?.id,
-        category: values.category,
+        markerId: values.markerId,
         limit: values.limit,
         month,
         year,
@@ -58,33 +60,33 @@ export function InlineCacheForm({ budget, categories, month, year, onSaved, onCa
   }
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="p-4 bg-muted/30 border-b space-y-2">
-      <div className="flex gap-2">
-        <Input
-          placeholder="Category"
-          list="inline-cache-categories"
-          className="flex-1 h-8 text-sm"
-          {...form.register('category')}
-        />
-        <datalist id="inline-cache-categories">
-          {categories.map((c) => <option key={c} value={c} />)}
-        </datalist>
+    <form onSubmit={form.handleSubmit(onSubmit)} className="bg-muted/30 border-b">
+      <div className="flex gap-2 items-center p-4">
+        <div className="flex-1">
+          <MarkerPicker
+            markers={markers}
+            selected={markerId ? [markerId] : []}
+            onChange={ids => form.setValue('markerId', ids[0] ?? '')}
+            placeholder="Select marker…"
+            singleSelect
+            initialPath={['Provisions']}
+          />
+        </div>
         <Input
           type="number"
           min="0"
           step="0.01"
           placeholder="500.00"
-          className="w-28 h-8 text-sm"
+          className="w-28 h-9 md:h-8 text-sm"
           {...form.register('limit', {
             valueAsNumber: true,
             setValueAs: (v) => (v === '' ? undefined : parseFloat(v)),
           })}
         />
       </div>
-      <Separator className="my-4" />
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="ghost" size="sm" onClick={onCancel} className="h-7 text-xs">Cancel</Button>
-        <Button type="submit" size="sm" disabled={saving} className="h-7 text-xs">
+      <div className="flex flex-col flex-col-reverse md:flex-row justify-end gap-2 p-4 md:py-2 border-t">
+        <Button type="button" variant="ghost" size="sm" onClick={onCancel} className="h-9 md:h-7 text-xs">Cancel</Button>
+        <Button type="submit" size="sm" disabled={saving} className="h-9 md:h-7 text-xs">
           {saving ? 'Saving…' : 'Save'}
         </Button>
       </div>

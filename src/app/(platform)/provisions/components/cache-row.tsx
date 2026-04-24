@@ -21,7 +21,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 
 export interface BudgetUtilization {
   id: string
-  category: string
+  markerId: string
+  marker: { id: string; name: string; color: string }
   limit: number
   spent: number
   utilization: number
@@ -29,7 +30,7 @@ export interface BudgetUtilization {
 
 interface Props {
   budget: BudgetUtilization
-  categories: string[]
+  markers: any[]
   month: number
   year: number
   onSaved: () => void
@@ -45,7 +46,7 @@ const utilizationColor = (pct: number) => {
   return 'bg-primary'
 }
 
-export function CacheRow({ budget, categories, month, year, onSaved, onDeleted }: Props) {
+export function CacheRow({ budget, markers, month, year, onSaved, onDeleted }: Props) {
   const { terms } = useTerminology()
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -54,7 +55,7 @@ export function CacheRow({ budget, categories, month, year, onSaved, onDeleted }
     return (
       <InlineCacheForm
         budget={budget}
-        categories={categories}
+        markers={markers}
         month={month}
         year={year}
         onSaved={() => { setEditing(false); onSaved() }}
@@ -67,7 +68,7 @@ export function CacheRow({ budget, categories, month, year, onSaved, onDeleted }
     <>
       <div className="px-3 py-2.5 hover:bg-muted/30 group">
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-sm font-medium">{budget.category}</span>
+          <span className="text-sm font-medium">{budget.marker?.name.split('/').pop() ?? 'Uncategorized'}</span>
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <Tooltip>
               <TooltipTrigger asChild>
@@ -116,7 +117,7 @@ export function CacheRow({ budget, categories, month, year, onSaved, onDeleted }
           <AlertDialogHeader>
             <AlertDialogTitle>Remove {terms.cache.toLowerCase()}?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove the &ldquo;{budget.category}&rdquo; {terms.cache.toLowerCase()} limit for this month. This action cannot be undone.
+              This will remove the &ldquo;{budget.marker?.name.split('/').pop() ?? 'Uncategorized'}&rdquo; {terms.cache.toLowerCase()} limit for this month. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

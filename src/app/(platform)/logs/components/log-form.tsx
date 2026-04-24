@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { MarkerBadge } from '@/app/(platform)/waypoints/components/marker-badge'
+import { MarkerPicker } from '@/components/ui/marker-picker'
 import { RichTextEditor } from '@/components/ui/rich-text-editor'
 import { FormActions } from '@/components/forms/form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
@@ -159,14 +159,6 @@ export function LogForm({ log, folders, waypoints, tags, onBack, onSaved, onDele
     } finally {
       setMarkerCreating(false)
     }
-  }
-
-  function toggleMarker(tagId: string) {
-    const current = form.getValues('tagIds')
-    form.setValue(
-      'tagIds',
-      current.includes(tagId) ? current.filter(id => id !== tagId) : [...current, tagId]
-    )
   }
 
   async function onSubmit(values: LogFormValues) {
@@ -385,20 +377,12 @@ export function LogForm({ log, folders, waypoints, tags, onBack, onSaved, onDele
                     )}
                   </div>
                   {localMarkers.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {localMarkers.map((marker: any) => (
-                        <button
-                          key={marker.id}
-                          type="button"
-                          onClick={() => toggleMarker(marker.id)}
-                          className={`rounded-full transition-opacity ${selectedMarkerIds.includes(marker.id) ? 'opacity-100 ring-2 ring-offset-1' : 'opacity-50'
-                            }`}
-                          style={{ ['--tw-ring-color' as any]: marker.color }}
-                        >
-                          <MarkerBadge marker={marker} />
-                        </button>
-                      ))}
-                    </div>
+                    <MarkerPicker
+                      markers={localMarkers}
+                      selected={selectedMarkerIds}
+                      onChange={ids => form.setValue('tagIds', ids)}
+                      placeholder={`Select ${terms.markers.toLowerCase()}…`}
+                    />
                   )}
                   {creatingMarker && (
                     <div className="flex flex-col gap-2 p-2 border rounded-md">

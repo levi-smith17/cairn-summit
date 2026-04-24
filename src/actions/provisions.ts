@@ -11,7 +11,6 @@ export async function saveProvision({
   amount,
   billingCycle,
   nextRenewal,
-  category,
   url,
   notes,
   active,
@@ -22,7 +21,6 @@ export async function saveProvision({
   amount: number
   billingCycle: BillingCycle
   nextRenewal: string
-  category: string
   url?: string | null
   notes?: string | null
   active?: boolean
@@ -40,13 +38,11 @@ export async function saveProvision({
         amount,
         billingCycle,
         nextRenewal: new Date(nextRenewal),
-        category,
         url: url ?? null,
         notes: notes ?? null,
         ...(active !== undefined && { active }),
       },
     })
-    // Update markers separately since updateMany doesn't support nested writes
     const existing = await prisma.provision.findFirst({ where: { id, wayfarerId } })
     if (existing) {
       await prisma.provision.update({
@@ -66,7 +62,6 @@ export async function saveProvision({
         amount,
         billingCycle,
         nextRenewal: new Date(nextRenewal),
-        category,
         url: url ?? null,
         notes: notes ?? null,
         active: true,

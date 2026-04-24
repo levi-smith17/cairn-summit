@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { MarkerBadge } from '@/app/(platform)/waypoints/components/marker-badge'
+import { MarkerPicker } from '@/components/ui/marker-picker'
 import { saveWaypoint } from '@/actions/waypoints'
 import { useFormStatus } from '@/hooks/use-form-status'
 import { useTerminology } from '@/contexts/terminology-context'
@@ -82,14 +82,6 @@ export function InlineWaypointForm({
     } finally {
       setFetching(false)
     }
-  }
-
-  function toggleMarker(tagId: string) {
-    const current = form.getValues('tagIds')
-    form.setValue(
-      'tagIds',
-      current.includes(tagId) ? current.filter(id => id !== tagId) : [...current, tagId]
-    )
   }
 
   async function onSubmit(values: FormValues) {
@@ -167,17 +159,13 @@ export function InlineWaypointForm({
             ))}
           </SelectContent>
         </Select>
-        {localMarkers.map((marker: any) => (
-          <button
-            key={marker.id}
-            type="button"
-            onClick={() => toggleMarker(marker.id)}
-            className={`rounded-full transition-opacity ${selectedMarkerIds.includes(marker.id) ? 'opacity-100 ring-2 ring-offset-1' : 'opacity-40'}`}
-            style={{ ['--tw-ring-color' as any]: marker.color }}
-          >
-            <MarkerBadge marker={marker} />
-          </button>
-        ))}
+        <MarkerPicker
+          markers={localMarkers}
+          selected={selectedMarkerIds}
+          onChange={ids => form.setValue('tagIds', ids)}
+          placeholder="Markers"
+          compact
+        />
       </div>
 
       {/* Actions */}

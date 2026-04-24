@@ -132,6 +132,41 @@ export async function updateStonePlacement(stoneId: string, placement: StonePlac
   revalidatePath('/guides')
 }
 
+// ── Import ────────────────────────────────────────────────────────────────────
+
+export type ImportStone = {
+  face: string
+  core: string
+  markerIds: string[]
+}
+
+export async function importStones(guideId: string, stones: ImportStone[]) {
+  const session = await auth()
+  if (!session?.user?.id) throw new Error('Unauthorized')
+  const wayfarerId = session.user.id
+
+  const guide = await prisma.guide.findFirst({ where: { id: guideId, wayfarerId } })
+  if (!guide) throw new Error('Not found')
+
+  await prisma.$transaction(
+    stones.map(s =>
+      prisma.stone.create({
+        data: {
+          face: s.face,
+          core: s.core,
+          guideId,
+          markers: {
+            create: s.markerIds.map(markerId => ({ markerId })),
+          },
+        },
+      })
+    )
+  )
+
+  revalidatePath('/guides')
+  return { count: stones.length }
+}
+
 export async function resetGuidePlacements(guideId: string) {
   const session = await auth()
   if (!session?.user?.id) throw new Error('Unauthorized')
