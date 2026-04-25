@@ -24,6 +24,7 @@ interface FilterBarProps {
   sortOptions?: { value: SortOption; label: string }[]
   searchPlaceholder?: string
   fill?: boolean
+  trailingAction?: React.ReactNode
 }
 
 export function FilterBar({
@@ -38,6 +39,7 @@ export function FilterBar({
   sortOptions,
   searchPlaceholder,
   fill = false,
+  trailingAction,
 }: FilterBarProps) {
   const { filters, setFilter, clearFilters } = useFilters()
   const isActive = hasActiveFilters(filters)
@@ -53,8 +55,8 @@ export function FilterBar({
 
       {showMarkerFilter && (
         <MarkerFilter
-          value={filters.markerId}
-          onChange={v => setFilter('markerId', v)}
+          value={filters.markerIds}
+          onChange={ids => setFilter('markerIds', ids)}
           markers={markers}
         />
       )}
@@ -113,6 +115,8 @@ export function FilterBar({
           Clear
         </Button>
       )}
+
+      {trailingAction}
     </div>
   )
 }

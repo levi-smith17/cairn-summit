@@ -5,13 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { CustomSelect } from '@/components/ui/custom-select'
 import { Plus, Search, ChevronLeft, ChevronRight, AlertTriangle, TrendingUp, Wallet, RefreshCw, Copy, X } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { PlatformHeader } from '@/components/nav/platform/platform-header'
@@ -257,23 +251,23 @@ export function ProvisionsClient({ markers }: Props) {
         <div className="rounded-lg border border-border bg-card p-2 shrink-0">
           <div className="flex flex-col md:flex-row flex-wrap items-center gap-1.5">
             {/* Month Navigation */}
-            <div className="flex items-center gap-2 bg-muted/70 rounded-md border border-border h-9 md:h-8">
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={prevMonth}>
+            <div className="flex items-center gap-2 bg-muted/70 rounded-md border border-border h-9 md:h-8 min-w-54 w-full md:w-auto">
+              <Button variant="ghost" size="icon" className="h-9 md:h-8 w-9 md:w-8" onClick={prevMonth}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <span className="text-sm font-medium w-36 text-center">{monthName}</span>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={nextMonth}>
+              <span className="text-sm font-medium w-full md:w-36 text-center">{monthName}</span>
+              <Button variant="ghost" size="icon" className="h-9 md:h-8 w-9 md:w-8" onClick={nextMonth}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
 
             {/* Search */}
-            <div className="relative h-9 md:h-8 min-w-48 max-w-96 w-full">
+            <div className="relative h-9 md:h-8 min-w-48 max-w-112 w-full">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
               <Input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder={`Search ${terms.burn.toLowerCase()} & ${terms.supplylines.toLowerCase()}…`}
+                placeholder={`${terms.explore} ${terms.burn.toLowerCase()} & ${terms.supplylines.toLowerCase()}…`}
                 className="pl-8 pr-8 h-9 md:h-8 text-sm"
               />
               {search && (
@@ -291,28 +285,30 @@ export function ProvisionsClient({ markers }: Props) {
             {/* Marker filter */}
             <div className="flex flex-col md:flex-row items-center gap-1.5 w-full md:w-auto">
               {markers.length > 0 && (
-                <MarkerPicker
-                  markers={markers}
-                  selected={markerFilter !== 'all' ? [markerFilter] : []}
-                  onChange={ids => setMarkerFilter(ids[0] ?? 'all')}
-                  singleSelect
-                  placeholder={`All ${terms.markers}`}
-                  align="start"
-                  initialPath={['Provisions']}
-                />
+                <div className="w-full md:w-64 shrink-0">
+                  <MarkerPicker
+                    markers={markers}
+                    selected={markerFilter !== 'all' ? [markerFilter] : []}
+                    onChange={ids => setMarkerFilter(ids[0] ?? 'all')}
+                    singleSelect
+                    placeholder={`All ${terms.markers}`}
+                    align="start"
+                    initialPath={['Provisions']}
+                  />
+                </div>
               )}
 
               {/* Active filter — supplylines only */}
-              <Select value={activeFilter} onValueChange={setActiveFilter}>
-                <SelectTrigger className="w-full md:w-28 h-9 md:h-8 text-sm w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All status</SelectItem>
-                  <SelectItem value="true">Active</SelectItem>
-                  <SelectItem value="false">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
+              <CustomSelect
+                options={[
+                  { value: 'all', label: 'All status' },
+                  { value: 'true', label: 'Active' },
+                  { value: 'false', label: 'Inactive' },
+                ]}
+                value={activeFilter}
+                onChange={setActiveFilter}
+                triggerClassName="w-full md:w-28"
+              />
 
               {filtersActive && (
                 <Button variant="ghost" size="sm" className="h-9 md:h-8 gap-1.5 text-sm" onClick={clearFilters}>

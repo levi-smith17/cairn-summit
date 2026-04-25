@@ -42,8 +42,13 @@ interface PlatformWayfarerMenuProps {
 }
 
 export function PlatformWayfarerMenu({ wayfarer, terms }: PlatformWayfarerMenuProps) {
-  const { isMobile } = useSidebar()
+  const { isMobile, setOpenMobile } = useSidebar()
   const router = useRouter()
+
+  function navigate(url: string) {
+    if (isMobile) setOpenMobile(false)
+    router.push(url)
+  }
 
   return (
       <SidebarMenu>
@@ -88,18 +93,18 @@ export function PlatformWayfarerMenu({ wayfarer, terms }: PlatformWayfarerMenuPr
                 <DropdownMenuLabel className="p-0 font-normal">
                   My {terms?.manifest ?? 'Manifest'}
                 </DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => router.push('/manifest')}>
+                <DropdownMenuItem onClick={() => navigate('/manifest')}>
                   <BookOpen className="h-4 w-4" />
                   Edit
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push('/manifest/' + wayfarer.username)}>
+                <DropdownMenuItem onClick={() => navigate('/manifest/' + wayfarer.username)}>
                   <BookUser className="h-4 w-4" />
                   View Public
                 </DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem onClick={() => router.push('/settings')}>
+                <DropdownMenuItem onClick={() => navigate('/settings')}>
                   <Settings className="h-4 w-4" />
                   Settings
                 </DropdownMenuItem>

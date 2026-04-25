@@ -59,9 +59,9 @@ export function GuidesClient({ guides, trails, markers }: GuidesClientProps) {
   // Filter state (client-side, independent of URL)
   const [search, setSearch] = useState('')
   const [trailId, setTrailId] = useState('all')
-  const [markerId, setMarkerId] = useState('all')
+  const [markerIds, setMarkerIds] = useState<string[]>([])
 
-  const hasActiveFilters = search !== '' || trailId !== 'all' || markerId !== 'all'
+  const hasActiveFilters = search !== '' || trailId !== 'all' || markerIds.length > 0
 
   const filteredGuides = useMemo(() => {
     let result = guides
@@ -76,11 +76,11 @@ export function GuidesClient({ guides, trails, markers }: GuidesClientProps) {
     if (trailId !== 'all') {
       result = result.filter(g => g.trailId === trailId)
     }
-    if (markerId !== 'all') {
-      result = result.filter(g => g.stones.some(s => s.markers.some(m => m.markerId === markerId)))
+    if (markerIds.length > 0) {
+      result = result.filter(g => g.stones.some(s => s.markers.some(m => markerIds.includes(m.markerId))))
     }
     return result
-  }, [guides, search, trailId, markerId])
+  }, [guides, search, trailId, markerIds])
 
   const [mode, setMode] = useState<Mode>('view')
   const [editingGuide, setEditingGuide] = useState<GuideWithStones | null>(null)
@@ -186,14 +186,14 @@ export function GuidesClient({ guides, trails, markers }: GuidesClientProps) {
               onChange={setSearch}
               placeholder={`Search ${terms.guides.toLowerCase()}…`}
             />
+            <MarkerFilter value={markerIds} onChange={setMarkerIds} markers={markers} />
             <TrailFilter value={trailId} onChange={setTrailId} trails={trails} />
-            <MarkerFilter value={markerId} onChange={setMarkerId} markers={markers} />
             {hasActiveFilters && (
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-8 gap-1.5 text-sm"
-                onClick={() => { setSearch(''); setTrailId('all'); setMarkerId('all') }}
+                onClick={() => { setSearch(''); setTrailId('all'); setMarkerIds([]) }}
               >
                 <X className="h-3.5 w-3.5" />
                 Clear
@@ -254,7 +254,7 @@ export function GuidesClient({ guides, trails, markers }: GuidesClientProps) {
                 guide={selectedGuide}
                 markers={markers}
                 stoneSearch={search}
-                stoneMarkerId={markerId}
+                stoneMarkerIds={markerIds}
                 onBack={clearGuide}
                 onEditGuide={() => handleEditGuide(selectedGuide)}
                 onLaunchPass={() => handleLaunchPass(selectedGuide.id)}

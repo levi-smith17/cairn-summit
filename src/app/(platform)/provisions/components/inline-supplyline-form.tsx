@@ -5,13 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { CustomSelect } from '@/components/ui/custom-select'
 import { MarkerPicker } from '@/components/ui/marker-picker'
 import { saveProvision } from '@/actions/provisions'
 import { useFormStatus } from '@/hooks/use-form-status'
@@ -117,19 +111,11 @@ export function InlineSupplylineForm({ provision, tags, onSaved, onCancel }: Pro
               setValueAs: (v) => (v === '' ? 0 : parseFloat(v)),
             })}
           />
-          <Select
+          <CustomSelect
+            options={BILLING_CYCLES.map(c => ({ value: c, label: CYCLE_LABELS[c] }))}
             value={billingCycle}
-            onValueChange={(v) => form.setValue('billingCycle', v as FormValues['billingCycle'])}
-          >
-            <SelectTrigger size="sm" className="w-full h-9 md:h-8 text-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {BILLING_CYCLES.map((c) => (
-                <SelectItem key={c} value={c}>{CYCLE_LABELS[c]}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            onChange={v => form.setValue('billingCycle', v as FormValues['billingCycle'])}
+          />
           <Input
             type="date"
             className="h-9 md:h-8 text-sm"

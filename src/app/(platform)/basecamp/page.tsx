@@ -47,9 +47,9 @@ export default async function BasecampPage({ searchParams }: BasecampPageProps) 
       { url: { contains: filters.search, mode: 'insensitive' } },
     ]
   }
-  if (filters.markerId !== 'all') waypointWhere.markers = { some: { markerId: filters.markerId } }
+  if (filters.markerIds.length > 0) waypointWhere.markers = { some: { markerId: { in: filters.markerIds } } }
   if (filters.readLater) waypointWhere.readLater = true
-  const hasWaypointFilter = !!(filters.search || filters.markerId !== 'all' || filters.readLater || filters.dateFrom || filters.dateTo)
+  const hasWaypointFilter = !!(filters.search || filters.markerIds.length > 0 || filters.readLater || filters.dateFrom || filters.dateTo)
 
   const now = new Date()
   const in7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)

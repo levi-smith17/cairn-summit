@@ -36,7 +36,7 @@ interface GuideDetailProps {
   guide: GuideWithStones
   markers: { id: string; name: string; color: string }[]
   stoneSearch?: string
-  stoneMarkerId?: string
+  stoneMarkerIds?: string[]
   onBack: () => void
   onEditGuide: () => void
   onLaunchPass: () => void
@@ -50,7 +50,7 @@ export function GuideDetail({
   guide,
   markers,
   stoneSearch = '',
-  stoneMarkerId = 'all',
+  stoneMarkerIds = [],
   onBack,
   onEditGuide,
   onLaunchPass,
@@ -70,13 +70,13 @@ export function GuideDetail({
         s.face.toLowerCase().includes(q) || s.core.toLowerCase().includes(q)
       )
     }
-    if (stoneMarkerId !== 'all') {
-      result = result.filter(s => s.markers.some(m => m.markerId === stoneMarkerId))
+    if (stoneMarkerIds.length > 0) {
+      result = result.filter(s => s.markers.some(m => stoneMarkerIds.includes(m.markerId)))
     }
     return result
-  }, [guide.stones, stoneSearch, stoneMarkerId])
+  }, [guide.stones, stoneSearch, stoneMarkerIds])
 
-  const isFiltered = stoneSearch !== '' || stoneMarkerId !== 'all'
+  const isFiltered = stoneSearch !== '' || stoneMarkerIds.length > 0
 
   function getPlacementLabel(placement: StonePlacement): string {
     switch (placement) {
