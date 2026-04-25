@@ -1,18 +1,11 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
-import { Save, Loader2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { useState } from 'react'
 import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { CustomSelect } from '@/components/ui/custom-select'
+import { FormActions } from '@/components/forms/form-actions'
+import { useFormStatus } from '@/hooks/use-form-status'
 import { updatePrivacySettings, updateListedSetting } from '@/actions/settings'
 
 interface PrivacyValues {
@@ -38,29 +31,26 @@ function SettingRow({ label, description, control }: { label: string; descriptio
 }
 
 export function PrivacyForm({ defaultValues }: PrivacyFormProps) {
-  const router = useRouter()
-  const [saving, startSave] = useTransition()
+  const { saving, saved, error, handleSubmit } = useFormStatus()
   const [values, setValues] = useState<PrivacyValues>(defaultValues)
 
   function set<K extends keyof PrivacyValues>(key: K, value: PrivacyValues[K]) {
     setValues(prev => ({ ...prev, [key]: value }))
   }
 
-  const isDirty = JSON.stringify(values) !== JSON.stringify(defaultValues)
-
-  function handleSave() {
-    startSave(async () => {
+  async function onSubmit(e: { preventDefault(): void }) {
+    e.preventDefault()
+    await handleSubmit(async () => {
       const { listed, ...privacyValues } = values
       await Promise.all([
         updatePrivacySettings(privacyValues),
         updateListedSetting(listed),
       ])
-      router.refresh()
     })
   }
 
   return (
-    <div className="space-y-8">
+    <form onSubmit={onSubmit} className="space-y-8">
       <div className="space-y-5">
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Manifest</p>
 
@@ -68,16 +58,12 @@ export function PrivacyForm({ defaultValues }: PrivacyFormProps) {
           label="Visibility"
           description="Who can view your public Manifest page"
           control={
-            <Select value={values.manifestVisibility} onValueChange={v => set('manifestVisibility', v as PrivacyValues['manifestVisibility'])}>
-              <SelectTrigger className="w-32 h-8 text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="PUBLIC">Public</SelectItem>
-                <SelectItem value="UNLISTED">Unlisted</SelectItem>
-                <SelectItem value="PRIVATE">Private</SelectItem>
-              </SelectContent>
-            </Select>
+            <CustomSelect
+              options={[{ value: 'PUBLIC', label: 'Public' }, { value: 'UNLISTED', label: 'Unlisted' }, { value: 'PRIVATE', label: 'Private' }]}
+              value={values.manifestVisibility}
+              onChange={v => set('manifestVisibility', v as PrivacyValues['manifestVisibility'])}
+              triggerClassName="w-32"
+            />
           }
         />
 
@@ -116,12 +102,7 @@ export function PrivacyForm({ defaultValues }: PrivacyFormProps) {
         />
       </div>
 
-      <div className="flex justify-end">
-        <Button type="button" onClick={handleSave} disabled={saving || !isDirty}>
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          {saving ? 'Saving...' : 'Save Changes'}
-        </Button>
-      </div>
-    </div>
+      <FormActions saving={saving} saved={saved} error={error} saveLabel="Save Changes" />
+    </form>
   )
 }

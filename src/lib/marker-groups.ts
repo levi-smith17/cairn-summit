@@ -16,8 +16,12 @@ export type MarkerLeaf = {
 
 export type MarkerGroup = {
   type: 'group'
-  label: string             // this segment e.g. "AWS"
+  label: string
   children: MarkerTreeNode[]
+  // Set when this group path is itself a real marker (has children AND its own marker record):
+  id?: string
+  color?: string
+  icon?: string | null
 }
 
 export type MarkerTreeNode = MarkerLeaf | MarkerGroup
@@ -43,6 +47,18 @@ function insertNode(
   marker: RawMarker
 ): void {
   if (parts.length === 1) {
+    // Check if there's already a group with this label (children exist because
+    // a deeper marker was processed first). If so, augment the group with this
+    // marker's own id/color/icon so it becomes selectable.
+    const existingGroup = nodes.find(
+      (n): n is MarkerGroup => n.type === 'group' && n.label === parts[0]
+    )
+    if (existingGroup) {
+      existingGroup.id = marker.id
+      existingGroup.color = marker.color
+      existingGroup.icon = marker.icon
+      return
+    }
     nodes.push({
       type: 'leaf',
       id: marker.id,
@@ -55,11 +71,33 @@ function insertNode(
   }
 
   const [head, ...rest] = parts
-  let group = nodes.find((n): n is MarkerGroup => n.type === 'group' && n.label === head)
+  let group = nodes.find(
+    (n): n is MarkerGroup => n.type === 'group' && n.label === head
+  )
+
   if (!group) {
-    group = { type: 'group', label: head, children: [] }
-    nodes.push(group)
+    // Check if there's a leaf at this label that needs to become a group
+    // (happens when a shallower marker was processed before a deeper one)
+    const existingLeafIdx = nodes.findIndex(
+      (n): n is MarkerLeaf => n.type === 'leaf' && n.label === head
+    )
+    if (existingLeafIdx !== -1) {
+      const leaf = nodes[existingLeafIdx] as MarkerLeaf
+      group = {
+        type: 'group',
+        label: head,
+        children: [],
+        id: leaf.id,
+        color: leaf.color,
+        icon: leaf.icon,
+      }
+      nodes.splice(existingLeafIdx, 1, group)
+    } else {
+      group = { type: 'group', label: head, children: [] }
+      nodes.push(group)
+    }
   }
+
   insertNode(group.children, rest, marker)
 }
 
@@ -90,9 +128,12 @@ export function getNodesAtPath(
 // ── Leaf collection ───────────────────────────────────────────────────────────
 
 export function getAllLeafIds(nodes: MarkerTreeNode[]): string[] {
-  return nodes.flatMap(n =>
-    n.type === 'leaf' ? [n.id] : getAllLeafIds(n.children)
-  )
+  return nodes.flatMap(n => {
+    if (n.type === 'leaf') return [n.id]
+    // Include the group's own marker id when present
+    const childIds = getAllLeafIds(n.children)
+    return n.id ? [n.id, ...childIds] : childIds
+  })
 }
 
 export type FlatLeaf = {
@@ -104,9 +145,24 @@ export function getAllLeaves(
   nodes: MarkerTreeNode[],
   prefix: string[] = []
 ): FlatLeaf[] {
-  return nodes.flatMap(n =>
-    n.type === 'leaf'
-      ? [{ leaf: n, path: [...prefix, n.label] }]
-      : getAllLeaves(n.children, [...prefix, n.label])
-  )
+  return nodes.flatMap(n => {
+    if (n.type === 'leaf') {
+      return [{ leaf: n, path: [...prefix, n.label] }]
+    }
+    // Group with its own marker id — include it as a selectable leaf too
+    const selfEntries: FlatLeaf[] = n.id
+      ? [{
+          leaf: {
+            type: 'leaf',
+            id: n.id,
+            name: [...prefix, n.label].join('/'),
+            label: n.label,
+            color: n.color!,
+            icon: n.icon,
+          },
+          path: [...prefix, n.label],
+        }]
+      : []
+    return [...selfEntries, ...getAllLeaves(n.children, [...prefix, n.label])]
+  })
 }

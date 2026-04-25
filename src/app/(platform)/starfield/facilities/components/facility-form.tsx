@@ -1,12 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { saveFacility } from '@/actions/starfield'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { Form, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { PlanetPicker } from '@/components/ui/planet-picker'
 import { FormActions } from '@/components/forms/form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
 
@@ -24,8 +25,9 @@ interface FacilityFormProps {
   onDone: () => void
 }
 
-export function FacilityForm({ facility, systems, onDone }: FacilityFormProps) {
+export function FacilityForm({ facility, systems: initialSystems, onDone }: FacilityFormProps) {
   const { saving, saved, error, handleSubmit } = useFormStatus()
+  const [systems, setSystems] = useState(initialSystems)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -43,10 +45,6 @@ export function FacilityForm({ facility, systems, onDone }: FacilityFormProps) {
     })
   }
 
-  const allPlanets = systems
-    .flatMap(s => s.planets.map((p: any) => ({ ...p, label: `${p.name} (${s.name})` })))
-    .sort((a, b) => a.label.localeCompare(b.label))
-
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center px-4 py-3 border-b border-border shrink-0">
@@ -59,32 +57,28 @@ export function FacilityForm({ facility, systems, onDone }: FacilityFormProps) {
             <FormField control={form.control} name="name" render={({ field }) => (
               <FormItem>
                 <FormLabel>Name</FormLabel>
-                <FormControl><Input placeholder="Central Manufacturing Hub" {...field} /></FormControl>
+                <Input placeholder="Central Manufacturing Hub" {...field} />
                 <FormMessage />
               </FormItem>
             )} />
+
             <FormField control={form.control} name="abbreviation" render={({ field }) => (
               <FormItem>
                 <FormLabel>Abbreviation</FormLabel>
-                <FormControl><Input placeholder="C" maxLength={1} {...field} /></FormControl>
+                <Input placeholder="C" maxLength={1} {...field} />
                 <FormMessage />
               </FormItem>
             )} />
+
             <FormField control={form.control} name="planetId" render={({ field }) => (
               <FormItem>
                 <FormLabel>Planet</FormLabel>
-                <Select key={field.value} onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a planet..." />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {allPlanets.map(p => (
-                      <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <PlanetPicker
+                  value={field.value}
+                  onChange={field.onChange}
+                  systems={systems}
+                  onSystemsUpdate={setSystems}
+                />
                 <FormMessage />
               </FormItem>
             )} />

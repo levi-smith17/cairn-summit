@@ -159,9 +159,9 @@ function AccountRow({ account }: AccountRowProps) {
                 <label htmlFor={`default-${account.id}`} className="text-xs text-muted-foreground cursor-pointer">Set as default account</label>
               </div>
             </div>
-            <div className="flex justify-end items-center gap-2 pt-1">
-              <Button size="sm" variant="ghost" onClick={handleCancel}>Cancel</Button>
-              <Button size="sm" onClick={handleSave} disabled={saving || !label.trim()}>
+            <div className="flex flex-col md:flex-row flex-col-reverse md:justify-end items-center gap-2 pt-1">
+              <Button size="sm" variant="ghost" onClick={handleCancel} className="w-full md:w-auto">Cancel</Button>
+              <Button size="sm" onClick={handleSave} disabled={saving || !label.trim()} className="w-full md:w-auto">
                 {saving ? 'Saving…' : 'Save'}
               </Button>
             </div>
@@ -400,7 +400,7 @@ function AddAccountForm({ onDone }: { onDone: () => void }) {
 
         {/* Test connection */}
         <div className="flex items-center gap-3">
-          <Button type="button" variant="outline" size="sm" onClick={handleTest} disabled={testPending}>
+          <Button type="button" variant="outline" size="sm" onClick={handleTest} disabled={testPending} className="w-full md:w-auto">
             {testPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Test Connection'}
           </Button>
           {testResult && (
@@ -454,7 +454,7 @@ export function EmailForm({ accounts }: EmailFormProps) {
           type="button"
           variant="outline"
           size="sm"
-          className="gap-1.5"
+          className="gap-1.5 w-full md:w-auto"
           onClick={() => setShowAdd(true)}
         >
           <Plus className="h-3.5 w-3.5" />

@@ -1,18 +1,11 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
-import { Save, Loader2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { useState } from 'react'
 import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { CustomSelect } from '@/components/ui/custom-select'
+import { FormActions } from '@/components/forms/form-actions'
+import { useFormStatus } from '@/hooks/use-form-status'
 import { updateAppearanceSettings, updateTimeFormat } from '@/actions/settings'
 
 interface AppearanceValues {
@@ -48,29 +41,26 @@ const LANDING_PAGES = [
 ]
 
 export function AppearanceForm({ defaultValues }: AppearanceFormProps) {
-  const router = useRouter()
-  const [saving, startSave] = useTransition()
+  const { saving, saved, error, handleSubmit } = useFormStatus()
   const [values, setValues] = useState<AppearanceValues>(defaultValues)
 
   function set<K extends keyof AppearanceValues>(key: K, value: AppearanceValues[K]) {
     setValues(prev => ({ ...prev, [key]: value }))
   }
 
-  const isDirty = JSON.stringify(values) !== JSON.stringify(defaultValues)
-
-  function handleSave() {
-    startSave(async () => {
+  async function onSubmit(e: { preventDefault(): void }) {
+    e.preventDefault()
+    await handleSubmit(async () => {
       const { timeFormat, ...appearanceValues } = values
       await Promise.all([
         updateAppearanceSettings(appearanceValues),
         updateTimeFormat(timeFormat),
       ])
-      router.refresh()
     })
   }
 
   return (
-    <div className="space-y-8">
+    <form onSubmit={onSubmit} className="space-y-8">
       <div className="space-y-5">
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Layout</p>
 
@@ -78,15 +68,12 @@ export function AppearanceForm({ defaultValues }: AppearanceFormProps) {
           label="Sidebar default state"
           description="Whether the sidebar starts expanded or collapsed on page load"
           control={
-            <Select value={values.sidebarDefault} onValueChange={v => set('sidebarDefault', v as AppearanceValues['sidebarDefault'])}>
-              <SelectTrigger className="w-32 h-8 text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="EXPANDED">Expanded</SelectItem>
-                <SelectItem value="COLLAPSED">Collapsed</SelectItem>
-              </SelectContent>
-            </Select>
+            <CustomSelect
+              options={[{ value: 'EXPANDED', label: 'Expanded' }, { value: 'COLLAPSED', label: 'Collapsed' }]}
+              value={values.sidebarDefault}
+              onChange={v => set('sidebarDefault', v as AppearanceValues['sidebarDefault'])}
+              triggerClassName="w-32"
+            />
           }
         />
 
@@ -94,16 +81,12 @@ export function AppearanceForm({ defaultValues }: AppearanceFormProps) {
           label="Default landing page"
           description="Which page opens when you log in"
           control={
-            <Select value={values.defaultLandingPage} onValueChange={v => set('defaultLandingPage', v)}>
-              <SelectTrigger className="w-36 h-8 text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {LANDING_PAGES.map(p => (
-                  <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <CustomSelect
+              options={LANDING_PAGES}
+              value={values.defaultLandingPage}
+              onChange={v => set('defaultLandingPage', v)}
+              triggerClassName="w-36"
+            />
           }
         />
       </div>
@@ -117,16 +100,12 @@ export function AppearanceForm({ defaultValues }: AppearanceFormProps) {
           label="Date format"
           description="How dates are displayed across the platform"
           control={
-            <Select value={values.dateFormat} onValueChange={v => set('dateFormat', v as AppearanceValues['dateFormat'])}>
-              <SelectTrigger className="w-40 h-8 text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="MDY">MM/DD/YYYY</SelectItem>
-                <SelectItem value="DMY">DD/MM/YYYY</SelectItem>
-                <SelectItem value="YMD">YYYY-MM-DD</SelectItem>
-              </SelectContent>
-            </Select>
+            <CustomSelect
+              options={[{ value: 'MDY', label: 'MM/DD/YYYY' }, { value: 'DMY', label: 'DD/MM/YYYY' }, { value: 'YMD', label: 'YYYY-MM-DD' }]}
+              value={values.dateFormat}
+              onChange={v => set('dateFormat', v as AppearanceValues['dateFormat'])}
+              triggerClassName="w-40"
+            />
           }
         />
 
@@ -134,25 +113,17 @@ export function AppearanceForm({ defaultValues }: AppearanceFormProps) {
           label="Time format"
           description="How times are displayed across the Itinerary and other areas"
           control={
-            <Select value={values.timeFormat} onValueChange={v => set('timeFormat', v as AppearanceValues['timeFormat'])}>
-              <SelectTrigger className="w-40 h-8 text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="TWELVE">12-hour (2:30 PM)</SelectItem>
-                <SelectItem value="TWENTYFOUR">24-hour (14:30)</SelectItem>
-              </SelectContent>
-            </Select>
+            <CustomSelect
+              options={[{ value: 'TWELVE', label: '12-hour (2:30 PM)' }, { value: 'TWENTYFOUR', label: '24-hour (14:30)' }]}
+              value={values.timeFormat}
+              onChange={v => set('timeFormat', v as AppearanceValues['timeFormat'])}
+              triggerClassName="w-40"
+            />
           }
         />
       </div>
 
-      <div className="flex justify-end">
-        <Button type="button" onClick={handleSave} disabled={saving || !isDirty}>
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          {saving ? 'Saving...' : 'Save Changes'}
-        </Button>
-      </div>
-    </div>
+      <FormActions saving={saving} saved={saved} error={error} saveLabel="Save Changes" />
+    </form>
   )
 }

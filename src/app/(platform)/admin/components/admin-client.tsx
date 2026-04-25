@@ -2,18 +2,12 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Shield, Users, UserPlus, UserX, X } from 'lucide-react'
+import { ArrowUpDown, Eye, Shield, Users, UserPlus, UserX, X } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { PlatformHeader } from '@/components/nav/platform/platform-header'
 import { SearchInput } from '@/components/filters/search-input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { CustomSelect } from '@/components/ui/custom-select'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -245,37 +239,30 @@ export function AdminClient({
           {activeTab === 'wayfarers' && (
             <div className="flex items-center gap-1.5 flex-wrap">
               <SearchInput value={search} onChange={setSearch} placeholder="Search wayfarers…" />
-              <Select value={roleFilter} onValueChange={v => setRoleFilter(v as RoleFilter)}>
-                <SelectTrigger className="h-8 w-auto text-sm gap-1.5 border-border">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All roles</SelectItem>
-                  <SelectItem value="admins">Admins only</SelectItem>
-                  <SelectItem value="members">Members only</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={listedFilter} onValueChange={v => setListedFilter(v as ListedFilter)}>
-                <SelectTrigger className="h-8 w-auto text-sm gap-1.5 border-border">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All visibility</SelectItem>
-                  <SelectItem value="listed">Listed only</SelectItem>
-                  <SelectItem value="unlisted">Unlisted only</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={sort} onValueChange={v => setSort(v as SortOption)}>
-                <SelectTrigger className="h-8 w-auto text-sm gap-1.5 border-border">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="newest">Newest first</SelectItem>
-                  <SelectItem value="oldest">Oldest first</SelectItem>
-                  <SelectItem value="name-asc">Name A–Z</SelectItem>
-                  <SelectItem value="name-desc">Name Z–A</SelectItem>
-                </SelectContent>
-              </Select>
+              <CustomSelect
+                options={[{ value: 'all', label: 'All roles' }, { value: 'admins', label: 'Admins only' }, { value: 'members', label: 'Members only' }]}
+                value={roleFilter}
+                onChange={v => setRoleFilter(v as RoleFilter)}
+                icon={Shield}
+                placeholderValue="all"
+                triggerClassName="w-36"
+              />
+              <CustomSelect
+                options={[{ value: 'all', label: 'All visibility' }, { value: 'listed', label: 'Listed only' }, { value: 'unlisted', label: 'Unlisted only' }]}
+                value={listedFilter}
+                onChange={v => setListedFilter(v as ListedFilter)}
+                icon={Eye}
+                placeholderValue="all"
+                triggerClassName="w-36"
+              />
+              <CustomSelect
+                options={[{ value: 'newest', label: 'Newest first' }, { value: 'oldest', label: 'Oldest first' }, { value: 'name-asc', label: 'Name A–Z' }, { value: 'name-desc', label: 'Name Z–A' }]}
+                value={sort}
+                onChange={v => setSort(v as SortOption)}
+                icon={ArrowUpDown}
+                placeholderValue="newest"
+                triggerClassName="w-36"
+              />
               {hasActiveFilters && (
                 <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-sm"
                   onClick={() => { setSearch(''); setRoleFilter('all'); setListedFilter('all') }}>

@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useRouter } from 'next/navigation'
 import * as icons from 'lucide-react'
-import { ChevronLeft, Tag, Trash2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Tag, Trash2 } from 'lucide-react'
 import {
   Form,
   FormControl,
@@ -85,18 +85,26 @@ interface MarkerItem {
   _count: { waypoints: number }
 }
 
+interface SubmarkerParent {
+  name: string
+  color: string
+  icon: string | null
+}
+
 interface MarkerFormProps {
   tag: MarkerItem | null
+  /** When set, this is a sub-marker creation: parent path is locked, color/icon pre-filled */
+  parentMarker?: SubmarkerParent | null
   onBack: () => void
   onSaved: (id: string) => void
   onDeleted: () => void
 }
 
-export function MarkerForm({ tag, onBack, onSaved, onDeleted }: MarkerFormProps) {
+export function MarkerForm({ tag, parentMarker, onBack, onSaved, onDeleted }: MarkerFormProps) {
   const router = useRouter()
   const { terms } = useTerminology()
   const { saving, saved, error, handleSubmit } = useFormStatus()
-  const [customColor, setCustomColor] = useState(tag?.color ?? '')
+  const [customColor, setCustomColor] = useState(tag?.color ?? parentMarker?.color ?? '')
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
@@ -104,8 +112,8 @@ export function MarkerForm({ tag, onBack, onSaved, onDeleted }: MarkerFormProps)
     resolver: zodResolver(markerSchema),
     defaultValues: {
       name: tag?.name ?? '',
-      color: tag?.color ?? PRESET_COLORS[0],
-      icon: tag?.icon ?? '',
+      color: tag?.color ?? parentMarker?.color ?? PRESET_COLORS[0],
+      icon: tag?.icon ?? parentMarker?.icon ?? '',
     },
   })
 
@@ -113,11 +121,19 @@ export function MarkerForm({ tag, onBack, onSaved, onDeleted }: MarkerFormProps)
   const watchedColor = form.watch('color')
   const watchedIcon = form.watch('icon')
 
+  // For preview: show the full resolved name
+  const resolvedName = parentMarker
+    ? (watchedName ? `${parentMarker.name}/${watchedName}` : parentMarker.name)
+    : watchedName
+
   async function onSubmit(values: MarkerFormValues) {
     await handleSubmit(async () => {
+      const fullName = parentMarker
+        ? `${parentMarker.name}/${values.name}`
+        : values.name
       const result = await saveMarker({
         id: tag?.id,
-        name: values.name,
+        name: fullName,
         color: values.color,
         icon: values.icon || '',
       })
@@ -135,6 +151,8 @@ export function MarkerForm({ tag, onBack, onSaved, onDeleted }: MarkerFormProps)
     onDeleted()
   }
 
+  const isSubmarker = !!parentMarker
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
@@ -147,7 +165,11 @@ export function MarkerForm({ tag, onBack, onSaved, onDeleted }: MarkerFormProps)
             <ChevronLeft className="h-4 w-4" />
           </button>
           <span className="text-sm font-medium">
-            {tag ? `Edit ${terms.markers.slice(0, -1)}` : `New ${terms.markers.slice(0, -1)}`}
+            {tag
+              ? `Edit ${terms.markers.slice(0, -1)}`
+              : isSubmarker
+                ? `New Sub-${terms.markers.slice(0, -1)}`
+                : `New ${terms.markers.slice(0, -1)}`}
           </span>
         </div>
         {tag && (
@@ -171,128 +193,154 @@ export function MarkerForm({ tag, onBack, onSaved, onDeleted }: MarkerFormProps)
       </div>
 
       {/* Form */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto">
         <Form {...form}>
-          <form id="marker-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form id="marker-form" onSubmit={form.handleSubmit(onSubmit)}>
+            <div className="p-4 space-y-6">
 
-            {/* Preview */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Preview:</span>
-              <MarkerBadge marker={{ name: watchedName || terms.markers.slice(0, -1).toLowerCase(), color: watchedColor, icon: watchedIcon || null }} />
-            </div>
+              {/* Preview */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Preview:</span>
+                <MarkerBadge marker={{ name: resolvedName || terms.markers.slice(0, -1).toLowerCase(), color: watchedColor, icon: watchedIcon || null }} />
+              </div>
 
-            {/* Name */}
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. design" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Color */}
-            <FormField
-              control={form.control}
-              name="color"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Color</FormLabel>
-                  <div className="flex flex-wrap gap-2">
-                    {PRESET_COLORS.map(color => (
-                      <button
-                        key={color}
-                        type="button"
-                        className={`h-6 w-6 rounded-full border-2 transition-transform hover:scale-110 ${
-                          field.value === color
-                            ? 'border-foreground scale-110'
-                            : 'border-transparent'
-                        }`}
-                        style={{ backgroundColor: color }}
-                        onClick={() => field.onChange(color)}
-                      />
+              {/* Parent path — locked, shown only for sub-markers */}
+              {isSubmarker && (
+                <div className="rounded-md border bg-muted/30 px-3 py-2.5 text-xs">
+                  <p className="text-muted-foreground font-medium mb-1">Parent {terms.markers.slice(0, -1).toLowerCase()}</p>
+                  <div className="flex items-center gap-1 flex-wrap">
+                    {parentMarker!.name.split('/').map((segment, i, arr) => (
+                      <span key={i} className="flex items-center gap-1">
+                        {i > 0 && <ChevronRight className="h-3 w-3 text-muted-foreground/50" />}
+                        <span className={i === arr.length - 1 ? 'font-medium text-foreground' : 'text-muted-foreground'}>
+                          {segment}
+                        </span>
+                      </span>
                     ))}
                   </div>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Input
-                      placeholder="#hex"
-                      value={customColor}
-                      onChange={e => {
-                        setCustomColor(e.target.value)
-                        if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) {
-                          field.onChange(e.target.value)
-                        }
-                      }}
-                      className="w-28"
-                    />
-                    {customColor && /^#[0-9a-fA-F]{6}$/.test(customColor) && (
-                      <div
-                        className="h-6 w-6 rounded-full border"
-                        style={{ backgroundColor: customColor }}
-                      />
-                    )}
-                  </div>
-                  <FormMessage />
-                </FormItem>
+                </div>
               )}
-            />
 
-            {/* Icon */}
-            <FormField
-              control={form.control}
-              name="icon"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Icon (optional)</FormLabel>
-                  <div className="flex flex-wrap gap-2">
-                    {ICON_OPTIONS.map(iconName => {
-                      const Icon = (icons as any)[iconName]
-                      if (!Icon) return null
-                      return (
+              {/* Name */}
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{isSubmarker ? 'Sub-marker name' : 'Name'}</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={isSubmarker ? `e.g. IAM` : 'e.g. design'}
+                        {...field}
+                      />
+                    </FormControl>
+                    {isSubmarker && (
+                      <p className="text-[11px] text-muted-foreground">
+                        Full name: <span className="font-medium">{resolvedName || '…'}</span>
+                      </p>
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Color */}
+              <FormField
+                control={form.control}
+                name="color"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Color</FormLabel>
+                    <div className="flex flex-wrap gap-2">
+                      {PRESET_COLORS.map(color => (
                         <button
-                          key={iconName}
+                          key={color}
                           type="button"
-                          className={`p-1.5 rounded border transition-colors ${
-                            field.value === iconName
+                          className={`h-6 w-6 rounded-full border-2 transition-transform hover:scale-110 ${field.value === color
+                            ? 'border-foreground scale-110'
+                            : 'border-transparent'
+                            }`}
+                          style={{ backgroundColor: color }}
+                          onClick={() => field.onChange(color)}
+                        />
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Input
+                        placeholder="#hex"
+                        value={customColor}
+                        onChange={e => {
+                          setCustomColor(e.target.value)
+                          if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) {
+                            field.onChange(e.target.value)
+                          }
+                        }}
+                        className="w-28"
+                      />
+                      {customColor && /^#[0-9a-fA-F]{6}$/.test(customColor) && (
+                        <div
+                          className="h-6 w-6 rounded-full border"
+                          style={{ backgroundColor: customColor }}
+                        />
+                      )}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Icon */}
+              <FormField
+                control={form.control}
+                name="icon"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Icon (optional)</FormLabel>
+                    <div className="flex flex-wrap gap-2">
+                      {ICON_OPTIONS.map(iconName => {
+                        const Icon = (icons as any)[iconName]
+                        if (!Icon) return null
+                        return (
+                          <button
+                            key={iconName}
+                            type="button"
+                            className={`p-1.5 rounded border transition-colors ${field.value === iconName
                               ? 'border-foreground bg-muted'
                               : 'border-transparent hover:border-muted-foreground'
-                          }`}
-                          onClick={() => field.onChange(field.value === iconName ? '' : iconName)}
-                        >
-                          <Icon className="h-4 w-4" />
-                        </button>
-                      )
-                    })}
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                              }`}
+                            onClick={() => field.onChange(field.value === iconName ? '' : iconName)}
+                          >
+                            <Icon className="h-4 w-4" />
+                          </button>
+                        )
+                      })}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            {tag && (
-              <div className="pt-2">
-                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                  <Tag className="h-3.5 w-3.5" />
-                  Applied to {tag._count.waypoints} {tag._count.waypoints !== 1 ? terms.waypoints.toLowerCase() : terms.waypoints.slice(0, -1).toLowerCase()}
-                </p>
-              </div>
-            )}
+              {tag && (
+                <div className="pt-2">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                    <Tag className="h-3.5 w-3.5" />
+                    Applied to {tag._count.waypoints} {tag._count.waypoints !== 1 ? terms.waypoints.toLowerCase() : terms.waypoints.slice(0, -1).toLowerCase()}
+                  </p>
+                </div>
+              )}
+            </div>
 
             {/* Actions */}
-            <div className="-mx-4 border-t" />
-            <FormActions
-              saving={saving}
-              saved={saved}
-              error={error}
-              saveLabel={tag ? 'Save Changes' : `Add ${terms.markers.slice(0, -1)}`}
-              formId="marker-form"
-              onCancel={onBack}
-            />
+            <div className="p-4 border-t w-full md:w-auto">
+              <FormActions
+                saving={saving}
+                saved={saved}
+                error={error}
+                saveLabel={tag ? 'Save Changes' : `Add ${terms.markers.slice(0, -1)}`}
+                formId="marker-form"
+                onCancel={onBack}
+              />
+            </div>
           </form>
         </Form>
       </div>

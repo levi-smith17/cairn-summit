@@ -23,8 +23,8 @@ export function ToggleFilter({ active, onToggle, label, icon, tooltip }: ToggleF
       className="h-8 gap-1.5 text-sm"
       onClick={onToggle}
     >
-      {icon}
-      {label}
+      {icon && <span className={active ? '' : 'text-muted-foreground'}>{icon}</span>}
+      <span className={active ? '' : 'text-muted-foreground'}>{label}</span>
     </Button>
   )
 

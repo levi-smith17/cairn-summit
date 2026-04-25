@@ -20,13 +20,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { FormActions } from '@/components/forms/form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select'
+import { CustomSelect } from '@/components/ui/custom-select'
 import {
     AlertDialog,
     AlertDialogContent,
@@ -141,17 +135,16 @@ export function AccountForm({ defaultValues, isAdmin }: AccountFormProps) {
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel>Default Terminology</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                    <SelectTrigger className="w-full">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    <SelectItem value="CAIRN">Cairn (Origins, Expeditions, etc.)</SelectItem>
-                                    <SelectItem value="STANDARD">Standard (Bio, Work Experience, etc.)</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <CustomSelect
+                                options={[
+                                    { value: 'CAIRN', label: 'Cairn (Origins, Expeditions, etc.)' },
+                                    { value: 'STANDARD', label: 'Standard (Bio, Work Experience, etc.)' },
+                                ]}
+                                value={field.value}
+                                onChange={field.onChange}
+                                triggerClassName="w-full"
+                                align="end"
+                            />
                             <FormDescription>
                                 Sets the default section labels on your public Manifest. Visitors can toggle between both.
                             </FormDescription>
@@ -166,18 +159,17 @@ export function AccountForm({ defaultValues, isAdmin }: AccountFormProps) {
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel>Default Theme for Visitors</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                    <SelectTrigger className="w-full">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    <SelectItem value="SYSTEM">System (follows visitor's preference)</SelectItem>
-                                    <SelectItem value="LIGHT">Light</SelectItem>
-                                    <SelectItem value="DARK">Dark</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <CustomSelect
+                                options={[
+                                    { value: 'SYSTEM', label: 'System (follows visitor\'s preference)' },
+                                    { value: 'LIGHT', label: 'Light' },
+                                    { value: 'DARK', label: 'Dark' },
+                                ]}
+                                value={field.value}
+                                onChange={field.onChange}
+                                triggerClassName="w-full"
+                                align="end"
+                            />
                             <FormDescription>
                                 Sets the default theme when visitors view your public Manifest page.
                                 Visitors can still toggle it themselves.

@@ -1,86 +1,24 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useForm, useController } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { saveResource } from '@/actions/starfield'
 import { Form, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { CustomSelect } from '@/components/ui/custom-select'
+import { ResourcePicker } from '@/components/ui/resource-picker'
 import { FormActions } from '@/components/forms/form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
-import { Separator } from '@/components/ui/separator'
 
 const schema = z.object({
   name: z.string().min(1, 'Name is required'),
   abbreviation: z.string().min(1, 'Abbreviation is required'),
   typeId: z.string().min(1, 'Type is required'),
-  resource1Id: z.string().optional(),
-  resource2Id: z.string().optional(),
-  resource3Id: z.string().optional(),
-  resource4Id: z.string().optional(),
+  ingredientIds: z.array(z.string()).max(4).optional(),
 })
 
 type FormValues = z.infer<typeof schema>
-
-interface IngredientAutocompleteProps {
-  name: keyof FormValues
-  label: string
-  options: any[]
-  control: any
-  listId: string
-}
-
-function IngredientAutocomplete({ name, label, options, control, listId }: IngredientAutocompleteProps) {
-  const { field } = useController({ name, control })
-  const getLabel = (id: string) => {
-    const r = options.find(o => o.id === id)
-    return r ? `${r.name} (${r.abbreviation})` : ''
-  }
-  const [inputValue, setInputValue] = useState(() => getLabel(field.value ?? ''))
-
-  useEffect(() => {
-    setInputValue(getLabel(field.value ?? ''))
-  }, [field.value])
-
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const text = e.target.value
-    setInputValue(text)
-    const match = options.find(r => `${r.name} (${r.abbreviation})` === text)
-    if (match) field.onChange(match.id)
-    else if (text === '') field.onChange('')
-  }
-
-  function handleBlur() {
-    const match = options.find(r => `${r.name} (${r.abbreviation})` === inputValue)
-    if (!match) {
-      setInputValue('')
-      field.onChange('')
-    }
-    field.onBlur()
-  }
-
-  return (
-    <FormItem>
-      <FormLabel>{label}</FormLabel>
-      <input
-        list={listId}
-        value={inputValue}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        placeholder="None"
-        autoComplete="off"
-        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-      />
-      <datalist id={listId}>
-        {options.map(r => (
-          <option key={r.id} value={`${r.name} (${r.abbreviation})`} />
-        ))}
-      </datalist>
-    </FormItem>
-  )
-}
 
 interface ResourceFormProps {
   resource?: any
@@ -98,27 +36,33 @@ export function ResourceForm({ resource, resources, resourceTypes, onDone }: Res
       name: resource?.name ?? '',
       abbreviation: resource?.abbreviation ?? '',
       typeId: resource?.typeId ?? '',
-      resource1Id: resource?.resource1Id ?? '',
-      resource2Id: resource?.resource2Id ?? '',
-      resource3Id: resource?.resource3Id ?? '',
-      resource4Id: resource?.resource4Id ?? '',
+      ingredientIds: [
+        resource?.resource1Id,
+        resource?.resource2Id,
+        resource?.resource3Id,
+        resource?.resource4Id,
+      ].filter(Boolean) as string[],
     },
   })
 
   async function onSubmit(values: FormValues) {
     await handleSubmit(async () => {
+      const ids = values.ingredientIds ?? []
       await saveResource({
         id: resource?.id,
-        ...values,
-        resource1Id: values.resource1Id || null,
-        resource2Id: values.resource2Id || null,
-        resource3Id: values.resource3Id || null,
-        resource4Id: values.resource4Id || null,
+        name: values.name,
+        abbreviation: values.abbreviation,
+        typeId: values.typeId,
+        resource1Id: ids[0] ?? null,
+        resource2Id: ids[1] ?? null,
+        resource3Id: ids[2] ?? null,
+        resource4Id: ids[3] ?? null,
       })
       onDone()
     })
   }
 
+  // Resources that can be selected as ingredients (exclude self)
   const ingredientOptions = resources.filter(r => r.id !== resource?.id)
 
   return (
@@ -137,6 +81,7 @@ export function ResourceForm({ resource, resources, resourceTypes, onDone }: Res
                 <FormMessage />
               </FormItem>
             )} />
+
             <FormField control={form.control} name="abbreviation" render={({ field }) => (
               <FormItem>
                 <FormLabel>Abbreviation</FormLabel>
@@ -144,26 +89,32 @@ export function ResourceForm({ resource, resources, resourceTypes, onDone }: Res
                 <FormMessage />
               </FormItem>
             )} />
+
             <FormField control={form.control} name="typeId" render={({ field }) => (
               <FormItem>
                 <FormLabel>Type</FormLabel>
-                <Select key={field.value} onValueChange={field.onChange} value={field.value}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select type..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {resourceTypes.map(t => (
-                      <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <CustomSelect
+                  options={resourceTypes.map(t => ({ value: t.id, label: t.name }))}
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Select type…"
+                  triggerClassName="w-full h-9!"
+                />
                 <FormMessage />
               </FormItem>
             )} />
-            <IngredientAutocomplete name="resource1Id" label="Ingredient 1" options={ingredientOptions} control={form.control} listId="ing1-list" />
-            <IngredientAutocomplete name="resource2Id" label="Ingredient 2" options={ingredientOptions} control={form.control} listId="ing2-list" />
-            <IngredientAutocomplete name="resource3Id" label="Ingredient 3" options={ingredientOptions} control={form.control} listId="ing3-list" />
-            <IngredientAutocomplete name="resource4Id" label="Ingredient 4" options={ingredientOptions} control={form.control} listId="ing4-list" />
+
+            <FormField control={form.control} name="ingredientIds" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Ingredients</FormLabel>
+                <ResourcePicker
+                  value={field.value ?? []}
+                  onChange={field.onChange}
+                  options={ingredientOptions}
+                />
+                <FormMessage />
+              </FormItem>
+            )} />
 
             <div className="-mx-4 border-t" />
             <FormActions

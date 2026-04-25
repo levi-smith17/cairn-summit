@@ -8,13 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { CustomSelect } from '@/components/ui/custom-select'
 import { MarkerPicker } from '@/components/ui/marker-picker'
 import { saveWaypoint } from '@/actions/waypoints'
 import { useFormStatus } from '@/hooks/use-form-status'
@@ -100,76 +94,73 @@ export function InlineWaypointForm({
   }
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-2 px-4 py-3 bg-muted/20 border-t">
+    <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col bg-muted/20 border-b">
       {/* URL + Fetch */}
-      <div className="flex gap-2">
-        <Input
-          placeholder="https://..."
-          className="h-8 text-sm flex-1"
-          {...form.register('url')}
-        />
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="h-8 shrink-0"
-          onClick={fetchMeta}
-          disabled={fetching}
-        >
-          {fetching ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Fetch'}
-        </Button>
-      </div>
-      {form.formState.errors.url && (
-        <p className="text-xs text-destructive">{form.formState.errors.url.message}</p>
-      )}
-
-      {/* Title */}
-      <div className="flex items-center gap-2">
-        {favicon && (
-          <img
-            src={favicon}
-            alt=""
-            className="h-4 w-4 rounded shrink-0"
-            onError={e => (e.currentTarget.style.display = 'none')}
+      <div className="flex flex-col p-4 gap-2">
+        <div className="flex gap-2">
+          <Input
+            placeholder="https://..."
+            className="h-8 text-sm flex-1"
+            {...form.register('url')}
           />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 shrink-0"
+            onClick={fetchMeta}
+            disabled={fetching}
+          >
+            {fetching ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Fetch'}
+          </Button>
+        </div>
+        {form.formState.errors.url && (
+          <p className="text-xs text-destructive">{form.formState.errors.url.message}</p>
         )}
-        <Input
-          placeholder="Title"
-          className="h-8 text-sm flex-1"
-          {...form.register('title')}
-        />
-      </div>
-      {form.formState.errors.title && (
-        <p className="text-xs text-destructive">{form.formState.errors.title.message}</p>
-      )}
 
-      {/* Trail + Markers */}
-      <div className="flex flex-wrap gap-2 items-center">
-        <Select
-          onValueChange={val => form.setValue('folderId', val === 'none' ? '' : val)}
+        {/* Title */}
+        <div className="flex items-center gap-2">
+          {favicon && (
+            <img
+              src={favicon}
+              alt=""
+              className="h-4 w-4 rounded shrink-0"
+              onError={e => (e.currentTarget.style.display = 'none')}
+            />
+          )}
+          <Input
+            placeholder="Title"
+            className="h-8 text-sm flex-1"
+            {...form.register('title')}
+          />
+        </div>
+        {form.formState.errors.title && (
+          <p className="text-xs text-destructive">{form.formState.errors.title.message}</p>
+        )}
+
+        {/* Trail — full width */}
+        <CustomSelect
+          options={[
+            { value: 'none', label: `No ${terms.trails.slice(0, -1).toLowerCase()}` },
+            ...localFolders.map((f: any) => ({ value: f.id, label: f.name })),
+          ]}
           value={form.watch('folderId') || 'none'}
-        >
-          <SelectTrigger className="h-7 text-xs w-40">
-            <SelectValue placeholder={`No ${terms.trails.slice(0, -1).toLowerCase()}`} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">No {terms.trails.slice(0, -1).toLowerCase()}</SelectItem>
-            {localFolders.map((f: any) => (
-              <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          onChange={val => form.setValue('folderId', val === 'none' ? '' : val)}
+          placeholderValue="none"
+          triggerClassName="w-full h-7 text-xs"
+        />
+
+        {/* Markers */}
         <MarkerPicker
           markers={localMarkers}
           selected={selectedMarkerIds}
           onChange={ids => form.setValue('tagIds', ids)}
           placeholder="Markers"
-          compact
         />
       </div>
 
       {/* Actions */}
-      <div className="flex justify-end gap-2">
+      <div className="flex flex-col md:flex-row flex-col-reverse justify-end gap-2 border-t p-4">
         <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={onCancel}>
           Cancel
         </Button>

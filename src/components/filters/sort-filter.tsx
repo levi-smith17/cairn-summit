@@ -1,13 +1,8 @@
 'use client'
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { SortOption } from '@/lib/filters'
+import { ArrowUpDown } from 'lucide-react'
+import { CustomSelect } from '@/components/ui/custom-select'
+import { DEFAULT_FILTERS, SortOption } from '@/lib/filters'
 
 interface SortFilterProps {
   value: SortOption
@@ -23,17 +18,13 @@ const DEFAULT_OPTIONS = [
 
 export function SortFilter({ value, onChange, options = DEFAULT_OPTIONS }: SortFilterProps) {
   return (
-    <Select value={value} onValueChange={v => onChange(v as SortOption)}>
-      <SelectTrigger size="sm" className="w-36">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {options.map(option => (
-          <SelectItem key={option.value} value={option.value}>
-            {option.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <CustomSelect
+      options={options}
+      value={value}
+      onChange={v => onChange(v as SortOption)}
+      icon={ArrowUpDown}
+      placeholderValue={DEFAULT_FILTERS.sort}
+      triggerClassName="w-full md:w-36"
+    />
   )
 }

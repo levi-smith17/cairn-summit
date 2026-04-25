@@ -7,18 +7,13 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button } from '@/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { CustomSelect } from '@/components/ui/custom-select'
 import { MarkerPicker } from '@/components/ui/marker-picker'
 import { RichTextEditor } from '@/components/ui/rich-text-editor'
 import { saveLog } from '@/actions/logs'
 import { useFormStatus } from '@/hooks/use-form-status'
 import { useTerminology } from '@/contexts/terminology-context'
+
 
 const schema = z.object({
   content: z.string().min(1, 'Content is required'),
@@ -88,65 +83,58 @@ export function InlineLogForm({
   }
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-2 px-4 py-3 bg-muted/20 border-t">
-      {/* Rich text editor */}
-      <RichTextEditor
-        value={form.watch('content')}
-        onChange={val => form.setValue('content', val)}
-        placeholder="Write your entry..."
-      />
-      {form.formState.errors.content && (
-        <p className="text-xs text-destructive">{form.formState.errors.content.message}</p>
-      )}
-
-      {/* Trail + Waypoint + Markers */}
-      <div className="flex flex-wrap gap-2 items-center">
-        {!defaultWaypointId && (
-          <Select
-            onValueChange={val => {
-              form.setValue('folderId', val === 'none' ? '' : val)
-              form.setValue('waypointId', '')
-            }}
-            value={form.watch('folderId') || 'none'}
-          >
-            <SelectTrigger className="h-7 text-xs w-36">
-              <SelectValue placeholder={`No ${terms.trails.slice(0, -1).toLowerCase()}`} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">No {terms.trails.slice(0, -1).toLowerCase()}</SelectItem>
-              {folders.map((f: any) => (
-                <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+    <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col bg-muted/20 border-b">
+      <div className="flex flex-col p-4 gap-2">
+        {/* Rich text editor */}
+        <RichTextEditor
+          value={form.watch('content')}
+          onChange={val => form.setValue('content', val)}
+          placeholder="Write your entry..."
+        />
+        {form.formState.errors.content && (
+          <p className="text-xs text-destructive">{form.formState.errors.content.message}</p>
         )}
 
-        <Select
-          onValueChange={val => form.setValue('waypointId', val === 'none' ? '' : val)}
-          value={form.watch('waypointId') || 'none'}
-        >
-          <SelectTrigger className="h-7 text-xs w-40">
-            <SelectValue placeholder={`No ${terms.waypoints.slice(0, -1).toLowerCase()}`} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">No {terms.waypoints.slice(0, -1).toLowerCase()}</SelectItem>
-            {filteredWaypoints.map((w: any) => (
-              <SelectItem key={w.id} value={w.id}>{w.title}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* Trail + Waypoint + Markers */}
+        <div className="flex flex-col gap-2">
+          {!defaultWaypointId && (
+            <CustomSelect
+              options={[
+                { value: 'none', label: `No ${terms.trails.slice(0, -1).toLowerCase()}` },
+                ...folders.map((f: any) => ({ value: f.id, label: f.name })),
+              ]}
+              value={form.watch('folderId') || 'none'}
+              onChange={val => {
+                form.setValue('folderId', val === 'none' ? '' : val)
+                form.setValue('waypointId', '')
+              }}
+              placeholderValue="none"
+              triggerClassName="w-full h-7 text-xs"
+            />
+          )}
 
-        <MarkerPicker
-          markers={localMarkers}
-          selected={selectedMarkerIds}
-          onChange={ids => form.setValue('tagIds', ids)}
-          placeholder="Markers"
-          compact
-        />
+          <CustomSelect
+            options={[
+              { value: 'none', label: `No ${terms.waypoints.slice(0, -1).toLowerCase()}` },
+              ...filteredWaypoints.map((w: any) => ({ value: w.id, label: w.title })),
+            ]}
+            value={form.watch('waypointId') || 'none'}
+            onChange={val => form.setValue('waypointId', val === 'none' ? '' : val)}
+            placeholderValue="none"
+            triggerClassName="w-full h-7 text-xs"
+          />
+
+          <MarkerPicker
+            markers={localMarkers}
+            selected={selectedMarkerIds}
+            onChange={ids => form.setValue('tagIds', ids)}
+            placeholder="Markers"
+          />
+        </div>
       </div>
 
       {/* Actions */}
-      <div className="flex justify-end gap-2">
+      <div className="flex flex-col md:flex-row flex-col-reverse justify-end gap-2 p-4 border-t">
         <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={onCancel}>
           Cancel
         </Button>

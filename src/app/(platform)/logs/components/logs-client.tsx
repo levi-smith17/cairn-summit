@@ -7,6 +7,7 @@ import { useTerminology } from '@/contexts/terminology-context'
 import { FilterBar } from '@/components/filters/filter-bar'
 import { LogList } from './log-list'
 import { LogForm } from './log-form'
+import { Logbook } from './logbook'
 
 interface LogClientProps {
   logs: any[]
@@ -19,9 +20,55 @@ export function LogClient({ logs, trails, waypoints, markers }: LogClientProps) 
   const router = useRouter()
   const searchParams = useSearchParams()
   const { terms } = useTerminology()
-  const selectedId = searchParams.get('id')
 
-  const selectedLog = logs.find(l => l.id === selectedId) ?? null
+  // ── Logbook mode ────────────────────────────────────────────────────────────
+  const logbookTrailId = searchParams.get('logbook')
+
+  if (logbookTrailId) {
+    const trail = trails.find((t: any) => t.id === logbookTrailId)
+    const trailLogs = [...logs]
+      .filter((l: any) => l.trailId === logbookTrailId)
+      .sort((a: any, b: any) => {
+        if (a.position != null && b.position != null) return a.position - b.position
+        if (a.position != null) return -1
+        if (b.position != null) return 1
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      })
+
+    function closeLogbook() {
+      const params = new URLSearchParams(searchParams.toString())
+      params.delete('logbook')
+      params.delete('id')
+      router.push(`?${params.toString()}`, { scroll: false })
+    }
+
+    const trailWaypoints = waypoints
+      .filter((w: any) => w.trailId === logbookTrailId)
+      .map((w: any) => ({ id: w.id, title: w.title, url: w.url, description: w.description ?? null }))
+
+    return (
+      <>
+        <PlatformHeader title={terms.logs} />
+        <div className="flex flex-col flex-1 p-4 overflow-hidden min-h-0">
+          <div className="flex-1 rounded-lg border border-border bg-card overflow-hidden">
+            <Logbook
+              trailId={logbookTrailId}
+              trailName={trail?.name ?? 'Logbook'}
+              initialLogs={trailLogs}
+              markers={markers}
+              waypoints={trailWaypoints}
+              initialLogId={searchParams.get('id')}
+              onBack={closeLogbook}
+            />
+          </div>
+        </div>
+      </>
+    )
+  }
+
+  // ── Standard two-column mode ────────────────────────────────────────────────
+  const selectedId = searchParams.get('id')
+  const selectedLog = logs.find((l: any) => l.id === selectedId) ?? null
   const showRightPanel = selectedId !== null
 
   function selectLog(id: string) {
@@ -42,8 +89,12 @@ export function LogClient({ logs, trails, waypoints, markers }: LogClientProps) 
     router.push(`?${params.toString()}`, { scroll: false })
   }
 
-  function handleSaved(id: string) {
-    selectLog(id)
+  function openLogbook(trailId: string, firstLogId: string) {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('logbook', trailId)
+    params.set('id', firstLogId)
+    params.delete('trail')  // clear any trail filter so the logbook isn't confused
+    router.push(`?${params.toString()}`, { scroll: false })
   }
 
   return (
@@ -76,6 +127,7 @@ export function LogClient({ logs, trails, waypoints, markers }: LogClientProps) 
               selectedId={selectedId}
               onSelect={selectLog}
               onNew={showNew}
+              onOpenLogbook={openLogbook}
             />
           </div>
 
@@ -91,7 +143,7 @@ export function LogClient({ logs, trails, waypoints, markers }: LogClientProps) 
                 waypoints={waypoints}
                 tags={markers}
                 onBack={clearSelection}
-                onSaved={handleSaved}
+                onSaved={selectLog}
                 onDeleted={clearSelection}
               />
             ) : (

@@ -7,7 +7,6 @@ import {
   Car,
   ChevronRight,
   Database,
-  Earth,
   Factory,
   Folder,
   LayoutDashboard,
@@ -115,7 +114,6 @@ function buildNavItems(terms: Terms): { group: string; items: NavItem[] }[] {
           children: [
             { title: 'Facilities', url: '/starfield/facilities', icon: Factory },
             { title: 'Resources', url: '/starfield/resources', icon: Database },
-            { title: 'Systems', url: '/starfield/systems', icon: Earth },
           ],
         },
       ],
