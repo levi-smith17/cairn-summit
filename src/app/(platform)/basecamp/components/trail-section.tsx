@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, FileText } from 'lucide-react'
+import { BookOpen, Plus, FileText } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { WaypointRow } from './waypoint-row'
@@ -29,6 +30,7 @@ export function TrailSection({
   allWaypoints,
   totalWaypointCount,
 }: TrailSectionProps) {
+  const router = useRouter()
   const { terms } = useTerminology()
   const [currentWaypoints, setCurrentWaypoints] = useState(waypoints)
   const [addingWaypoint, setAddingWaypoint] = useState(false)
@@ -119,10 +121,21 @@ export function TrailSection({
       {/* Trail-level logs sub-group */}
       {folderLogs.length > 0 && (
         <div>
-          <div className="px-4 py-1 bg-muted/40 border-t border-b">
+          <div className="px-4 py-1 bg-muted/40 border-t border-b flex items-center justify-between">
             <span className="text-xs text-muted-foreground">
               {terms.trails.slice(0, -1)} {terms.logs.toLowerCase()}
             </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => router.push(`/logs?logbook=${trail.id}&id=${folderLogs[0].id}`)}
+                  className="text-muted-foreground hover:text-foreground transition-colors p-0.5"
+                >
+                  <BookOpen className="h-3 w-3" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Open logbook</TooltipContent>
+            </Tooltip>
           </div>
           <div className="flex flex-col divide-y">
             {folderLogs.map(log => (

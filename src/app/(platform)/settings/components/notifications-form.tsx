@@ -1,18 +1,11 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
-import { Save, Loader2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { useState } from 'react'
 import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { CustomSelect } from '@/components/ui/custom-select'
+import { FormActions } from '@/components/forms/form-actions'
+import { useFormStatus } from '@/hooks/use-form-status'
 import { updateNotificationSettings } from '@/actions/settings'
 
 interface NotificationValues {
@@ -38,15 +31,12 @@ function SettingRow({ label, description, control }: { label: string; descriptio
 }
 
 export function NotificationsForm({ defaultValues }: NotificationsFormProps) {
-  const router = useRouter()
-  const [saving, startSave] = useTransition()
+  const { saving, saved, error, handleSubmit } = useFormStatus()
   const [values, setValues] = useState<NotificationValues>(defaultValues)
 
   function set<K extends keyof NotificationValues>(key: K, value: NotificationValues[K]) {
     setValues(prev => ({ ...prev, [key]: value }))
   }
-
-  const isDirty = JSON.stringify(values) !== JSON.stringify(defaultValues)
 
   async function handleBrowserToggle(enabled: boolean) {
     if (enabled && 'Notification' in window) {
@@ -56,15 +46,15 @@ export function NotificationsForm({ defaultValues }: NotificationsFormProps) {
     set('browserNotifications', enabled)
   }
 
-  function handleSave() {
-    startSave(async () => {
+  async function onSubmit(e: { preventDefault(): void }) {
+    e.preventDefault()
+    await handleSubmit(async () => {
       await updateNotificationSettings(values)
-      router.refresh()
     })
   }
 
   return (
-    <div className="space-y-8">
+    <form onSubmit={onSubmit} className="space-y-8">
       <div className="space-y-5">
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">In-App</p>
 
@@ -100,26 +90,17 @@ export function NotificationsForm({ defaultValues }: NotificationsFormProps) {
           label="Email digest"
           description="Receive a summary of unread signals to your inbox"
           control={
-            <Select value={values.emailDigest} onValueChange={v => set('emailDigest', v as NotificationValues['emailDigest'])}>
-              <SelectTrigger className="w-28 h-8 text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="NEVER">Never</SelectItem>
-                <SelectItem value="DAILY">Daily</SelectItem>
-                <SelectItem value="WEEKLY">Weekly</SelectItem>
-              </SelectContent>
-            </Select>
+            <CustomSelect
+              options={[{ value: 'NEVER', label: 'Never' }, { value: 'DAILY', label: 'Daily' }, { value: 'WEEKLY', label: 'Weekly' }]}
+              value={values.emailDigest}
+              onChange={v => set('emailDigest', v as NotificationValues['emailDigest'])}
+              triggerClassName="w-28"
+            />
           }
         />
       </div>
 
-      <div className="flex justify-end">
-        <Button type="button" onClick={handleSave} disabled={saving || !isDirty}>
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          {saving ? 'Saving...' : 'Save Changes'}
-        </Button>
-      </div>
-    </div>
+      <FormActions saving={saving} saved={saved} error={error} saveLabel="Save Changes" />
+    </form>
   )
 }

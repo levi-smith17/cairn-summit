@@ -14,13 +14,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { CustomSelect } from '@/components/ui/custom-select'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
@@ -321,22 +315,16 @@ export function WaypointForm({ waypoint, folders, tags, onBack, onSaved, onDelet
                       </Button>
                     )}
                   </div>
-                  <Select
-                    onValueChange={val => field.onChange(val === 'none' ? '' : val)}
+                  <CustomSelect
+                    options={[
+                      { value: 'none', label: `No ${terms.trails.slice(0, -1).toLowerCase()}` },
+                      ...localTrails.map((f: any) => ({ value: f.id, label: f.name })),
+                    ]}
                     value={field.value || 'none'}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full overflow-hidden [&_span]:truncate [&_span]:block">
-                        <SelectValue placeholder={`No ${terms.trails.slice(0, -1).toLowerCase()}`} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="none">No {terms.trails.slice(0, -1).toLowerCase()}</SelectItem>
-                      {localTrails.map((f: any) => (
-                        <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    onChange={val => field.onChange(val === 'none' ? '' : val)}
+                    placeholderValue="none"
+                    triggerClassName="w-full"
+                  />
                   {creatingTrail && (
                     <div className="flex gap-2 mt-1">
                       <Input

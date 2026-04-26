@@ -8,24 +8,18 @@ import { useRouter } from 'next/navigation'
 import { Check, ChevronLeft, Loader2, Plus, Trash2, X } from 'lucide-react'
 import {
   Form,
-  FormControl,
   FormDescription,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { CustomSelect } from '@/components/ui/custom-select'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { MarkerPicker } from '@/components/ui/marker-picker'
-import { RichTextEditor } from '@/components/ui/rich-text-editor'
+import { RichEditor } from '@/components/ui/rich-editor'
 import { FormActions } from '@/components/forms/form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
 import { saveLog, deleteLog } from '@/actions/logs'
@@ -49,6 +43,7 @@ const MARKER_COLORS = [
 ]
 
 const logSchema = z.object({
+  title: z.string().optional(),
   content: z.string().min(1, 'Content is required'),
   folderId: z.string().optional(),
   waypointId: z.string().optional(),
@@ -59,6 +54,7 @@ type LogFormValues = z.infer<typeof logSchema>
 
 interface LogItem {
   id: string
+  title: string | null
   content: string
   trailId: string | null
   waypointId: string | null
@@ -102,6 +98,7 @@ export function LogForm({ log, folders, waypoints, tags, onBack, onSaved, onDele
   const form = useForm<LogFormValues>({
     resolver: zodResolver(logSchema),
     defaultValues: {
+      title: log?.title ?? '',
       content: log?.content ?? '',
       folderId: log?.trailId ?? '',
       waypointId: log?.waypointId ?? '',
@@ -165,6 +162,7 @@ export function LogForm({ log, folders, waypoints, tags, onBack, onSaved, onDele
     await handleSubmit(async () => {
       const result = await saveLog({
         id: log?.id,
+        title: values.title || null,
         content: values.content,
         trailId: values.folderId || null,
         waypointId: values.waypointId || null,
@@ -224,6 +222,21 @@ export function LogForm({ log, folders, waypoints, tags, onBack, onSaved, onDele
         <Form {...form}>
           <form id="log-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 
+            {/* Title */}
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Title <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
+                  <FormControl>
+                    <Input placeholder="Give this entry a title..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             {/* Content */}
             <FormField
               control={form.control}
@@ -232,11 +245,14 @@ export function LogForm({ log, folders, waypoints, tags, onBack, onSaved, onDele
                 <FormItem>
                   <FormLabel>Content</FormLabel>
                   <FormControl>
-                    <RichTextEditor
-                      value={field.value}
-                      onChange={field.onChange}
-                      placeholder="Write your entry..."
-                    />
+                    <div className="border border-border rounded-md">
+                      <RichEditor
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Write your entry..."
+                        showColorToggle
+                      />
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -264,26 +280,20 @@ export function LogForm({ log, folders, waypoints, tags, onBack, onSaved, onDele
                       </Button>
                     )}
                   </div>
-                  <Select
-                    onValueChange={val => {
+                  <CustomSelect
+                    options={[
+                      { value: 'none', label: `No ${terms.trails.slice(0, -1).toLowerCase()}` },
+                      ...localTrails.map((f: any) => ({ value: f.id, label: f.name })),
+                    ]}
+                    value={field.value || 'none'}
+                    onChange={val => {
                       field.onChange(val === 'none' ? '' : val)
                       form.setValue('waypointId', '')
                     }}
-                    value={field.value || 'none'}
+                    placeholderValue="none"
                     disabled={!!selectedWaypointId && selectedWaypointId !== 'none'}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full overflow-hidden [&_span]:truncate [&_span]:block">
-                        <SelectValue placeholder={`No ${terms.trails.slice(0, -1).toLowerCase()}`} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="none">No {terms.trails.slice(0, -1).toLowerCase()}</SelectItem>
-                      {localTrails.map((f: any) => (
-                        <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    triggerClassName="w-full"
+                  />
                   {creatingTrail && (
                     <div className="flex gap-2 mt-1">
                       <Input
@@ -317,43 +327,39 @@ export function LogForm({ log, folders, waypoints, tags, onBack, onSaved, onDele
                       </Button>
                     </div>
                   )}
-                  <FormDescription>
-                    {selectedWaypointId && selectedWaypointId !== 'none'
-                      ? `${terms.trails.slice(0, -1)} is set by the selected ${terms.waypoints.slice(0, -1).toLowerCase()}.`
-                      : `Choosing a ${terms.trails.slice(0, -1).toLowerCase()} filters the ${terms.waypoints.toLowerCase()} below.`}
-                  </FormDescription>
+                  {selectedWaypointId && selectedWaypointId !== 'none' && (
+                    <FormDescription>
+                      {terms.trails.slice(0, -1)} is set by the selected {terms.waypoints.slice(0, -1).toLowerCase()}.
+                    </FormDescription>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {/* Waypoint */}
-            <FormField
-              control={form.control}
-              name="waypointId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{terms.waypoints.slice(0, -1)}</FormLabel>
-                  <Select
-                    onValueChange={val => field.onChange(val === 'none' ? '' : val)}
-                    value={field.value || 'none'}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full overflow-hidden [&_span]:truncate [&_span]:block">
-                        <SelectValue placeholder={`No ${terms.waypoints.slice(0, -1).toLowerCase()}`} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="none">No {terms.waypoints.slice(0, -1).toLowerCase()}</SelectItem>
-                      {filteredWaypoints.map((w: any) => (
-                        <SelectItem key={w.id} value={w.id}>{w.title}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Waypoint — only shown when a trail is selected */}
+            {selectedTrailId && selectedTrailId !== 'none' && (
+              <FormField
+                control={form.control}
+                name="waypointId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{terms.waypoints.slice(0, -1)}</FormLabel>
+                    <CustomSelect
+                      options={[
+                        { value: 'none', label: `No ${terms.waypoints.slice(0, -1).toLowerCase()}` },
+                        ...filteredWaypoints.map((w: any) => ({ value: w.id, label: w.title })),
+                      ]}
+                      value={field.value || 'none'}
+                      onChange={val => field.onChange(val === 'none' ? '' : val)}
+                      placeholderValue="none"
+                      triggerClassName="w-full"
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             {/* Markers */}
             <FormField
@@ -469,6 +475,6 @@ export function LogForm({ log, folders, waypoints, tags, onBack, onSaved, onDele
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </div >
   )
 }

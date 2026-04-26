@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache'
 
 export async function saveLog(data: {
   id?: string
+  title?: string | null
   content: string
   trailId?: string | null
   waypointId?: string | null
@@ -22,6 +23,7 @@ export async function saveLog(data: {
     const log = await prisma.log.update({
       where: { id: data.id },
       data: {
+        title: data.title ?? null,
         content: data.content,
         trailId: data.trailId,
         waypointId: data.waypointId,
@@ -37,6 +39,7 @@ export async function saveLog(data: {
   } else {
     const log = await prisma.log.create({
       data: {
+        title: data.title ?? null,
         content: data.content,
         trailId: data.trailId,
         waypointId: data.waypointId,
@@ -50,6 +53,22 @@ export async function saveLog(data: {
     revalidatePath('/log')
     return log
   }
+}
+
+export async function reorderLogs(orderedIds: string[]) {
+  const session = await auth()
+  if (!session?.user?.id) throw new Error('Unauthorized')
+  const wayfarerId = session.user.id
+
+  await Promise.all(
+    orderedIds.map((id, index) =>
+      prisma.log.updateMany({
+        where: { id, wayfarerId },
+        data: { position: (index + 1) * 1000 },
+      })
+    )
+  )
+  revalidatePath('/logs')
 }
 
 export async function deleteLog(id: string) {

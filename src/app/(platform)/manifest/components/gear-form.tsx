@@ -17,13 +17,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { EntryActions } from './entry-actions'
 import { FormActions } from '@/components/forms/form-actions'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { CustomSelect } from '@/components/ui/custom-select'
 import { Separator } from '@/components/ui/separator'
 
 const gearLevels = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'EXPERT'] as const
@@ -167,23 +161,13 @@ export function GearForm({ gear, adding, setAdding, saving, saved, error, handle
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Level</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select level" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {gearLevels.map((level) => (
-                            <SelectItem key={level} value={level}>
-                              {levelLabels[level]}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <CustomSelect
+                        options={gearLevels.map(l => ({ value: l, label: levelLabels[l] }))}
+                        value={field.value ?? ''}
+                        onChange={field.onChange}
+                        placeholder="Select level"
+                        triggerClassName="w-full"
+                      />
                       <FormMessage />
                     </FormItem>
                   )}

@@ -1,18 +1,11 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
-import { Save, Loader2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { useState } from 'react'
 import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { CustomSelect } from '@/components/ui/custom-select'
+import { FormActions } from '@/components/forms/form-actions'
+import { useFormStatus } from '@/hooks/use-form-status'
 import { updateWaypointSettings } from '@/actions/settings'
 
 interface WaypointSettingsValues {
@@ -37,25 +30,22 @@ function SettingRow({ label, description, control }: { label: string; descriptio
 }
 
 export function WaypointsSettingsForm({ defaultValues }: WaypointsSettingsFormProps) {
-  const router = useRouter()
-  const [saving, startSave] = useTransition()
+  const { saving, saved, error, handleSubmit } = useFormStatus()
   const [values, setValues] = useState<WaypointSettingsValues>(defaultValues)
 
   function set<K extends keyof WaypointSettingsValues>(key: K, value: WaypointSettingsValues[K]) {
     setValues(prev => ({ ...prev, [key]: value }))
   }
 
-  const isDirty = JSON.stringify(values) !== JSON.stringify(defaultValues)
-
-  function handleSave() {
-    startSave(async () => {
+  async function onSubmit(e: { preventDefault(): void }) {
+    e.preventDefault()
+    await handleSubmit(async () => {
       await updateWaypointSettings(values)
-      router.refresh()
     })
   }
 
   return (
-    <div className="space-y-8">
+    <form onSubmit={onSubmit} className="space-y-8">
       <div className="space-y-5">
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Display</p>
 
@@ -63,17 +53,17 @@ export function WaypointsSettingsForm({ defaultValues }: WaypointsSettingsFormPr
           label="Default sort order"
           description="How waypoints are ordered when no sort is applied"
           control={
-            <Select value={values.defaultSort} onValueChange={v => set('defaultSort', v as WaypointSettingsValues['defaultSort'])}>
-              <SelectTrigger className="w-36 h-8 text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="NEWEST">Newest first</SelectItem>
-                <SelectItem value="OLDEST">Oldest first</SelectItem>
-                <SelectItem value="TITLE_ASC">Title A–Z</SelectItem>
-                <SelectItem value="TITLE_DESC">Title Z–A</SelectItem>
-              </SelectContent>
-            </Select>
+            <CustomSelect
+              options={[
+                { value: 'NEWEST', label: 'Newest first' },
+                { value: 'OLDEST', label: 'Oldest first' },
+                { value: 'TITLE_ASC', label: 'Title A–Z' },
+                { value: 'TITLE_DESC', label: 'Title Z–A' },
+              ]}
+              value={values.defaultSort}
+              onChange={v => set('defaultSort', v as WaypointSettingsValues['defaultSort'])}
+              triggerClassName="w-36"
+            />
           }
         />
       </div>
@@ -95,12 +85,7 @@ export function WaypointsSettingsForm({ defaultValues }: WaypointsSettingsFormPr
         />
       </div>
 
-      <div className="flex justify-end">
-        <Button type="button" onClick={handleSave} disabled={saving || !isDirty}>
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          {saving ? 'Saving...' : 'Save Changes'}
-        </Button>
-      </div>
-    </div>
+      <FormActions saving={saving} saved={saved} error={error} saveLabel="Save Changes" />
+    </form>
   )
 }

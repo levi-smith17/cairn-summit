@@ -1,6 +1,6 @@
 'use client'
 
-import { NotebookPen, Plus } from 'lucide-react'
+import { BookOpen, NotebookPen, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { MarkerBadge } from '@/app/(platform)/waypoints/components/marker-badge'
 import { RichTextContent } from '@/components/ui/rich-text-content'
@@ -10,6 +10,7 @@ import { useTerminology } from '@/contexts/terminology-context'
 
 interface LogItem {
   id: string
+  title: string | null
   content: string
   createdAt: Date | string
   trailId: string | null
@@ -24,6 +25,7 @@ interface LogListProps {
   selectedId: string | null
   onSelect: (id: string) => void
   onNew: () => void
+  onOpenLogbook: (trailId: string, firstLogId: string) => void
 }
 
 interface TrailGroup {
@@ -58,7 +60,7 @@ function groupByTrail(logs: LogItem[]): TrailGroup[] {
   return unfiled ? [...named, unfiled] : named
 }
 
-export function LogList({ logs, selectedId, onSelect, onNew }: LogListProps) {
+export function LogList({ logs, selectedId, onSelect, onNew, onOpenLogbook }: LogListProps) {
   const { terms } = useTerminology()
   const groups = groupByTrail(logs)
 
@@ -93,11 +95,24 @@ export function LogList({ logs, selectedId, onSelect, onNew }: LogListProps) {
           groups.map(group => (
             <div key={group.trailId ?? '__unfiled__'}>
               {/* Trail header */}
-              <div className="sticky top-0 z-10 px-4 py-1.5 bg-muted/80 backdrop-blur-sm border-b">
+              <div className="sticky top-0 z-10 px-4 py-1.5 bg-muted/80 backdrop-blur-sm border-b flex items-center justify-between">
                 <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                   {group.trailName}
                   <span className="ml-1.5 font-normal normal-case">({group.logs.length})</span>
                 </span>
+                {group.trailId !== null && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => onOpenLogbook(group.trailId!, group.logs[0].id)}
+                        className="text-muted-foreground hover:text-foreground transition-colors p-0.5"
+                      >
+                        <BookOpen className="h-3 w-3" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>Open logbook</TooltipContent>
+                  </Tooltip>
+                )}
               </div>
 
               {/* Log entries */}
@@ -109,6 +124,13 @@ export function LogList({ logs, selectedId, onSelect, onNew }: LogListProps) {
                     className={`w-full flex flex-col items-start gap-1.5 px-4 py-3 text-left transition-colors hover:bg-muted/50 ${selectedId === log.id ? 'bg-primary/10 hover:bg-primary/10' : ''
                       }`}
                   >
+                    {/* Title */}
+                    {log.title && (
+                      <span className="w-full text-sm font-medium truncate">
+                        {log.title}
+                      </span>
+                    )}
+
                     {/* Content preview */}
                     <div className="w-full text-sm text-muted-foreground line-clamp-2 [&_p]:m-0 [&_ul]:m-0 [&_ol]:m-0">
                       <RichTextContent html={log.content} />

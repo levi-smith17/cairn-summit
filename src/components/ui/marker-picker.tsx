@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { Check, ChevronRight, Search, X, ArrowLeft } from 'lucide-react'
+import { Check, ChevronRight, Search, Tag, X, ArrowLeft } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
 import {
@@ -11,6 +11,7 @@ import {
   getAllLeaves,
   type RawMarker,
   type MarkerTreeNode,
+  type MarkerGroup,
   type FlatLeaf,
 } from '@/lib/marker-groups'
 
@@ -162,6 +163,7 @@ export function MarkerPicker({
             size="sm"
             className="h-9 md:h-8 gap-1.5 text-sm justify-start min-w-[120px] w-full"
           >
+            <Tag className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
             <span className="flex-1 text-left truncate flex items-center gap-1.5">
               {triggerContent}
             </span>
@@ -171,7 +173,7 @@ export function MarkerPicker({
       </PopoverTrigger>
 
       <PopoverContent
-        className="w-64 p-0 overflow-hidden"
+        className="w-96 p-0 overflow-hidden"
         align={align}
         sideOffset={4}
       >
@@ -274,11 +276,13 @@ export function MarkerPicker({
                   node.type === 'group' ? (
                     <GroupRow
                       key={node.label}
-                      label={node.label}
+                      node={node}
                       selectedCount={getAllLeafIds(node.children).filter(id => selected.includes(id)).length}
                       totalCount={getAllLeafIds(node.children).length}
                       onDrillIn={() => drillInto(node.label)}
                       singleSelect={singleSelect}
+                      markerSelected={node.id ? selected.includes(node.id) : false}
+                      onToggleMarker={node.id ? () => toggleId(node.id!) : undefined}
                     />
                   ) : (
                     <LeafRow
@@ -315,31 +319,55 @@ export function MarkerPicker({
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
 function GroupRow({
-  label,
+  node,
   selectedCount,
   totalCount,
   onDrillIn,
   singleSelect,
+  markerSelected,
+  onToggleMarker,
 }: {
-  label: string
+  node: MarkerGroup
   selectedCount: number
   totalCount: number
   onDrillIn: () => void
   singleSelect: boolean
+  markerSelected: boolean
+  onToggleMarker?: () => void
 }) {
   return (
-    <button
-      onClick={onDrillIn}
-      className="flex items-center gap-2.5 w-full px-3 py-1.5 text-xs hover:bg-muted/60 transition-colors text-left"
-    >
-      <span className="flex-1 font-medium">{label}</span>
-      {!singleSelect && selectedCount > 0 && (
-        <span className="text-[10px] text-muted-foreground tabular-nums">
-          {selectedCount}/{totalCount}
-        </span>
+    <div className="flex items-center w-full text-xs hover:bg-muted/60 transition-colors">
+      {/* If this group is also a real marker, show a selectable checkbox + dot */}
+      {node.id && onToggleMarker && (
+        <button
+          type="button"
+          onClick={e => { e.stopPropagation(); onToggleMarker() }}
+          className="flex items-center gap-1.5 pl-3 pr-2 py-1.5 shrink-0"
+          title={`Select "${node.label}"`}
+        >
+          {!singleSelect && <Checkbox checked={markerSelected} />}
+          <span
+            className="h-2 w-2 rounded-full shrink-0"
+            style={{ backgroundColor: node.color }}
+          />
+        </button>
       )}
-      <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
-    </button>
+
+      {/* Drill-in button */}
+      <button
+        type="button"
+        onClick={onDrillIn}
+        className={`flex items-center gap-2.5 flex-1 min-w-0 py-1.5 pr-3 text-left ${!node.id ? 'pl-3' : ''}`}
+      >
+        <span className="flex-1 font-medium truncate">{node.label}</span>
+        {!singleSelect && selectedCount > 0 && (
+          <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
+            {selectedCount}/{totalCount}
+          </span>
+        )}
+        <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
+      </button>
+    </div>
   )
 }
 

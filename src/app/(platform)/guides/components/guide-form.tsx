@@ -5,13 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { CustomSelect } from '@/components/ui/custom-select'
 import { FormActions } from '@/components/forms/form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
 import { useTerminology } from '@/contexts/terminology-context'
@@ -51,6 +45,11 @@ export function GuideForm({ guide, trails, onBack, onSaved }: GuideFormProps) {
       onSaved(result.id)
     })
   }
+
+  const trailOptions = [
+    { value: 'none', label: `No ${terms.trails.slice(0, -1).toLowerCase()}` },
+    ...trails.map(t => ({ value: t.id, label: t.name })),
+  ]
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -95,17 +94,13 @@ export function GuideForm({ guide, trails, onBack, onSaved }: GuideFormProps) {
           {/* Trail */}
           <div className="space-y-1.5">
             <label className="text-sm font-medium">{terms.trails.slice(0, -1)} <span className="text-muted-foreground font-normal">(optional)</span></label>
-            <Select value={trailId || 'none'} onValueChange={val => setTrailId(val === 'none' ? '' : val)}>
-              <SelectTrigger>
-                <SelectValue placeholder={`No ${terms.trails.slice(0, -1).toLowerCase()}`} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No {terms.trails.slice(0, -1).toLowerCase()}</SelectItem>
-                {trails.map(t => (
-                  <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <CustomSelect
+              options={trailOptions}
+              value={trailId || 'none'}
+              onChange={val => setTrailId(val === 'none' ? '' : val)}
+              placeholderValue="none"
+              triggerClassName="w-full"
+            />
           </div>
 
           <div className="-mx-4 border-t" />

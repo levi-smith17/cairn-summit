@@ -10,7 +10,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { cn } from '@/lib/utils'
 
 interface DatePickerProps {
   value?: string
@@ -27,13 +26,13 @@ export function DatePicker({ value, onChange, placeholder = 'Pick a date' }: Dat
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className={cn(
-            'w-full justify-start text-left font-normal',
-            !date && 'text-muted-foreground'
-          )}
+          size="sm"
+          className="w-full h-9 md:h-8 justify-start gap-1.5 text-sm font-normal"
         >
-          <CalendarIcon className="h-4 w-4" />
-          {date ? format(date, 'PPP') : placeholder}
+          <CalendarIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          <span className={date ? '' : 'text-muted-foreground'}>
+            {date ? format(date, 'PPP') : placeholder}
+          </span>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
@@ -44,7 +43,6 @@ export function DatePicker({ value, onChange, placeholder = 'Pick a date' }: Dat
             onChange(selected ? selected.toISOString().split('T')[0] : '')
             setOpen(false)
           }}
-          initialFocus
         />
       </PopoverContent>
     </Popover>

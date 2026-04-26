@@ -1,6 +1,8 @@
 model Log {
   id         String         @id @default(cuid())
+  title      String?
   content    String
+  position   Float?
   trailId    String?        @map("folderId")
   waypointId String?
   createdAt  DateTime       @default(now())

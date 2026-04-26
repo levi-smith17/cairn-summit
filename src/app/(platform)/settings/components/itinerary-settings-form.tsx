@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Save, Loader2, Trash2, Plus, ChevronUp, Pencil } from 'lucide-react'
+import { Trash2, Plus, ChevronUp, Pencil } from 'lucide-react'
 import { addCalendarSchema, type AddCalendarFormValues } from '@/lib/schemas/settings'
 import {
   addICloudCalendar,
@@ -30,13 +30,7 @@ import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
 import { FormActions } from '@/components/forms/form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { CustomSelect } from '@/components/ui/custom-select'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -99,17 +93,17 @@ function CalendarRow({ calendar }: { calendar: CalendarEntry }) {
   const [editing, setEditing] = useState(false)
   const [editName, setEditName] = useState(calendar.name)
   const [editColor, setEditColor] = useState(calendar.color)
-  const [saving, setSaving] = useState(false)
+  const { saving, saved, error, handleSubmit } = useFormStatus()
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
-  async function handleSave() {
-    if (!editName.trim()) return
-    setSaving(true)
-    await updateICloudCalendar(calendar.id, { name: editName.trim(), color: editColor })
-    router.refresh()
-    setSaving(false)
-    setEditing(false)
+  async function onSaveSubmit(e: { preventDefault(): void }) {
+    e.preventDefault()
+    await handleSubmit(async () => {
+      await updateICloudCalendar(calendar.id, { name: editName.trim(), color: editColor })
+      router.refresh()
+      setEditing(false)
+    })
   }
 
   function handleCancel() {
@@ -148,22 +142,17 @@ function CalendarRow({ calendar }: { calendar: CalendarEntry }) {
           </Button>
         </div>
         {editing && (
-          <div className="border-t border-border px-3 pb-3 pt-2 space-y-3">
+          <form onSubmit={onSaveSubmit} className="border-t border-border px-3 pb-3 pt-2 space-y-3">
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Display Name</label>
-              <Input value={editName} onChange={e => setEditName(e.target.value)} placeholder="Calendar name" className="h-8 text-sm" />
+              <Input value={editName} onChange={e => setEditName(e.target.value)} placeholder="Calendar name" className="h-8 text-sm" required />
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Color</label>
               <ColorPicker value={editColor} onChange={setEditColor} />
             </div>
-            <div className="flex justify-end items-center gap-2 pt-1">
-              <Button size="sm" variant="ghost" onClick={handleCancel}>Cancel</Button>
-              <Button size="sm" onClick={handleSave} disabled={saving || !editName.trim()}>
-                {saving ? 'Saving…' : 'Save'}
-              </Button>
-            </div>
-          </div>
+            <FormActions saving={saving} saved={saved} error={error} saveLabel="Save" onCancel={handleCancel} />
+          </form>
         )}
       </div>
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
@@ -251,17 +240,17 @@ function SubscriptionRow({ sub }: { sub: SubscriptionEntry }) {
   const [editing, setEditing] = useState(false)
   const [editName, setEditName] = useState(sub.name)
   const [editColor, setEditColor] = useState(sub.color)
-  const [saving, setSaving] = useState(false)
+  const { saving, saved, error, handleSubmit } = useFormStatus()
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
-  async function handleSave() {
-    if (!editName.trim()) return
-    setSaving(true)
-    await updateCalendarSubscription(sub.id, { name: editName.trim(), color: editColor })
-    router.refresh()
-    setSaving(false)
-    setEditing(false)
+  async function onSaveSubmit(e: { preventDefault(): void }) {
+    e.preventDefault()
+    await handleSubmit(async () => {
+      await updateCalendarSubscription(sub.id, { name: editName.trim(), color: editColor })
+      router.refresh()
+      setEditing(false)
+    })
   }
 
   function handleCancel() { setEditName(sub.name); setEditColor(sub.color); setEditing(false) }
@@ -288,20 +277,17 @@ function SubscriptionRow({ sub }: { sub: SubscriptionEntry }) {
           </Button>
         </div>
         {editing && (
-          <div className="border-t border-border px-3 pb-3 pt-2 space-y-3">
+          <form onSubmit={onSaveSubmit} className="border-t border-border px-3 pb-3 pt-2 space-y-3">
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Display Name</label>
-              <Input value={editName} onChange={e => setEditName(e.target.value)} placeholder="Calendar name" className="h-8 text-sm" />
+              <Input value={editName} onChange={e => setEditName(e.target.value)} placeholder="Calendar name" className="h-8 text-sm" required />
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Color</label>
               <ColorPicker value={editColor} onChange={setEditColor} />
             </div>
-            <div className="flex justify-end items-center gap-2 pt-1">
-              <Button size="sm" variant="ghost" onClick={handleCancel}>Cancel</Button>
-              <Button size="sm" onClick={handleSave} disabled={saving || !editName.trim()}>{saving ? 'Saving…' : 'Save'}</Button>
-            </div>
-          </div>
+            <FormActions saving={saving} saved={saved} error={error} saveLabel="Save" onCancel={handleCancel} />
+          </form>
         )}
       </div>
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
@@ -325,26 +311,19 @@ function AddSubscriptionForm({ onDone }: { onDone: () => void }) {
   const [name, setName] = useState('')
   const [url, setUrl] = useState('')
   const [color, setColor] = useState('#3b82f6')
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const { saving, saved, error, handleSubmit } = useFormStatus()
 
-  async function handleSubmit(e: { preventDefault(): void }) {
+  async function onSubmit(e: { preventDefault(): void }) {
     e.preventDefault()
-    if (!name.trim() || !url.trim()) return
-    setSaving(true)
-    setError(null)
-    try {
+    await handleSubmit(async () => {
       await addCalendarSubscription({ name: name.trim(), url: url.trim(), color })
       router.refresh()
       onDone()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add subscription')
-      setSaving(false)
-    }
+    })
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 pt-2">
+    <form onSubmit={onSubmit} className="space-y-3 pt-2">
       <div className="space-y-1.5">
         <label className="text-xs font-medium text-muted-foreground">Display Name</label>
         <Input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. US Holidays" className="h-8 text-sm" required />
@@ -357,11 +336,7 @@ function AddSubscriptionForm({ onDone }: { onDone: () => void }) {
         <label className="text-xs font-medium text-muted-foreground">Color</label>
         <ColorPicker value={color} onChange={setColor} />
       </div>
-      {error && <p className="text-xs text-destructive">{error}</p>}
-      <div className="flex justify-end gap-2 pt-1">
-        <Button type="button" size="sm" variant="ghost" onClick={onDone}>Cancel</Button>
-        <Button type="submit" size="sm" disabled={saving || !name.trim() || !url.trim()}>{saving ? 'Adding…' : 'Add'}</Button>
-      </div>
+      <FormActions saving={saving} saved={saved} error={error} saveLabel="Add" onCancel={onDone} />
     </form>
   )
 }
@@ -382,8 +357,7 @@ interface ItinerarySettingsFormProps {
 }
 
 export function ItinerarySettingsForm({ preferences, calendars, subscriptions }: ItinerarySettingsFormProps) {
-  const router = useRouter()
-  const [saving, startSave] = useTransition()
+  const { saving, saved, error, handleSubmit } = useFormStatus()
   const [values, setValues] = useState<ItineraryPreferencesValues>(preferences)
   const [showAdd, setShowAdd] = useState(false)
   const [showAddSub, setShowAddSub] = useState(false)
@@ -392,12 +366,10 @@ export function ItinerarySettingsForm({ preferences, calendars, subscriptions }:
     setValues(prev => ({ ...prev, [key]: value }))
   }
 
-  const isDirty = JSON.stringify(values) !== JSON.stringify(preferences)
-
-  function handleSave() {
-    startSave(async () => {
+  async function onSubmit(e: { preventDefault(): void }) {
+    e.preventDefault()
+    await handleSubmit(async () => {
       await updateItinerarySettings(values)
-      router.refresh()
     })
   }
 
@@ -405,68 +377,64 @@ export function ItinerarySettingsForm({ preferences, calendars, subscriptions }:
     <div className="space-y-8">
 
       {/* ── Preferences ── */}
-      <div className="space-y-5">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Preferences</p>
+      <form onSubmit={onSubmit} className="space-y-8">
+        <div className="space-y-5">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Preferences</p>
 
-        <SettingRow
-          label="Default view"
-          description="Which calendar view opens when you navigate to Itinerary"
-          control={
-            <Select value={values.defaultView} onValueChange={v => set('defaultView', v as ItineraryPreferencesValues['defaultView'])}>
-              <SelectTrigger className="w-28 h-8 text-sm"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="MONTH">Month</SelectItem>
-                <SelectItem value="WEEK">Week</SelectItem>
-                <SelectItem value="DAY">Day</SelectItem>
-              </SelectContent>
-            </Select>
-          }
-        />
+          <SettingRow
+            label="Default view"
+            description="Which calendar view opens when you navigate to Itinerary"
+            control={
+              <CustomSelect
+                options={[{ value: 'MONTH', label: 'Month' }, { value: 'WEEK', label: 'Week' }, { value: 'DAY', label: 'Day' }]}
+                value={values.defaultView}
+                onChange={v => set('defaultView', v as ItineraryPreferencesValues['defaultView'])}
+                triggerClassName="w-28"
+              />
+            }
+          />
 
-        <SettingRow
-          label="First day of week"
-          description="Which day the week starts on in calendar views"
-          control={
-            <Select value={values.firstDayOfWeek} onValueChange={v => set('firstDayOfWeek', v as ItineraryPreferencesValues['firstDayOfWeek'])}>
-              <SelectTrigger className="w-28 h-8 text-sm"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="SUNDAY">Sunday</SelectItem>
-                <SelectItem value="MONDAY">Monday</SelectItem>
-              </SelectContent>
-            </Select>
-          }
-        />
+          <SettingRow
+            label="First day of week"
+            description="Which day the week starts on in calendar views"
+            control={
+              <CustomSelect
+                options={[{ value: 'SUNDAY', label: 'Sunday' }, { value: 'MONDAY', label: 'Monday' }]}
+                value={values.firstDayOfWeek}
+                onChange={v => set('firstDayOfWeek', v as ItineraryPreferencesValues['firstDayOfWeek'])}
+                triggerClassName="w-28"
+              />
+            }
+          />
 
-        <SettingRow
-          label="Show week numbers"
-          description="Display ISO week numbers alongside calendar rows"
-          control={<Switch checked={values.showWeekNumbers} onCheckedChange={v => set('showWeekNumbers', v)} />}
-        />
+          <SettingRow
+            label="Show week numbers"
+            description="Display ISO week numbers alongside calendar rows"
+            control={<Switch checked={values.showWeekNumbers} onCheckedChange={v => set('showWeekNumbers', v)} />}
+          />
 
-        <SettingRow
-          label="Default event duration"
-          description="How long new events are set to by default"
-          control={
-            <Select value={String(values.defaultEventDuration)} onValueChange={v => set('defaultEventDuration', Number(v))}>
-              <SelectTrigger className="w-28 h-8 text-sm"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="15">15 min</SelectItem>
-                <SelectItem value="30">30 min</SelectItem>
-                <SelectItem value="60">1 hour</SelectItem>
-                <SelectItem value="90">90 min</SelectItem>
-                <SelectItem value="120">2 hours</SelectItem>
-              </SelectContent>
-            </Select>
-          }
-        />
-      </div>
+          <SettingRow
+            label="Default event duration"
+            description="How long new events are set to by default"
+            control={
+              <CustomSelect
+                options={[
+                  { value: '15', label: '15 min' },
+                  { value: '30', label: '30 min' },
+                  { value: '60', label: '1 hour' },
+                  { value: '90', label: '90 min' },
+                  { value: '120', label: '2 hours' },
+                ]}
+                value={String(values.defaultEventDuration)}
+                onChange={v => set('defaultEventDuration', Number(v))}
+                triggerClassName="w-28"
+              />
+            }
+          />
+        </div>
 
-      <div className="flex justify-end">
-        <Button type="button" onClick={handleSave} disabled={saving || !isDirty}>
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          {saving ? 'Saving...' : 'Save Changes'}
-        </Button>
-      </div>
+        <FormActions saving={saving} saved={saved} error={error} saveLabel="Save Changes" />
+      </form>
 
       <Separator />
 
@@ -482,7 +450,7 @@ export function ItinerarySettingsForm({ preferences, calendars, subscriptions }:
           <div className="space-y-2">{calendars.map(cal => <CalendarRow key={cal.id} calendar={cal} />)}</div>
         )}
         {!showAdd ? (
-          <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={() => setShowAdd(true)}>
+          <Button type="button" variant="outline" size="sm" className="gap-1.5 w-full md:w-auto" onClick={() => setShowAdd(true)}>
             <Plus className="h-3.5 w-3.5" />Add Calendar
           </Button>
         ) : (
@@ -512,7 +480,7 @@ export function ItinerarySettingsForm({ preferences, calendars, subscriptions }:
           <div className="space-y-2">{subscriptions.map(sub => <SubscriptionRow key={sub.id} sub={sub} />)}</div>
         )}
         {!showAddSub ? (
-          <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={() => setShowAddSub(true)}>
+          <Button type="button" variant="outline" size="sm" className="gap-1.5 w-full md:w-auto" onClick={() => setShowAddSub(true)}>
             <Plus className="h-3.5 w-3.5" />Add Subscription
           </Button>
         ) : (
