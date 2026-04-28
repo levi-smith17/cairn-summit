@@ -1,6 +1,7 @@
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
+import { unstable_cache } from 'next/cache'
 import { parseFiltersFromParams, buildFolderOrderBy, buildWaypointOrderBy } from '@/lib/filters'
 import { BasecampClient } from './components/basecamp-client'
 
@@ -25,6 +26,34 @@ function provisionAmountForMonth(
   const cycleToMonths: Record<string, number> = { WEEKLY: 1 / 4.33, BIWEEKLY: 1 / 2.17, MONTHLY: 1 }
   return amount * (cycleToMonths[billingCycle] ?? 1)
 }
+
+// Cached fetch for sidebar data that changes rarely (profile, manifest highlights).
+// Revalidates every 5 minutes — stale-but-fast on repeated Basecamp navigations.
+const getManifestHighlights = unstable_cache(
+  async (wayfarerId: string) => {
+    const [wayfarer, expeditions, trainingList, gear, landmarkCount, summitCount, pathfindingCount, companionCount] = await Promise.all([
+      prisma.wayfarer.findUnique({
+        where: { id: wayfarerId },
+        select: {
+          name: true,
+          image: true,
+          username: true,
+          origins: { select: { headline: true, location: true, website: true, linkedin: true, github: true } },
+        },
+      }),
+      prisma.expedition.findMany({ where: { wayfarerId }, select: { title: true, company: true, current: true, startDate: true, endDate: true }, orderBy: { startDate: 'desc' } }),
+      prisma.training.findMany({ where: { wayfarerId }, select: { institution: true, degree: true }, orderBy: { startDate: 'desc' } }),
+      prisma.gear.findMany({ where: { wayfarerId }, select: { name: true, level: true }, orderBy: { name: 'asc' } }),
+      prisma.landmark.count({ where: { wayfarerId } }),
+      prisma.summit.count({ where: { wayfarerId } }),
+      prisma.pathfinding.count({ where: { wayfarerId } }),
+      prisma.companion.count({ where: { wayfarerId } }),
+    ])
+    return { wayfarer, expeditions, trainingList, gear, landmarkCount, summitCount, pathfindingCount, companionCount }
+  },
+  ['basecamp-manifest-highlights'],
+  { revalidate: 300 }
+)
 
 interface BasecampPageProps {
   searchParams: Promise<Record<string, string>>
@@ -63,15 +92,6 @@ export default async function BasecampPage({ searchParams }: BasecampPageProps) 
     totalTrails,
     markers,
     allTrails,
-    allWaypoints,
-    wayfarer,
-    expeditions,
-    trainingList,
-    gear,
-    landmarkCount,
-    summitCount,
-    pathfindingCount,
-    companionCount,
     activeProvisions,
     upcomingRenewals,
     monthExpenseAgg,
@@ -79,14 +99,16 @@ export default async function BasecampPage({ searchParams }: BasecampPageProps) 
     itineraryStops,
     unreadSignals,
     latestSignals,
-    imapAccountsWithCounts,
+    manifestHighlights,
   ] = await Promise.all([
     // Main waypoint data
     prisma.trail.findMany({
       where: {
         wayfarerId,
         ...(filters.trailId !== 'all' ? { id: filters.trailId } : {}),
-        ...(hasWaypointFilter ? { waypoints: { some: waypointWhere } } : {}),
+        ...(hasWaypointFilter
+          ? { waypoints: { some: waypointWhere } }
+          : { OR: [{ waypoints: { some: {} } }, { logs: { some: {} } }] }),
       },
       orderBy,
       take: PAGE_SIZE,
@@ -98,57 +120,34 @@ export default async function BasecampPage({ searchParams }: BasecampPageProps) 
           include: {
             markers: { include: { marker: true } },
             logs: {
-              include: { markers: { include: { marker: true } } },
               orderBy: { createdAt: 'desc' },
+              take: 1,
+              include: { markers: { include: { marker: true } } },
             },
           },
         },
-        logs: {
-          where: { wayfarerId, waypointId: null },
-          include: { markers: { include: { marker: true } } },
-          orderBy: { createdAt: 'desc' },
-        },
-        _count: { select: { waypoints: true } },
+        _count: { select: { waypoints: true, logs: true } },
       },
     }),
     prisma.trail.count({
       where: {
         wayfarerId,
         ...(filters.trailId !== 'all' ? { id: filters.trailId } : {}),
-        ...(hasWaypointFilter ? { waypoints: { some: waypointWhere } } : {}),
+        ...(hasWaypointFilter
+          ? { waypoints: { some: waypointWhere } }
+          : { OR: [{ waypoints: { some: {} } }, { logs: { some: {} } }] }),
       },
     }),
     prisma.marker.findMany({ where: { wayfarerId }, orderBy: { name: 'asc' } }),
     prisma.trail.findMany({ where: { wayfarerId }, orderBy: { name: 'asc' }, select: { id: true, name: true } }),
-    prisma.waypoint.findMany({ where: { wayfarerId }, orderBy: { title: 'asc' }, select: { id: true, title: true, trailId: true } }),
 
-    // Sidebar: Wayfarer + origins
-    prisma.wayfarer.findUnique({
-      where: { id: wayfarerId },
-      select: {
-        name: true,
-        image: true,
-        username: true,
-        origins: { select: { headline: true, location: true, website: true, linkedin: true, github: true } },
-      },
-    }),
-
-    // Sidebar: Manifest highlights + counts
-    prisma.expedition.findMany({ where: { wayfarerId }, select: { title: true, company: true, current: true, startDate: true, endDate: true }, orderBy: { startDate: 'desc' } }),
-    prisma.training.findMany({ where: { wayfarerId }, select: { institution: true, degree: true }, orderBy: { startDate: 'desc' } }),
-    prisma.gear.findMany({ where: { wayfarerId }, select: { name: true, level: true }, orderBy: { name: 'asc' } }),
-    prisma.landmark.count({ where: { wayfarerId } }),
-    prisma.summit.count({ where: { wayfarerId } }),
-    prisma.pathfinding.count({ where: { wayfarerId } }),
-    prisma.companion.count({ where: { wayfarerId } }),
-
-    // Sidebar: Provisions
+    // Sidebar: Provisions (changes when expenses/provisions are added)
     prisma.provision.findMany({ where: { wayfarerId, active: true }, select: { amount: true, billingCycle: true, nextRenewal: true } }),
     prisma.provision.count({ where: { wayfarerId, active: true, nextRenewal: { gte: now, lte: in7Days } } }),
     prisma.expense.aggregate({ where: { wayfarerId, date: { gte: monthStart, lte: monthEnd } }, _sum: { amount: true } }),
     prisma.budget.findMany({ where: { wayfarerId, month: currentMonth, year: currentYear }, select: { limit: true } }),
 
-    // Sidebar: Itinerary (today + next 3 days)
+    // Sidebar: Itinerary (time-sensitive, always fresh)
     prisma.stop.findMany({
       where: {
         wayfarerId,
@@ -166,7 +165,7 @@ export default async function BasecampPage({ searchParams }: BasecampPageProps) 
       },
     }),
 
-    // Sidebar: Signals
+    // Sidebar: Signals (always fresh)
     prisma.signal.count({ where: { wayfarerId, read: false } }),
     prisma.signal.findMany({
       where: { wayfarerId },
@@ -174,14 +173,12 @@ export default async function BasecampPage({ searchParams }: BasecampPageProps) 
       take: 5,
       select: { id: true, senderName: true, body: true, createdAt: true, read: true },
     }),
-    prisma.imapAccount.findMany({
-      where: { wayfarerId },
-      orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
-      select: { id: true, label: true, emailAddress: true, isDefault: true,
-        cachedEmails: { where: { isRead: false, mailbox: 'INBOX' }, select: { id: true } },
-      },
-    }),
+
+    // Cached: profile + manifest highlights (5-min TTL)
+    getManifestHighlights(wayfarerId),
   ])
+
+  const { wayfarer, expeditions, trainingList, gear, landmarkCount, summitCount, pathfindingCount, companionCount } = manifestHighlights
 
   const filteredCounts = hasWaypointFilter
     ? await prisma.waypoint.groupBy({
@@ -207,7 +204,6 @@ export default async function BasecampPage({ searchParams }: BasecampPageProps) 
       initialHasMore={PAGE_SIZE < totalTrails}
       tags={markers}
       folders={allTrails}
-      waypoints={allWaypoints}
       filteredCountMap={filteredCountMap}
       sidebarData={{
         wayfarer: {
@@ -244,12 +240,7 @@ export default async function BasecampPage({ searchParams }: BasecampPageProps) 
         signalsSummary: {
           unreadCount: unreadSignals,
           latestMessages: latestSignals,
-          emailAccounts: imapAccountsWithCounts.map(a => ({
-            id: a.id,
-            label: a.label,
-            emailAddress: a.emailAddress,
-            unreadCount: a.cachedEmails.length,
-          })),
+          emailAccounts: [],
         },
         itinerarySummary: {
           stops: itineraryStops.map(s => ({

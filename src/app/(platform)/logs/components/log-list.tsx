@@ -1,6 +1,7 @@
 'use client'
 
-import { BookOpen, NotebookPen, Plus } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { BookOpen, ChevronLeft, ChevronRight, ExternalLink, NotebookPen, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { MarkerBadge } from '@/app/(platform)/waypoints/components/marker-badge'
 import { RichTextContent } from '@/components/ui/rich-text-content'
@@ -16,7 +17,7 @@ interface LogItem {
   trailId: string | null
   waypointId: string | null
   trail: { id: string; name: string } | null
-  waypoint: { id: string; title: string } | null
+  waypoint: { id: string; title: string; url: string } | null
   markers: { markerId: string; marker: { id: string; name: string; color: string; icon: string | null } }[]
 }
 
@@ -26,6 +27,9 @@ interface LogListProps {
   onSelect: (id: string) => void
   onNew: () => void
   onOpenLogbook: (trailId: string, firstLogId: string) => void
+  totalCount: number
+  currentPage: number
+  logsPerPage: number
 }
 
 interface TrailGroup {
@@ -60,15 +64,24 @@ function groupByTrail(logs: LogItem[]): TrailGroup[] {
   return unfiled ? [...named, unfiled] : named
 }
 
-export function LogList({ logs, selectedId, onSelect, onNew, onOpenLogbook }: LogListProps) {
+export function LogList({ logs, selectedId, onSelect, onNew, onOpenLogbook, totalCount, currentPage, logsPerPage }: LogListProps) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const { terms } = useTerminology()
   const groups = groupByTrail(logs)
+  const totalPages = Math.max(1, Math.ceil(totalCount / logsPerPage))
+
+  function goToPage(page: number) {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('page', String(page))
+    router.push(`?${params.toString()}`, { scroll: false })
+  }
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
         <span className="text-sm font-medium">
-          {logs.length} {logs.length !== 1 ? terms.logs.toLowerCase() : terms.logs.slice(0, -1).toLowerCase()}
+          {totalCount} {totalCount !== 1 ? terms.logs.toLowerCase() : terms.logs.slice(0, -1).toLowerCase()}
         </span>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -103,14 +116,16 @@ export function LogList({ logs, selectedId, onSelect, onNew, onOpenLogbook }: Lo
                 {group.trailId !== null && (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
                         onClick={() => onOpenLogbook(group.trailId!, group.logs[0].id)}
-                        className="text-muted-foreground hover:text-foreground transition-colors p-0.5"
                       >
                         <BookOpen className="h-3 w-3" />
-                      </button>
+                      </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Open logbook</TooltipContent>
+                    <TooltipContent>Open {terms.logbook.toLowerCase()}</TooltipContent>
                   </Tooltip>
                 )}
               </div>
@@ -118,49 +133,91 @@ export function LogList({ logs, selectedId, onSelect, onNew, onOpenLogbook }: Lo
               {/* Log entries */}
               <div className="flex flex-col divide-y">
                 {group.logs.map(log => (
-                  <button
+                  <div
                     key={log.id}
-                    onClick={() => onSelect(log.id)}
-                    className={`w-full flex flex-col items-start gap-1.5 px-4 py-3 text-left transition-colors hover:bg-muted/50 ${selectedId === log.id ? 'bg-primary/10 hover:bg-primary/10' : ''
-                      }`}
+                    className={`flex items-stretch transition-colors hover:bg-muted/50 ${selectedId === log.id ? 'bg-primary/10 hover:bg-primary/10' : ''}`}
                   >
-                    {/* Title */}
-                    {log.title && (
-                      <span className="w-full text-sm font-medium truncate">
-                        {log.title}
-                      </span>
-                    )}
-
-                    {/* Content preview */}
-                    <div className="w-full text-sm text-muted-foreground line-clamp-2 [&_p]:m-0 [&_ul]:m-0 [&_ol]:m-0">
-                      <RichTextContent html={log.content} />
-                    </div>
-
-                    {/* Meta row */}
-                    <div className="flex items-center flex-wrap gap-x-2 gap-y-1 w-full">
-                      <span className="text-xs text-muted-foreground/70">
-                        {format(new Date(log.createdAt), 'MMM d, yyyy')}
-                      </span>
-                      {log.waypoint && (
-                        <span className="text-xs text-muted-foreground/70 truncate max-w-[120px]">
-                          · {log.waypoint.title}
+                    {/* Main click area */}
+                    <button
+                      className="flex flex-col items-start gap-1.5 px-4 py-3 text-left flex-1 min-w-0"
+                      onClick={() => onSelect(log.id)}
+                    >
+                      {/* Title */}
+                      {log.title && (
+                        <span className="w-full text-sm font-medium truncate">
+                          {log.title}
                         </span>
                       )}
-                      {log.markers.length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                          {log.markers.map(t => (
-                            <MarkerBadge key={t.markerId} marker={t.marker} />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </button>
+
+                      {/* Content preview */}
+                      <div className="w-full text-sm text-muted-foreground line-clamp-2 [&_p]:m-0 [&_ul]:m-0 [&_ol]:m-0">
+                        <RichTextContent html={log.content} />
+                      </div>
+
+                      {/* Meta row */}
+                      <div className="flex items-center flex-wrap gap-x-2 gap-y-1 w-full">
+                        <span className="text-xs text-muted-foreground/70">
+                          {format(new Date(log.createdAt), 'MMM d, yyyy')}
+                        </span>
+                        {log.markers.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {log.markers.map(t => (
+                              <MarkerBadge key={t.markerId} marker={t.marker} />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </button>
+
+                    {/* Waypoint link */}
+                    {log.waypoint && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <a
+                            href={log.waypoint.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="shrink-0 flex items-center px-2 text-muted-foreground/40 hover:text-muted-foreground transition-colors"
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </a>
+                        </TooltipTrigger>
+                        <TooltipContent>{log.waypoint.title}</TooltipContent>
+                      </Tooltip>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
           ))
         )}
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-4 py-2 border-t shrink-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => goToPage(currentPage - 1)}
+            disabled={currentPage <= 1}
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </Button>
+          <span className="text-xs text-muted-foreground">
+            {currentPage} / {totalPages}
+          </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => goToPage(currentPage + 1)}
+            disabled={currentPage >= totalPages}
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { MoreHorizontal, Pencil, Trash2, FileText, ExternalLink, Bookmark, BookmarkCheck, Eye, EyeOff } from 'lucide-react'
+import { MoreHorizontal, Pencil, Plus, Trash2, ExternalLink, Bookmark, BookmarkCheck, Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
@@ -26,26 +26,23 @@ import { MarkerBadge } from '@/app/(platform)/waypoints/components/marker-badge'
 import { deleteWaypoint, toggleWaypointRead, toggleWaypointReadLater } from '@/actions/waypoints'
 import { InlineWaypointForm } from './inline-waypoint-form'
 import { InlineLogForm } from './inline-log-form'
-import { LogRow } from './log-row'
+import { LogRow } from './inline-log-row'
 import { useTerminology } from '@/contexts/terminology-context'
 
 interface WaypointRowProps {
   waypoint: any
   folders: any[]
   tags: any[]
-  allWaypoints: any[]
 }
 
-export function WaypointRow({ waypoint, folders, tags, allWaypoints }: WaypointRowProps) {
+export function WaypointRow({ waypoint, folders, tags }: WaypointRowProps) {
   const router = useRouter()
   const { terms } = useTerminology()
   const [editing, setEditing] = useState(false)
   const [addingLog, setAddingLog] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
-  const [deleting, setDeleting] = useState(false)
 
   async function handleDelete() {
-    setDeleting(true)
     await deleteWaypoint(waypoint.id)
     router.refresh()
   }
@@ -75,7 +72,7 @@ export function WaypointRow({ waypoint, folders, tags, allWaypoints }: WaypointR
   return (
     <div className={`flex flex-col ${waypoint.read ? 'opacity-60' : ''}`}>
       {/* Waypoint row */}
-      <div className="flex items-start gap-3 px-4 py-3">
+      <div className="flex items-start gap-3 px-4 py-3 group">
         {waypoint.favicon ? (
           <img
             src={waypoint.favicon}
@@ -95,7 +92,7 @@ export function WaypointRow({ waypoint, folders, tags, allWaypoints }: WaypointR
             </div>
           )}
         </div>
-        <div className="flex items-center gap-0.5 shrink-0">
+        <div className="flex items-center gap-0.5 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
           <Tooltip>
             <TooltipTrigger asChild>
               <a href={waypoint.url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}>
@@ -114,7 +111,7 @@ export function WaypointRow({ waypoint, folders, tags, allWaypoints }: WaypointR
                 className="h-7 w-7"
                 onClick={() => { setAddingLog(v => !v); setEditing(false) }}
               >
-                <FileText className="h-3.5 w-3.5" />
+                <Plus className="h-3.5 w-3.5" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>Add {terms.logs.slice(0, -1).toLowerCase()}</TooltipContent>
@@ -163,7 +160,7 @@ export function WaypointRow({ waypoint, folders, tags, allWaypoints }: WaypointR
               defaultWaypointId={waypoint.id}
               defaultFolderId={waypoint.trailId}
               folders={folders}
-              waypoints={allWaypoints}
+              waypoints={[]}
               tags={tags}
               onCancel={() => setAddingLog(false)}
               onSaved={() => setAddingLog(false)}
@@ -176,7 +173,7 @@ export function WaypointRow({ waypoint, folders, tags, allWaypoints }: WaypointR
       {waypoint.logs?.length > 0 && (
         <div className="flex flex-col divide-y border rounded-lg ml-7 mr-4 mb-2 overflow-hidden">
           {waypoint.logs.map((log: any) => (
-            <LogRow key={log.id} log={log} folders={folders} tags={tags} allWaypoints={allWaypoints} />
+            <LogRow key={log.id} log={log} folders={folders} tags={tags} />
           ))}
         </div>
       )}

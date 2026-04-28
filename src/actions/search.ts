@@ -6,7 +6,7 @@ import { format } from 'date-fns'
 
 export type SearchResultType =
   | 'waypoint' | 'log' | 'provision' | 'stop'
-  | 'trail' | 'marker' | 'signal' | 'email'
+  | 'trail' | 'marker' | 'signal'
 
 export interface SearchResult {
   id: string
@@ -45,7 +45,7 @@ export async function globalSearch(
 
   const ci = { contains: q, mode: 'insensitive' as const }
 
-  const [waypoints, logs, provisions, stops, trails, markers, signals, emails] = await Promise.all([
+  const [waypoints, logs, provisions, stops, trails, markers, signals] = await Promise.all([
     // Waypoints
     prisma.waypoint.findMany({
       where: {
@@ -119,21 +119,6 @@ export async function globalSearch(
       orderBy: { createdAt: 'desc' },
     }),
 
-    // Cached emails
-    prisma.cachedEmail.findMany({
-      where: {
-        account: { wayfarerId },
-        OR: deep
-          ? [{ subject: ci }, { fromName: ci }, { fromAddress: ci }, { snippet: ci }]
-          : [{ subject: ci }, { fromName: ci }, { fromAddress: ci }],
-      },
-      select: {
-        id: true, subject: true, fromName: true, fromAddress: true,
-        date: true, accountId: true, mailbox: true,
-      },
-      take: 20,
-      orderBy: { date: 'desc' },
-    }),
   ])
 
   const results: SearchResult[] = []
@@ -218,18 +203,7 @@ export async function globalSearch(
       id: sig.id, type: 'signal',
       title: sig.senderName,
       subtitle: `${sig.senderEmail} · ${format(new Date(sig.createdAt), 'MMM d, yyyy')}`,
-      url: `/signals?tab=signals&signal=${sig.id}`,
-      score: ts || 30,
-    })
-  }
-
-  for (const e of emails) {
-    const ts = titleScore(e.subject, q) || titleScore(e.fromName, q) || titleScore(e.fromAddress, q)
-    results.push({
-      id: e.id, type: 'email',
-      title: e.subject ?? '(no subject)',
-      subtitle: `${e.fromName ?? e.fromAddress} · ${e.date ? format(new Date(e.date), 'MMM d, yyyy') : ''}`,
-      url: `/signals?tab=email&account=${e.accountId}&folder=${e.mailbox}&email=${e.id}`,
+      url: `/signals?signal=${sig.id}`,
       score: ts || 30,
     })
   }

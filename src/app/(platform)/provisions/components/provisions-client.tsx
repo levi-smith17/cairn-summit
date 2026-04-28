@@ -73,6 +73,9 @@ export function ProvisionsClient({ markers }: Props) {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [expenseLoading, setExpenseLoading] = useState(true)
   const [addingExpense, setAddingExpense] = useState(false)
+  const [expensePage, setExpensePage] = useState(1)
+  const [expenseTotal, setExpenseTotal] = useState(0)
+  const [expensePageSize, setExpensePageSize] = useState(20)
 
   // Supplyline panel state
   const [provisions, setProvisions] = useState<Provision[]>([])
@@ -101,17 +104,24 @@ export function ProvisionsClient({ markers }: Props) {
     fetchSummary()
   }, [month, year, refreshKey])
 
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setExpensePage(1)
+  }, [month, year, debouncedSearch, markerFilter])
+
   // Fetch expenses
   useEffect(() => {
     const fetchExpenses = async () => {
       setExpenseLoading(true)
-      const params = new URLSearchParams({ month: String(month), year: String(year) })
+      const params = new URLSearchParams({ month: String(month), year: String(year), page: String(expensePage) })
       if (debouncedSearch) params.set('search', debouncedSearch)
       if (markerFilter !== 'all') params.set('markerId', markerFilter)
       try {
         const res = await fetch(`/api/expenses?${params}`)
         const data = await res.json()
         setExpenses(data.expenses ?? [])
+        setExpenseTotal(data.total ?? 0)
+        setExpensePageSize(data.pageSize ?? 20)
       } catch (err) {
         console.error('Failed to load expenses', err)
       } finally {
@@ -119,7 +129,7 @@ export function ProvisionsClient({ markers }: Props) {
       }
     }
     fetchExpenses()
-  }, [month, year, debouncedSearch, markerFilter, refreshKey])
+  }, [month, year, debouncedSearch, markerFilter, refreshKey, expensePage])
 
   // Fetch provisions/supplylines
   useEffect(() => {
@@ -391,6 +401,32 @@ export function ProvisionsClient({ markers }: Props) {
                 </div>
               )}
             </div>
+
+            {expenseTotal > expensePageSize && (
+              <div className="flex items-center justify-between px-4 py-2 border-t shrink-0">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => setExpensePage(p => p - 1)}
+                  disabled={expensePage <= 1}
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                </Button>
+                <span className="text-xs text-muted-foreground">
+                  {expensePage} / {Math.ceil(expenseTotal / expensePageSize)}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => setExpensePage(p => p + 1)}
+                  disabled={expensePage >= Math.ceil(expenseTotal / expensePageSize)}
+                >
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Right column: Supplylines + Cache */}

@@ -55,12 +55,13 @@ interface WaypointFormProps {
   waypoint: any | null
   folders: any[]
   tags: any[]
+  defaultTrailId?: string
   onBack: () => void
   onSaved: (id: string) => void
   onDeleted: () => void
 }
 
-export function WaypointForm({ waypoint, folders, tags, onBack, onSaved, onDeleted }: WaypointFormProps) {
+export function WaypointForm({ waypoint, folders, tags, defaultTrailId, onBack, onSaved, onDeleted }: WaypointFormProps) {
   const router = useRouter()
   const { terms } = useTerminology()
   const { saving, saved, error, handleSubmit } = useFormStatus()
@@ -93,7 +94,7 @@ export function WaypointForm({ waypoint, folders, tags, onBack, onSaved, onDelet
       url: waypoint?.url ?? '',
       description: waypoint?.description ?? '',
       notes: waypoint?.notes ?? '',
-      folderId: waypoint?.trailId ?? '',
+      folderId: waypoint?.trailId ?? defaultTrailId ?? '',
       tagIds: waypoint?.markers?.map((t: any) => t.markerId) ?? [],
     },
   })

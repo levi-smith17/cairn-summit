@@ -4,8 +4,10 @@ import { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useTerminology } from '@/contexts/terminology-context'
-import { ChevronLeft, Pencil, Play, Plus, Trash2, Upload } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Pencil, Play, Plus, Trash2, Upload } from 'lucide-react'
 import { ImportDialog } from './import-dialog'
+
+const STONES_PER_PAGE = 20
 
 type StonePlacement = 'UNPLACED' | 'PLACED' | 'SET' | 'SEATED'
 
@@ -61,6 +63,7 @@ export function GuideDetail({
 }: GuideDetailProps) {
   const { terms } = useTerminology()
   const [importOpen, setImportOpen] = useState(false)
+  const [stonePage, setStonePage] = useState(1)
 
   const filteredStones = useMemo(() => {
     let result = guide.stones
@@ -77,6 +80,8 @@ export function GuideDetail({
   }, [guide.stones, stoneSearch, stoneMarkerIds])
 
   const isFiltered = stoneSearch !== '' || stoneMarkerIds.length > 0
+  const stoneTotalPages = Math.max(1, Math.ceil(filteredStones.length / STONES_PER_PAGE))
+  const pagedStones = filteredStones.slice((stonePage - 1) * STONES_PER_PAGE, stonePage * STONES_PER_PAGE)
 
   function getPlacementLabel(placement: StonePlacement): string {
     switch (placement) {
@@ -173,7 +178,7 @@ export function GuideDetail({
             <p>No {terms.stones.toLowerCase()} match your filters</p>
           </div>
         ) : (
-          filteredStones.map(stone => (
+          pagedStones.map(stone => (
             <div
               key={stone.id}
               className="flex items-start justify-between px-4 py-3 border-b border-border/50 hover:bg-muted/50 transition-colors group cursor-pointer"
@@ -213,6 +218,32 @@ export function GuideDetail({
           ))
         )}
       </div>
+
+      {stoneTotalPages > 1 && (
+        <div className="flex items-center justify-between px-4 py-2 border-t shrink-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => setStonePage(p => p - 1)}
+            disabled={stonePage <= 1}
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </Button>
+          <span className="text-xs text-muted-foreground">
+            {stonePage} / {stoneTotalPages}
+          </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => setStonePage(p => p + 1)}
+            disabled={stonePage >= stoneTotalPages}
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      )}
 
       <ImportDialog
         open={importOpen}

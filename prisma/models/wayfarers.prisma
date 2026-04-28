@@ -40,6 +40,7 @@ model Wayfarer {
   privacySettings       PrivacySettings?
   itinerarySettings     ItinerarySettings?
   waypointSettings      WaypointSettings?
+  logSettings           LogSettings?
   sentInvitations       Invitation[]     @relation("SentInvitations")
   adminActivities       AdminActivity[]  @relation("AdminActivities")
   guides                Guide[]

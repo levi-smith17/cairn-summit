@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Search, X, AlignLeft, Bookmark, NotebookPen, Wallet, CalendarDays,
-  Folder, Tag, Zap, Mail, Clock,
+  Folder, Tag, Zap, Clock,
 } from 'lucide-react'
 import { globalSearch, type SearchResult, type SearchResultType } from '@/actions/search'
 
@@ -23,7 +23,6 @@ const TYPE_META: Record<SearchResultType, {
   trail:     { label: 'Trail',     Icon: Folder,       bg: 'bg-slate-500/15',  text: 'text-slate-600 dark:text-slate-400' },
   marker:    { label: 'Marker',    Icon: Tag,          bg: 'bg-slate-500/15',  text: 'text-slate-600 dark:text-slate-400' },
   signal:    { label: 'Signal',    Icon: Zap,          bg: 'bg-yellow-500/15', text: 'text-yellow-600 dark:text-yellow-400' },
-  email:     { label: 'Email',     Icon: Mail,         bg: 'bg-sky-500/15',    text: 'text-sky-600 dark:text-sky-400' },
 }
 
 const RECENT_KEY = 'cairn:recent-search'

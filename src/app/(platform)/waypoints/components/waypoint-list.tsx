@@ -1,7 +1,7 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
-import { Bookmark, BookCheck, Clock, ExternalLink, Plus } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Bookmark, BookCheck, ChevronLeft, ChevronRight, Clock, ExternalLink, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { MarkerBadge } from './marker-badge'
 import { toggleWaypointRead, toggleWaypointReadLater } from '@/actions/waypoints'
@@ -25,6 +25,9 @@ interface WaypointListProps {
   selectedId: string | null
   onSelect: (id: string) => void
   onNew: () => void
+  totalCount: number
+  currentPage: number
+  waypointsPerPage: number
 }
 
 interface TrailGroup {
@@ -58,11 +61,19 @@ function groupByTrail(waypoints: WaypointItem[], noTrailLabel: string): TrailGro
   return noTrail ? [...named, noTrail] : named
 }
 
-export function WaypointList({ waypoints, selectedId, onSelect, onNew }: WaypointListProps) {
+export function WaypointList({ waypoints, selectedId, onSelect, onNew, totalCount, currentPage, waypointsPerPage }: WaypointListProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { terms } = useTerminology()
   const noTrailLabel = `No ${terms.trails.slice(0, -1)}`
   const groups = groupByTrail(waypoints, noTrailLabel)
+  const totalPages = Math.max(1, Math.ceil(totalCount / waypointsPerPage))
+
+  function goToPage(page: number) {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('page', String(page))
+    router.push(`?${params.toString()}`, { scroll: false })
+  }
 
   async function handleToggleReadLater(e: React.MouseEvent, waypoint: WaypointItem) {
     e.stopPropagation()
@@ -81,7 +92,7 @@ export function WaypointList({ waypoints, selectedId, onSelect, onNew }: Waypoin
       {/* Count header */}
       <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
         <span className="text-sm font-medium">
-          {waypoints.length} {waypoints.length !== 1 ? terms.waypoints.toLowerCase() : terms.waypoints.slice(0, -1).toLowerCase()}
+          {totalCount} {totalCount !== 1 ? terms.waypoints.toLowerCase() : terms.waypoints.slice(0, -1).toLowerCase()}
         </span>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -208,6 +219,32 @@ export function WaypointList({ waypoints, selectedId, onSelect, onNew }: Waypoin
           ))
         )}
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-4 py-2 border-t shrink-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => goToPage(currentPage - 1)}
+            disabled={currentPage <= 1}
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </Button>
+          <span className="text-xs text-muted-foreground">
+            {currentPage} / {totalPages}
+          </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => goToPage(currentPage + 1)}
+            disabled={currentPage >= totalPages}
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

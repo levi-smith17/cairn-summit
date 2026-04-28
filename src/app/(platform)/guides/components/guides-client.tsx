@@ -49,9 +49,12 @@ interface GuidesClientProps {
   guides: GuideWithStones[]
   trails: { id: string; name: string }[]
   markers: { id: string; name: string; color: string; icon: string | null }[]
+  totalCount: number
+  currentPage: number
+  pageSize: number
 }
 
-export function GuidesClient({ guides, trails, markers }: GuidesClientProps) {
+export function GuidesClient({ guides, trails, markers, totalCount, currentPage, pageSize }: GuidesClientProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { terms } = useTerminology()
@@ -216,6 +219,9 @@ export function GuidesClient({ guides, trails, markers }: GuidesClientProps) {
               onLaunch={handleLaunchPass}
               onLaunchTraverse={handleLaunchTraverse}
               onDelete={(id, name) => setDeleteTarget({ type: 'guide', id, name })}
+              totalCount={totalCount}
+              currentPage={currentPage}
+              pageSize={pageSize}
             />
           </div>
 

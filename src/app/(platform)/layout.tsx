@@ -26,7 +26,7 @@ export default async function PlatformLayout({
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const todayEnd   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
 
-  const [adminWayfarer, displayWayfarer, unreadSignals, unreadEmails, todayStops, waypointSettings] = await Promise.all([
+  const [adminWayfarer, displayWayfarer, unreadSignals, todayStops, waypointSettings] = await Promise.all([
     impersonatedId
       ? prisma.wayfarer.findUnique({ where: { id: adminId }, select: { isAdmin: true } })
       : null,
@@ -35,9 +35,6 @@ export default async function PlatformLayout({
       select: { username: true, name: true, email: true, isAdmin: true },
     }),
     prisma.signal.count({ where: { wayfarerId: displayId, read: false } }),
-    prisma.cachedEmail.count({
-      where: { account: { wayfarerId: displayId }, isRead: false, mailbox: 'INBOX' },
-    }),
     prisma.stop.count({
       where: { wayfarerId: displayId, startDate: { gte: todayStart, lte: todayEnd } },
     }),
@@ -64,7 +61,7 @@ export default async function PlatformLayout({
             isAdmin,
           }}
           badges={{
-            signals:   unreadSignals + unreadEmails,
+            signals:   unreadSignals,
             itinerary: todayStops,
           }}
         />

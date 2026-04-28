@@ -1,21 +1,20 @@
 'use client'
 
 import { useState } from 'react'
-import { Switch } from '@/components/ui/switch'
-import { Separator } from '@/components/ui/separator'
 import { CustomSelect } from '@/components/ui/custom-select'
+import { Separator } from '@/components/ui/separator'
 import { FormActions } from '@/components/forms/form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
-import { updateWaypointSettings } from '@/actions/settings'
+import { updateLogSettings } from '@/actions/settings'
+import { useTerminology } from '@/contexts/terminology-context'
 
-interface WaypointSettingsValues {
-  defaultSort: 'NEWEST' | 'OLDEST' | 'TITLE_ASC' | 'TITLE_DESC'
-  openInNewTab: boolean
-  waypointsPerPage: number
+interface LogSettingsValues {
+  logsPerPage: number
+  defaultSort: 'NEWEST' | 'OLDEST'
 }
 
-interface WaypointsSettingsFormProps {
-  defaultValues: WaypointSettingsValues
+interface LogSettingsFormProps {
+  defaultValues: LogSettingsValues
 }
 
 function SettingRow({ label, description, control }: { label: string; description: string; control: React.ReactNode }) {
@@ -30,18 +29,19 @@ function SettingRow({ label, description, control }: { label: string; descriptio
   )
 }
 
-export function WaypointsSettingsForm({ defaultValues }: WaypointsSettingsFormProps) {
+export function LogSettingsForm({ defaultValues }: LogSettingsFormProps) {
+  const { terms } = useTerminology()
   const { saving, saved, error, handleSubmit } = useFormStatus()
-  const [values, setValues] = useState<WaypointSettingsValues>(defaultValues)
+  const [values, setValues] = useState<LogSettingsValues>(defaultValues)
 
-  function set<K extends keyof WaypointSettingsValues>(key: K, value: WaypointSettingsValues[K]) {
+  function set<K extends keyof LogSettingsValues>(key: K, value: LogSettingsValues[K]) {
     setValues(prev => ({ ...prev, [key]: value }))
   }
 
   async function onSubmit(e: { preventDefault(): void }) {
     e.preventDefault()
     await handleSubmit(async () => {
-      await updateWaypointSettings(values)
+      await updateLogSettings(values)
     })
   }
 
@@ -51,8 +51,8 @@ export function WaypointsSettingsForm({ defaultValues }: WaypointsSettingsFormPr
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Display</p>
 
         <SettingRow
-          label="Waypoints per page"
-          description="How many waypoints to show in the list at once"
+          label={`${terms.logs} per page`}
+          description={`How many ${terms.logs.toLowerCase()} to show in the list at once`}
           control={
             <CustomSelect
               options={[
@@ -61,27 +61,9 @@ export function WaypointsSettingsForm({ defaultValues }: WaypointsSettingsFormPr
                 { value: '50', label: '50' },
                 { value: '100', label: '100' },
               ]}
-              value={String(values.waypointsPerPage)}
-              onChange={v => set('waypointsPerPage', Number(v))}
+              value={String(values.logsPerPage)}
+              onChange={v => set('logsPerPage', Number(v))}
               triggerClassName="w-20"
-            />
-          }
-        />
-
-        <SettingRow
-          label="Default sort order"
-          description="How waypoints are ordered when no sort is applied"
-          control={
-            <CustomSelect
-              options={[
-                { value: 'NEWEST', label: 'Newest first' },
-                { value: 'OLDEST', label: 'Oldest first' },
-                { value: 'TITLE_ASC', label: 'Title A–Z' },
-                { value: 'TITLE_DESC', label: 'Title Z–A' },
-              ]}
-              value={values.defaultSort}
-              onChange={v => set('defaultSort', v as WaypointSettingsValues['defaultSort'])}
-              triggerClassName="w-36"
             />
           }
         />
@@ -93,12 +75,17 @@ export function WaypointsSettingsForm({ defaultValues }: WaypointsSettingsFormPr
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Behavior</p>
 
         <SettingRow
-          label="Open links in new tab"
-          description="Open waypoint URLs in a new browser tab instead of the current one"
+          label="Default sort order"
+          description={`How ${terms.logs.toLowerCase()} are ordered when no sort is applied`}
           control={
-            <Switch
-              checked={values.openInNewTab}
-              onCheckedChange={v => set('openInNewTab', v)}
+            <CustomSelect
+              options={[
+                { value: 'NEWEST', label: 'Newest first' },
+                { value: 'OLDEST', label: 'Oldest first' },
+              ]}
+              value={values.defaultSort}
+              onChange={v => set('defaultSort', v as 'NEWEST' | 'OLDEST')}
+              triggerClassName="w-36"
             />
           }
         />

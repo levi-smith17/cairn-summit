@@ -23,6 +23,7 @@ import { WayfarerForm } from './wayfarer-form'
 import { InvitationsPanel, type InvitationSummary } from './invitations-panel'
 import { ActivityPanel, type ActivityEntry } from './activity-panel'
 import { bulkUpdateWayfarers, bulkDeleteWayfarers } from '@/actions/admin'
+import { useTerminology } from '@/contexts/terminology-context'
 
 interface Summary {
   total: number
@@ -57,6 +58,7 @@ export function AdminClient({
 }: AdminClientProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { terms } = useTerminology()
 
   const tabParam = searchParams.get('tab') as Tab | null
   const activeTab: Tab = tabParam === 'invitations' || tabParam === 'activity' ? tabParam : 'wayfarers'
@@ -156,7 +158,7 @@ export function AdminClient({
   }
 
   const tabs: { value: Tab; label: string }[] = [
-    { value: 'wayfarers',   label: 'Wayfarers' },
+    { value: 'wayfarers',   label: terms.wayfarers },
     { value: 'invitations', label: 'Invitations' },
     { value: 'activity',    label: 'Activity' },
   ]
@@ -172,7 +174,7 @@ export function AdminClient({
           <Card>
             <CardHeader className="pb-1 pt-3 px-4">
               <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                <Users className="h-3.5 w-3.5" />Total Wayfarers
+                <Users className="h-3.5 w-3.5" />Total {terms.wayfarers}
               </CardTitle>
             </CardHeader>
             <CardContent className="pb-3 px-4">
@@ -238,7 +240,7 @@ export function AdminClient({
           {/* Filter bar — only for wayfarers tab */}
           {activeTab === 'wayfarers' && (
             <div className="flex items-center gap-1.5 flex-wrap">
-              <SearchInput value={search} onChange={setSearch} placeholder="Search wayfarers…" />
+              <SearchInput value={search} onChange={setSearch} placeholder={`Search ${terms.wayfarers.toLowerCase()}…`} />
               <CustomSelect
                 options={[{ value: 'all', label: 'All roles' }, { value: 'admins', label: 'Admins only' }, { value: 'members', label: 'Members only' }]}
                 value={roleFilter}
@@ -311,7 +313,7 @@ export function AdminClient({
                   <div className="flex flex-col items-center justify-center h-full px-8 text-center">
                     <Users className="h-10 w-10 text-muted-foreground/30 mb-3" />
                     <p className="text-sm text-muted-foreground">
-                      Select a wayfarer to edit, or{' '}
+                      Select a {terms.wayfarers.endsWith('s') ? terms.wayfarers.slice(0, -1).toLowerCase() : terms.wayfarers.toLowerCase()} to edit, or{' '}
                       <button onClick={showNew} className="text-primary hover:underline">add a new one</button>.
                     </p>
                   </div>

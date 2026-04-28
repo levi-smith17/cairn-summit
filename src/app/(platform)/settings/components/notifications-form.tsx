@@ -60,7 +60,7 @@ export function NotificationsForm({ defaultValues }: NotificationsFormProps) {
 
         <SettingRow
           label="Browser notifications"
-          description="Show desktop notifications for new Signals and Relays"
+          description="Show desktop notifications for new contact-form messages"
           control={
             <Switch
               checked={values.browserNotifications}

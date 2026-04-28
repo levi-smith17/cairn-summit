@@ -85,13 +85,14 @@ enum FirstDay {
 }
 
 model WaypointSettings {
-  id             String        @id @default(cuid())
-  defaultSort    WaypointSort  @default(NEWEST)
-  openInNewTab   Boolean       @default(true)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  wayfarerId     String        @unique
-  wayfarer       Wayfarer      @relation(fields: [wayfarerId], references: [id], onDelete: Cascade)
+  id               String        @id @default(cuid())
+  defaultSort      WaypointSort  @default(NEWEST)
+  openInNewTab     Boolean       @default(true)
+  waypointsPerPage Int           @default(25)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  wayfarerId       String        @unique
+  wayfarer         Wayfarer      @relation(fields: [wayfarerId], references: [id], onDelete: Cascade)
 
   @@map("waypoint_settings")
 }

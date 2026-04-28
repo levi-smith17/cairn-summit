@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 
 type ColorScheme = 'auto' | 'light' | 'dark'
-type FontSize = 'sm' | 'base' | 'lg' | 'xl'
+export type FontSize = 'sm' | 'base' | 'lg' | 'xl'
 
 const fontSizeLabels: Record<FontSize, string> = { sm: 'S', base: 'M', lg: 'L', xl: 'XL' }
 const fontSizeOrder: FontSize[] = ['sm', 'base', 'lg', 'xl']
@@ -34,6 +34,9 @@ interface RichEditorProps {
   showFontSizeToggle?: boolean
   /** When provided, the image popover shows a file upload option. */
   onImageUpload?: (file: File) => Promise<string>
+  /** Controlled font size — provide with onFontSizeChange to persist across remounts. */
+  fontSize?: FontSize
+  onFontSizeChange?: (size: FontSize) => void
 }
 
 // Static lookup — full literal strings are required so Tailwind's scanner
@@ -264,9 +267,20 @@ export function RichEditor({
   showColorToggle = false,
   showFontSizeToggle = false,
   onImageUpload,
+  fontSize: fontSizeProp,
+  onFontSizeChange,
 }: RichEditorProps) {
   const [colorScheme, setColorScheme] = useState<ColorScheme>('auto')
-  const [fontSize, setFontSize] = useState<FontSize>('sm')
+  const [internalFontSize, setInternalFontSize] = useState<FontSize>('sm')
+  const fontSize = fontSizeProp ?? internalFontSize
+
+  function handleFontSizeChange(size: FontSize) {
+    if (onFontSizeChange) {
+      onFontSizeChange(size)
+    } else {
+      setInternalFontSize(size)
+    }
+  }
   const wrapperRef = useRef<HTMLDivElement>(null)
 
   const editor = useEditor({
@@ -280,7 +294,7 @@ export function RichEditor({
     content: value,
     editorProps: {
       attributes: {
-        class: buildEditorClass('auto', 'sm'),
+        class: buildEditorClass('auto', fontSizeProp ?? internalFontSize),
       },
     },
     onUpdate: ({ editor }) => {
@@ -436,7 +450,7 @@ export function RichEditor({
                   key={size}
                   type="button"
                   title={`Font size: ${size}`}
-                  onClick={() => setFontSize(size)}
+                  onClick={() => handleFontSizeChange(size)}
                   className={cn(
                     'h-7 px-1.5 rounded text-xs font-medium transition-colors hover:bg-muted',
                     fontSize === size ? 'bg-muted text-foreground' : 'text-muted-foreground'

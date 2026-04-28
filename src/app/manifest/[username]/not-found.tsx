@@ -1,6 +1,5 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { CairnLogo } from '@/components/cairn-logo'
 import Link from 'next/link'
 

@@ -14,9 +14,12 @@ interface WaypointsClientProps {
   waypoints: any[]
   trails: any[]
   markers: any[]
+  totalCount: number
+  currentPage: number
+  waypointsPerPage: number
 }
 
-export function WaypointsClient({ waypoints, trails, markers }: WaypointsClientProps) {
+export function WaypointsClient({ waypoints, trails, markers, totalCount, currentPage, waypointsPerPage }: WaypointsClientProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { terms } = useTerminology()
@@ -104,6 +107,9 @@ export function WaypointsClient({ waypoints, trails, markers }: WaypointsClientP
               selectedId={selectedId}
               onSelect={selectWaypoint}
               onNew={showNew}
+              totalCount={totalCount}
+              currentPage={currentPage}
+              waypointsPerPage={waypointsPerPage}
             />
           </div>
 
@@ -117,6 +123,7 @@ export function WaypointsClient({ waypoints, trails, markers }: WaypointsClientP
                 waypoint={selectedWaypoint}
                 folders={trails}
                 tags={markers}
+                defaultTrailId={selectedWaypoint ? undefined : (searchParams.get('trailId') ?? undefined)}
                 onBack={clearSelection}
                 onSaved={handleSaved}
                 onDeleted={clearSelection}

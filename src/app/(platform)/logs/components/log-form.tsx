@@ -66,12 +66,13 @@ interface LogFormProps {
   folders: any[]
   waypoints: any[]
   tags: any[]
+  defaultTrailId?: string
   onBack: () => void
   onSaved: (id: string) => void
   onDeleted: () => void
 }
 
-export function LogForm({ log, folders, waypoints, tags, onBack, onSaved, onDeleted }: LogFormProps) {
+export function LogForm({ log, folders, waypoints, tags, defaultTrailId, onBack, onSaved, onDeleted }: LogFormProps) {
   const router = useRouter()
   const { terms } = useTerminology()
   const { saving, saved, error, handleSubmit } = useFormStatus()
@@ -100,7 +101,7 @@ export function LogForm({ log, folders, waypoints, tags, onBack, onSaved, onDele
     defaultValues: {
       title: log?.title ?? '',
       content: log?.content ?? '',
-      folderId: log?.trailId ?? '',
+      folderId: log?.trailId ?? defaultTrailId ?? '',
       waypointId: log?.waypointId ?? '',
       tagIds: log?.markers?.map(t => t.markerId) ?? [],
     },

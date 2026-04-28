@@ -1,72 +1,103 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { BookOpen, Plus, FileText } from 'lucide-react'
+import { BookOpen, Bookmark, NotebookPen, Plus } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { WaypointRow } from './waypoint-row'
-import { LogRow } from './log-row'
 import { InlineWaypointForm } from './inline-waypoint-form'
-import { InlineLogForm } from './inline-log-form'
 import { useTerminology } from '@/contexts/terminology-context'
 
 interface TrailSectionProps {
   trail: { id: string; name: string }
   waypoints: any[]
-  folderLogs: any[]
+  logCount: number
   tags: any[]
   folders: any[]
-  allWaypoints: any[]
   totalWaypointCount: number
 }
 
 export function TrailSection({
   trail,
   waypoints,
-  folderLogs,
+  logCount,
   tags,
   folders,
-  allWaypoints,
   totalWaypointCount,
 }: TrailSectionProps) {
   const router = useRouter()
   const { terms } = useTerminology()
   const [currentWaypoints, setCurrentWaypoints] = useState(waypoints)
   const [addingWaypoint, setAddingWaypoint] = useState(false)
-  const [addingLog, setAddingLog] = useState(false)
 
   useEffect(() => { setCurrentWaypoints(waypoints) }, [waypoints])
 
   return (
     <div>
       {/* Trail group header */}
-      <div className="lg:sticky top-0 z-10 px-4 py-1.5 bg-muted/80 backdrop-blur-sm border-b flex items-center justify-between">
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+      <div className="lg:sticky top-0 z-10 px-4 py-1.5 bg-muted/80 backdrop-blur-sm border-b flex items-center gap-1">
+        {/* Trail name */}
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide truncate mx-1">
           {trail.name}
-          <span className="ml-1.5 font-normal normal-case">({totalWaypointCount})</span>
         </span>
-        <div className="flex items-center gap-0.5">
+        
+        {/* Left: count buttons */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              className="h-6 px-1 gap-0.5 text-xs font-normal text-muted-foreground shrink-0"
+              onClick={() => router.push(`/waypoints?trailId=${trail.id}`)}
+            >
+              <Bookmark className="h-3 w-3" />
+              {totalWaypointCount}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>View {terms.waypoints.toLowerCase()} for this {terms.trails.slice(0, -1).toLowerCase()}</TooltipContent>
+        </Tooltip>
+
+        {logCount > 0 && (
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
-                size="icon"
-                className="h-6 w-6"
-                onClick={() => { setAddingLog(v => !v); setAddingWaypoint(false) }}
+                className="h-6 px-1 gap-0.5 text-xs font-normal text-muted-foreground shrink-0"
+                onClick={() => router.push(`/logs?trailId=${trail.id}`)}
               >
-                <FileText className="h-3 w-3" />
+                <NotebookPen className="h-3 w-3" />
+                {logCount}
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Add {terms.logs.slice(0, -1).toLowerCase()}</TooltipContent>
+            <TooltipContent>View {terms.logs.toLowerCase()} for this {terms.trails.slice(0, -1).toLowerCase()}</TooltipContent>
           </Tooltip>
+        )}
+
+        {/* Right: action buttons */}
+        <div className="ml-auto flex items-center gap-1">
+          {logCount > 0 && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 shrink-0"
+                  onClick={() => router.push(`/logs?logbook=${trail.id}`)}
+                >
+                  <BookOpen className="h-3 w-3" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Open {terms.logbook.toLowerCase()}</TooltipContent>
+            </Tooltip>
+          )}
+
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-6 w-6"
-                onClick={() => { setAddingWaypoint(v => !v); setAddingLog(false) }}
+                className="h-6 w-6 shrink-0"
+                onClick={() => setAddingWaypoint(v => !v)}
               >
                 <Plus className="h-3 w-3" />
               </Button>
@@ -87,18 +118,6 @@ export function TrailSection({
         />
       )}
 
-      {/* Inline add log form (trail-level) */}
-      {addingLog && (
-        <InlineLogForm
-          defaultFolderId={trail.id}
-          folders={folders}
-          waypoints={allWaypoints}
-          tags={tags}
-          onCancel={() => setAddingLog(false)}
-          onSaved={() => setAddingLog(false)}
-        />
-      )}
-
       {/* Waypoints */}
       <div className="flex flex-col divide-y">
         {currentWaypoints.length === 0 ? (
@@ -112,38 +131,11 @@ export function TrailSection({
               waypoint={waypoint}
               folders={folders}
               tags={tags}
-              allWaypoints={allWaypoints}
             />
           ))
         )}
       </div>
 
-      {/* Trail-level logs sub-group */}
-      {folderLogs.length > 0 && (
-        <div>
-          <div className="px-4 py-1 bg-muted/40 border-t border-b flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">
-              {terms.trails.slice(0, -1)} {terms.logs.toLowerCase()}
-            </span>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => router.push(`/logs?logbook=${trail.id}&id=${folderLogs[0].id}`)}
-                  className="text-muted-foreground hover:text-foreground transition-colors p-0.5"
-                >
-                  <BookOpen className="h-3 w-3" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>Open logbook</TooltipContent>
-            </Tooltip>
-          </div>
-          <div className="flex flex-col divide-y">
-            {folderLogs.map(log => (
-              <LogRow key={log.id} log={log} folders={folders} tags={tags} allWaypoints={allWaypoints} />
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   )
 }
