@@ -26,7 +26,7 @@ import { MarkerBadge } from '@/app/(platform)/waypoints/components/marker-badge'
 import { deleteWaypoint, toggleWaypointRead, toggleWaypointReadLater } from '@/actions/waypoints'
 import { InlineWaypointForm } from './inline-waypoint-form'
 import { InlineLogForm } from './inline-log-form'
-import { LogRow } from './log-row'
+import { LogRow } from './inline-log-row'
 import { useTerminology } from '@/contexts/terminology-context'
 
 interface WaypointRowProps {
