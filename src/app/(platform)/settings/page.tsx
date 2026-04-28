@@ -17,8 +17,8 @@ export default async function SettingsPage({
     wayfarer,
     calendars,
     subscriptions,
-    imapAccounts,
     signalSettings,
+    logSettings,
     appearanceSettings,
     notificationSettings,
     privacySettings,
@@ -47,14 +47,13 @@ export default async function SettingsPage({
       orderBy: { createdAt: 'asc' },
       select: { id: true, name: true, url: true, color: true },
     }),
-    prisma.imapAccount.findMany({
-      where: { wayfarerId: session.user.id },
-      orderBy: { createdAt: 'asc' },
-      select: { id: true, label: true, emailAddress: true, imapHost: true, imapPort: true, imapSecure: true, smtpHost: true, smtpPort: true, smtpSecure: true, username: true, isDefault: true },
-    }),
     prisma.signalSettings.findUnique({
       where: { wayfarerId: session.user.id },
       select: { messagesPerPage: true, autoMarkRead: true, autoRefreshInterval: true, defaultView: true, compactView: true, showSnippets: true },
+    }),
+    prisma.logSettings.findUnique({
+      where: { wayfarerId: session.user.id },
+      select: { logsPerPage: true, defaultSort: true },
     }),
     prisma.appearanceSettings.findUnique({
       where: { wayfarerId: session.user.id },
@@ -74,7 +73,7 @@ export default async function SettingsPage({
     }),
     prisma.waypointSettings.findUnique({
       where: { wayfarerId: session.user.id },
-      select: { defaultSort: true, openInNewTab: true },
+      select: { defaultSort: true, openInNewTab: true, waypointsPerPage: true },
     }),
   ])
 
@@ -93,12 +92,14 @@ export default async function SettingsPage({
           }}
           calendars={calendars}
           subscriptions={subscriptions}
-          imapAccounts={imapAccounts}
+          logSettings={{
+            logsPerPage:  logSettings?.logsPerPage  ?? 25,
+            defaultSort:  (logSettings?.defaultSort as 'NEWEST' | 'OLDEST') ?? 'NEWEST',
+          }}
           signalSettings={{
             messagesPerPage:     signalSettings?.messagesPerPage     ?? 25,
             autoMarkRead:        signalSettings?.autoMarkRead        ?? true,
             autoRefreshInterval: signalSettings?.autoRefreshInterval ?? 30,
-            defaultView:         signalSettings?.defaultView         ?? 'SIGNALS',
             compactView:         signalSettings?.compactView         ?? false,
             showSnippets:        signalSettings?.showSnippets        ?? true,
           }}
@@ -123,8 +124,9 @@ export default async function SettingsPage({
             showWeekNumbers:      itinerarySettings?.showWeekNumbers       ?? false,
           }}
           waypointSettings={{
-            defaultSort:  waypointSettings?.defaultSort  ?? 'NEWEST',
-            openInNewTab: waypointSettings?.openInNewTab ?? true,
+            defaultSort:       waypointSettings?.defaultSort       ?? 'NEWEST',
+            openInNewTab:      waypointSettings?.openInNewTab      ?? true,
+            waypointsPerPage:  waypointSettings?.waypointsPerPage  ?? 25,
           }}
         />
     </>

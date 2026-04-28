@@ -2,6 +2,7 @@
 
 import { format } from 'date-fns'
 import { Eye, EyeOff, Plus, Shield, Trash2, UserX } from 'lucide-react'
+import { useTerminology } from '@/contexts/terminology-context'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -48,6 +49,8 @@ export function WayfarerList({
   onBulkDelete,
   onBulkClear,
 }: WayfarerListProps) {
+  const { terms } = useTerminology()
+  const singularWayfarer = terms.wayfarers.endsWith('s') ? terms.wayfarers.slice(0, -1) : terms.wayfarers
   const allSelected = wayfarers.length > 0 && wayfarers.every(w => selectedBulk.has(w.id))
   const someSelected = selectedBulk.size > 0
 
@@ -63,7 +66,7 @@ export function WayfarerList({
             className="shrink-0"
           />
           <span className="text-sm font-medium">
-            {`${wayfarers.length} wayfarer${wayfarers.length !== 1 ? 's' : ''}`}
+            {`${wayfarers.length} ${wayfarers.length === 1 ? singularWayfarer : terms.wayfarers}`.toLowerCase()}
           </span>
         </div>
         <Tooltip>
@@ -72,7 +75,7 @@ export function WayfarerList({
               <Plus className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Add wayfarer</TooltipContent>
+          <TooltipContent>Add {singularWayfarer.toLowerCase()}</TooltipContent>
         </Tooltip>
       </div>
 
@@ -101,7 +104,7 @@ export function WayfarerList({
       <div className="flex-1 overflow-y-auto">
         {wayfarers.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full py-16 px-4 text-center">
-            <p className="text-sm text-muted-foreground">No wayfarers found.</p>
+            <p className="text-sm text-muted-foreground">No {terms.wayfarers.toLowerCase()} found.</p>
           </div>
         ) : (
           wayfarers.map((w, i) => (

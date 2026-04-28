@@ -9,7 +9,7 @@ import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import { CustomSelect } from '@/components/ui/custom-select'
 import { MarkerPicker } from '@/components/ui/marker-picker'
-import { RichTextEditor } from '@/components/ui/rich-text-editor'
+import { RichEditor } from '@/components/ui/rich-editor'
 import { saveLog } from '@/actions/logs'
 import { useFormStatus } from '@/hooks/use-form-status'
 import { useTerminology } from '@/contexts/terminology-context'
@@ -86,11 +86,13 @@ export function InlineLogForm({
     <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col bg-muted/20 border-b">
       <div className="flex flex-col p-4 gap-2">
         {/* Rich text editor */}
-        <RichTextEditor
-          value={form.watch('content')}
-          onChange={val => form.setValue('content', val)}
-          placeholder="Write your entry..."
-        />
+        <div className="rounded-md border border-border overflow-hidden">
+          <RichEditor
+            value={form.watch('content')}
+            onChange={val => form.setValue('content', val)}
+            placeholder="Write your entry..."
+          />
+        </div>
         {form.formState.errors.content && (
           <p className="text-xs text-destructive">{form.formState.errors.content.message}</p>
         )}
@@ -113,16 +115,18 @@ export function InlineLogForm({
             />
           )}
 
-          <CustomSelect
-            options={[
-              { value: 'none', label: `No ${terms.waypoints.slice(0, -1).toLowerCase()}` },
-              ...filteredWaypoints.map((w: any) => ({ value: w.id, label: w.title })),
-            ]}
-            value={form.watch('waypointId') || 'none'}
-            onChange={val => form.setValue('waypointId', val === 'none' ? '' : val)}
-            placeholderValue="none"
-            triggerClassName="w-full h-7 text-xs"
-          />
+          {!defaultWaypointId && !log?.waypointId && (
+            <CustomSelect
+              options={[
+                { value: 'none', label: `No ${terms.waypoints.slice(0, -1).toLowerCase()}` },
+                ...filteredWaypoints.map((w: any) => ({ value: w.id, label: w.title })),
+              ]}
+              value={form.watch('waypointId') || 'none'}
+              onChange={val => form.setValue('waypointId', val === 'none' ? '' : val)}
+              placeholderValue="none"
+              triggerClassName="w-full h-7 text-xs"
+            />
+          )}
 
           <MarkerPicker
             markers={localMarkers}

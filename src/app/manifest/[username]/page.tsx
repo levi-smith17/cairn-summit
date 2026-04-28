@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { ManifestContent } from './components/manifest-content'
 
+export const revalidate = 300
+
 interface ManifestPageProps {
     params: Promise<{ username: string }>
 }

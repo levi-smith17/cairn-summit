@@ -18,7 +18,21 @@ export default async function WaypointsPage({ searchParams }: WaypointsPageProps
   const where = buildWaypointWhere(filters, wayfarerId)
   const orderBy = buildWaypointOrderBy(filters.sort)
 
-  const [waypoints, markers, trails] = await Promise.all([
+  const page = Math.max(1, parseInt(params.get('page') ?? '1', 10))
+
+  const [waypointSettings, markers, trails] = await Promise.all([
+    prisma.waypointSettings.findUnique({
+      where: { wayfarerId },
+      select: { waypointsPerPage: true },
+    }),
+    prisma.marker.findMany({ where: { wayfarerId }, orderBy: { name: 'asc' } }),
+    prisma.trail.findMany({ where: { wayfarerId }, orderBy: { name: 'asc' } }),
+  ])
+
+  const waypointsPerPage = waypointSettings?.waypointsPerPage ?? 25
+  const skip = (page - 1) * waypointsPerPage
+
+  const [waypoints, totalCount] = await Promise.all([
     prisma.waypoint.findMany({
       where,
       include: {
@@ -26,10 +40,20 @@ export default async function WaypointsPage({ searchParams }: WaypointsPageProps
         markers: { include: { marker: true } },
       },
       orderBy,
+      take: waypointsPerPage,
+      skip,
     }),
-    prisma.marker.findMany({ where: { wayfarerId }, orderBy: { name: 'asc' } }),
-    prisma.trail.findMany({ where: { wayfarerId }, orderBy: { name: 'asc' } }),
+    prisma.waypoint.count({ where }),
   ])
 
-  return <WaypointsClient waypoints={waypoints} trails={trails} markers={markers} />
+  return (
+    <WaypointsClient
+      waypoints={waypoints}
+      trails={trails}
+      markers={markers}
+      totalCount={totalCount}
+      currentPage={page}
+      waypointsPerPage={waypointsPerPage}
+    />
+  )
 }

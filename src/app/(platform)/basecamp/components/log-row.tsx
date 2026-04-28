@@ -26,10 +26,9 @@ interface LogRowProps {
   log: any
   folders: any[]
   tags: any[]
-  allWaypoints: any[]
 }
 
-export function LogRow({ log, folders, tags, allWaypoints }: LogRowProps) {
+export function LogRow({ log, folders, tags }: LogRowProps) {
   const router = useRouter()
   const { terms } = useTerminology()
   const [editing, setEditing] = useState(false)
@@ -47,8 +46,9 @@ export function LogRow({ log, folders, tags, allWaypoints }: LogRowProps) {
     return (
       <InlineLogForm
         log={log}
+        defaultWaypointId={log.waypointId}
         folders={folders}
-        waypoints={allWaypoints}
+        waypoints={[]}
         tags={tags}
         onCancel={() => setEditing(false)}
         onSaved={() => setEditing(false)}

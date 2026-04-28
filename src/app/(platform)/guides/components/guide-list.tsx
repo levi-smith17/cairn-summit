@@ -1,9 +1,10 @@
 'use client'
 
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useTerminology } from '@/contexts/terminology-context'
-import { Pencil, Play, Plus, Route, Trash2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Pencil, Play, Plus, Route, Trash2 } from 'lucide-react'
 
 type GuideWithStones = {
   id: string
@@ -24,6 +25,9 @@ interface GuideListProps {
   onLaunch: (id: string) => void
   onLaunchTraverse: () => void
   onDelete: (id: string, name: string) => void
+  totalCount: number
+  currentPage: number
+  pageSize: number
 }
 
 export function GuideList({
@@ -37,16 +41,28 @@ export function GuideList({
   onLaunch,
   onLaunchTraverse,
   onDelete,
+  totalCount,
+  currentPage,
+  pageSize,
 }: GuideListProps) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const { terms } = useTerminology()
   const traverseCount = selectedForTraverse.length
   const canTraverse = traverseCount >= 2
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
+
+  function goToPage(page: number) {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('page', String(page))
+    router.push(`?${params.toString()}`, { scroll: false })
+  }
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
         <span className="text-sm font-medium">
-          {guides.length} {guides.length === 1 ? terms.guide.toLowerCase() : terms.guides.toLowerCase()}
+          {totalCount} {totalCount === 1 ? terms.guide.toLowerCase() : terms.guides.toLowerCase()}
         </span>
         <div className="flex items-center gap-1">
           {canTraverse && (
@@ -175,6 +191,32 @@ export function GuideList({
           })
         )}
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-4 py-2 border-t shrink-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => goToPage(currentPage - 1)}
+            disabled={currentPage <= 1}
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </Button>
+          <span className="text-xs text-muted-foreground">
+            {currentPage} / {totalPages}
+          </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => goToPage(currentPage + 1)}
+            disabled={currentPage >= totalPages}
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

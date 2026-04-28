@@ -129,23 +129,6 @@ export async function deleteResource(id: string) {
   revalidatePath('/starfield/resources')
 }
 
-export async function saveResourceType({
-  id,
-  name,
-  plural,
-}: {
-  id?: string
-  name: string
-  plural: string
-}) {
-  if (id) {
-    await prisma.sfResourceType.update({ where: { id }, data: { name, plural } })
-  } else {
-    await prisma.sfResourceType.create({ data: { name, plural } })
-  }
-  revalidatePath('/starfield/resources')
-}
-
 // ─── System/Planet Catalog ────────────────────────────────────────────────────────
 
 export async function saveSystem({ id, name }: { id?: string; name: string }) {

@@ -115,7 +115,7 @@ function MarkerRow({
             <Plus className="h-3.5 w-3.5" />
           </button>
         </TooltipTrigger>
-        <TooltipContent side="right">{addLabel}</TooltipContent>
+        <TooltipContent side="left">{addLabel}</TooltipContent>
       </Tooltip>
 
       {/* Drill-in chevron — only for group+leaf */}

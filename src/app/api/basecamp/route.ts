@@ -49,6 +49,14 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  const hasWaypointFilter = !!(filters.search || filters.markerIds.length > 0 || filters.readLater || filters.dateFrom || filters.dateTo)
+
+  if (hasWaypointFilter) {
+    trailWhere.waypoints = { some: waypointWhere }
+  } else {
+    trailWhere.OR = [{ waypoints: { some: {} } }, { logs: { some: {} } }]
+  }
+
   const orderBy = buildFolderOrderBy(filters.sort)
   const waypointOrderBy = buildWaypointOrderBy(filters.sort)
 
@@ -66,26 +74,13 @@ export async function GET(req: NextRequest) {
           include: {
             markers: { include: { marker: true } },
             logs: {
-              include: { markers: { include: { marker: true } } },
               orderBy: { createdAt: 'desc' },
+              take: 1,
+              include: { markers: { include: { marker: true } } },
             },
           },
         },
-        logs: {
-          where: {
-            wayfarerId,
-            waypointId: null,
-            ...(filters.search
-              ? { content: { contains: filters.search, mode: 'insensitive' } }
-              : {}),
-            ...(filters.markerIds.length > 0
-              ? { markers: { some: { markerId: { in: filters.markerIds } } } }
-              : {}),
-          },
-          include: { markers: { include: { marker: true } } },
-          orderBy: { createdAt: 'desc' },
-        },
-        _count: { select: { waypoints: true } },
+        _count: { select: { waypoints: true, logs: true } },
       },
     }),
     prisma.trail.count({ where: trailWhere }),

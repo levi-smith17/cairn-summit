@@ -14,8 +14,6 @@ export const authConfig: NextAuthConfig = {
       const isLoggedIn = !!auth?.user
       const isOnLogin = nextUrl.pathname.startsWith('/login')
 
-      console.log('middleware check:', { isLoggedIn, path: nextUrl.pathname })
-
       if (!isLoggedIn && !isOnLogin) return false
       if (isLoggedIn && isOnLogin) {
         return Response.redirect(new URL('/dashboard', nextUrl))

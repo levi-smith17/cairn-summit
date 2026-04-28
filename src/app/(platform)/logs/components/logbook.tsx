@@ -27,7 +27,8 @@ import {
 } from '@/components/ui/alert-dialog'
 import { cn } from '@/lib/utils'
 import { saveLog, deleteLog, reorderLogs } from '@/actions/logs'
-import { RichEditor } from '@/components/ui/rich-editor'
+import { RichEditor, type FontSize } from '@/components/ui/rich-editor'
+import { useTerminology } from '@/contexts/terminology-context'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -186,6 +187,7 @@ export function Logbook({
 }: LogbookProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { terms } = useTerminology()
 
   // ── Page list ──────────────────────────────────────────────────────────────
   const [localLogs, setLocalLogs] = useState<LogItem[]>(initialLogs)
@@ -468,6 +470,17 @@ export function Logbook({
 
   // ── Reorder (DnD) ──────────────────────────────────────────────────────────
   const [reorderMode, setReorderMode] = useState(false)
+
+  const [logbookFontSize, setLogbookFontSize] = useState<FontSize>(() => {
+    if (typeof window === 'undefined') return 'sm'
+    const saved = window.localStorage.getItem('logbook-font-size')
+    return (['sm', 'base', 'lg', 'xl'].includes(saved ?? '') ? saved : 'sm') as FontSize
+  })
+
+  function handleFontSizeChange(size: FontSize) {
+    setLogbookFontSize(size)
+    window.localStorage.setItem('logbook-font-size', size)
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -832,12 +845,14 @@ export function Logbook({
                 fullHeight
                 showColorToggle
                 showFontSizeToggle
+                fontSize={logbookFontSize}
+                onFontSizeChange={handleFontSizeChange}
                 onImageUpload={handleImageUpload}
               />
             </>
           ) : (
             <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-              No pages in this logbook.
+              No pages in this {terms.logbook.toLowerCase()}.
             </div>
           )}
         </div>
@@ -939,7 +954,7 @@ export function Logbook({
             <AlertDialogDescription>
               {isDirty
                 ? 'You have unsaved changes on this page. Would you like to save before adding a new page?'
-                : 'Add a new page to this logbook?'}
+                : `Add a new page to this ${terms.logbook.toLowerCase()}?`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { FileText, Loader2, Plus } from 'lucide-react'
+import { Loader2, Plus } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -11,7 +11,6 @@ import { useTerminology } from '@/contexts/terminology-context'
 import { TrailSection } from './trail-section'
 import { SnapshotPanels } from './snapshot-panels'
 import { InlineWaypointForm } from './inline-waypoint-form'
-import { InlineLogForm } from './inline-log-form'
 
 interface SnapshotData {
   wayfarer: {
@@ -59,7 +58,6 @@ interface BasecampClientProps {
   initialHasMore: boolean
   tags: any[]
   folders: any[]
-  waypoints: any[]
   filteredCountMap: Record<string, number> | null
   sidebarData: SnapshotData
 }
@@ -69,7 +67,6 @@ export function BasecampClient({
   initialHasMore,
   tags,
   folders,
-  waypoints,
   filteredCountMap,
   sidebarData,
 }: BasecampClientProps) {
@@ -82,7 +79,6 @@ export function BasecampClient({
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(false)
   const [addingWaypoint, setAddingWaypoint] = useState(false)
-  const [addingLog, setAddingLog] = useState(false)
 
   const sentinelRef = useRef<HTMLDivElement>(null)
   const prevSearchParamsStr = useRef(searchParamsStr)
@@ -160,52 +156,28 @@ export function BasecampClient({
               <span className="text-sm font-medium text-muted-foreground">
                 {loadedTrails.length} {loadedTrails.length !== 1 ? terms.trails.toLowerCase() : terms.trails.slice(0, -1).toLowerCase()}
               </span>
-              <div className="flex items-center gap-1">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() => { setAddingLog(v => !v); setAddingWaypoint(false) }}
-                    >
-                      <FileText className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Add {terms.logs.slice(0, -1).toLowerCase()}</TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() => { setAddingWaypoint(v => !v); setAddingLog(false) }}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Add {terms.waypoints.slice(0, -1).toLowerCase()}</TooltipContent>
-                </Tooltip>
-              </div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => setAddingWaypoint(v => !v)}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Add {terms.waypoints.slice(0, -1).toLowerCase()}</TooltipContent>
+              </Tooltip>
             </div>
 
-            {/* Global inline add forms */}
+            {/* Global inline add form */}
             {addingWaypoint && (
               <InlineWaypointForm
                 folders={folders}
                 tags={tags}
                 onCancel={() => setAddingWaypoint(false)}
                 onSaved={() => setAddingWaypoint(false)}
-              />
-            )}
-            {addingLog && (
-              <InlineLogForm
-                folders={folders}
-                waypoints={waypoints}
-                tags={tags}
-                onCancel={() => setAddingLog(false)}
-                onSaved={() => setAddingLog(false)}
               />
             )}
 
@@ -230,10 +202,9 @@ export function BasecampClient({
                       key={trail.id}
                       trail={trail}
                       waypoints={trail.waypoints ?? []}
-                      folderLogs={trail.logs ?? []}
+                      logCount={trail._count?.logs ?? 0}
                       tags={tags}
                       folders={folders}
-                      allWaypoints={waypoints}
                       totalWaypointCount={
                         filteredCountMap
                           ? (filteredCountMap[trail.id] ?? 0)

@@ -116,123 +116,6 @@ export async function deleteICloudCalendar(id: string) {
   revalidatePath('/itinerary')
 }
 
-// ── IMAP Accounts ────────────────────────────────────────────────────────────
-
-export async function testImapConnectionAction(data: {
-  imapHost: string
-  imapPort: number
-  imapSecure: boolean
-  username: string
-  password: string
-}): Promise<{ ok: boolean; error?: string }> {
-  try {
-    const { testImapConnection } = await import('@/lib/imap')
-    await testImapConnection({
-      host: data.imapHost,
-      port: data.imapPort,
-      secure: data.imapSecure,
-      username: data.username,
-      password: data.password,
-    })
-    return { ok: true }
-  } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : 'Connection failed' }
-  }
-}
-
-export async function addImapAccount(data: {
-  label: string
-  emailAddress: string
-  imapHost: string
-  imapPort: number
-  imapSecure: boolean
-  smtpHost: string
-  smtpPort: number
-  smtpSecure: boolean
-  username: string
-  password: string
-  isDefault: boolean
-}) {
-  const session = await auth()
-  if (!session?.user?.id) throw new Error('Unauthorized')
-
-  const { encrypt } = await import('@/lib/encrypt')
-  const passwordEnc = encrypt(data.password)
-
-  // If this is the default, unset any existing default
-  if (data.isDefault) {
-    await prisma.imapAccount.updateMany({
-      where: { wayfarerId: session.user.id },
-      data: { isDefault: false },
-    })
-  }
-
-  await prisma.imapAccount.create({
-    data: {
-      label: data.label,
-      emailAddress: data.emailAddress,
-      imapHost: data.imapHost,
-      imapPort: data.imapPort,
-      imapSecure: data.imapSecure,
-      smtpHost: data.smtpHost,
-      smtpPort: data.smtpPort,
-      smtpSecure: data.smtpSecure,
-      username: data.username,
-      passwordEnc,
-      isDefault: data.isDefault,
-      wayfarerId: session.user.id,
-    },
-  })
-
-  revalidatePath('/settings')
-  revalidatePath('/signals')
-}
-
-export async function updateImapAccount(id: string, data: {
-  label: string
-  emailAddress: string
-  imapHost: string
-  imapPort: number
-  imapSecure: boolean
-  smtpHost: string
-  smtpPort: number
-  smtpSecure: boolean
-  isDefault: boolean
-}) {
-  const session = await auth()
-  if (!session?.user?.id) throw new Error('Unauthorized')
-
-  const account = await prisma.imapAccount.findFirst({
-    where: { id, wayfarerId: session.user.id },
-  })
-  if (!account) return
-
-  if (data.isDefault) {
-    await prisma.imapAccount.updateMany({
-      where: { wayfarerId: session.user.id, id: { not: id } },
-      data: { isDefault: false },
-    })
-  }
-
-  await prisma.imapAccount.update({
-    where: { id },
-    data: {
-      label: data.label,
-      emailAddress: data.emailAddress,
-      imapHost: data.imapHost,
-      imapPort: data.imapPort,
-      imapSecure: data.imapSecure,
-      smtpHost: data.smtpHost,
-      smtpPort: data.smtpPort,
-      smtpSecure: data.smtpSecure,
-      isDefault: data.isDefault,
-    },
-  })
-
-  revalidatePath('/settings')
-  revalidatePath('/signals')
-}
-
 // ── Signal Settings ──────────────────────────────────────────────────────────
 
 export async function updateSignalSettings(data: {
@@ -325,11 +208,29 @@ export async function updateItinerarySettings(data: {
   revalidatePath('/itinerary')
 }
 
+// ── Log Settings ─────────────────────────────────────────────────────────────
+
+export async function updateLogSettings(data: {
+  logsPerPage?: number
+  defaultSort?: 'NEWEST' | 'OLDEST'
+}) {
+  const session = await auth()
+  if (!session?.user?.id) return
+  await prisma.logSettings.upsert({
+    where:  { wayfarerId: session.user.id },
+    update: data,
+    create: { wayfarerId: session.user.id, ...data },
+  })
+  revalidatePath('/settings')
+  revalidatePath('/logs')
+}
+
 // ── Waypoint Settings ────────────────────────────────────────────────────────
 
 export async function updateWaypointSettings(data: {
   defaultSort: 'NEWEST' | 'OLDEST' | 'TITLE_ASC' | 'TITLE_DESC'
   openInNewTab: boolean
+  waypointsPerPage: number
 }) {
   const session = await auth()
   if (!session?.user?.id) return
@@ -340,21 +241,6 @@ export async function updateWaypointSettings(data: {
   })
   revalidatePath('/settings')
   revalidatePath('/waypoints')
-}
-
-export async function deleteImapAccount(id: string) {
-  const session = await auth()
-  if (!session?.user?.id) throw new Error('Unauthorized')
-
-  const account = await prisma.imapAccount.findFirst({
-    where: { id, wayfarerId: session.user.id },
-  })
-  if (!account) return
-
-  await prisma.imapAccount.delete({ where: { id } })
-
-  revalidatePath('/settings')
-  revalidatePath('/signals')
 }
 
 // ── Calendar Subscriptions ───────────────────────────────────────────────────

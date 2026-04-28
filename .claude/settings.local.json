@@ -14,7 +14,10 @@
       "Bash(npm install:*)",
       "Bash(npx tsc:*)",
       "Bash(ls -la \"c:\\\\Users\\\\Levi\\\\NextJS\\\\cairn\\\\src\\\\app\\\\\\(platform\\)\\\\settings\")",
-      "Bash(grep -A 15 '$StopPayload' node_modules/.prisma/client/index.d.ts)"
+      "Bash(grep -A 15 '$StopPayload' node_modules/.prisma/client/index.d.ts)",
+      "Bash(xargs ls *)",
+      "Bash(npm uninstall *)",
+      "Bash(grep -E \"\\\\.\\(tsx|ts\\)$\")"
     ]
   }
 }

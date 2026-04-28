@@ -38,10 +38,6 @@ interface ItinerarySnapshotPanelProps {
   stops: CairnStop[]
 }
 
-function isSameDay(a: Date, b: Date) {
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
-}
-
 function eventsForDay(cairnStops: CairnStop[], externalEvents: ExternalEvent[], date: Date): DayEvent[] {
   const d = new Date(date); d.setHours(0, 0, 0, 0)
 

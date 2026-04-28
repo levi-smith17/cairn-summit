@@ -22,9 +22,12 @@ import {
 interface ResourcesClientProps {
   resources: any[]
   resourceTypes: any[]
+  totalCount: number
+  currentPage: number
+  pageSize: number
 }
 
-export function ResourcesClient({ resources, resourceTypes }: ResourcesClientProps) {
+export function ResourcesClient({ resources, resourceTypes, totalCount, currentPage, pageSize }: ResourcesClientProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [search, setSearch] = useState('')
@@ -114,6 +117,10 @@ export function ResourcesClient({ resources, resourceTypes }: ResourcesClientPro
               onNew={handleAdd}
               onEdit={handleEdit}
               onDelete={(id, name) => setDeleteTarget({ id, name })}
+              totalCount={totalCount}
+              currentPage={currentPage}
+              pageSize={pageSize}
+              isSearching={!!search.trim()}
             />
           </div>
           <div className={`${(selectedResource || showForm) ? 'flex' : 'hidden md:flex'} flex-col flex-1 rounded-lg border border-border bg-card overflow-hidden`}>

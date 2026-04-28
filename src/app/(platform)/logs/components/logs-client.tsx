@@ -1,7 +1,9 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
-import { NotebookPen } from 'lucide-react'
+import { NotebookPen, Settings } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { PlatformHeader } from '@/components/nav/platform/platform-header'
 import { useTerminology } from '@/contexts/terminology-context'
 import { FilterBar } from '@/components/filters/filter-bar'
@@ -14,9 +16,12 @@ interface LogClientProps {
   trails: any[]
   waypoints: any[]
   markers: any[]
+  totalCount: number
+  currentPage: number
+  logsPerPage: number
 }
 
-export function LogClient({ logs, trails, waypoints, markers }: LogClientProps) {
+export function LogClient({ logs, trails, waypoints, markers, totalCount, currentPage, logsPerPage }: LogClientProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { terms } = useTerminology()
@@ -53,7 +58,7 @@ export function LogClient({ logs, trails, waypoints, markers }: LogClientProps) 
           <div className="flex-1 rounded-lg border border-border bg-card overflow-hidden">
             <Logbook
               trailId={logbookTrailId}
-              trailName={trail?.name ?? 'Logbook'}
+              trailName={trail?.name ?? terms.logbook}
               initialLogs={trailLogs}
               markers={markers}
               waypoints={trailWaypoints}
@@ -93,7 +98,7 @@ export function LogClient({ logs, trails, waypoints, markers }: LogClientProps) 
     const params = new URLSearchParams(searchParams.toString())
     params.set('logbook', trailId)
     params.set('id', firstLogId)
-    params.delete('trail')  // clear any trail filter so the logbook isn't confused
+    params.delete('trailId')
     router.push(`?${params.toString()}`, { scroll: false })
   }
 
@@ -104,17 +109,44 @@ export function LogClient({ logs, trails, waypoints, markers }: LogClientProps) 
       <div className="flex flex-col flex-1 gap-4 p-4 overflow-hidden min-h-0">
         {/* Filter bar */}
         <div className="rounded-lg border border-border bg-card p-2 shrink-0">
-          <FilterBar
-            markers={markers}
-            trails={trails}
-            showTrailFilter
-            showMarkerFilter
-            showSort
-            showUnattached
-            showDateRange
-            searchPlaceholder={`${terms.explore} ${terms.logs.toLowerCase()}...`}
-            fill
-          />
+          <div className="flex items-center gap-1.5">
+            <FilterBar
+              markers={markers}
+              trails={trails}
+              showTrailFilter
+              showMarkerFilter
+              showSort
+              showUnattached
+              showDateRange
+              searchPlaceholder={`${terms.explore} ${terms.logs.toLowerCase()}...`}
+              fill
+              trailingAction={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="md:hidden h-8 gap-1.5 text-sm"
+                  onClick={() => router.push('/settings?section=logs')}
+                >
+                  <Settings className="h-3.5 w-3.5" />
+                  Settings
+                </Button>
+              }
+            />
+            <div className="hidden md:block flex-1" />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="hidden md:flex h-8 w-8 shrink-0"
+                  onClick={() => router.push('/settings?section=logs')}
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{terms.logs} Settings</TooltipContent>
+            </Tooltip>
+          </div>
         </div>
 
         <div className="flex flex-1 gap-4 overflow-hidden min-h-0">
@@ -128,6 +160,9 @@ export function LogClient({ logs, trails, waypoints, markers }: LogClientProps) 
               onSelect={selectLog}
               onNew={showNew}
               onOpenLogbook={openLogbook}
+              totalCount={totalCount}
+              currentPage={currentPage}
+              logsPerPage={logsPerPage}
             />
           </div>
 
@@ -142,6 +177,7 @@ export function LogClient({ logs, trails, waypoints, markers }: LogClientProps) 
                 folders={trails}
                 waypoints={waypoints}
                 tags={markers}
+                defaultTrailId={selectedLog ? undefined : (searchParams.get('trailId') ?? undefined)}
                 onBack={clearSelection}
                 onSaved={selectLog}
                 onDeleted={clearSelection}

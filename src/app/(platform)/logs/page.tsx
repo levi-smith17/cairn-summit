@@ -18,7 +18,22 @@ export default async function LogPage({ searchParams }: LogPageProps) {
   const where = buildLogWhere(filters, wayfarerId)
   const orderBy = buildLogOrderBy(filters.sort)
 
-  const [logs, markers, trails, waypoints] = await Promise.all([
+  const page = Math.max(1, parseInt(params.get('page') ?? '1', 10))
+
+  const [logSettings, markers, trails, waypoints] = await Promise.all([
+    prisma.logSettings.findUnique({
+      where: { wayfarerId },
+      select: { logsPerPage: true, defaultSort: true },
+    }),
+    prisma.marker.findMany({ where: { wayfarerId }, orderBy: { name: 'asc' } }),
+    prisma.trail.findMany({ where: { wayfarerId }, orderBy: { name: 'asc' } }),
+    prisma.waypoint.findMany({ where: { wayfarerId }, orderBy: { title: 'asc' } }),
+  ])
+
+  const logsPerPage = logSettings?.logsPerPage ?? 25
+  const skip = (page - 1) * logsPerPage
+
+  const [logs, totalCount] = await Promise.all([
     prisma.log.findMany({
       where,
       include: {
@@ -27,11 +42,21 @@ export default async function LogPage({ searchParams }: LogPageProps) {
         markers: { include: { marker: true } },
       },
       orderBy,
+      take: logsPerPage,
+      skip,
     }),
-    prisma.marker.findMany({ where: { wayfarerId }, orderBy: { name: 'asc' } }),
-    prisma.trail.findMany({ where: { wayfarerId }, orderBy: { name: 'asc' } }),
-    prisma.waypoint.findMany({ where: { wayfarerId }, orderBy: { title: 'asc' } }),
+    prisma.log.count({ where }),
   ])
 
-  return <LogClient logs={logs} markers={markers} trails={trails} waypoints={waypoints} />
+  return (
+    <LogClient
+      logs={logs}
+      markers={markers}
+      trails={trails}
+      waypoints={waypoints}
+      totalCount={totalCount}
+      currentPage={page}
+      logsPerPage={logsPerPage}
+    />
+  )
 }

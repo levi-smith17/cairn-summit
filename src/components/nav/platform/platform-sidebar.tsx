@@ -94,7 +94,7 @@ function buildNavItems(terms: Terms): { group: string; items: NavItem[] }[] {
     {
       group: 'Admin',
       items: [
-        { title: 'Wayfarers', url: '/admin', icon: Shield, tooltip: 'Wayfarer Management' },
+        { title: terms.wayfarers, url: '/admin', icon: Shield, tooltip: terms.wayfarers },
       ],
     },
     {
