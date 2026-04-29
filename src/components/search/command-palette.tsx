@@ -108,6 +108,7 @@ export function CommandPalette({ openInNewTab }: CommandPaletteProps) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [deep, setDeep] = useState(false)
+  const [googleMode, setGoogleMode] = useState(false)
   const [results, setResults] = useState<SearchResult[]>([])
   const [activeIndex, setActiveIndex] = useState(0)
   const [showAll, setShowAll] = useState(false)
@@ -128,6 +129,7 @@ export function CommandPalette({ openInNewTab }: CommandPaletteProps) {
       setResults([])
       setActiveIndex(0)
       setShowAll(false)
+      setGoogleMode(false)
     }
   }, [open])
 
@@ -151,8 +153,9 @@ export function CommandPalette({ openInNewTab }: CommandPaletteProps) {
     return () => window.removeEventListener('cairn:open-search', onOpen)
   }, [])
 
-  // Debounced search
+  // Debounced search — suppressed in Google mode
   useEffect(() => {
+    if (googleMode) return
     if (debounceRef.current) clearTimeout(debounceRef.current)
     if (!query.trim()) {
       setResults([])
@@ -169,39 +172,7 @@ export function CommandPalette({ openInNewTab }: CommandPaletteProps) {
       })
     }, 200)
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
-  }, [query, deep])
-
-  const displayItems: (SearchResult | StoredResult)[] = query.trim()
-    ? (showAll ? results : results.slice(0, INITIAL_SHOW))
-    : recents
-
-  const hasMore = query.trim() && !showAll && results.length > INITIAL_SHOW
-
-  // Keyboard navigation within results
-  useEffect(() => {
-    if (!open) return
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'ArrowDown') {
-        e.preventDefault()
-        setActiveIndex(i => Math.min(i + 1, displayItems.length - 1))
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault()
-        setActiveIndex(i => Math.max(i - 1, 0))
-      } else if (e.key === 'Enter') {
-        e.preventDefault()
-        if (displayItems[activeIndex]) navigate(displayItems[activeIndex] as SearchResult)
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [open, displayItems, activeIndex])
-
-  // Scroll active item into view
-  useEffect(() => {
-    if (!listRef.current) return
-    const el = listRef.current.querySelector(`[data-index="${activeIndex}"]`) as HTMLElement | null
-    el?.scrollIntoView({ block: 'nearest' })
-  }, [activeIndex])
+  }, [query, deep, googleMode])
 
   const navigate = useCallback((result: SearchResult | StoredResult) => {
     saveRecent(result as SearchResult)
@@ -213,6 +184,48 @@ export function CommandPalette({ openInNewTab }: CommandPaletteProps) {
       router.push(result.url)
     }
   }, [openInNewTab, router])
+
+  const displayItems: (SearchResult | StoredResult)[] = query.trim()
+    ? (showAll ? results : results.slice(0, INITIAL_SHOW))
+    : recents
+
+  const hasMore = query.trim() && !showAll && results.length > INITIAL_SHOW
+
+  // Keyboard navigation within results + Google mode toggle
+  useEffect(() => {
+    if (!open) return
+    function onKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'g') {
+        e.preventDefault()
+        setGoogleMode(v => !v)
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        if (!googleMode) setActiveIndex(i => Math.min(i + 1, displayItems.length - 1))
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        if (!googleMode) setActiveIndex(i => Math.max(i - 1, 0))
+      } else if (e.key === 'Enter') {
+        e.preventDefault()
+        if (googleMode) {
+          if (query.trim()) {
+            window.open(`https://www.google.com/search?q=${encodeURIComponent(query.trim())}`, '_blank', 'noopener,noreferrer')
+            setOpen(false)
+          }
+        } else if (displayItems[activeIndex]) {
+          navigate(displayItems[activeIndex] as SearchResult)
+        }
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, displayItems, activeIndex, googleMode, query, navigate])
+
+  // Scroll active item into view
+  useEffect(() => {
+    if (!listRef.current) return
+    const el = listRef.current.querySelector(`[data-index="${activeIndex}"]`) as HTMLElement | null
+    el?.scrollIntoView({ block: 'nearest' })
+  }, [activeIndex])
 
   if (!open) return null
 
@@ -228,28 +241,36 @@ export function CommandPalette({ openInNewTab }: CommandPaletteProps) {
       <div className="fixed left-1/2 top-[15%] z-50 w-full max-w-xl -translate-x-1/2 rounded-xl border border-border bg-background shadow-2xl overflow-hidden">
 
         {/* Search bar */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
-          <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+        <div className={`flex items-center gap-2 px-4 py-3 border-b transition-colors ${googleMode ? 'border-blue-500/40 bg-blue-500/5' : 'border-border'}`}>
+          <Search className={`h-4 w-4 shrink-0 transition-colors ${googleMode ? 'text-blue-500' : 'text-muted-foreground'}`} />
           <input
             ref={inputRef}
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Search everything…"
+            placeholder={googleMode ? 'Search Google…' : 'Search everything…'}
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
-          {/* Deep search toggle */}
-          <button
-            onClick={() => setDeep(v => !v)}
-            title={deep ? 'Deep search on — searching body text' : 'Deep search off — title only'}
-            className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium transition-colors ${
-              deep
-                ? 'bg-primary/15 text-primary'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-            }`}
-          >
-            <AlignLeft className="h-3.5 w-3.5" />
-            Deep
-          </button>
+          {/* Google mode badge */}
+          {googleMode && (
+            <span className="flex items-center px-2 py-0.5 rounded bg-blue-500/15 text-blue-600 dark:text-blue-400 text-xs font-semibold shrink-0 select-none">
+              Google
+            </span>
+          )}
+          {/* Deep search toggle — hidden in Google mode */}
+          {!googleMode && (
+            <button
+              onClick={() => setDeep(v => !v)}
+              title={deep ? 'Deep search on — searching body text' : 'Deep search off — title only'}
+              className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium transition-colors ${
+                deep
+                  ? 'bg-primary/15 text-primary'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+              }`}
+            >
+              <AlignLeft className="h-3.5 w-3.5" />
+              Deep
+            </button>
+          )}
           {/* Close */}
           <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground transition-colors">
             <X className="h-4 w-4" />
@@ -258,7 +279,21 @@ export function CommandPalette({ openInNewTab }: CommandPaletteProps) {
 
         {/* Results */}
         <div ref={listRef} className="overflow-y-auto max-h-[420px]">
-          {!query.trim() && recents.length === 0 && (
+
+          {/* Google mode state */}
+          {googleMode && (
+            <div className="flex flex-col items-center justify-center py-12 text-center px-4 gap-2">
+              {query.trim() ? (
+                <p className="text-sm text-muted-foreground">
+                  Press <kbd className="font-mono px-1 py-0.5 rounded bg-muted text-xs">↵</kbd> to search Google for <strong>&quot;{query}&quot;</strong>
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">Type to search Google…</p>
+              )}
+            </div>
+          )}
+
+          {!googleMode && !query.trim() && recents.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-center px-4">
               <Search className="h-8 w-8 text-muted-foreground/30 mb-3" />
               <p className="text-sm text-muted-foreground">Type to search across all your content.</p>
@@ -268,7 +303,7 @@ export function CommandPalette({ openInNewTab }: CommandPaletteProps) {
             </div>
           )}
 
-          {!query.trim() && recents.length > 0 && (
+          {!googleMode && !query.trim() && recents.length > 0 && (
             <>
               <div className="flex items-center gap-1.5 px-4 py-2">
                 <Clock className="h-3 w-3 text-muted-foreground" />
@@ -286,15 +321,15 @@ export function CommandPalette({ openInNewTab }: CommandPaletteProps) {
             </>
           )}
 
-          {query.trim() && pending && (
+          {!googleMode && query.trim() && pending && (
             <div className="flex items-center justify-center py-10">
               <div className="h-5 w-5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
             </div>
           )}
 
-          {query.trim() && !pending && results.length === 0 && (
+          {!googleMode && query.trim() && !pending && results.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-center px-4">
-              <p className="text-sm text-muted-foreground">No results for <strong>"{query}"</strong>.</p>
+              <p className="text-sm text-muted-foreground">No results for <strong>&quot;{query}&quot;</strong>.</p>
               {!deep && (
                 <button
                   onClick={() => setDeep(true)}
@@ -306,7 +341,7 @@ export function CommandPalette({ openInNewTab }: CommandPaletteProps) {
             </div>
           )}
 
-          {query.trim() && !pending && displayItems.map((r, i) => (
+          {!googleMode && query.trim() && !pending && displayItems.map((r, i) => (
             <ResultRow
               key={`${r.type}:${r.id}`}
               result={r}
@@ -327,11 +362,23 @@ export function CommandPalette({ openInNewTab }: CommandPaletteProps) {
         </div>
 
         {/* Footer hint */}
-        <div className="flex items-center gap-3 px-4 py-2 border-t border-border/50 text-[10px] text-muted-foreground/60">
-          <span><kbd className="font-mono">↑↓</kbd> navigate</span>
-          <span><kbd className="font-mono">↵</kbd> open</span>
-          <span><kbd className="font-mono">Esc</kbd> close</span>
-          <span className="ml-auto"><kbd className="font-mono">⌘K</kbd> toggle</span>
+        <div className="flex items-center gap-3 px-4 py-2 border-t border-border/50 text-[12px] text-muted-foreground/60">
+          {googleMode ? (
+            <>
+              <span><kbd className="font-mono">↵</kbd> search</span>
+              <span><kbd className="font-mono">Esc</kbd> close</span>
+              <span className="ml-auto text-blue-500/70"><kbd className="font-mono">⌘G</kbd> back to app</span>
+              <span><kbd className="font-mono">⌘K</kbd> toggle</span>
+            </>
+          ) : (
+            <>
+              <span><kbd className="font-mono">↑↓</kbd> navigate</span>
+              <span><kbd className="font-mono">↵</kbd> open</span>
+              <span><kbd className="font-mono">Esc</kbd> close</span>
+              <span className="ml-auto"><kbd className="font-mono">⌘G</kbd> Google</span>
+              <span><kbd className="font-mono">⌘K</kbd> toggle</span>
+            </>
+          )}
         </div>
       </div>
     </>
