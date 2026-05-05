@@ -68,7 +68,7 @@ Open [http://localhost:3000](http://localhost:3000) to see the result.
 
 ## Project Status
 
-Cairn is actively developed and maintained. It is a personal project and not open for contributions at this time, but feel free to explore the codebase, ask questions, or reach out via [levismith.us](https://levismith.us).
+Cairn is actively developed and maintained. It is a personal project and not open for contributions at this time, but feel free to explore the codebase, ask questions, or reach out via [levismith.us]([https://levismith.us](https://cairn.ing/manifest/levi/contact)).
 
 ---
 
