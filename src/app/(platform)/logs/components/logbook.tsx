@@ -30,6 +30,9 @@ import { saveLog, deleteLog, reorderLogs } from '@/actions/logs'
 import { RichEditor, type FontSize } from '@/components/ui/rich-editor'
 import { useTerminology } from '@/contexts/terminology-context'
 
+const POPUP_PAGE_SIZE = 20
+const REORDER_PAGE_SIZE = 25
+
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 interface LogItem {
@@ -60,6 +63,8 @@ function SortablePageRow({
   compact = false,
   canDrag = true,
   onNavigate,
+  totalCount,
+  onMoveToPosition,
 }: {
   log: LogItem
   index: number
@@ -67,7 +72,21 @@ function SortablePageRow({
   compact?: boolean
   canDrag?: boolean
   onNavigate?: () => void
+  totalCount?: number
+  onMoveToPosition?: (targetIndex: number) => void
 }) {
+  const [posEditing, setPosEditing] = useState(false)
+  const [posValue, setPosValue] = useState('')
+
+  function commitPosition() {
+    const n = parseInt(posValue, 10)
+    if (!isNaN(n) && n >= 1 && n <= (totalCount ?? 1) && n - 1 !== index) {
+      onMoveToPosition?.(n - 1)
+    }
+    setPosEditing(false)
+    setPosValue('')
+  }
+
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: log.id,
     disabled: !canDrag,
@@ -143,8 +162,36 @@ function SortablePageRow({
         <GripVertical className="h-5 w-5" />
       </button>
 
-      {/* Page number */}
-      <span className="text-sm text-muted-foreground tabular-nums w-6 text-right shrink-0">{index + 1}</span>
+      {/* Page number — clickable to jump to a position when onMoveToPosition is provided */}
+      {onMoveToPosition ? (
+        posEditing ? (
+          <input
+            type="number"
+            autoFocus
+            min={1}
+            max={totalCount}
+            value={posValue}
+            onChange={e => setPosValue(e.target.value)}
+            onBlur={commitPosition}
+            onKeyDown={e => {
+              if (e.key === 'Enter') { e.preventDefault(); commitPosition() }
+              if (e.key === 'Escape') { setPosEditing(false); setPosValue('') }
+            }}
+            className="w-10 text-sm text-right bg-transparent border-b border-border outline-none tabular-nums text-muted-foreground shrink-0"
+          />
+        ) : (
+          <button
+            type="button"
+            title={`Position ${index + 1} — click to move`}
+            onClick={() => { setPosEditing(true); setPosValue(String(index + 1)) }}
+            className="text-sm text-muted-foreground tabular-nums w-6 text-right shrink-0 hover:text-foreground hover:underline transition-colors"
+          >
+            {index + 1}
+          </button>
+        )
+      ) : (
+        <span className="text-sm text-muted-foreground tabular-nums w-6 text-right shrink-0">{index + 1}</span>
+      )}
 
       {/* Content */}
       <div className="flex-1 min-w-0">
@@ -241,7 +288,7 @@ export function Logbook({
     html: string,
     ids: string[],
     pageTitle: string,
-    silent = false,
+    message: string | false = 'Saved',
   ) => {
     await saveLog({ id: logId, title: pageTitle || null, content: html, trailId, markerIds: ids })
     setSavedContent(html)
@@ -249,7 +296,7 @@ export function Logbook({
     setLocalLogs(prev => prev.map(l =>
       l.id === logId ? { ...l, title: pageTitle || null, content: html } : l
     ))
-    if (!silent) toast.success('Saved')
+    if (message) toast.success(message)
   }, [trailId])
 
   async function handleSave() {
@@ -275,7 +322,7 @@ export function Logbook({
     titleAutoSaveTimer.current = setTimeout(async () => {
       const log = localLogs[currentIndexRef.current]
       if (!log) return
-      await persistLog(log.id, contentRef.current, markerIdsRef.current, val, true)
+      await persistLog(log.id, contentRef.current, markerIdsRef.current, val, 'Title saved')
     }, 800)
   }
 
@@ -286,7 +333,7 @@ export function Logbook({
     autoSaveTimer.current = setTimeout(async () => {
       const log = localLogs[currentIndexRef.current]
       if (!log) return
-      await persistLog(log.id, contentRef.current, ids, titleRef.current, true)
+      await persistLog(log.id, contentRef.current, ids, titleRef.current, `${terms.markers} saved`)
     }, 400)
   }
 
@@ -393,7 +440,7 @@ export function Logbook({
     const newIndex = localLogs.length // index the new item will occupy
     try {
       if (saveFirst && logToSave) {
-        await persistLog(logToSave.id, contentSnapshot, markerIdsSnapshot, titleSnapshot, true)
+        await persistLog(logToSave.id, contentSnapshot, markerIdsSnapshot, titleSnapshot, false)
       }
       const newLog = await saveLog({ title: null, content: '<p></p>', trailId, markerIds: [] })
       const newItem: LogItem = {
@@ -471,11 +518,14 @@ export function Logbook({
   // ── Reorder (DnD) ──────────────────────────────────────────────────────────
   const [reorderMode, setReorderMode] = useState(false)
 
-  const [logbookFontSize, setLogbookFontSize] = useState<FontSize>(() => {
-    if (typeof window === 'undefined') return 'sm'
+  const [logbookFontSize, setLogbookFontSize] = useState<FontSize>('sm')
+
+  useEffect(() => {
     const saved = window.localStorage.getItem('logbook-font-size')
-    return (['sm', 'base', 'lg', 'xl'].includes(saved ?? '') ? saved : 'sm') as FontSize
-  })
+    if (['sm', 'base', 'lg', 'xl'].includes(saved ?? '')) {
+      setLogbookFontSize(saved as FontSize)
+    }
+  }, [])
 
   function handleFontSizeChange(size: FontSize) {
     setLogbookFontSize(size)
@@ -510,6 +560,8 @@ export function Logbook({
   // ── Page list popover ──────────────────────────────────────────────────────
   const [pageListOpen, setPageListOpen] = useState(false)
   const [pageSearch, setPageSearch] = useState('')
+  const [popoverPage, setPopoverPage] = useState(0)
+  const [reorderPage, setReorderPage] = useState(0)
   const pageSearchRef = useRef<HTMLInputElement>(null)
 
   const filteredPages = useMemo(() => {
@@ -521,10 +573,39 @@ export function Logbook({
     )
   }, [localLogs, pageSearch])
 
+  const popoverTotalPages = Math.ceil(localLogs.length / POPUP_PAGE_SIZE)
+  const showPopoverPagination = !pageSearch && popoverTotalPages > 1
+  const paginatedPopoverPages = pageSearch
+    ? filteredPages
+    : filteredPages.slice(popoverPage * POPUP_PAGE_SIZE, (popoverPage + 1) * POPUP_PAGE_SIZE)
+
+  const reorderTotalPages = Math.ceil(localLogs.length / REORDER_PAGE_SIZE)
+  const pagedReorderLogs = localLogs.slice(reorderPage * REORDER_PAGE_SIZE, (reorderPage + 1) * REORDER_PAGE_SIZE)
+
   function handlePageListOpenChange(open: boolean) {
     setPageListOpen(open)
-    if (!open) setPageSearch('')
-    else setTimeout(() => pageSearchRef.current?.focus(), 50)
+    if (!open) {
+      setPageSearch('')
+    } else {
+      setPopoverPage(Math.floor(currentIndex / POPUP_PAGE_SIZE))
+      setTimeout(() => pageSearchRef.current?.focus(), 50)
+    }
+  }
+
+  function handlePageSearchChange(val: string) {
+    setPageSearch(val)
+    if (val) setPopoverPage(0)
+  }
+
+  function handleMoveToPosition(logId: string, targetIndex: number) {
+    const fromIndex = localLogs.findIndex(l => l.id === logId)
+    if (fromIndex === -1 || fromIndex === targetIndex) return
+    const newOrder = arrayMove(localLogs, fromIndex, targetIndex)
+    const currentLogId = currentLog?.id
+    const newCurrentIndex = newOrder.findIndex(l => l.id === currentLogId)
+    if (newCurrentIndex !== -1) setCurrentIndex(newCurrentIndex)
+    setLocalLogs(newOrder)
+    reorderLogs(newOrder.map(l => l.id)).catch(console.error)
   }
 
   // ── Animation style ────────────────────────────────────────────────────────
@@ -551,32 +632,48 @@ export function Logbook({
       `}</style>
 
       {/* ── Action bar ── */}
-      <div className="flex flex-col border-b shrink-0 sm:flex-row sm:items-center sm:gap-2 sm:px-4 sm:py-2.5">
+      <div className="flex flex-col border-b shrink-0 sm:flex-row sm:items-stretch sm:gap-2 sm:px-4">
 
-        {/* Row 1 (always): back button + trail name */}
-        <div className="flex items-center gap-2 px-4 py-2.5 sm:p-0 sm:flex-1 sm:min-w-0">
+        {/* Row 1 (always): back button + trail name + title */}
+        <div className="flex items-stretch gap-2 px-4 sm:px-0 sm:flex-1 sm:min-w-0">
           <button
             onClick={onBack}
-            className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
+            className="self-center shrink-0 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
 
-          <span className="text-sm font-medium truncate flex-1 min-w-0">
-            {trailName}
-            {!reorderMode && isDirty && (
-              <span className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-primary align-middle" title="Unsaved changes" />
+          {/* Trail name | divider | title — fills remaining width, divider is full-height */}
+          <div className="flex flex-1 min-w-0 items-stretch">
+            <span className="flex-1 min-w-0 py-2.5 text-sm font-medium truncate flex items-center">
+              {trailName}
+              {!reorderMode && isDirty && (
+                <span className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-primary align-middle" title="Unsaved changes" />
+              )}
+            </span>
+
+            {!reorderMode && (
+              <>
+                <div className="w-px bg-border shrink-0" />
+                <input
+                  type="text"
+                  value={title}
+                  onChange={e => handleTitleChange(e.target.value)}
+                  placeholder="Title (optional)"
+                  className="flex-1 min-w-0 py-2.5 px-3 text-sm font-medium bg-transparent focus:outline-none placeholder:text-muted-foreground/40"
+                />
+              </>
             )}
-          </span>
+          </div>
 
           {/* Reorder controls — inline with name on mobile, separate on desktop */}
           {reorderMode && (
             <>
-              <span className="text-xs text-muted-foreground hidden sm:block">Drag pages to reorder</span>
+              <span className="text-xs text-muted-foreground hidden sm:flex items-center">Drag pages to reorder</span>
               <Button
                 variant="outline"
                 size="sm"
-                className="h-7 text-xs shrink-0"
+                className="h-7 text-xs shrink-0 self-center"
                 onClick={() => setReorderMode(false)}
               >
                 Done
@@ -675,7 +772,7 @@ export function Logbook({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-9 w-9"
-                    onClick={() => setReorderMode(true)}>
+                    onClick={() => { setReorderMode(true); setReorderPage(Math.floor(currentIndex / REORDER_PAGE_SIZE)) }}>
                     <LayoutList className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
@@ -696,7 +793,7 @@ export function Logbook({
             </div>
 
             {/* Desktop: all controls inline */}
-            <div className="hidden sm:flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-2 sm:py-2.5">
               <div className="shrink-0">
                 <MarkerPicker
                   markers={markers}
@@ -778,7 +875,7 @@ export function Logbook({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0"
-                    onClick={() => setReorderMode(true)}>
+                    onClick={() => { setReorderMode(true); setReorderPage(Math.floor(currentIndex / REORDER_PAGE_SIZE)) }}>
                     <LayoutList className="h-3.5 w-3.5" />
                   </Button>
                 </TooltipTrigger>
@@ -801,66 +898,9 @@ export function Logbook({
         )}
       </div>
 
-      {/* ── Main content area ── */}
-      {reorderMode ? (
-        /* Dedicated reorder view */
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={localLogs.map(l => l.id)} strategy={verticalListSortingStrategy}>
-            <div className="flex-1 overflow-y-auto">
-              {localLogs.map((log, idx) => (
-                <SortablePageRow
-                  key={log.id}
-                  log={log}
-                  index={idx}
-                  isActive={idx === currentIndex}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
-      ) : (
-        /* Normal editor view — animated on page navigation */
-        <div
-          key={flipKey}
-          style={animStyle}
-          className="flex-1 overflow-hidden flex flex-col min-h-0"
-        >
-          {currentLog ? (
-            <>
-              {/* Title input */}
-              <div className="shrink-0">
-                <input
-                  type="text"
-                  value={title}
-                  onChange={e => handleTitleChange(e.target.value)}
-                  placeholder="Title (optional)"
-                  className="px-4 py-3 w-full text-md font-medium bg-transparent border-b border-border focus:outline-none focus:border-border placeholder:text-muted-foreground/40 transition-colors"
-                />
-              </div>
-
-              <RichEditor
-                key={currentLog.id}
-                value={content}
-                onChange={handleContentChange}
-                fullHeight
-                showColorToggle
-                showFontSizeToggle
-                fontSize={logbookFontSize}
-                onFontSizeChange={handleFontSizeChange}
-                onImageUpload={handleImageUpload}
-              />
-            </>
-          ) : (
-            <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-              No pages in this {terms.logbook.toLowerCase()}.
-            </div>
-          )}
-        </div>
-      )}
-
       {/* ── Navigation bar (hidden in reorder mode) ── */}
       {!reorderMode && (
-        <div className="flex items-center justify-between px-4 py-2 border-t shrink-0 bg-muted/20">
+        <div className="flex items-center justify-between px-4 py-2 border-b shrink-0 bg-muted/20">
           <Button
             variant="ghost" size="sm" className="h-7 gap-1 text-xs"
             onClick={() => navigate(currentIndex - 1, 'prev')} disabled={!canPrev}
@@ -877,19 +917,19 @@ export function Logbook({
                 <ChevronDown className="h-3 w-3 shrink-0" />
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-72 p-0 bg-card border-border overflow-hidden" align="center" side="top" sideOffset={8}>
+            <PopoverContent className="w-72 p-0 bg-card border-border overflow-hidden" align="center" side="bottom" sideOffset={8}>
               {/* Search */}
               <div className="flex items-center gap-2 px-3 py-2 border-b">
                 <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                 <input
                   ref={pageSearchRef}
                   value={pageSearch}
-                  onChange={e => setPageSearch(e.target.value)}
+                  onChange={e => handlePageSearchChange(e.target.value)}
                   placeholder="Search pages…"
                   className="flex-1 text-xs bg-transparent outline-none placeholder:text-muted-foreground"
                 />
                 {pageSearch && (
-                  <button type="button" onClick={() => setPageSearch('')}
+                  <button type="button" onClick={() => handlePageSearchChange('')}
                     className="text-muted-foreground hover:text-foreground">
                     <X className="h-3 w-3" />
                   </button>
@@ -905,12 +945,12 @@ export function Logbook({
 
               {/* Sortable page list */}
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext items={localLogs.map(l => l.id)} strategy={verticalListSortingStrategy}>
+                <SortableContext items={paginatedPopoverPages.map(l => l.id)} strategy={verticalListSortingStrategy}>
                   <div className="max-h-72 overflow-y-auto">
-                    {filteredPages.length === 0 ? (
+                    {paginatedPopoverPages.length === 0 ? (
                       <p className="text-xs text-muted-foreground text-center py-4">No results</p>
                     ) : (
-                      filteredPages.map(log => {
+                      paginatedPopoverPages.map(log => {
                         const realIdx = localLogs.indexOf(log)
                         return (
                           <SortablePageRow
@@ -933,6 +973,31 @@ export function Logbook({
                   </div>
                 </SortableContext>
               </DndContext>
+
+              {/* Popup pagination controls */}
+              {showPopoverPagination && (
+                <div className="flex items-center justify-between px-3 py-1.5 border-t bg-muted/10">
+                  <button
+                    type="button"
+                    disabled={popoverPage === 0}
+                    onClick={() => setPopoverPage(p => p - 1)}
+                    className="text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
+                  >
+                    <ChevronLeft className="h-3 w-3" />
+                  </button>
+                  <span className="text-[10px] text-muted-foreground tabular-nums">
+                    {popoverPage + 1} / {popoverTotalPages}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={popoverPage >= popoverTotalPages - 1}
+                    onClick={() => setPopoverPage(p => p + 1)}
+                    className="text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
+                  >
+                    <ChevronRight className="h-3 w-3" />
+                  </button>
+                </div>
+              )}
             </PopoverContent>
           </Popover>
 
@@ -943,6 +1008,80 @@ export function Logbook({
             Next
             <ChevronRight className="h-3.5 w-3.5" />
           </Button>
+        </div>
+      )}
+
+      {/* ── Main content area ── */}
+      {reorderMode ? (
+        /* Dedicated reorder view */
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={pagedReorderLogs.map(l => l.id)} strategy={verticalListSortingStrategy}>
+            <div className="flex-1 overflow-y-auto">
+              {pagedReorderLogs.map((log, pageIdx) => {
+                const realIdx = reorderPage * REORDER_PAGE_SIZE + pageIdx
+                return (
+                  <SortablePageRow
+                    key={log.id}
+                    log={log}
+                    index={realIdx}
+                    isActive={realIdx === currentIndex}
+                    totalCount={localLogs.length}
+                    onMoveToPosition={(targetIdx) => handleMoveToPosition(log.id, targetIdx)}
+                  />
+                )
+              })}
+            </div>
+            {reorderTotalPages > 1 && (
+              <div className="flex items-center justify-between px-6 py-2 border-t shrink-0 bg-muted/20">
+                <Button
+                  variant="ghost" size="sm" className="h-7 gap-1 text-xs"
+                  disabled={reorderPage === 0}
+                  onClick={() => setReorderPage(p => p - 1)}
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                  Prev
+                </Button>
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  Page {reorderPage + 1} of {reorderTotalPages}
+                </span>
+                <Button
+                  variant="ghost" size="sm" className="h-7 gap-1 text-xs"
+                  disabled={reorderPage >= reorderTotalPages - 1}
+                  onClick={() => setReorderPage(p => p + 1)}
+                >
+                  Next
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            )}
+          </SortableContext>
+        </DndContext>
+      ) : (
+        /* Normal editor view — animated on page navigation */
+        <div
+          key={flipKey}
+          style={animStyle}
+          className="flex-1 overflow-hidden flex flex-col min-h-0"
+        >
+          {currentLog ? (
+            <>
+              <RichEditor
+                key={currentLog.id}
+                value={content}
+                onChange={handleContentChange}
+                fullHeight
+                showColorToggle
+                showFontSizeToggle
+                fontSize={logbookFontSize}
+                onFontSizeChange={handleFontSizeChange}
+                onImageUpload={handleImageUpload}
+              />
+            </>
+          ) : (
+            <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+              No pages in this {terms.logbook.toLowerCase()}.
+            </div>
+          )}
         </div>
       )}
 

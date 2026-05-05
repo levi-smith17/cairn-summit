@@ -49,6 +49,8 @@ export function ImportDialog({
   const [importing, setImporting] = useState(false)
   const [importedCount, setImportedCount] = useState(0)
   const [bulkMarkerIds, setBulkMarkerIds] = useState<string[]>([])
+  const [uploadMode, setUploadMode] = useState<'file' | 'paste'>('file')
+  const [pasteText, setPasteText] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   function reset() {
@@ -57,6 +59,8 @@ export function ImportDialog({
     setParseError(null)
     setIsDragging(false)
     setImporting(false)
+    setPasteText('')
+    setUploadMode('file')
   }
 
   function handleClose() {
@@ -64,26 +68,27 @@ export function ImportDialog({
     setTimeout(reset, 200)
   }
 
-  function processFile(file: File) {
+  function processText(text: string, filename: string) {
     setParseError(null)
-    const reader = new FileReader()
-    reader.onload = e => {
-      const text = e.target?.result as string
-      const result = parseImportFile(text, file.name)
-      if (!result.ok) {
-        setParseError(result.error)
-        return
-      }
-      const stones: StoneDraft[] = result.stones.map(s => {
-        const resolvedMarkerIds = resolveMarkerIds(s.markerNames, markers)
-        const unresolved = s.markerNames.filter(
-          name => !markers.some(m => m.name.toLowerCase() === name.toLowerCase())
-        )
-        return { ...s, resolvedMarkerIds, unresolved }
-      })
-      setDrafts(stones)
-      setStep('preview')
+    const result = parseImportFile(text, filename)
+    if (!result.ok) {
+      setParseError(result.error)
+      return
     }
+    const stones: StoneDraft[] = result.stones.map(s => {
+      const resolvedMarkerIds = resolveMarkerIds(s.markerNames, markers)
+      const unresolved = s.markerNames.filter(
+        name => !markers.some(m => m.name.toLowerCase() === name.toLowerCase())
+      )
+      return { ...s, resolvedMarkerIds, unresolved }
+    })
+    setDrafts(stones)
+    setStep('preview')
+  }
+
+  function processFile(file: File) {
+    const reader = new FileReader()
+    reader.onload = e => processText(e.target?.result as string, file.name)
     reader.readAsText(file)
   }
 
@@ -150,30 +155,67 @@ export function ImportDialog({
         {/* ── Upload step ── */}
         {step === 'upload' && (
           <div className="flex flex-col gap-4 p-6">
-            <div
-              className={`
-                relative flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-10
-                transition-colors cursor-pointer
-                ${isDragging ? 'border-primary bg-primary/5' : 'border-border hover:border-muted-foreground/50 hover:bg-muted/30'}
-              `}
-              onClick={() => fileInputRef.current?.click()}
-              onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
-              onDragLeave={() => setIsDragging(false)}
-              onDrop={handleDrop}
-            >
-              <Upload className="h-8 w-8 text-muted-foreground" />
-              <div className="text-center">
-                <p className="text-sm font-medium">Drop a file here or click to browse</p>
-                <p className="text-xs text-muted-foreground mt-1">Supports JSON and CSV</p>
-              </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".json,.csv"
-                className="hidden"
-                onChange={handleFileChange}
-              />
+            {/* Mode tabs */}
+            <div className="flex rounded-lg border border-border overflow-hidden text-sm shrink-0">
+              <button
+                type="button"
+                className={`flex-1 py-1.5 text-xs font-medium transition-colors ${uploadMode === 'file' ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                onClick={() => { setUploadMode('file'); setParseError(null) }}
+              >
+                File upload
+              </button>
+              <button
+                type="button"
+                className={`flex-1 py-1.5 text-xs font-medium transition-colors border-l border-border ${uploadMode === 'paste' ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                onClick={() => { setUploadMode('paste'); setParseError(null) }}
+              >
+                Paste JSON
+              </button>
             </div>
+
+            {uploadMode === 'file' ? (
+              <div
+                className={`
+                  relative flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-10
+                  transition-colors cursor-pointer
+                  ${isDragging ? 'border-primary bg-primary/5' : 'border-border hover:border-muted-foreground/50 hover:bg-muted/30'}
+                `}
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={handleDrop}
+              >
+                <Upload className="h-8 w-8 text-muted-foreground" />
+                <div className="text-center">
+                  <p className="text-sm font-medium">Drop a file here or click to browse</p>
+                  <p className="text-xs text-muted-foreground mt-1">Supports JSON and CSV</p>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".json,.csv"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <textarea
+                  value={pasteText}
+                  onChange={e => setPasteText(e.target.value)}
+                  placeholder={`Paste JSON here…\n\n{\n  "stones": [\n    { "face": "…", "core": "…", "markers": ["Tag"] }\n  ]\n}`}
+                  className="w-full h-48 rounded-lg border border-border bg-muted/20 px-3 py-2.5 text-xs font-mono leading-relaxed resize-none focus:outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/50"
+                  spellCheck={false}
+                />
+                <Button
+                  className="self-end"
+                  disabled={!pasteText.trim()}
+                  onClick={() => processText(pasteText.trim(), 'paste.json')}
+                >
+                  Preview
+                </Button>
+              </div>
+            )}
 
             {parseError && (
               <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">

@@ -170,6 +170,7 @@ export async function saveLandmark(data: {
   name: string
   description: string | null
   url: string | null
+  githubUrl: string | null
   startDate: Date | null
   endDate: Date | null
   current: boolean
@@ -184,6 +185,7 @@ export async function saveLandmark(data: {
         name: data.name,
         description: data.description,
         url: data.url,
+        githubUrl: data.githubUrl,
         startDate: data.startDate,
         endDate: data.current ? null : data.endDate,
         current: data.current,

@@ -19,7 +19,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { EntryActions } from './entry-actions'
 import { FormActions } from '@/components/forms/form-actions'
 import { MonthYearPicker } from '@/components/ui/month-year-picker'
-import { ExternalLink } from 'lucide-react'
+import { ExternalLink, Github } from 'lucide-react'
 import { RichTextEditor } from '@/components/ui/rich-text-editor'
 import { RichTextContent } from '@/components/ui/rich-text-content'
 import { format } from 'date-fns'
@@ -29,6 +29,7 @@ const landmarkSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   description: z.string().optional(),
   url: z.string().url().optional().or(z.literal('')),
+  githubUrl: z.string().url().optional().or(z.literal('')),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   current: z.boolean(),
@@ -41,6 +42,7 @@ interface Landmark {
   name: string
   description: string | null
   url: string | null
+  githubUrl: string | null
   startDate: Date | null
   endDate: Date | null
   current: boolean
@@ -60,6 +62,7 @@ const emptyDefaults: LandmarkFormValues = {
   name: '',
   description: '',
   url: '',
+  githubUrl: '',
   startDate: '',
   endDate: '',
   current: false,
@@ -81,6 +84,7 @@ export function LandmarksForm({ landmarks, adding, setAdding, saving, saved, err
       name: entry.name,
       description: entry.description ?? '',
       url: entry.url ?? '',
+      githubUrl: entry.githubUrl ?? '',
       startDate: entry.startDate?.toISOString().split('T')[0] ?? '',
       endDate: entry.endDate?.toISOString().split('T')[0] ?? '',
       current: entry.current,
@@ -102,6 +106,7 @@ export function LandmarksForm({ landmarks, adding, setAdding, saving, saved, err
         name: values.name,
         description: values.description ?? null,
         url: values.url ?? null,
+        githubUrl: values.githubUrl ?? null,
         startDate: values.startDate ? new Date(values.startDate) : null,
         endDate: values.current ? null : values.endDate ? new Date(values.endDate) : null,
         current: values.current,
@@ -132,19 +137,34 @@ export function LandmarksForm({ landmarks, adding, setAdding, saving, saved, err
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="url"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>URL</FormLabel>
-                <FormControl>
-                  <Input placeholder="https://github.com/you/project" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="url"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Project URL</FormLabel>
+                  <FormControl>
+                    <Input placeholder="https://myproject.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="githubUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>GitHub URL</FormLabel>
+                  <FormControl>
+                    <Input placeholder="https://github.com/you/project" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField
@@ -233,6 +253,11 @@ export function LandmarksForm({ landmarks, adding, setAdding, saving, saved, err
                       {entry.url && (
                         <a href={entry.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">
                           <ExternalLink className="h-3 w-3" />
+                        </a>
+                      )}
+                      {entry.githubUrl && (
+                        <a href={entry.githubUrl} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">
+                          <Github className="h-3 w-3" />
                         </a>
                       )}
                     </div>
