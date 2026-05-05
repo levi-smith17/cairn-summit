@@ -13,6 +13,7 @@ import { Logbook } from './logbook'
 
 interface LogClientProps {
   logs: any[]
+  logbookTrailLogs?: any[]
   trails: any[]
   waypoints: any[]
   markers: any[]
@@ -21,7 +22,7 @@ interface LogClientProps {
   logsPerPage: number
 }
 
-export function LogClient({ logs, trails, waypoints, markers, totalCount, currentPage, logsPerPage }: LogClientProps) {
+export function LogClient({ logs, logbookTrailLogs, trails, waypoints, markers, totalCount, currentPage, logsPerPage }: LogClientProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { terms } = useTerminology()
@@ -31,14 +32,17 @@ export function LogClient({ logs, trails, waypoints, markers, totalCount, curren
 
   if (logbookTrailId) {
     const trail = trails.find((t: any) => t.id === logbookTrailId)
-    const trailLogs = [...logs]
-      .filter((l: any) => l.trailId === logbookTrailId)
-      .sort((a: any, b: any) => {
-        if (a.position != null && b.position != null) return a.position - b.position
-        if (a.position != null) return -1
-        if (b.position != null) return 1
-        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      })
+    const sortFn = (a: any, b: any) => {
+      if (a.position != null && b.position != null) return a.position - b.position
+      if (a.position != null) return -1
+      if (b.position != null) return 1
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    }
+    const trailLogs = (
+      logbookTrailLogs && logbookTrailLogs.length > 0
+        ? [...logbookTrailLogs]
+        : [...logs].filter((l: any) => l.trailId === logbookTrailId)
+    ).sort(sortFn)
 
     function closeLogbook() {
       const params = new URLSearchParams(searchParams.toString())

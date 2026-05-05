@@ -144,6 +144,7 @@ model Landmark {
   name        String
   description String?
   url         String?
+  githubUrl   String?
   startDate   DateTime?
   endDate     DateTime?
   current     Boolean              @default(false)

@@ -7,7 +7,7 @@ import { getTerms, type TerminologyStyle } from '@/lib/terminology'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
-import { ExternalLink } from 'lucide-react'
+import { ExternalLink, Github } from 'lucide-react'
 import { FooterNav } from "@/components/nav/footer";
 import { RichTextContent } from '@/components/ui/rich-text-content'
 import { Timeline } from '@/components/ui/timeline'
@@ -16,7 +16,8 @@ import { GearChart } from './gear-chart'
 import { ManifestContact } from './manifest-contact'
 import { ManifestHeader } from './manifest-header'
 
-const formatDate = (date: Date) => format(date, 'MMM yyyy')
+const toLocalDate = (d: Date) => new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
+const formatDate = (date: Date) => format(toLocalDate(date), 'MMM yyyy')
 
 interface ManifestContentProps {
     wayfarer: {
@@ -66,6 +67,7 @@ interface ManifestContentProps {
         name: string
         description: string | null
         url: string | null
+        githubUrl: string | null
         startDate: Date | null
         endDate: Date | null
         current: boolean
@@ -110,8 +112,63 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function DateRange({ startDate, endDate, current }: { startDate: Date; endDate: Date | null; current: boolean }) {
     return (
         <span className="text-sm text-muted-foreground">
-            {format(startDate, 'MMM yyyy')} — {current ? 'Present' : endDate ? format(endDate, 'MMM yyyy') : ''}
+            {formatDate(startDate)} — {current ? 'Present' : endDate ? formatDate(endDate) : ''}
         </span>
+    )
+}
+
+function LandmarkCard({ l }: { l: ManifestContentProps['landmarks'][number] }) {
+    const [expanded, setExpanded] = useState(false)
+    const [overflows, setOverflows] = useState(false)
+    const innerRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        const el = innerRef.current
+        if (el) setOverflows(el.scrollHeight > el.clientHeight)
+    }, [])
+
+    return (
+        <div className="rounded-lg border p-4 flex flex-col gap-2 bg-secondary">
+            <div className="flex items-start justify-between gap-2">
+                <p className="font-medium">{l.name}</p>
+                <div className="flex items-center gap-2 shrink-0">
+                    {l.url && (
+                        <a href={l.url} target="_blank" rel="noopener noreferrer"
+                            className="text-muted-foreground hover:text-foreground transition-colors">
+                            <ExternalLink className="h-3 w-3" />
+                        </a>
+                    )}
+                    {l.githubUrl && (
+                        <a href={l.githubUrl} target="_blank" rel="noopener noreferrer"
+                            className="text-muted-foreground hover:text-foreground transition-colors">
+                            <Github className="h-3 w-3" />
+                        </a>
+                    )}
+                </div>
+            </div>
+            <div
+                ref={innerRef}
+                className={`relative ${!expanded ? 'max-h-48 overflow-hidden' : ''}`}
+            >
+                {l.startDate && (
+                    <DateRange startDate={l.startDate} endDate={l.endDate} current={l.current} />
+                )}
+                {l.description && (
+                    <RichTextContent html={l.description} className="text-muted-foreground text-sm" />
+                )}
+                {!expanded && overflows && (
+                    <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-secondary to-transparent pointer-events-none" />
+                )}
+            </div>
+            {overflows && (
+                <button
+                    onClick={() => setExpanded(e => !e)}
+                    className="text-xs text-muted-foreground hover:text-foreground self-start transition-colors"
+                >
+                    {expanded ? 'Show less' : 'Read more'}
+                </button>
+            )}
+        </div>
     )
 }
 
@@ -287,30 +344,24 @@ export function ManifestContent({
                 {/* Landmarks */}
                 {landmarks.length > 0 && (
                     <Section title={terms.landmarks}>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {/* Mobile: single column */}
+                        <div className="flex flex-col gap-4 sm:hidden">
                             {landmarks.map((l) => (
-                                <div key={l.id} className="rounded-lg border p-4 flex flex-col gap-2 bg-secondary">
-                                    <div className="flex items-start justify-between gap-2">
-                                        <p className="font-medium">{l.name}</p>
-                                        {l.url && (
-                                            <a
-                                                href={l.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-muted-foreground hover:text-foreground shrink-0"
-                                            >
-                                                <ExternalLink className="h-3 w-3" />
-                                            </a>
-                                        )}
-                                    </div>
-                                    {l.startDate && (
-                                        <DateRange startDate={l.startDate} endDate={l.endDate} current={l.current} />
-                                    )}
-                                    {l.description && (
-                                        <RichTextContent html={l.description} className="text-muted-foreground text-sm" />
-                                    )}
-                                </div>
+                                <LandmarkCard key={l.id} l={l} />
                             ))}
+                        </div>
+                        {/* Desktop: two independent flex columns so cards stack tightly */}
+                        <div className="hidden sm:flex gap-4">
+                            <div className="flex-1 flex flex-col gap-4">
+                                {landmarks.filter((_, i) => i % 2 === 0).map((l) => (
+                                    <LandmarkCard key={l.id} l={l} />
+                                ))}
+                            </div>
+                            <div className="flex-1 flex flex-col gap-4">
+                                {landmarks.filter((_, i) => i % 2 === 1).map((l) => (
+                                    <LandmarkCard key={l.id} l={l} />
+                                ))}
+                            </div>
                         </div>
                     </Section>
                 )}
@@ -323,24 +374,24 @@ export function ManifestContent({
                             <div key={s.id} className="flex flex-col gap-1">
                                 <div className="flex items-start justify-between gap-4">
                                     <div>
-                                        <div className="flex items-center gap-2">
-                                            <p className="font-medium">{s.title}</p>
+                                        <p className="font-medium">
+                                            {s.title}
                                             {s.url && (
                                                 <a
                                                     href={s.url}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="text-muted-foreground hover:text-foreground text-xs underline underline-offset-4"
+                                                    className="ml-1.5 inline-block align-middle text-muted-foreground hover:text-foreground transition-colors"
                                                 >
-                                                    Link
+                                                    <ExternalLink className="h-3 w-3" />
                                                 </a>
                                             )}
-                                        </div>
+                                        </p>
                                         {s.issuer && <p className="text-sm text-muted-foreground">{s.issuer}</p>}
                                     </div>
                                     {s.date && (
                                         <span className="text-sm text-muted-foreground shrink-0">
-                                            {format(s.date, 'MMM yyyy')}
+                                            {formatDate(s.date)}
                                         </span>
                                     )}
                                 </div>
