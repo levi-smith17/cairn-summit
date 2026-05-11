@@ -8,6 +8,10 @@ variable "environment" {
   default = "dev"
 }
 
+variable "github_repo" {
+  type = string
+}
+
 variable "managed_by" {
   type    = string
   default = "terraform"

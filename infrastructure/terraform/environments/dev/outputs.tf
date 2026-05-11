@@ -23,6 +23,10 @@ output "dynamodb_table_arn" {
   value = module.dynamodb.table_arn
 }
 
+output "github_actions_role_arn" {
+  value = module.github_oidc.role_arn
+}
+
 output "lambda_markers_get_arn" {
   value = module.lambda_markers_get.function_arn
 }

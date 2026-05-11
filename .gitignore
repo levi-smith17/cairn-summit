@@ -31,8 +31,12 @@ yarn-error.log*
 *.tfplan
 
 # WebStorm
-/.idea
+.idea/
 
 # Claude
 CLAUDE.md
-/.claude
+.claude/
+
+# Prisma - remove once refactor is fully complete
+prisma/
+**/prisma/
