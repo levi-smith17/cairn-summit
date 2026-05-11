@@ -25,5 +25,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 
+# terraform
+*.tfplan
+
 # WebStorm
 /.idea
+
+# Claude
+CLAUDE.md
+/.claude

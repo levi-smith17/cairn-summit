@@ -1,0 +1,11 @@
+{
+  "extends": "../../../packages/config/tsconfig.lambda.json",
+  "compilerOptions": {
+    "baseUrl": "..",
+    "paths": {
+      "@cairn/types": ["../../packages/types/index.ts"]
+    }
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}

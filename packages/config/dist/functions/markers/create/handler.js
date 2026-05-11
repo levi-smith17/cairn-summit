@@ -1,0 +1,36 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.handler = void 0;
+const lib_dynamodb_1 = require("@aws-sdk/lib-dynamodb");
+const crypto_1 = require("crypto");
+const db_1 = require("../../shared/db");
+const auth_1 = require("../../shared/auth");
+const response_1 = require("../../shared/response");
+const handler = async (event) => {
+    try {
+        const body = JSON.parse(event.body ?? '{}');
+        if (!body.name || !body.color) {
+            return (0, response_1.toApiGatewayResponse)((0, response_1.badRequest)('name and color are required'));
+        }
+        const pk = (0, auth_1.getPk)(event);
+        const marker = {
+            pk,
+            sk: `MARKER#${(0, crypto_1.randomUUID)()}`,
+            name: body.name,
+            color: body.color,
+            icon: body.icon ?? undefined,
+            createdAt: new Date().toISOString(),
+        };
+        await db_1.dynamo.send(new lib_dynamodb_1.PutCommand({
+            TableName: db_1.TABLE_NAME,
+            Item: marker,
+        }));
+        return (0, response_1.toApiGatewayResponse)((0, response_1.created)(marker));
+    }
+    catch (err) {
+        console.error(err);
+        return (0, response_1.toApiGatewayResponse)((0, response_1.serverError)());
+    }
+};
+exports.handler = handler;
+//# sourceMappingURL=handler.js.map
