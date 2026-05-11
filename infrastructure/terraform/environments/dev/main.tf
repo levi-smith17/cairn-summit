@@ -12,13 +12,11 @@ terraform {
     bucket  = "cairn-terraform-state"
     key     = "dev/terraform.tfstate"
     region  = "us-east-2"
-    profile = "cairn-dev"
   }
 }
 
 provider "aws" {
   region  = "us-east-2"
-  profile = var.aws_profile
 }
 
 module "cognito" {
