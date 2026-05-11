@@ -4,12 +4,7 @@
   "private": true,
   "scripts": {
     "build": "tsc --build",
-    "deploy:markers:get": "npm run build && cd dist/functions && zip -r ../../markers-get.zip markers/get shared && aws lambda update-function-code --function-name cairn-dev-markers-get --zip-file fileb://../../markers-get.zip --profile cairn-dev && cd ../.. && rm markers-get.zip",
-    "deploy:markers:create": "npm run build && cd dist/functions && zip -r ../../markers-create.zip markers/create shared && aws lambda update-function-code --function-name cairn-dev-markers-create --zip-file fileb://../../markers-create.zip --profile cairn-dev && cd ../.. && rm markers-create.zip",
-    "deploy:markers:update": "npm run build && cd dist/functions && zip -r ../../markers-update.zip markers/update shared && aws lambda update-function-code --function-name cairn-dev-markers-update --zip-file fileb://../../markers-update.zip --profile cairn-dev && cd ../.. && rm markers-update.zip",
-    "deploy:markers:delete": "npm run build && cd dist/functions && zip -r ../../markers-delete.zip markers/delete shared && aws lambda update-function-code --function-name cairn-dev-markers-delete --zip-file fileb://../../markers-delete.zip --profile cairn-dev && cd ../.. && rm markers-delete.zip",
-    "deploy:markers": "npm run deploy:markers:create && npm run deploy:markers:delete && npm run deploy:markers:get && npm run deploy:markers:update",
-    "lint": "eslint .",
+    "deploy": "node scripts/deploy.mjs",
     "test": "vitest",
     "test:coverage": "vitest run --coverage"
   },
