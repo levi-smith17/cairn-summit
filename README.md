@@ -15,28 +15,60 @@ Cairn consolidates the tools a person actually needs into a single, cohesive pla
 | Bookmarks | **Waypoints** | Save and organize links and references |
 | Notes | **Logs** | Personal note-taking and journaling |
 | Finances | **Provisions** | Personal finance tracking and management |
-| Flashcards | **Guides** | Study and review system |
+| Flashcards | **Guides** | Study and review system (cards called Stones) |
 | Folders | **Trails** | Hierarchical organization for all content types |
 | Tags | **Markers** | Cross-cutting categorization and labeling |
 | Calendar | **Itinerary** | Unified view integrating multiple external calendar sources |
 | Resume | **Manifest** | A dynamic, living resume builder |
+| Messages | **Signals** | Inbound contact messages and reply threads |
 
 ---
 
 ## Tech Stack
 
-- **Framework:** [Next.js](https://nextjs.org/) (App Router)
-- **Language:** TypeScript
-- **Database:** [Supabase](https://supabase.com/) (PostgreSQL)
-- **Deployment:** [Vercel](https://vercel.com/)
-- **Font:** [Geist](https://vercel.com/font) via `next/font`
-- **AI Development:** Built with [Claude Code](https://www.anthropic.com/claude-code)
+### Frontend
+- **[Vite](https://vitejs.dev/)** + **[React](https://react.dev/)** — replaces Next.js App Router
+- **[React Router v7](https://reactrouter.com/)** — client-side routing
+- **[TanStack Query](https://tanstack.com/query)** — data fetching and cache management
+- **[shadcn/ui](https://ui.shadcn.com/)** + **[Tailwind CSS v4](https://tailwindcss.com/)** — UI components and styling
+- **[Tiptap](https://tiptap.dev/)** — rich text editor for Logs
+- **[React Flow](https://reactflow.dev/)** — node graph canvas for Starfield
+- **[react-hook-form](https://react-hook-form.com/)** + **[Zod](https://zod.dev/)** — form validation
+
+### Backend
+- **[AWS Lambda](https://aws.amazon.com/lambda/)** — serverless function handlers, one per feature area
+- **[API Gateway HTTP API](https://aws.amazon.com/api-gateway/)** — routes requests to Lambda functions
+- **[DynamoDB](https://aws.amazon.com/dynamodb/)** — single-table design (`cairn-dev` / `cairn-prod`)
+- **[Cognito](https://aws.amazon.com/cognito/)** — authentication and user management
+- **[S3](https://aws.amazon.com/s3/) + [CloudFront](https://aws.amazon.com/cloudfront/)** — static frontend hosting and CDN
+- **[SES](https://aws.amazon.com/ses/)** — transactional email via SMTP
+
+### Infrastructure
+- **[Terraform](https://www.terraform.io/)** — all AWS infrastructure as code
+- **[Turborepo](https://turbo.build/)** — monorepo build orchestration
+- **[GitHub Actions](https://github.com/features/actions)** — CI/CD for web, API, and infrastructure
+
+---
+
+## Monorepo Structure
+
+```
+cairn/
+├── apps/
+│   ├── web/          # Vite + React frontend
+│   └── api/          # AWS Lambda functions
+├── packages/
+│   ├── types/        # Shared TypeScript interfaces (@cairn/types)
+│   └── config/       # Shared tsconfig base (@cairn/config)
+└── infrastructure/
+    └── terraform/    # AWS infrastructure as code
+```
 
 ---
 
 ## The Manifest
 
-The Manifest is Cairn's resume builder — a living, dynamic profile for a Wayfarer (user) that pulls together professional experience, skills, projects, education, and community involvement into a single shareable profile. The Manifest powers [levismith.us](https://levismith.us), where Cairn's terminology is used throughout the site. Visitors can toggle between standard terminology and Cairn terminology at the top of the page.
+The Manifest is Cairn's resume builder — a living, dynamic profile for a Wayfarer (user) that pulls together professional experience, skills, projects, education, and community involvement into a single shareable profile. The Manifest powers [levismith.us](https://levismith.us).
 
 ---
 
@@ -51,6 +83,7 @@ Every feature name is drawn from the language of hiking and wayfinding:
 - A **Trail** is the path that connects waypoints
 - A **Marker** helps others (and yourself) find the way
 - An **Itinerary** is the plan for where you're going
+- A **Signal** is a message sent from the trail
 - A **Manifest** is the full account of who you are and what you carry
 
 ---
@@ -62,14 +95,31 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to see the result.
+The frontend runs at `http://localhost:5173`. You'll need a `.env` file in `apps/web/` with the following variables:
+
+```
+VITE_API_URL=
+VITE_COGNITO_USER_POOL_ID=
+VITE_COGNITO_CLIENT_ID=
+VITE_AWS_REGION=
+```
+
+---
+
+## Domains
+
+| Environment | Domain |
+|---|---|
+| Production | [cairn.ing](https://cairn.ing) |
+| Development | [dev.cairn.ing](https://dev.cairn.ing) |
+| Manifest | [levismith.us](https://levismith.us) |
 
 ---
 
 ## Project Status
 
-Cairn is actively developed and maintained. It is a personal project and not open for contributions at this time, but feel free to explore the codebase, ask questions, or reach out via [levismith.us]([https://levismith.us](https://cairn.ing/manifest/levi/contact)).
+Cairn is actively developed and maintained. It is a personal project and not open for contributions at this time, but feel free to explore the codebase, ask questions, or reach out via [levismith.us](https://cairn.ing/manifest/levi/contact).
 
 ---
 
-*Built by [Levi Smith](https://levismith.us)*
+*Built by [Levi Smith](https://levismith.us) with [Claude Code](https://www.anthropic.com/claude-code)*
