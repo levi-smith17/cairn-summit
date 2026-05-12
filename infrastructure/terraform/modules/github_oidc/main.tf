@@ -60,8 +60,8 @@ resource "aws_iam_policy" "terraform_state" {
           "s3:PutObject",
         ]
         Resource = [
-          "arn:aws:s3:::cairn-terraform-state",
-          "arn:aws:s3:::cairn-terraform-state/*",
+          "arn:aws:s3:::${var.terraform_state_bucket}",
+          "arn:aws:s3:::${var.terraform_state_bucket}/*",
         ]
       }
     ]
@@ -113,6 +113,7 @@ resource "aws_iam_policy" "terraform_aws" {
         Effect = "Allow"
         Action = [
           "apigateway:*",
+          "cloudfront:*",
           "cognito-idp:*",
           "dynamodb:*",
           "iam:AttachRolePolicy",
@@ -141,6 +142,7 @@ resource "aws_iam_policy" "terraform_aws" {
           "iam:UntagRole",
           "iam:UpdateAssumeRolePolicy",
           "lambda:*",
+          "s3:*",
         ]
         Resource = "*"
       }
