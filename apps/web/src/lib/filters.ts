@@ -64,6 +64,101 @@ export function hasActiveFilters(filters: FilterState): boolean {
   )
 }
 
+// Client-side filter functions
+
+export function applyWaypointFilters(waypoints: any[], filters: FilterState): any[] {
+  let result = [...waypoints]
+
+  if (filters.search) {
+    const q = filters.search.toLowerCase()
+    result = result.filter(w =>
+      w.title?.toLowerCase().includes(q) || w.url?.toLowerCase().includes(q)
+    )
+  }
+
+  if (filters.markerIds.length > 0) {
+    result = result.filter(w =>
+      filters.markerIds.some(id => w.markers?.some((m: any) => m.markerId === id))
+    )
+  }
+
+  if (filters.trailId !== 'all') {
+    result = result.filter(w => w.trailId === filters.trailId)
+  }
+
+  if (filters.readLater) {
+    result = result.filter(w => w.readLater === true)
+  }
+
+  if (filters.unattached) {
+    result = result.filter(w => !w.markers?.length)
+  }
+
+  if (filters.dateFrom) {
+    const from = new Date(filters.dateFrom).getTime()
+    result = result.filter(w => new Date(w.createdAt).getTime() >= from)
+  }
+
+  if (filters.dateTo) {
+    const to = new Date(filters.dateTo).getTime()
+    result = result.filter(w => new Date(w.createdAt).getTime() <= to)
+  }
+
+  if (filters.sort === 'newest') {
+    result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  } else if (filters.sort === 'oldest') {
+    result.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+  } else {
+    result.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''))
+  }
+
+  return result
+}
+
+export function applyLogFilters(logs: any[], filters: FilterState): any[] {
+  let result = [...logs]
+
+  if (filters.search) {
+    const q = filters.search.toLowerCase()
+    result = result.filter(l =>
+      l.title?.toLowerCase().includes(q) ||
+      l.content?.replace(/<[^>]*>/g, '').toLowerCase().includes(q)
+    )
+  }
+
+  if (filters.markerIds.length > 0) {
+    result = result.filter(l =>
+      filters.markerIds.some(id => l.markers?.some((m: any) => m.id === id))
+    )
+  }
+
+  if (filters.trailId !== 'all') {
+    result = result.filter(l => l.trailId === filters.trailId)
+  }
+
+  if (filters.unattached) {
+    result = result.filter(l => !l.markers?.length && !l.trailId && !l.waypointId)
+  }
+
+  if (filters.dateFrom) {
+    const from = new Date(filters.dateFrom).getTime()
+    result = result.filter(l => new Date(l.createdAt).getTime() >= from)
+  }
+
+  if (filters.dateTo) {
+    const to = new Date(filters.dateTo).getTime()
+    result = result.filter(l => new Date(l.createdAt).getTime() <= to)
+  }
+
+  if (filters.sort === 'oldest') {
+    result.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+  } else {
+    result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  }
+
+  return result
+}
+
 // Prisma query builders
 export function buildWaypointWhere(filters: FilterState, wayfarerId: string) {
   const where: any = { wayfarerId }

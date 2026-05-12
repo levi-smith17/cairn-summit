@@ -33,15 +33,30 @@ export default function Logs() {
         enabled: !!user
     })
 
-    const logs = (logsData ?? []).map((l: any) => ({
-        ...l,
-        id: l.sk?.split('#').pop() ?? l.id,
-    }))
-
     const trails = (trailsData ?? []).map((t: any) => ({
         ...t,
         id: t.sk?.split('#').pop() ?? t.id,
     }))
+
+    const logs = (logsData ?? []).map((l: any) => {
+        const trailId = l.trailId ?? null
+        const trailObj = trailId ? trails.find((t: any) => t.id === trailId) ?? null : null
+        return {
+            ...l,
+            id: l.sk?.split('#').pop() ?? l.id,
+            trailId,
+            trail: trailObj ? { id: trailObj.id, name: trailObj.name } : null,
+            markers: (l.markers ?? []).map((m: any) => ({
+                markerId: m.id ?? m.markerId,
+                marker: {
+                    id: m.id ?? m.markerId,
+                    name: m.name,
+                    color: m.color,
+                    icon: m.icon ?? null,
+                }
+            }))
+        }
+    })
 
     const markers = (markersData ?? []).map((m: any) => ({
         ...m,
@@ -65,8 +80,6 @@ export default function Logs() {
             trails={trails}
             waypoints={waypoints}
             markers={markers}
-            totalCount={logs.length}
-            currentPage={1}
             logsPerPage={25}
         />
     )

@@ -1,18 +1,6 @@
-import { pool } from '@/hooks/use-auth'
+import { getAuthHeaders } from '@/lib/api/auth-headers'
 
 const API_BASE = import.meta.env.VITE_API_URL
-
-async function getAuthHeaders(): Promise<Record<string, string>> {
-    return new Promise((resolve) => {
-        const cognitoUser = pool.getCurrentUser()
-        if (!cognitoUser) return resolve({})
-
-        cognitoUser.getSession((err: Error | null, session: any) => {
-            if (err || !session?.isValid()) return resolve({})
-            resolve({ Authorization: session.getIdToken().getJwtToken() })
-        })
-    })
-}
 
 export async function getWaypoints() {
     const res = await fetch(`${API_BASE}/waypoints`, {
@@ -68,7 +56,7 @@ export async function deleteWaypoint(id: string): Promise<void> {
 }
 
 export async function toggleWaypointRead(id: string, read: boolean) {
-    const res = await fetch(`${API_BASE}/waypoints/${id}/read`, {
+    const res = await fetch(`${API_BASE}/waypoints/${id}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -81,7 +69,7 @@ export async function toggleWaypointRead(id: string, read: boolean) {
 }
 
 export async function toggleWaypointReadLater(id: string, readLater: boolean) {
-    const res = await fetch(`${API_BASE}/waypoints/${id}/read-later`, {
+    const res = await fetch(`${API_BASE}/waypoints/${id}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',

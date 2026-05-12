@@ -1,9 +1,6 @@
-const API_BASE = import.meta.env.VITE_API_URL
+import { getAuthHeaders } from '@/lib/api/auth-headers'
 
-async function getAuthHeaders(): Promise<Record<string, string>> {
-  // Will be replaced with Cognito token once auth is set up
-  return {}
-}
+const API_BASE = import.meta.env.VITE_API_URL
 
 export async function getProvisions(): Promise<any[]> {
   const res = await fetch(`${API_BASE}/provisions`, {

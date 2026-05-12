@@ -1,10 +1,16 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Outlet } from 'react-router-dom'
 import { ThemeProvider } from '@/components/theme/provider'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { Toaster } from '@/components/ui/sonner'
 import { TerminologyProvider } from '@/contexts/terminology-context'
 import ProtectedRoute from '@/components/auth/protected-route'
 import PlatformLayout from '@/components/nav/platform/layout'
+import { useAuth } from '@/hooks/use-auth'
+
+function ConditionalPlatformLayout() {
+    const { user } = useAuth()
+    return user ? <PlatformLayout /> : <Outlet />
+}
 
 // Public Routes
 import Home from '@/routes/home'
@@ -49,8 +55,12 @@ export default function App() {
             <TooltipProvider>
                 <TerminologyProvider>
                     <Routes>
+                        {/* Home — platform layout when logged in, public layout when not */}
+                        <Route element={<ConditionalPlatformLayout />}>
+                            <Route path="/" element={<Home />} />
+                        </Route>
+
                         {/* Public routes */}
-                        <Route path="/" element={<Home />} />
                         <Route path="/login" element={<Login />} />
                         <Route path="/privacy" element={<Privacy />} />
                         <Route path="/privacy-contact" element={<PrivacyContact />} />

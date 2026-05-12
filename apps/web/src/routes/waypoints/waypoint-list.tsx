@@ -135,18 +135,16 @@ export function WaypointList({ waypoints, selectedId, onSelect, onNew, totalCoun
                       } ${waypoint.read ? 'opacity-60' : ''}`}
                   >
                     {/* Favicon */}
-                    <div className="shrink-0 mt-0.5">
-                      {waypoint.favicon ? (
+                    {waypoint.favicon && (
+                      <div className="shrink-0 mt-0.5">
                         <img
                           src={waypoint.favicon}
                           alt=""
                           className="h-4 w-4 rounded"
                           onError={e => (e.currentTarget.style.display = 'none')}
                         />
-                      ) : (
-                        <div className="h-4 w-4 rounded bg-muted-foreground/20" />
-                      )}
-                    </div>
+                      </div>
+                    )}
 
                     {/* Content */}
                     <div className="flex flex-col gap-0.5 min-w-0 flex-1">

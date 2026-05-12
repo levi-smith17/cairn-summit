@@ -7,21 +7,24 @@ import { useTerminology } from '@/contexts/terminology-context'
 import { FilterBar } from '@/components/filters/filter-bar'
 import { WaypointList } from './waypoint-list'
 import { WaypointForm } from './waypoint-form'
+import { parseFiltersFromParams, applyWaypointFilters } from '@/lib/filters'
 
 interface WaypointsClientProps {
   waypoints: any[]
   trails: any[]
   markers: any[]
-  totalCount: number
-  currentPage: number
   waypointsPerPage: number
 }
 
-export function WaypointsClient({ waypoints, trails, markers, totalCount, currentPage, waypointsPerPage }: WaypointsClientProps) {
+export function WaypointsClient({ waypoints, trails, markers, waypointsPerPage }: WaypointsClientProps) {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const { terms } = useTerminology()
   const selectedId = searchParams.get('id')
+
+  const filters = parseFiltersFromParams(searchParams)
+  const filteredWaypoints = applyWaypointFilters(waypoints, filters)
+  const currentPage = Math.max(1, Number(searchParams.get('page') ?? 1))
 
   const selectedWaypoint = waypoints.find(w => w.id === selectedId) ?? null
   const showRightPanel = selectedId !== null
@@ -99,11 +102,11 @@ export function WaypointsClient({ waypoints, trails, markers, totalCount, curren
             className={`${showRightPanel ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-1/3 rounded-lg border border-border bg-card overflow-hidden`}
           >
             <WaypointList
-              waypoints={waypoints}
+              waypoints={filteredWaypoints}
               selectedId={selectedId}
               onSelect={selectWaypoint}
               onNew={showNew}
-              totalCount={totalCount}
+              totalCount={filteredWaypoints.length}
               currentPage={currentPage}
               waypointsPerPage={waypointsPerPage}
             />

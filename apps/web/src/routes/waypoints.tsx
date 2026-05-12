@@ -26,24 +26,30 @@ export default function Waypoints() {
         enabled: !!user
     })
 
-    const waypoints = (waypointsData ?? []).map((w: any) => ({
-        ...w,
-        id: w.sk?.split('#').pop() ?? w.id,
-        markers: (w.markers ?? []).map((m: any) => ({
-            markerId: m.id ?? m.markerId,
-            marker: {
-                id: m.id ?? m.markerId,
-                name: m.name,
-                color: m.color,
-                icon: m.icon ?? null,
-            }
-        }))
-    }))
-
     const trails = (trailsData ?? []).map((t: any) => ({
         ...t,
         id: t.sk?.split('#').pop() ?? t.id,
     }))
+
+    const waypoints = (waypointsData ?? []).map((w: any) => {
+        const trailId = w.trailId ?? null
+        const trailObj = trailId ? trails.find((t: any) => t.id === trailId) ?? null : null
+        return {
+            ...w,
+            id: w.sk?.split('#').pop() ?? w.id,
+            trailId,
+            trail: trailObj ? { id: trailObj.id, name: trailObj.name } : null,
+            markers: (w.markers ?? []).map((m: any) => ({
+                markerId: m.id ?? m.markerId,
+                marker: {
+                    id: m.id ?? m.markerId,
+                    name: m.name,
+                    color: m.color,
+                    icon: m.icon ?? null,
+                }
+            }))
+        }
+    })
 
     const markers = (markersData ?? []).map((m: any) => ({
         ...m,
@@ -61,8 +67,6 @@ export default function Waypoints() {
             waypoints={waypoints}
             trails={trails}
             markers={markers}
-            totalCount={waypoints.length}
-            currentPage={1}
             waypointsPerPage={25}
         />
     )

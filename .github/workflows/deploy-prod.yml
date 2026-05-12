@@ -56,6 +56,62 @@ jobs:
           path: apps/api/dist
           retention-days: 1
 
+  deploy-lambda-itinerary:
+    name: Deploy Lambda — Itinerary
+    runs-on: ubuntu-latest
+    needs: build-lambda
+    environment: prod
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-dist
+          path: apps/api/dist
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.PROD_AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy Lambda functions
+        working-directory: apps/api
+        env:
+          ENVIRONMENT: prod
+          AWS_REGION: us-east-2
+        run: node scripts/deploy.mjs itinerary/create itinerary/delete itinerary/update
+
+  deploy-lambda-itinerary-subscriptions:
+    name: Deploy Lambda — Itinerary Subscriptions
+    runs-on: ubuntu-latest
+    needs: build-lambda
+    environment: prod
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-dist
+          path: apps/api/dist
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.PROD_AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy Lambda functions
+        working-directory: apps/api
+        env:
+          ENVIRONMENT: prod
+          AWS_REGION: us-east-2
+        run: node scripts/deploy.mjs itinerary-subscriptions/create itinerary-subscriptions/delete itinerary-subscriptions/update
+
   deploy-lambda-logs:
     name: Deploy Lambda — Logs
     runs-on: ubuntu-latest
@@ -111,6 +167,34 @@ jobs:
           ENVIRONMENT: prod
           AWS_REGION: us-east-2
         run: node scripts/deploy.mjs markers/get markers/create markers/update markers/delete
+
+  deploy-lambda-settings:
+    name: Deploy Lambda — Settings
+    runs-on: ubuntu-latest
+    needs: build-lambda
+    environment: prod
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-dist
+          path: apps/api/dist
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.PROD_AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy Lambda functions
+        working-directory: apps/api
+        env:
+          ENVIRONMENT: prod
+          AWS_REGION: us-east-2
+        run: node scripts/deploy.mjs settings/delete-account settings/get settings/update
 
   deploy-lambda-signals:
     name: Deploy Lambda — Signals

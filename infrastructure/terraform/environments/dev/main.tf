@@ -45,6 +45,78 @@ module "iam" {
   project_name       = var.project_name
 }
 
+module "lambda_itinerary_create" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "itinerary-create"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_write_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_itinerary_delete" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "itinerary-delete"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_delete_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_itinerary_update" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "itinerary-update"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_write_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_itinerary_subscriptions_create" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "itinerary-create"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_write_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_itinerary_subscriptions_delete" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "itinerary-delete"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_delete_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_itinerary_subscriptions_update" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "itinerary-update"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_write_policy_arn
+  project_name         = var.project_name
+}
+
 module "lambda_logs_create" {
   source               = "../../modules/lambda"
   cognito_user_pool_id = module.cognito.cognito_user_pool_id
@@ -147,6 +219,42 @@ module "lambda_profile_get" {
   dynamodb_table_name  = module.dynamodb.table_name
   environment          = var.environment
   function_name        = "profile-get"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_read_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_settings_delete_account" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "settings-delete-account"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_read_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_settings_get" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "settings-get"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_read_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_settings_update" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "settings-update"
   managed_by           = var.managed_by
   owner                = var.owner
   policy_arn           = module.iam.lambda_read_policy_arn
@@ -356,6 +464,12 @@ module "github_oidc" {
 
   dynamodb_table_arn = module.dynamodb.table_arn
   lambda_function_arns = [
+    module.lambda_itinerary_create.function_arn,
+    module.lambda_itinerary_delete.function_arn,
+    module.lambda_itinerary_update.function_arn,
+    module.lambda_itinerary_subscriptions_create.function_arn,
+    module.lambda_itinerary_subscriptions_delete.function_arn,
+    module.lambda_itinerary_subscriptions_update.function_arn,
     module.lambda_logs_create.function_arn,
     module.lambda_logs_delete.function_arn,
     module.lambda_logs_get.function_arn,
@@ -365,6 +479,9 @@ module "github_oidc" {
     module.lambda_markers_get.function_arn,
     module.lambda_markers_update.function_arn,
     module.lambda_profile_get.function_arn,
+    module.lambda_settings_delete_account.function_arn,
+    module.lambda_settings_get.function_arn,
+    module.lambda_settings_update.function_arn,
     module.lambda_signals_contact.function_arn,
     module.lambda_signals_delete.function_arn,
     module.lambda_signals_get.function_arn,
@@ -407,6 +524,36 @@ module "api_gateway" {
   ]
 
   lambda_functions = {
+    itinerary-create = {
+      invoke_arn    = module.lambda_itinerary_create.invoke_arn
+      function_name = module.lambda_itinerary_create.function_name
+      route_key     = "POST /itinerary"
+    }
+    itinerary-delete = {
+      invoke_arn    = module.lambda_itinerary_delete.invoke_arn
+      function_name = module.lambda_itinerary_delete.function_name
+      route_key     = "DELETE /itinerary/{id}"
+    }
+    itinerary-update = {
+      invoke_arn    = module.lambda_itinerary_update.invoke_arn
+      function_name = module.lambda_itinerary_update.function_name
+      route_key     = "PUT /itinerary/{id}"
+    }
+    itinerary-subscriptions-create = {
+      invoke_arn    = module.lambda_itinerary_subscriptions_create.invoke_arn
+      function_name = module.lambda_itinerary_subscriptions_create.function_name
+      route_key     = "POST /itinerary-subscriptions"
+    }
+    itinerary-subscriptions-delete = {
+      invoke_arn    = module.lambda_itinerary_subscriptions_delete.invoke_arn
+      function_name = module.lambda_itinerary_subscriptions_delete.function_name
+      route_key     = "DELETE /itinerary-subscriptions/{id}"
+    }
+    itinerary-subscriptions-update = {
+      invoke_arn    = module.lambda_itinerary_subscriptions_update.invoke_arn
+      function_name = module.lambda_itinerary_subscriptions_update.function_name
+      route_key     = "PUT /itinerary-subscriptions/{id}"
+    }
     logs-create = {
       invoke_arn    = module.lambda_logs_create.invoke_arn
       function_name = module.lambda_logs_create.function_name
@@ -451,6 +598,21 @@ module "api_gateway" {
       invoke_arn    = module.lambda_profile_get.invoke_arn
       function_name = module.lambda_profile_get.function_name
       route_key     = "GET /profile"
+    }
+    settings-delete-account = {
+      invoke_arn    = module.lambda_settings_delete_account.invoke_arn
+      function_name = module.lambda_settings_delete_account.function_name
+      route_key     = "DELETE /account"
+    }
+    settings-get = {
+      invoke_arn    = module.lambda_settings_get.invoke_arn
+      function_name = module.lambda_settings_get.function_name
+      route_key     = "GET /settings"
+    }
+    settings-update = {
+      invoke_arn    = module.lambda_settings_update.invoke_arn
+      function_name = module.lambda_settings_update.function_name
+      route_key     = "PUT /settings/account"
     }
     signals-contact = {
       invoke_arn    = module.lambda_signals_contact.invoke_arn

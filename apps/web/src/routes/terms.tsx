@@ -1,5 +1,4 @@
-import { useAuth } from "@/hooks/use-auth";
-import { CairnLockup } from '@/components/cairn-lockup'
+import { useAuth } from "@/hooks/use-auth"
 import { PublicHeader } from '@/components/nav/public/public-header'
 import { FooterNav } from '@/components/nav/footer'
 
@@ -8,7 +7,7 @@ export const metadata = {
     description: 'Terms of Service for Cairn.',
 }
 
-export default async function Terms() {
+export default function Terms() {
     const { user } = useAuth()
     const wayfarer = user ? {
         name: user.name ?? null,
@@ -19,11 +18,12 @@ export default async function Terms() {
     return (
         <div className="min-h-screen flex flex-col">
             <header className="sticky top-0 z-10 flex items-center justify-between bg-header px-6 py-3 border-b">
-                <CairnLockup className="h-8" />
+                <img src="/cairn-lockup2.png" alt="Cairn Summit Lockup" height={50} width={160} />
                 <PublicHeader wayfarer={wayfarer} />
             </header>
 
-            <div className="max-w-2xl mx-auto w-full px-6 py-12">
+            <div className="max-w-3xl mx-auto w-full px-6 py-12">
+                <div className="bg-card border rounded-xl px-10 py-10">
                 <div className="prose prose-neutral dark:prose-invert prose-sm max-w-none">
                     <h1>Terms of Service</h1>
                     <p className="text-muted-foreground">Effective Date: March 11, 2026</p>
@@ -135,10 +135,10 @@ export default async function Terms() {
                         <a href="mailto:contact@cairn.ing">contact@cairn.ing</a>
                     </p>
                 </div>
-
-                <div className="flex justify-center pt-12">
-                    <FooterNav showCairn={true} />
                 </div>
+            </div>
+            <div className="pb-6 flex justify-center">
+                <FooterNav showCairn={true} />
             </div>
         </div>
     )
