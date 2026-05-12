@@ -177,6 +177,18 @@ module "lambda_signals_get" {
   project_name         = var.project_name
 }
 
+module "lambda_signals_mark_read" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "signals-mark-read"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_write_policy_arn
+  project_name         = var.project_name
+}
+
 module "lambda_signals_public_thread_get" {
   source               = "../../modules/lambda"
   cognito_user_pool_id = module.cognito.cognito_user_pool_id
@@ -332,14 +344,30 @@ module "github_oidc" {
 
   dynamodb_table_arn = module.dynamodb.table_arn
   lambda_function_arns = [
+    module.lambda_logs_create.function_arn,
+    module.lambda_logs_delete.function_arn,
+    module.lambda_logs_get.function_arn,
+    module.lambda_logs_update.function_arn,
     module.lambda_markers_create.function_arn,
     module.lambda_markers_delete.function_arn,
     module.lambda_markers_get.function_arn,
     module.lambda_markers_update.function_arn,
+    module.lambda_signals_contact.function_arn,
+    module.lambda_signals_delete.function_arn,
+    module.lambda_signals_get.function_arn,
+    module.lambda_signals_mark_read.function_arn,
+    module.lambda_signals_public_thread_get.function_arn,
+    module.lambda_signals_public_thread_reply.function_arn,
+    module.lambda_signals_reply.function_arn,
+    module.lambda_signals_sync.function_arn,
     module.lambda_trails_create.function_arn,
     module.lambda_trails_delete.function_arn,
     module.lambda_trails_get.function_arn,
     module.lambda_trails_update.function_arn,
+    module.lambda_waypoints_create.function_arn,
+    module.lambda_waypoints_delete.function_arn,
+    module.lambda_waypoints_get.function_arn,
+    module.lambda_waypoints_update.function_arn,
   ]
 }
 
@@ -366,6 +394,26 @@ module "api_gateway" {
   ]
 
   lambda_functions = {
+    logs-create = {
+      invoke_arn    = module.lambda_logs_create.invoke_arn
+      function_name = module.lambda_logs_create.function_name
+      route_key     = "POST /logs"
+    }
+    logs-delete = {
+      invoke_arn    = module.lambda_logs_delete.invoke_arn
+      function_name = module.lambda_logs_delete.function_name
+      route_key     = "DELETE /logs/{id}"
+    }
+    logs-get = {
+      invoke_arn    = module.lambda_logs_get.invoke_arn
+      function_name = module.lambda_logs_get.function_name
+      route_key     = "GET /logs"
+    }
+    logs-update = {
+      invoke_arn    = module.lambda_logs_update.invoke_arn
+      function_name = module.lambda_logs_update.function_name
+      route_key     = "PUT /logs/{id}"
+    }
     markers-create = {
       invoke_arn    = module.lambda_markers_create.invoke_arn
       function_name = module.lambda_markers_create.function_name
@@ -386,6 +434,46 @@ module "api_gateway" {
       function_name = module.lambda_markers_update.function_name
       route_key     = "PUT /markers/{id}"
     }
+    signals-contact = {
+      invoke_arn    = module.lambda_signals_contact.invoke_arn
+      function_name = module.lambda_signals_contact.function_name
+      route_key     = "POST /signals/contact/{username}"
+    }
+    signals-delete = {
+      invoke_arn    = module.lambda_signals_delete.invoke_arn
+      function_name = module.lambda_signals_delete.function_name
+      route_key     = "DELETE /signals/{id}"
+    }
+    signals-get = {
+      invoke_arn    = module.lambda_signals_get.invoke_arn
+      function_name = module.lambda_signals_get.function_name
+      route_key     = "GET /signals"
+    }
+    signals-mark-read = {
+      invoke_arn    = module.lambda_signals_mark_read.invoke_arn
+      function_name = module.lambda_signals_mark_read.function_name
+      route_key     = "PUT /signals/{id}/read"
+    }
+    signals-public-thread-get = {
+      invoke_arn    = module.lambda_signals_public_thread_get.invoke_arn
+      function_name = module.lambda_signals_public_thread_get.function_name
+      route_key     = "GET /public/thread/{token}"
+    }
+    signals-public-thread-reply = {
+      invoke_arn    = module.lambda_signals_public_thread_reply.invoke_arn
+      function_name = module.lambda_signals_public_thread_reply.function_name
+      route_key     = "POST /public/thread/{token}/reply"
+    }
+    signals-reply = {
+      invoke_arn    = module.lambda_signals_reply.invoke_arn
+      function_name = module.lambda_signals_reply.function_name
+      route_key     = "POST /signals/{id}/replies"
+    }
+    signals-sync = {
+      invoke_arn    = module.lambda_signals_sync.invoke_arn
+      function_name = module.lambda_signals_sync.function_name
+      route_key     = "POST /signals/sync"
+    }
     trails-create = {
       invoke_arn    = module.lambda_trails_create.invoke_arn
       function_name = module.lambda_trails_create.function_name
@@ -405,6 +493,26 @@ module "api_gateway" {
       invoke_arn    = module.lambda_trails_update.invoke_arn
       function_name = module.lambda_trails_update.function_name
       route_key     = "PUT /trails/{id}"
+    }
+    waypoints-create = {
+      invoke_arn    = module.lambda_waypoints_create.invoke_arn
+      function_name = module.lambda_waypoints_create.function_name
+      route_key     = "POST /waypoints"
+    }
+    waypoints-delete = {
+      invoke_arn    = module.lambda_waypoints_delete.invoke_arn
+      function_name = module.lambda_waypoints_delete.function_name
+      route_key     = "DELETE /waypoints/{id}"
+    }
+    waypoints-get = {
+      invoke_arn    = module.lambda_waypoints_get.invoke_arn
+      function_name = module.lambda_waypoints_get.function_name
+      route_key     = "GET /waypoints"
+    }
+    waypoints-update = {
+      invoke_arn    = module.lambda_waypoints_update.invoke_arn
+      function_name = module.lambda_waypoints_update.function_name
+      route_key     = "PUT /waypoints/{id}"
     }
   }
 }
