@@ -2,7 +2,7 @@
   "extends": "../../packages/config/tsconfig.web.json",
   "compilerOptions": {
     "baseUrl": ".",
-    "types": ["vite/client"],
+    "types": ["@testing-library/jest-dom","vite/client"],
     "paths": {
       "@/*": ["./src/*"],
       "@cairn/types": ["../../packages/types/index.ts"],
