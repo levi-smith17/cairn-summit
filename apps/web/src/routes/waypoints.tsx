@@ -29,6 +29,15 @@ export default function Waypoints() {
     const waypoints = (waypointsData ?? []).map((w: any) => ({
         ...w,
         id: w.sk?.split('#').pop() ?? w.id,
+        markers: (w.markers ?? []).map((m: any) => ({
+            markerId: m.id ?? m.markerId,
+            marker: {
+                id: m.id ?? m.markerId,
+                name: m.name,
+                color: m.color,
+                icon: m.icon ?? null,
+            }
+        }))
     }))
 
     const trails = (trailsData ?? []).map((t: any) => ({
