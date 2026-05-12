@@ -19,7 +19,8 @@ export async function getLogs(): Promise<any[]> {
         headers: await getAuthHeaders()
     })
     if (!res.ok) throw new Error('Failed to fetch logs')
-    return res.json()
+    const json = await res.json()
+    return json.data
 }
 
 export async function createLog(data: Record<string, unknown>): Promise<any> {
@@ -32,7 +33,9 @@ export async function createLog(data: Record<string, unknown>): Promise<any> {
         body: JSON.stringify(data)
     })
     if (!res.ok) throw new Error('Failed to create log')
-    return res.json()
+    const json = await res.json()
+    const log = json.data
+    return { ...log, id: log.sk?.split('#').pop() }
 }
 
 export async function updateLog(id: string, data: Record<string, unknown>): Promise<any> {
@@ -45,7 +48,9 @@ export async function updateLog(id: string, data: Record<string, unknown>): Prom
         body: JSON.stringify(data)
     })
     if (!res.ok) throw new Error('Failed to update log')
-    return res.json()
+    const json = await res.json()
+    const log = json.data
+    return { ...log, id: log.sk?.split('#').pop() }
 }
 
 export async function saveLog(data: {

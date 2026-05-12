@@ -19,7 +19,8 @@ export async function getWaypoints() {
         headers: await getAuthHeaders()
     })
     if (!res.ok) throw new Error('Failed to fetch waypoints')
-    return res.json()
+    const json = await res.json()
+    return json.data
 }
 
 export async function createWaypoint(data: Record<string, unknown>) {
@@ -32,7 +33,9 @@ export async function createWaypoint(data: Record<string, unknown>) {
         body: JSON.stringify(data)
     })
     if (!res.ok) throw new Error('Failed to create waypoint')
-    return res.json()
+    const json = await res.json()
+    const waypoint = json.data
+    return { ...waypoint, id: waypoint.sk?.split('#').pop() }
 }
 
 export async function updateWaypoint(id: string, data: Record<string, unknown>) {
@@ -45,7 +48,9 @@ export async function updateWaypoint(id: string, data: Record<string, unknown>) 
         body: JSON.stringify(data)
     })
     if (!res.ok) throw new Error('Failed to update waypoint')
-    return res.json()
+    const json = await res.json()
+    const waypoint = json.data
+    return { ...waypoint, id: waypoint.sk?.split('#').pop() }
 }
 
 export async function saveWaypoint(data: Record<string, any>) {
