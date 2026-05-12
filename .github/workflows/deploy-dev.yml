@@ -84,6 +84,34 @@ jobs:
           AWS_REGION: us-east-2
         run: node scripts/deploy.mjs markers/get markers/create markers/update markers/delete
 
+  deploy-lambda-trails:
+    name: Deploy Lambda — Trails
+    runs-on: ubuntu-latest
+    needs: build-lambda
+    environment: dev
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-dist
+          path: apps/api/dist
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.DEV_AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy Lambda functions
+        working-directory: apps/api
+        env:
+          ENVIRONMENT: dev
+          AWS_REGION: us-east-2
+        run: node scripts/deploy.mjs trails/get trails/create trails/update trails/delete
+
   deploy-web:
     name: Deploy Web
     runs-on: ubuntu-latest
