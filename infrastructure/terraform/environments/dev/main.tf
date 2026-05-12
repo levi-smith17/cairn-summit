@@ -111,6 +111,14 @@ module "github_oidc" {
   ]
 }
 
+module "cloudfront" {
+  source       = "../../modules/cloudfront"
+  environment  = var.environment
+  managed_by   = var.managed_by
+  owner        = var.owner
+  project_name = var.project_name
+}
+
 module "api_gateway" {
   source               = "../../modules/api_gateway"
   cognito_client_id    = module.cognito.cognito_client_id
@@ -119,6 +127,11 @@ module "api_gateway" {
   managed_by           = var.managed_by
   owner                = var.owner
   project_name         = var.project_name
+  allowed_origins      = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    module.cloudfront.cloudfront_url,
+  ]
 
   lambda_functions = {
     markers-create = {
@@ -142,12 +155,4 @@ module "api_gateway" {
       route_key     = "PUT /markers/{id}"
     }
   }
-}
-
-module "cloudfront" {
-  source       = "../../modules/cloudfront"
-  environment  = var.environment
-  managed_by   = var.managed_by
-  owner        = var.owner
-  project_name = var.project_name
 }
