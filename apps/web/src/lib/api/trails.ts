@@ -1,5 +1,6 @@
 import type { Trail } from '@cairn/types'
 import { pool } from '@/hooks/use-auth'
+import { extractId } from '@/lib/utils'
 
 const API_BASE = import.meta.env.VITE_API_URL
 
@@ -15,9 +16,7 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
     })
 }
 
-export type TrailWithCount = Trail & { _count: { waypoints: number } }
-
-export async function getTrails(): Promise<TrailWithCount[]> {
+export async function getTrails(): Promise<Trail[]> {
     const res = await fetch(`${API_BASE}/trails`, {
         headers: await getAuthHeaders(),
     })
@@ -26,7 +25,7 @@ export async function getTrails(): Promise<TrailWithCount[]> {
     return json.data
 }
 
-export async function createTrail(data: { name: string }): Promise<Trail> {
+export async function createTrail(data: { name: string }): Promise<{ id: string; name: string }> {
     const res = await fetch(`${API_BASE}/trails`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...await getAuthHeaders() },
@@ -34,10 +33,11 @@ export async function createTrail(data: { name: string }): Promise<Trail> {
     })
     if (!res.ok) throw new Error('Failed to create trail')
     const json = await res.json()
-    return json.data
+    const trail: Trail = json.data
+    return { id: extractId(trail.sk), name: trail.name }
 }
 
-export async function updateTrail(id: string, data: { name: string }): Promise<Trail> {
+export async function updateTrail(id: string, data: { name: string }): Promise<{ id: string; name: string }> {
     const res = await fetch(`${API_BASE}/trails/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...await getAuthHeaders() },
@@ -45,10 +45,11 @@ export async function updateTrail(id: string, data: { name: string }): Promise<T
     })
     if (!res.ok) throw new Error('Failed to update trail')
     const json = await res.json()
-    return json.data
+    const trail: Trail = json.data
+    return { id: extractId(trail.sk), name: trail.name }
 }
 
-export async function saveTrail(data: { id?: string; name: string }): Promise<Trail> {
+export async function saveTrail(data: { id?: string; name: string }): Promise<{ id: string; name: string }> {
     if (data.id) return updateTrail(data.id, { name: data.name })
     return createTrail({ name: data.name })
 }
