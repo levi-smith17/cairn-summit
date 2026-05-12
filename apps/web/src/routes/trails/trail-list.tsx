@@ -6,7 +6,6 @@ import { useTerminology } from '@/contexts/terminology-context'
 interface Trail {
   id: string
   name: string
-  _count: { waypoints: number }
 }
 
 interface TrailListProps {
@@ -57,9 +56,6 @@ export function TrailList({ trails, selectedId, onSelect, onNew }: TrailListProp
                 className={`w-full flex flex-col items-start px-4 py-3 text-left transition-colors hover:bg-muted/50 ${selectedId === trail.id ? 'bg-primary/10 hover:bg-primary/10' : ''}`}
               >
                 <span className="text-sm font-medium">{trail.name}</span>
-                <span className="text-xs text-muted-foreground">
-                  {trail._count.waypoints} {trail._count.waypoints !== 1 ? terms.waypoints.toLowerCase() : terms.waypoints.slice(0, -1).toLowerCase()}
-                </span>
               </button>
             ))}
           </div>

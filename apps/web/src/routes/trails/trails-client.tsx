@@ -8,7 +8,6 @@ import { TrailForm } from './trail-form'
 interface Trail {
   id: string
   name: string
-  _count: { waypoints: number }
 }
 
 interface TrailsClientProps {

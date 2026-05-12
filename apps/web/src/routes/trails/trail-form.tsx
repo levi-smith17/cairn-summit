@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useQueryClient } from '@tanstack/react-query'
-import { ChevronLeft, Folder, Trash2 } from 'lucide-react'
+import { ChevronLeft, Trash2 } from 'lucide-react'
 import {
   Form,
   FormControl,
@@ -39,7 +39,6 @@ type TrailFormValues = z.infer<typeof trailSchema>
 interface Trail {
   id: string
   name: string
-  _count: { waypoints: number }
 }
 
 interface TrailFormProps {
@@ -126,15 +125,6 @@ export function TrailForm({ trail, onBack, onSaved, onDeleted }: TrailFormProps)
                 </FormItem>
               )}
             />
-
-            {trail && (
-              <div className="pt-2">
-                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                  <Folder className="h-3.5 w-3.5" />
-                  Contains {trail._count.waypoints} {trail._count.waypoints !== 1 ? terms.waypoints.toLowerCase() : terms.waypoints.slice(0, -1).toLowerCase()}
-                </p>
-              </div>
-            )}
 
             <div className="-mx-4 border-t" />
             <FormActions

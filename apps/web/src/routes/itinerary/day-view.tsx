@@ -11,11 +11,6 @@ interface DayViewProps {
   anchor: Date
   calendarMode: CalendarMode
   calendarColorMap: Record<string, string>
-  onSelectStop: (stop: StopWithMarkers) => void
-  onDeleteStop: (stop: StopWithMarkers) => void
-  onSelectICloudEvent: (event: ICloudEventDisplay) => void
-  onDeleteICloudEvent: (event: ICloudEventDisplay) => void
-  onDayClick: (date: Date) => void
 }
 
 function isSameDay(a: Date, b: Date): boolean {
@@ -28,7 +23,6 @@ function isSameDay(a: Date, b: Date): boolean {
 
 function stopsForDay(stops: StopWithMarkers[], date: Date): StopWithMarkers[] {
   return stops.filter(s => {
-    if (s.recurrenceRule && !s.masterStopId && !s.id.includes('::')) return false
     const start = new Date(s.startDate)
     const end = s.endDate ? new Date(s.endDate) : new Date(s.startDate)
     const d = new Date(date)
@@ -55,7 +49,7 @@ function formatTime(date: Date): string {
   return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
 }
 
-export function DayView({ stops, icloudEvents, anchor, calendarMode, calendarColorMap, onSelectStop, onDeleteStop, onSelectICloudEvent, onDeleteICloudEvent, onDayClick }: DayViewProps) {
+export function DayView({ stops, icloudEvents, anchor, calendarMode, calendarColorMap }: DayViewProps) {
   const { terms } = useTerminology()
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -124,8 +118,6 @@ export function DayView({ stops, icloudEvents, anchor, calendarMode, calendarCol
                   notes={e.notes}
                   color={e.color}
                   readonly={e.readonly}
-                  onEdit={e.readonly ? undefined : () => onSelectICloudEvent(e)}
-                  onDelete={e.readonly ? undefined : () => onDeleteICloudEvent(e)}
                 >
                   <button
                     className="flex items-center gap-2 px-3 py-2 rounded-lg w-full text-left hover:opacity-90 transition-opacity"
@@ -148,8 +140,6 @@ export function DayView({ stops, icloudEvents, anchor, calendarMode, calendarCol
                     location={stop.location}
                     notes={stop.notes}
                     color={color}
-                    onEdit={() => onSelectStop(stop)}
-                    onDelete={() => onDeleteStop(stop)}
                   >
                     <button
                       className="flex items-center gap-2 text-left px-3 py-2 rounded-lg hover:opacity-90 transition-opacity w-full"
@@ -193,8 +183,6 @@ export function DayView({ stops, icloudEvents, anchor, calendarMode, calendarCol
                     location={stop.location}
                     notes={stop.notes}
                     color={color}
-                    onEdit={() => onSelectStop(stop)}
-                    onDelete={() => onDeleteStop(stop)}
                   >
                     <button className="flex items-start gap-3 text-left p-3 rounded-lg border hover:bg-muted/40 transition-colors w-full">
                       <div className="w-1 self-stretch rounded-full shrink-0 mt-0.5" style={{ backgroundColor: color }} />
@@ -232,8 +220,6 @@ export function DayView({ stops, icloudEvents, anchor, calendarMode, calendarCol
                     notes={e.notes}
                     color={e.color}
                     readonly={e.readonly}
-                    onEdit={e.readonly ? undefined : () => onSelectICloudEvent(e)}
-                    onDelete={e.readonly ? undefined : () => onDeleteICloudEvent(e)}
                   >
                     <button className="flex items-start gap-3 p-3 rounded-lg border w-full text-left hover:bg-muted/40 transition-colors">
                       <div className="w-1 self-stretch rounded-full shrink-0 mt-0.5" style={{ backgroundColor: e.color }} />
@@ -256,16 +242,10 @@ export function DayView({ stops, icloudEvents, anchor, calendarMode, calendarCol
         )}
 
         {dayStops.length === 0 && dayICloud.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16 text-center gap-2">
+          <div className="flex flex-col items-center justify-center py-16 text-center">
             <p className="text-sm text-muted-foreground">
               No {terms.stops.toLowerCase()} on this {terms.legs.slice(0, -1).toLowerCase()}.
             </p>
-            <button
-              onClick={() => onDayClick(anchor)}
-              className="text-xs text-primary hover:underline"
-            >
-              Add one to get started.
-            </button>
           </div>
         )}
       </div>

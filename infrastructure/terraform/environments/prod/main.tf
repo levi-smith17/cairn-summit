@@ -93,6 +93,54 @@ module "lambda_markers_update" {
   project_name         = var.project_name
 }
 
+module "lambda_trails_create" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "trails-create"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_write_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_trails_get" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "trails-get"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_read_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_trails_delete" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "trails-delete"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_delete_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_trails_update" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "trails-update"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_write_policy_arn
+  project_name         = var.project_name
+}
+
 module "github_oidc" {
   source                  = "../../modules/github_oidc"
   environment             = var.environment
@@ -108,6 +156,10 @@ module "github_oidc" {
     module.lambda_markers_delete.function_arn,
     module.lambda_markers_get.function_arn,
     module.lambda_markers_update.function_arn,
+    module.lambda_trails_create.function_arn,
+    module.lambda_trails_delete.function_arn,
+    module.lambda_trails_get.function_arn,
+    module.lambda_trails_update.function_arn,
   ]
 }
 
@@ -153,6 +205,26 @@ module "api_gateway" {
       invoke_arn    = module.lambda_markers_update.invoke_arn
       function_name = module.lambda_markers_update.function_name
       route_key     = "PUT /markers/{id}"
+    }
+    trails-create = {
+      invoke_arn    = module.lambda_trails_create.invoke_arn
+      function_name = module.lambda_trails_create.function_name
+      route_key     = "POST /trails"
+    }
+    trails-delete = {
+      invoke_arn    = module.lambda_trails_delete.invoke_arn
+      function_name = module.lambda_trails_delete.function_name
+      route_key     = "DELETE /trails/{id}"
+    }
+    trails-get = {
+      invoke_arn    = module.lambda_trails_get.invoke_arn
+      function_name = module.lambda_trails_get.function_name
+      route_key     = "GET /trails"
+    }
+    trails-update = {
+      invoke_arn    = module.lambda_trails_update.invoke_arn
+      function_name = module.lambda_trails_update.function_name
+      route_key     = "PUT /trails/{id}"
     }
   }
 }

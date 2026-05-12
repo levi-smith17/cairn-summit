@@ -1,11 +1,9 @@
-import { useState } from 'react'
-import { Lock, Clock, MapPin, FileText, Pencil, Trash2, AlertTriangle } from 'lucide-react'
+import { Clock, MapPin, FileText, Lock } from 'lucide-react'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { Button } from '@/components/ui/button'
 import { contrastColor } from '@/lib/color'
 
 interface EventPopoverProps {
@@ -17,8 +15,6 @@ interface EventPopoverProps {
   notes?: string | null
   color: string
   readonly?: boolean
-  onEdit?: () => void
-  onDelete?: () => void
   children: React.ReactNode
 }
 
@@ -43,12 +39,8 @@ export function EventPopover({
   notes,
   color,
   readonly,
-  onEdit,
-  onDelete,
   children,
 }: EventPopoverProps) {
-  const [confirmingDelete, setConfirmingDelete] = useState(false)
-
   const startDate = startRaw instanceof Date ? startRaw : new Date(startRaw)
   const endDate = endRaw ? (endRaw instanceof Date ? endRaw : new Date(endRaw)) : null
 
@@ -63,7 +55,7 @@ export function EventPopover({
     : formatDate(startDate)
 
   return (
-    <Popover onOpenChange={open => { if (!open) setConfirmingDelete(false) }}>
+    <Popover>
       <PopoverTrigger asChild onClick={e => e.stopPropagation()}>
         {children}
       </PopoverTrigger>
@@ -76,90 +68,35 @@ export function EventPopover({
           <span className="text-sm font-semibold leading-snug flex-1 min-w-0">{title}</span>
         </div>
 
-        {confirmingDelete ? (
-          <div className="p-3 flex flex-col gap-3">
-            <div className="flex items-start gap-2 text-xs text-muted-foreground">
-              <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-destructive" />
-              <span>Are you sure you want to remove this event? This cannot be undone.</span>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 h-7 text-xs"
-                onClick={e => { e.stopPropagation(); setConfirmingDelete(false) }}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                className="flex-1 h-7 text-xs gap-1.5"
-                onClick={e => { e.stopPropagation(); onDelete?.() }}
-              >
-                <Trash2 className="h-3 w-3" />
-                Remove
-              </Button>
+        <div className="p-3 flex flex-col gap-2">
+          <div className="flex items-start gap-2 text-xs text-muted-foreground">
+            <Clock className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+            <div>
+              <div>{dateLabel}</div>
+              <div>{timeLabel}</div>
             </div>
           </div>
-        ) : (
-          <div className="p-3 flex flex-col gap-2">
+
+          {location && (
             <div className="flex items-start gap-2 text-xs text-muted-foreground">
-              <Clock className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-              <div>
-                <div>{dateLabel}</div>
-                <div>{timeLabel}</div>
-              </div>
+              <MapPin className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+              <span>{location}</span>
             </div>
+          )}
 
-            {location && (
-              <div className="flex items-start gap-2 text-xs text-muted-foreground">
-                <MapPin className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                <span>{location}</span>
-              </div>
-            )}
+          {notes && (
+            <div className="flex items-start gap-2 text-xs text-muted-foreground">
+              <FileText className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+              <span className="line-clamp-4">{notes}</span>
+            </div>
+          )}
 
-            {notes && (
-              <div className="flex items-start gap-2 text-xs text-muted-foreground">
-                <FileText className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                <span className="line-clamp-4">{notes}</span>
-              </div>
-            )}
-
-            {!readonly && (onEdit || onDelete) && (
-              <div className="flex items-center gap-2 pt-1 border-t mt-0.5">
-                {onEdit && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1 h-7 text-xs gap-1.5"
-                    onClick={e => { e.stopPropagation(); onEdit() }}
-                  >
-                    <Pencil className="h-3 w-3" />
-                    Edit
-                  </Button>
-                )}
-                {onDelete && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1 h-7 text-xs gap-1.5 text-destructive hover:text-destructive"
-                    onClick={e => { e.stopPropagation(); setConfirmingDelete(true) }}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                    Remove
-                  </Button>
-                )}
-              </div>
-            )}
-
-            {readonly && (
-              <p className="text-[10px] text-muted-foreground/60 border-t pt-2 mt-0.5">
-                Read-only — from a subscribed calendar
-              </p>
-            )}
-          </div>
-        )}
+          {readonly && (
+            <p className="text-[10px] text-muted-foreground/60 border-t pt-2 mt-0.5">
+              Read-only — from a subscribed calendar
+            </p>
+          )}
+        </div>
       </PopoverContent>
     </Popover>
   )

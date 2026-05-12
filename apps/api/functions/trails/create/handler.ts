@@ -1,7 +1,7 @@
 import { PutCommand } from '@aws-sdk/lib-dynamodb'
 import { randomUUID } from 'crypto'
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from 'aws-lambda'
-import type { Marker } from '@cairn/types'
+import type { Trail } from '@cairn/types'
 import { dynamo, TABLE_NAME } from '../../shared/db'
 import { getPk } from '../../shared/auth'
 import { toApiGatewayResponse, created, badRequest, serverError } from '../../shared/response'
@@ -12,31 +12,31 @@ export const handler = async (
     try {
         const body = JSON.parse(event.body ?? '{}')
 
-        if (!body.name || !body.color) {
-            return toApiGatewayResponse(badRequest('name and color are required'))
+        if (!body.name) {
+            return toApiGatewayResponse(badRequest('name is required'))
         }
 
         const pk = getPk(event)
         const id = randomUUID()
-        const sk = `MARKER#${id}`
+        const sk = `TRAIL#${id}`
 
-        const marker: Marker & { gsi1pk: string; gsi1sk: string } = {
+        const trail: Trail = {
             pk,
             sk,
-            gsi1pk: pk,          // USER#id — future GSI queries by user
-            gsi1sk: sk,          // MARKER#id — sorts markers within user
             name: body.name,
-            color: body.color,
-            icon: body.icon ?? undefined,
             createdAt: new Date().toISOString(),
         }
 
         await dynamo.send(new PutCommand({
             TableName: TABLE_NAME,
-            Item: marker,
+            Item: {
+                ...trail,
+                gsi1pk: pk,
+                gsi1sk: sk,
+            },
         }))
 
-        return toApiGatewayResponse(created(marker))
+        return toApiGatewayResponse(created(trail))
     } catch (err) {
         console.error(err)
         return toApiGatewayResponse(serverError())
