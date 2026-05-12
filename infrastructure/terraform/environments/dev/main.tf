@@ -9,7 +9,7 @@ terraform {
   }
 
   backend "s3" {
-    bucket  = "cairn-terraform-state"
+    bucket  = "cairn-dev-terraform-state"
     key     = "dev/terraform.tfstate"
     region  = "us-east-2"
   }
@@ -94,12 +94,13 @@ module "lambda_markers_update" {
 }
 
 module "github_oidc" {
-  source      = "../../modules/github_oidc"
-  environment = var.environment
-  github_repo = "levi-smith17/cairn-summit"
-  managed_by  = var.managed_by
-  owner       = var.owner
-  project_name = var.project_name
+  source                  = "../../modules/github_oidc"
+  environment             = var.environment
+  github_repo             = "levi-smith17/cairn-summit"
+  managed_by              = var.managed_by
+  owner                   = var.owner
+  project_name            = var.project_name
+  terraform_state_bucket  = "cairn-dev-terraform-state"
 
   dynamodb_table_arn = module.dynamodb.table_arn
   lambda_function_arns = [
@@ -141,4 +142,12 @@ module "api_gateway" {
       route_key     = "PUT /markers/{id}"
     }
   }
+}
+
+module "cloudfront" {
+  source       = "../../modules/cloudfront"
+  environment  = var.environment
+  managed_by   = var.managed_by
+  owner        = var.owner
+  project_name = var.project_name
 }

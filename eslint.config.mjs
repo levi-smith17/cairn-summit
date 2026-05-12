@@ -6,7 +6,7 @@ const eslintConfig = defineConfig([
   js.configs.recommended,
   ...tseslint.configs.recommended,
   globalIgnores([
-    // build outputs
+    // build outputs.tf
     "**/dist/**",
     "**/build/**",
     "**/.turbo/**",
@@ -17,7 +17,7 @@ const eslintConfig = defineConfig([
     // terraform
     "infrastructure/**",
 
-    // migration script outputs
+    // migration script outputs.tf
     "scripts/**",
   ]),
 ]);
