@@ -12,11 +12,6 @@ interface MonthViewProps {
   anchor: Date
   calendarMode: CalendarMode
   calendarColorMap: Record<string, string>
-  onSelectStop: (stop: StopWithMarkers) => void
-  onDeleteStop: (stop: StopWithMarkers) => void
-  onSelectICloudEvent: (event: ICloudEventDisplay) => void
-  onDeleteICloudEvent: (event: ICloudEventDisplay) => void
-  onDayClick: (date: Date) => void
 }
 
 function isSameDay(a: Date, b: Date): boolean {
@@ -29,7 +24,6 @@ function isSameDay(a: Date, b: Date): boolean {
 
 function stopsForDay(stops: StopWithMarkers[], date: Date): StopWithMarkers[] {
   return stops.filter(s => {
-    if (s.recurrenceRule && !s.masterStopId && !s.id.includes('::')) return false
     const start = new Date(s.startDate)
     const end = s.endDate ? new Date(s.endDate) : new Date(s.startDate)
     const d = new Date(date)
@@ -83,18 +77,10 @@ function EventPills({
   stops,
   icloudEvents,
   calendarColorMap,
-  onSelectStop,
-  onDeleteStop,
-  onSelectICloudEvent,
-  onDeleteICloudEvent,
 }: {
   stops: StopWithMarkers[]
   icloudEvents: ICloudEventDisplay[]
   calendarColorMap: Record<string, string>
-  onSelectStop: (s: StopWithMarkers) => void
-  onDeleteStop: (s: StopWithMarkers) => void
-  onSelectICloudEvent: (e: ICloudEventDisplay) => void
-  onDeleteICloudEvent: (e: ICloudEventDisplay) => void
 }) {
   const events = sortedDayEvents(stops, icloudEvents)
   if (!events.length) return null
@@ -115,8 +101,6 @@ function EventPills({
               location={stop.location}
               notes={stop.notes}
               color={color}
-              onEdit={() => onSelectStop(stop)}
-              onDelete={() => onDeleteStop(stop)}
             >
               <button
                 className="text-left text-xs px-2 py-1 rounded truncate leading-tight font-medium hover:opacity-80 transition-opacity w-full"
@@ -140,8 +124,6 @@ function EventPills({
             notes={event.notes}
             color={event.color}
             readonly={event.readonly}
-            onEdit={event.readonly ? undefined : () => onSelectICloudEvent(event)}
-            onDelete={event.readonly ? undefined : () => onDeleteICloudEvent(event)}
           >
             <button
               className="text-left text-xs px-2 py-1 rounded leading-tight font-medium flex items-center gap-1 overflow-hidden w-full hover:opacity-80 transition-opacity"
@@ -161,18 +143,7 @@ function EventPills({
   )
 }
 
-function GregorianMonthGrid({
-  stops,
-  icloudEvents,
-  anchor,
-  calendarMode,
-  calendarColorMap,
-  onSelectStop,
-  onDeleteStop,
-  onSelectICloudEvent,
-  onDeleteICloudEvent,
-  onDayClick,
-}: MonthViewProps) {
+function GregorianMonthGrid({ stops, icloudEvents, anchor, calendarMode, calendarColorMap }: MonthViewProps) {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
@@ -214,8 +185,7 @@ function GregorianMonthGrid({
           return (
             <div
               key={i}
-              onClick={() => onDayClick(day)}
-              className={`border-b border-r last:border-r-0 p-0.5 sm:p-1 cursor-pointer hover:bg-muted/40 transition-colors flex flex-col overflow-hidden ${
+              className={`border-b border-r last:border-r-0 p-0.5 sm:p-1 flex flex-col overflow-hidden ${
                 !isCurrentMonth ? 'opacity-40' : ''
               }`}
             >
@@ -240,7 +210,7 @@ function GregorianMonthGrid({
                   </div>
                 )}
               </div>
-              <EventPills stops={dayStops} icloudEvents={dayICloud} calendarColorMap={calendarColorMap} onSelectStop={onSelectStop} onDeleteStop={onDeleteStop} onSelectICloudEvent={onSelectICloudEvent} onDeleteICloudEvent={onDeleteICloudEvent} />
+              <EventPills stops={dayStops} icloudEvents={dayICloud} calendarColorMap={calendarColorMap} />
             </div>
           )
         })}
@@ -249,7 +219,7 @@ function GregorianMonthGrid({
   )
 }
 
-function LuviFullMonthGrid({ stops, icloudEvents, anchor, calendarColorMap, onSelectStop, onDeleteStop, onSelectICloudEvent, onDeleteICloudEvent, onDayClick }: MonthViewProps) {
+function LuviFullMonthGrid({ stops, icloudEvents, anchor, calendarColorMap }: MonthViewProps) {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
@@ -275,14 +245,9 @@ function LuviFullMonthGrid({ stops, icloudEvents, anchor, calendarColorMap, onSe
           ))}
         </div>
 
-        <div
-          className="grid flex-1 border-b"
-          style={{ gridTemplateColumns: '80px repeat(13, minmax(0, 1fr))' }}
-        >
+        <div className="grid flex-1 border-b" style={{ gridTemplateColumns: '80px repeat(13, minmax(0, 1fr))' }}>
           <div className="flex items-center justify-center border-r px-2">
-            <span className="text-xs font-semibold text-muted-foreground tracking-wide rotate-0">
-              {monthLabel}a
-            </span>
+            <span className="text-xs font-semibold text-muted-foreground tracking-wide">{monthLabel}a</span>
           </div>
           {weekA.map((day, i) => {
             const isToday = isSameDay(day, today)
@@ -290,37 +255,24 @@ function LuviFullMonthGrid({ stops, icloudEvents, anchor, calendarColorMap, onSe
             const dayICloud = icloudEventsForDay(icloudEvents, day)
             const luvi = toLuvi(day)
             return (
-              <div
-                key={i}
-                onClick={() => onDayClick(day)}
-                className="border-r last:border-r-0 p-0.5 sm:p-1 cursor-pointer hover:bg-muted/40 transition-colors flex flex-col overflow-hidden"
-              >
+              <div key={i} className="border-r last:border-r-0 p-0.5 sm:p-1 flex flex-col overflow-hidden">
                 <div className="flex flex-col items-center mb-0.5">
-                  <span
-                    className={`text-[10px] sm:text-xs font-medium h-5 w-5 flex items-center justify-center rounded-full ${
-                      isToday ? 'bg-foreground text-background' : 'text-muted-foreground'
-                    }`}
-                  >
+                  <span className={`text-[10px] sm:text-xs font-medium h-5 w-5 flex items-center justify-center rounded-full ${isToday ? 'bg-foreground text-background' : 'text-muted-foreground'}`}>
                     {luvi.dayOfMonth}
                   </span>
                   <span className="text-[8px] text-muted-foreground/70 hidden sm:block">
                     {day.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </span>
                 </div>
-                <EventPills stops={dayStops} icloudEvents={dayICloud} calendarColorMap={calendarColorMap} onSelectStop={onSelectStop} onDeleteStop={onDeleteStop} onSelectICloudEvent={onSelectICloudEvent} onDeleteICloudEvent={onDeleteICloudEvent} />
+                <EventPills stops={dayStops} icloudEvents={dayICloud} calendarColorMap={calendarColorMap} />
               </div>
             )
           })}
         </div>
 
-        <div
-          className="grid flex-1"
-          style={{ gridTemplateColumns: '80px repeat(13, minmax(0, 1fr))' }}
-        >
+        <div className="grid flex-1" style={{ gridTemplateColumns: '80px repeat(13, minmax(0, 1fr))' }}>
           <div className="flex items-center justify-center border-r px-2">
-            <span className="text-xs font-semibold text-muted-foreground tracking-wide">
-              {monthLabel}i
-            </span>
+            <span className="text-xs font-semibold text-muted-foreground tracking-wide">{monthLabel}i</span>
           </div>
           {weekI.map((day, i) => {
             const isToday = isSameDay(day, today)
@@ -328,24 +280,16 @@ function LuviFullMonthGrid({ stops, icloudEvents, anchor, calendarColorMap, onSe
             const dayICloud = icloudEventsForDay(icloudEvents, day)
             const luvi = toLuvi(day)
             return (
-              <div
-                key={i}
-                onClick={() => onDayClick(day)}
-                className="border-r last:border-r-0 p-0.5 sm:p-1 cursor-pointer hover:bg-muted/40 transition-colors flex flex-col overflow-hidden"
-              >
+              <div key={i} className="border-r last:border-r-0 p-0.5 sm:p-1 flex flex-col overflow-hidden">
                 <div className="flex flex-col items-center mb-0.5">
-                  <span
-                    className={`text-[10px] sm:text-xs font-medium h-5 w-5 flex items-center justify-center rounded-full ${
-                      isToday ? 'bg-foreground text-background' : 'text-muted-foreground'
-                    }`}
-                  >
+                  <span className={`text-[10px] sm:text-xs font-medium h-5 w-5 flex items-center justify-center rounded-full ${isToday ? 'bg-foreground text-background' : 'text-muted-foreground'}`}>
                     {luvi.dayOfMonth}
                   </span>
                   <span className="text-[8px] text-muted-foreground/70 hidden sm:block">
                     {day.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </span>
                 </div>
-                <EventPills stops={dayStops} icloudEvents={dayICloud} calendarColorMap={calendarColorMap} onSelectStop={onSelectStop} onDeleteStop={onDeleteStop} onSelectICloudEvent={onSelectICloudEvent} onDeleteICloudEvent={onDeleteICloudEvent} />
+                <EventPills stops={dayStops} icloudEvents={dayICloud} calendarColorMap={calendarColorMap} />
               </div>
             )
           })}

@@ -23,9 +23,6 @@ export default function LoginPage() {
         setPending(true)
         setError(null)
         try {
-            console.log('email:', JSON.stringify(email))
-            console.log('password:', JSON.stringify(password))
-            await signIn(email, password)
             await signIn(email, password)
             navigate('/')
         } catch (err: unknown) {

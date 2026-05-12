@@ -25,10 +25,10 @@ jobs:
         run: npm ci
 
       - name: Run Lambda tests
-        run: npm run test --workspace=apps/api -- --run
+        run: npm run test --workspace=apps/api -- --run --reporter=verbose
 
-      - name: Run web tests
-        run: npm run test:run --workspace=apps/web
+      - name: Run Web tests
+        run: npm run test:run --workspace=apps/web --reporter=verbose
 
   build-lambda:
     name: Build Lambda

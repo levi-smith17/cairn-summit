@@ -15,11 +15,6 @@ interface WeekViewProps {
   anchor: Date
   calendarMode: CalendarMode
   calendarColorMap: Record<string, string>
-  onSelectStop: (stop: StopWithMarkers) => void
-  onDeleteStop: (stop: StopWithMarkers) => void
-  onSelectICloudEvent: (event: ICloudEventDisplay) => void
-  onDeleteICloudEvent: (event: ICloudEventDisplay) => void
-  onDayClick: (date: Date) => void
 }
 
 function isSameDay(a: Date, b: Date): boolean {
@@ -32,7 +27,6 @@ function isSameDay(a: Date, b: Date): boolean {
 
 function stopsForDay(stops: StopWithMarkers[], date: Date): StopWithMarkers[] {
   return stops.filter(s => {
-    if (s.recurrenceRule && !s.masterStopId && !s.id.includes('::')) return false
     const start = new Date(s.startDate)
     const end = s.endDate ? new Date(s.endDate) : new Date(s.startDate)
     const d = new Date(date)
@@ -71,7 +65,7 @@ function eventPosition(start: Date, end: Date | null): { top: number; height: nu
   }
 }
 
-function GregorianWeekGrid({ stops, icloudEvents, anchor, calendarMode, calendarColorMap, onSelectStop, onDeleteStop, onSelectICloudEvent, onDeleteICloudEvent, onDayClick }: WeekViewProps) {
+function GregorianWeekGrid({ stops, icloudEvents, anchor, calendarMode, calendarColorMap }: WeekViewProps) {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -110,8 +104,7 @@ function GregorianWeekGrid({ stops, icloudEvents, anchor, calendarMode, calendar
               return (
                 <div
                   key={i}
-                  onClick={() => onDayClick(day)}
-                  className="py-2 px-1 text-center cursor-pointer hover:bg-muted/40 transition-colors border-r last:border-r-0"
+                  className="py-2 px-1 text-center border-r last:border-r-0"
                 >
                   <div className="text-xs text-muted-foreground mb-0.5 truncate">
                     {luvi?.dayName || day.toLocaleDateString('en-US', { weekday: 'short' })}
@@ -151,8 +144,6 @@ function GregorianWeekGrid({ stops, icloudEvents, anchor, calendarMode, calendar
                           location={stop.location}
                           notes={stop.notes}
                           color={color}
-                          onEdit={() => onSelectStop(stop)}
-                          onDelete={() => onDeleteStop(stop)}
                         >
                           <button
                             className="text-left w-full px-1.5 py-0.5 rounded text-[10px] font-medium truncate hover:opacity-90"
@@ -174,8 +165,6 @@ function GregorianWeekGrid({ stops, icloudEvents, anchor, calendarMode, calendar
                         notes={e.notes}
                         color={e.color}
                         readonly={e.readonly}
-                        onEdit={e.readonly ? undefined : () => onSelectICloudEvent(e)}
-                        onDelete={e.readonly ? undefined : () => onDeleteICloudEvent(e)}
                       >
                         <button
                           className="text-left w-full px-1.5 py-0.5 rounded text-[10px] font-medium flex items-center gap-0.5 overflow-hidden hover:opacity-90"
@@ -217,8 +206,7 @@ function GregorianWeekGrid({ stops, icloudEvents, anchor, calendarMode, calendar
             return (
               <div
                 key={i}
-                className="relative border-r last:border-r-0 cursor-pointer"
-                onClick={() => onDayClick(day)}
+                className="relative border-r last:border-r-0"
               >
                 {HOURS.map(h => (
                   <div key={h} className="absolute w-full border-t border-border/40" style={{ top: h * PX_PER_HOUR }} />
@@ -240,8 +228,6 @@ function GregorianWeekGrid({ stops, icloudEvents, anchor, calendarMode, calendar
                       location={stop.location}
                       notes={stop.notes}
                       color={color}
-                      onEdit={() => onSelectStop(stop)}
-                      onDelete={() => onDeleteStop(stop)}
                     >
                       <button
                         className="absolute inset-x-0.5 rounded px-1.5 text-left overflow-hidden hover:opacity-90 transition-opacity z-10"
@@ -267,8 +253,6 @@ function GregorianWeekGrid({ stops, icloudEvents, anchor, calendarMode, calendar
                       notes={e.notes}
                       color={e.color}
                       readonly={e.readonly}
-                      onEdit={e.readonly ? undefined : () => onSelectICloudEvent(e)}
-                      onDelete={e.readonly ? undefined : () => onDeleteICloudEvent(e)}
                     >
                       <button
                         className="absolute inset-x-0.5 rounded px-1.5 text-left overflow-hidden z-10 hover:opacity-90 transition-opacity"
@@ -294,23 +278,15 @@ function GregorianWeekGrid({ stops, icloudEvents, anchor, calendarMode, calendar
 }
 
 function SimpleEventColumn({
-  day, stops, icloudEvents, calendarColorMap, onSelectStop, onDeleteStop, onSelectICloudEvent, onDeleteICloudEvent, onDayClick,
+  day, stops, icloudEvents, calendarColorMap,
 }: {
   day: Date
   stops: StopWithMarkers[]
   icloudEvents: ICloudEventDisplay[]
   calendarColorMap: Record<string, string>
-  onSelectStop: (s: StopWithMarkers) => void
-  onDeleteStop: (s: StopWithMarkers) => void
-  onSelectICloudEvent: (e: ICloudEventDisplay) => void
-  onDeleteICloudEvent: (e: ICloudEventDisplay) => void
-  onDayClick: (d: Date) => void
 }) {
   return (
-    <div
-      className="border-r last:border-r-0 p-1 flex flex-col gap-1 min-h-[160px] cursor-pointer hover:bg-muted/20 transition-colors"
-      onClick={() => onDayClick(day)}
-    >
+    <div className="border-r last:border-r-0 p-1 flex flex-col gap-1 min-h-[160px]">
       {stops.map(stop => {
         const color = stop.markers[0]?.marker.color ?? (stop.icloudCalendarId ? calendarColorMap[stop.icloudCalendarId] : undefined) ?? '#6b7280'
         return (
@@ -323,8 +299,6 @@ function SimpleEventColumn({
             location={stop.location}
             notes={stop.notes}
             color={color}
-            onEdit={() => onSelectStop(stop)}
-            onDelete={() => onDeleteStop(stop)}
           >
             <button
               className="text-left w-full px-1.5 py-1 rounded text-xs hover:opacity-90 transition-opacity"
@@ -349,8 +323,6 @@ function SimpleEventColumn({
           notes={e.notes}
           color={e.color}
           readonly={e.readonly}
-          onEdit={e.readonly ? undefined : () => onSelectICloudEvent(e)}
-          onDelete={e.readonly ? undefined : () => onDeleteICloudEvent(e)}
         >
           <button
             className="text-left w-full px-1.5 py-1 rounded text-xs hover:opacity-90 transition-opacity"
@@ -370,7 +342,7 @@ function SimpleEventColumn({
   )
 }
 
-function LuviFullWeekGrid({ stops, icloudEvents, anchor, calendarColorMap, onSelectStop, onDeleteStop, onSelectICloudEvent, onDeleteICloudEvent, onDayClick }: WeekViewProps) {
+function LuviFullWeekGrid({ stops, icloudEvents, anchor, calendarColorMap }: WeekViewProps) {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
@@ -403,8 +375,7 @@ function LuviFullWeekGrid({ stops, icloudEvents, anchor, calendarColorMap, onSel
             return (
               <div
                 key={i}
-                onClick={() => onDayClick(day)}
-                className="py-1.5 text-center border-r last:border-r-0 cursor-pointer hover:bg-muted/40 transition-colors"
+                className="py-1.5 text-center border-r last:border-r-0"
               >
                 <div className={`text-xs font-semibold mx-auto h-6 w-6 flex items-center justify-center rounded-full ${isToday ? 'bg-foreground text-background' : ''}`}>
                   {luvi.dayOfMonth}
@@ -425,11 +396,6 @@ function LuviFullWeekGrid({ stops, icloudEvents, anchor, calendarColorMap, onSel
               stops={stopsForDay(stops, day)}
               icloudEvents={icloudEventsForDay(icloudEvents, day)}
               calendarColorMap={calendarColorMap}
-              onSelectStop={onSelectStop}
-              onDeleteStop={onDeleteStop}
-              onSelectICloudEvent={onSelectICloudEvent}
-              onDeleteICloudEvent={onDeleteICloudEvent}
-              onDayClick={onDayClick}
             />
           ))}
         </div>

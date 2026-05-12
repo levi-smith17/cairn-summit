@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, Plus, Settings } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { PlatformHeader } from '@/components/nav/platform/platform-header'
@@ -9,13 +9,8 @@ import { luviNavLabel, type CalendarMode } from '@/lib/luvi'
 import { MonthView } from './month-view'
 import { WeekView } from './week-view'
 import { DayView } from './day-view'
-import { StopForm } from './stop-form'
-import { RecurrenceDialog, type RecurrenceScope } from './recurrence-dialog'
 import {
   fetchExternalCalendarEvents,
-  deleteStop as deleteStopAction,
-  deleteStopOccurrence,
-  deleteICloudEventDirect,
   type ExternalCalendarEvent,
 } from '@/lib/api/itinerary'
 
@@ -30,16 +25,7 @@ export type StopWithMarkers = {
   endDate: Date | null
   allDay: boolean
   icloudCalendarId: string | null
-  recurrenceRule: string | null
-  masterStopId: string | null
   markers: { markerId: string; marker: { id: string; name: string; color: string; icon: string | null } }[]
-}
-
-export type MarkerOption = {
-  id: string
-  name: string
-  color: string
-  icon: string | null
 }
 
 export type CalendarOption = {
@@ -50,21 +36,9 @@ export type CalendarOption = {
 
 export type ICloudEventDisplay = ExternalCalendarEvent
 
-export function isVirtualRecurring(stop: StopWithMarkers): boolean {
-  return stop.id.includes('::')
-}
-export function getMasterId(stop: StopWithMarkers): string {
-  return stop.id.includes('::') ? stop.id.split('::')[0] : stop.id
-}
-export function getInstanceDate(stop: StopWithMarkers): Date {
-  return new Date(stop.id.split('::')[1])
-}
-
 interface ItineraryClientProps {
   stops: StopWithMarkers[]
-  markers: MarkerOption[]
   calendars: CalendarOption[]
-  onRefresh: () => void
 }
 
 function addDays(date: Date, n: number): Date {
@@ -108,7 +82,7 @@ const MODE_OPTIONS: { value: CalendarMode; label: string; short: string; tip: st
   { value: 'luvi-full', label: 'Full Luvi', short: 'L*', tip: 'Full Luvi calendar (14 months × 26 days)' },
 ]
 
-export function ItineraryClient({ stops, markers, calendars, onRefresh }: ItineraryClientProps) {
+export function ItineraryClient({ stops, calendars }: ItineraryClientProps) {
   const { terms } = useTerminology()
   const navigate = useNavigate()
   const [view, setView] = useState<CalendarView>('month')
@@ -118,20 +92,6 @@ export function ItineraryClient({ stops, markers, calendars, onRefresh }: Itiner
     return now
   })
   const [calendarMode, setCalendarMode] = useState<CalendarMode>('gregorian')
-  const [selectedStop, setSelectedStop] = useState<StopWithMarkers | null>(null)
-  const [showForm, setShowForm] = useState(false)
-  const [formInitialDate, setFormInitialDate] = useState<Date | null>(null)
-  const [formICloudSeed, setFormICloudSeed] = useState<ICloudEventDisplay | null>(null)
-  const [formOccurrenceDate, setFormOccurrenceDate] = useState<Date | null>(null)
-  const [formOccurrenceScope, setFormOccurrenceScope] = useState<RecurrenceScope | null>(null)
-  const [formMasterId, setFormMasterId] = useState<string | null>(null)
-
-  const [recurrenceDialog, setRecurrenceDialog] = useState<{
-    stop: StopWithMarkers
-    mode: 'edit' | 'delete'
-  } | null>(null)
-  const [icloudRecurrenceDialog, setICloudRecurrenceDialog] = useState<ICloudEventDisplay | null>(null)
-
   const [icloudEvents, setIcloudEvents] = useState<ICloudEventDisplay[]>([])
   const [eventsLoading, setEventsLoading] = useState(true)
 
@@ -140,128 +100,6 @@ export function ItineraryClient({ stops, markers, calendars, onRefresh }: Itiner
       .then(events => setIcloudEvents(events))
       .finally(() => setEventsLoading(false))
   }, [])
-
-  function openNew(date?: Date) {
-    setSelectedStop(null)
-    setFormICloudSeed(null)
-    setFormInitialDate(date ?? anchor)
-    setFormOccurrenceDate(null)
-    setFormOccurrenceScope(null)
-    setFormMasterId(null)
-    setShowForm(true)
-  }
-
-  function openEdit(stop: StopWithMarkers) {
-    if (isVirtualRecurring(stop) || (stop.recurrenceRule && !stop.masterStopId)) {
-      setRecurrenceDialog({ stop, mode: 'edit' })
-      return
-    }
-    _openForm(stop, null, null, null)
-  }
-
-  function openDelete(stop: StopWithMarkers) {
-    if (isVirtualRecurring(stop) || (stop.recurrenceRule && !stop.masterStopId)) {
-      setRecurrenceDialog({ stop, mode: 'delete' })
-      return
-    }
-    void (async () => {
-      await deleteStopAction(stop.id)
-      onRefresh()
-    })()
-  }
-
-  function _openForm(
-    stop: StopWithMarkers | null,
-    occurrenceDate: Date | null,
-    scope: RecurrenceScope | null,
-    masterId: string | null,
-  ) {
-    if (stop && isVirtualRecurring(stop)) {
-      const mId = getMasterId(stop)
-      const master = stops.find(s => s.id === mId) ?? stop
-      setSelectedStop(scope === 'all' ? master : stop)
-    } else {
-      setSelectedStop(stop)
-    }
-    setFormOccurrenceDate(occurrenceDate)
-    setFormOccurrenceScope(scope)
-    setFormMasterId(masterId)
-    setFormICloudSeed(null)
-    setFormInitialDate(null)
-    setShowForm(true)
-  }
-
-  function handleRecurrenceSelect(scope: RecurrenceScope) {
-    if (!recurrenceDialog) return
-    const { stop, mode } = recurrenceDialog
-    setRecurrenceDialog(null)
-
-    const virtual = isVirtualRecurring(stop)
-    const instanceDate = virtual ? getInstanceDate(stop) : new Date(stop.startDate)
-    const masterId = virtual ? getMasterId(stop) : stop.id
-
-    if (mode === 'delete') {
-      void (async () => {
-        await deleteStopOccurrence({ masterId, occurrenceDate: instanceDate, scope })
-        onRefresh()
-      })()
-    } else {
-      if (scope === 'all') {
-        const master = stops.find(s => s.id === masterId) ?? stop
-        _openForm(master, null, 'all', null)
-      } else {
-        _openForm(stop, instanceDate, scope, masterId)
-      }
-    }
-  }
-
-  function openDeleteICloud(event: ICloudEventDisplay) {
-    if (event.readonly) return
-    void (async () => {
-      await deleteICloudEventDirect(event.calendarId, event.url)
-      onRefresh()
-    })()
-  }
-
-  function openFromICloud(event: ICloudEventDisplay) {
-    if (event.readonly) return
-    if (event.recurrenceRule) {
-      setICloudRecurrenceDialog(event)
-      return
-    }
-    _openICloudForm(event, null)
-  }
-
-  function handleICloudRecurrenceSelect(scope: RecurrenceScope) {
-    if (!icloudRecurrenceDialog) return
-    const event = icloudRecurrenceDialog
-    setICloudRecurrenceDialog(null)
-    _openICloudForm(event, scope)
-  }
-
-  function _openICloudForm(event: ICloudEventDisplay, scope: RecurrenceScope | null) {
-    if (scope === 'one' || scope === 'future') {
-      openNew(new Date(event.startDate))
-      return
-    }
-    setSelectedStop(null)
-    setFormICloudSeed(event)
-    setFormInitialDate(null)
-    setFormOccurrenceDate(null)
-    setFormOccurrenceScope(null)
-    setFormMasterId(null)
-    setShowForm(true)
-  }
-
-  function closeForm() {
-    setShowForm(false)
-    setSelectedStop(null)
-    setFormInitialDate(null)
-    setFormICloudSeed(null)
-    setFormOccurrenceDate(null)
-    setFormOccurrenceScope(null)
-    setFormMasterId(null)
-  }
 
   function goToday() {
     const now = new Date()
@@ -276,24 +114,14 @@ export function ItineraryClient({ stops, markers, calendars, onRefresh }: Itiner
   }
 
   const calendarColorMap = Object.fromEntries(calendars.map(c => [c.id, c.color]))
-  const viewProps = {
-    stops, icloudEvents, anchor, calendarMode, calendarColorMap,
-    onSelectStop: openEdit,
-    onDeleteStop: openDelete,
-    onSelectICloudEvent: openFromICloud,
-    onDeleteICloudEvent: openDeleteICloud,
-    onDayClick: openNew,
-  }
+  const viewProps = { stops, icloudEvents, anchor, calendarMode, calendarColorMap }
 
   return (
     <>
       <PlatformHeader title={terms.itinerary} />
 
-      <div className="flex flex-1 gap-4 p-4 overflow-hidden min-h-0">
-
-        <div
-          className={`${showForm ? 'hidden md:flex' : 'flex'} flex-col flex-1 rounded-lg border border-border bg-card overflow-hidden min-w-0`}
-        >
+      <div className="flex flex-1 p-4 overflow-hidden min-h-0">
+        <div className="flex flex-col flex-1 rounded-lg border border-border bg-card overflow-hidden min-w-0">
           <div className="flex items-center gap-1 px-3 py-2 border-b shrink-0 flex-wrap gap-y-1.5">
             <div className="flex items-center gap-0.5 shrink-0">
               <Button
@@ -360,24 +188,14 @@ export function ItineraryClient({ stops, markers, calendars, onRefresh }: Itiner
               ))}
             </div>
 
-            <div className="flex items-center gap-0.5 shrink-0">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openNew()}>
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Add {terms.stops.slice(0, -1).toLowerCase()}</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigate('/settings?section=itinerary')}>
-                    <Settings className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Itinerary settings</TooltipContent>
-              </Tooltip>
-            </div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => navigate('/settings?section=itinerary')}>
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Itinerary settings</TooltipContent>
+            </Tooltip>
           </div>
 
           <div className="flex-1 overflow-auto min-h-0">
@@ -386,40 +204,7 @@ export function ItineraryClient({ stops, markers, calendars, onRefresh }: Itiner
             {view === 'day'   && <DayView   {...viewProps} />}
           </div>
         </div>
-
-        {showForm && (
-          <div className="flex flex-col w-full md:w-80 lg:w-96 rounded-lg border border-border bg-card overflow-hidden shrink-0">
-            <StopForm
-              key={selectedStop?.id ?? formICloudSeed?.uid ?? 'new'}
-              stop={selectedStop}
-              initialDate={formInitialDate}
-              icloudSeed={formICloudSeed}
-              markers={markers}
-              calendars={calendars}
-              occurrenceDate={formOccurrenceDate}
-              occurrenceScope={formOccurrenceScope}
-              masterId={formMasterId}
-              onClose={closeForm}
-              onRefresh={onRefresh}
-            />
-          </div>
-        )}
-
       </div>
-
-      <RecurrenceDialog
-        open={!!recurrenceDialog}
-        mode={recurrenceDialog?.mode ?? 'edit'}
-        onSelect={handleRecurrenceSelect}
-        onCancel={() => setRecurrenceDialog(null)}
-      />
-
-      <RecurrenceDialog
-        open={!!icloudRecurrenceDialog}
-        mode="edit"
-        onSelect={handleICloudRecurrenceSelect}
-        onCancel={() => setICloudRecurrenceDialog(null)}
-      />
     </>
   )
 }
