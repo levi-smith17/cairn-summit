@@ -141,6 +141,18 @@ module "lambda_markers_update" {
   project_name         = var.project_name
 }
 
+module "lambda_profile_get" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "profile-get"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_read_policy_arn
+  project_name         = var.project_name
+}
+
 module "lambda_signals_contact" {
   source               = "../../modules/lambda"
   cognito_user_pool_id = module.cognito.cognito_user_pool_id
@@ -352,6 +364,7 @@ module "github_oidc" {
     module.lambda_markers_delete.function_arn,
     module.lambda_markers_get.function_arn,
     module.lambda_markers_update.function_arn,
+    module.lambda_profile_get.function_arn,
     module.lambda_signals_contact.function_arn,
     module.lambda_signals_delete.function_arn,
     module.lambda_signals_get.function_arn,
@@ -433,6 +446,11 @@ module "api_gateway" {
       invoke_arn    = module.lambda_markers_update.invoke_arn
       function_name = module.lambda_markers_update.function_name
       route_key     = "PUT /markers/{id}"
+    }
+    profile-get = {
+      invoke_arn    = module.lambda_profile_get.invoke_arn
+      function_name = module.lambda_profile_get.function_name
+      route_key     = "GET /profile"
     }
     signals-contact = {
       invoke_arn    = module.lambda_signals_contact.invoke_arn

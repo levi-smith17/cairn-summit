@@ -1,14 +1,26 @@
+import { pool } from '@/hooks/use-auth'
 import { useEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 
 const API_BASE = import.meta.env.VITE_API_URL
 const POLL_INTERVAL_MS = 15_000
 
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  return new Promise((resolve) => {
+    const cognitoUser = pool.getCurrentUser()
+    if (!cognitoUser) return resolve({})
+    cognitoUser.getSession((err: Error | null, session: any) => {
+      if (err || !session?.isValid()) return resolve({})
+      resolve({ Authorization: session.getIdToken().getJwtToken() })
+    })
+  })
+}
+
 async function syncAndGetNewSignals(since: string) {
   try {
     const res = await fetch(`${API_BASE}/signals/sync`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...await getAuthHeaders() },
       body: JSON.stringify({ since }),
     })
     if (!res.ok) return { ok: false }

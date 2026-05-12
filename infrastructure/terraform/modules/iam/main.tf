@@ -91,6 +91,7 @@ resource "aws_iam_policy" "lambda_write" {
       {
         Effect = "Allow"
         Action = [
+          "dynamodb:BatchGetItem",
           "dynamodb:BatchWriteItem",
           "dynamodb:PutItem",
           "dynamodb:TransactWriteItems",
