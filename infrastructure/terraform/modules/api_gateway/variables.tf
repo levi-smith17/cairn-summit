@@ -1,3 +1,9 @@
+variable "allowed_origins" {
+  description = "List of allowed CORS origins"
+  type        = list(string)
+  default     = ["http://localhost:3000", "http://localhost:5173"]
+}
+
 variable "cognito_client_id" {
   type = string
 }
