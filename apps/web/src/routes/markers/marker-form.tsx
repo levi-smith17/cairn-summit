@@ -35,6 +35,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { extractId } from '@/lib/utils'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/use-auth'
+import { toast } from 'sonner'
 
 const PRESET_COLORS = [
   '#ef4444', '#f97316', '#eab308', '#22c55e',
@@ -158,9 +159,15 @@ export function MarkerForm({ tag, parentMarker, onBack, onSaved, onDeleted }: Ma
   async function handleDelete() {
     if (!tag) return
     setDeleting(true)
-    await deleteMarker(tag.id)
-    await queryClient.invalidateQueries({ queryKey: ['markers', user?.id] })
-    onDeleted()
+    try {
+      await deleteMarker(tag.id)
+      await queryClient.invalidateQueries({ queryKey: ['markers', user?.id] })
+      onDeleted()
+    } catch {
+      toast.error('Failed to delete marker. Please try again.')
+    } finally {
+      setDeleting(false)
+    }
   }
 
   const isSubmarker = !!parentMarker
