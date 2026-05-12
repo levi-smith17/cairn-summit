@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { format, formatDistanceToNow } from 'date-fns'
 import { MailOpen, Trash2, Send, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -107,9 +109,11 @@ function ReplyEditor({ signalId }: { signalId: string }) {
 }
 
 export function SignalsInbox({ signals, singularTerm, pluralTerm, messagesPerPage = 25, autoMarkRead = true, initialSelectedId = null, onBack, showBackButton }: SignalsInboxProps) {
+  const queryClient = useQueryClient()
   const [selected, setSelected] = useState<string | null>(initialSelectedId)
   const [page, setPage] = useState(1)
   const [removingId, setRemovingId] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
   const chatEndRef = useRef<HTMLDivElement>(null)
 
   const totalPages = Math.max(1, Math.ceil(signals.length / messagesPerPage))
@@ -228,14 +232,23 @@ export function SignalsInbox({ signals, singularTerm, pluralTerm, messagesPerPag
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => {
+              disabled={deleting}
+              onClick={async () => {
                 if (!removingId) return
-                const nextId = selected === removingId
-                  ? (signals.find(s => s.id !== removingId)?.id ?? null)
-                  : selected
-                setSelected(nextId)
-                setRemovingId(null)
-                deleteMessage(removingId)
+                setDeleting(true)
+                try {
+                  await deleteMessage(removingId)
+                  queryClient.invalidateQueries({ queryKey: ['signals'] })
+                  const nextId = selected === removingId
+                    ? (signals.find(s => s.id !== removingId)?.id ?? null)
+                    : selected
+                  setSelected(nextId)
+                  setRemovingId(null)
+                } catch {
+                  toast.error('Failed to delete signal. Please try again.')
+                } finally {
+                  setDeleting(false)
+                }
               }}
             >
               Remove

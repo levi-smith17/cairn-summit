@@ -22,6 +22,7 @@ import { FormActions } from '@/components/forms/form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
 import { saveLog, deleteLog, createTrail } from '@/lib/api/logs'
 import { createMarker } from '@/lib/api/markers'
+import { toast } from 'sonner'
 import { useTerminology } from '@/contexts/terminology-context'
 import {
   AlertDialog,
@@ -176,9 +177,15 @@ export function LogForm({ log, folders, waypoints, tags, defaultTrailId, onBack,
   async function handleDelete() {
     if (!log) return
     setDeleting(true)
-    await deleteLog(log.id)
-    queryClient.invalidateQueries({ queryKey: ['logs'] })
-    onDeleted()
+    try {
+      await deleteLog(log.id)
+      queryClient.invalidateQueries({ queryKey: ['logs'] })
+      onDeleted()
+    } catch {
+      toast.error('Failed to delete log. Please try again.')
+    } finally {
+      setDeleting(false)
+    }
   }
 
   return (

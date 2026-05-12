@@ -20,6 +20,7 @@ import { MarkerPicker } from '@/components/ui/marker-picker'
 import { FormActions } from '@/components/forms/form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
 import { createWaypoint, updateWaypoint, deleteWaypoint, createTrail, createMarker } from '@/lib/api/waypoints'
+import { toast } from 'sonner'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -170,9 +171,15 @@ export function WaypointForm({ waypoint, folders, tags, defaultTrailId, onBack, 
   async function handleDelete() {
     if (!waypoint) return
     setDeleting(true)
-    await deleteWaypoint(waypoint.id)
-    queryClient.invalidateQueries({ queryKey: ['waypoints'] })
-    onDeleted()
+    try {
+      await deleteWaypoint(waypoint.id)
+      queryClient.invalidateQueries({ queryKey: ['waypoints'] })
+      onDeleted()
+    } catch {
+      toast.error('Failed to delete waypoint. Please try again.')
+    } finally {
+      setDeleting(false)
+    }
   }
 
   return (

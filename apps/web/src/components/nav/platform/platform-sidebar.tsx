@@ -20,8 +20,6 @@ import {
   Wallet,
 } from "lucide-react"
 import { useNavigate, useLocation } from "react-router-dom"
-import { CairnLockup } from '@/components/cairn-lockup'
-import { CairnLogo } from '@/components/cairn-logo'
 import { FooterNav } from '@/components/nav/footer'
 import { PlatformWayfarerMenu } from "@/components/nav/platform/platform-wayfarer-menu"
 import { useTerminology } from '@/contexts/terminology-context'

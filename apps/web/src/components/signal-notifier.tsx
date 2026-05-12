@@ -12,7 +12,8 @@ async function syncAndGetNewSignals(since: string) {
       body: JSON.stringify({ since }),
     })
     if (!res.ok) return { ok: false }
-    return { ok: true, ...(await res.json()) }
+    const json = await res.json()
+    return { ok: true, ...(json.data ?? json) }
   } catch {
     return { ok: false }
   }
