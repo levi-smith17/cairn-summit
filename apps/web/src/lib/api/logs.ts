@@ -1,8 +1,17 @@
+import { pool } from '@/hooks/use-auth'
+
 const API_BASE = import.meta.env.VITE_API_URL
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
-    // Will be replaced with Cognito token once auth is set up
-    return {}
+    return new Promise((resolve) => {
+        const cognitoUser = pool.getCurrentUser()
+        if (!cognitoUser) return resolve({})
+
+        cognitoUser.getSession((err: Error | null, session: any) => {
+            if (err || !session?.isValid()) return resolve({})
+            resolve({ Authorization: session.getIdToken().getJwtToken() })
+        })
+    })
 }
 
 export async function getLogs(): Promise<any[]> {
@@ -47,9 +56,7 @@ export async function saveLog(data: {
     waypointId?: string | null
     markerIds?: string[]
 }): Promise<any> {
-    if (data.id) {
-        return updateLog(data.id, data)
-    }
+    if (data.id) return updateLog(data.id, data)
     return createLog(data)
 }
 
@@ -71,41 +78,4 @@ export async function reorderLogs(orderedIds: string[]): Promise<void> {
         body: JSON.stringify({ orderedIds })
     })
     if (!res.ok) throw new Error('Failed to reorder logs')
-}
-
-export async function getTrails(): Promise<any[]> {
-    const res = await fetch(`${API_BASE}/trails`, {
-        headers: await getAuthHeaders()
-    })
-    if (!res.ok) throw new Error('Failed to fetch trails')
-    return res.json()
-}
-
-export async function getMarkers(): Promise<any[]> {
-    const res = await fetch(`${API_BASE}/markers`, {
-        headers: await getAuthHeaders()
-    })
-    if (!res.ok) throw new Error('Failed to fetch markers')
-    return res.json()
-}
-
-export async function getWaypoints(): Promise<any[]> {
-    const res = await fetch(`${API_BASE}/waypoints`, {
-        headers: await getAuthHeaders()
-    })
-    if (!res.ok) throw new Error('Failed to fetch waypoints')
-    return res.json()
-}
-
-export async function createTrail(name: string): Promise<any> {
-    const res = await fetch(`${API_BASE}/trails`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            ...await getAuthHeaders()
-        },
-        body: JSON.stringify({ name })
-    })
-    if (!res.ok) throw new Error('Failed to create trail')
-    return res.json()
 }

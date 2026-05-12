@@ -1,12 +1,17 @@
-import { getMarkers } from '@/lib/api/markers'
-
-export { getMarkers }
+import { pool } from '@/hooks/use-auth'
 
 const API_BASE = import.meta.env.VITE_API_URL
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
-    // Will be replaced with Cognito token once auth is set up
-    return {}
+    return new Promise((resolve) => {
+        const cognitoUser = pool.getCurrentUser()
+        if (!cognitoUser) return resolve({})
+
+        cognitoUser.getSession((err: Error | null, session: any) => {
+            if (err || !session?.isValid()) return resolve({})
+            resolve({ Authorization: session.getIdToken().getJwtToken() })
+        })
+    })
 }
 
 export async function getWaypoints() {
@@ -80,39 +85,5 @@ export async function toggleWaypointReadLater(id: string, readLater: boolean) {
         body: JSON.stringify({ readLater })
     })
     if (!res.ok) throw new Error('Failed to update waypoint read-later status')
-    return res.json()
-}
-
-export async function getTrails() {
-    const res = await fetch(`${API_BASE}/trails`, {
-        headers: await getAuthHeaders()
-    })
-    if (!res.ok) throw new Error('Failed to fetch trails')
-    return res.json()
-}
-
-export async function createTrail(name: string) {
-    const res = await fetch(`${API_BASE}/trails`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            ...await getAuthHeaders()
-        },
-        body: JSON.stringify({ name })
-    })
-    if (!res.ok) throw new Error('Failed to create trail')
-    return res.json()
-}
-
-export async function createMarker(data: { name: string; color: string }) {
-    const res = await fetch(`${API_BASE}/markers`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            ...await getAuthHeaders()
-        },
-        body: JSON.stringify(data)
-    })
-    if (!res.ok) throw new Error('Failed to create marker')
     return res.json()
 }

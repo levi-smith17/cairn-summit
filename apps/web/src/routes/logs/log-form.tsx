@@ -20,8 +20,10 @@ import { MarkerPicker } from '@/components/ui/marker-picker'
 import { RichEditor } from '@/components/ui/rich-editor'
 import { FormActions } from '@/components/forms/form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
-import { saveLog, deleteLog, createTrail } from '@/lib/api/logs'
+import { saveLog, deleteLog } from '@/lib/api/logs'
+import { createTrail } from '@/lib/api/trails'
 import { createMarker } from '@/lib/api/markers'
+import { extractId } from '@/lib/utils'
 import { toast } from 'sonner'
 import { useTerminology } from '@/contexts/terminology-context'
 import {
@@ -130,7 +132,7 @@ export function LogForm({ log, folders, waypoints, tags, defaultTrailId, onBack,
     if (!name) return
     setTrailCreating(true)
     try {
-      const trail = await createTrail(name)
+      const trail = await createTrail({ name })
       setLocalTrails(prev => [...prev, trail])
       form.setValue('folderId', trail.id)
       form.setValue('waypointId', '')
@@ -147,9 +149,10 @@ export function LogForm({ log, folders, waypoints, tags, defaultTrailId, onBack,
     setMarkerCreating(true)
     try {
       const marker = await createMarker({ name, color: newMarkerColor })
-      setLocalMarkers(prev => [...prev, marker])
+      const id = extractId(marker.sk)
+      setLocalMarkers(prev => [...prev, { ...marker, id }])
       const current = form.getValues('tagIds')
-      form.setValue('tagIds', [...current, marker.sk.split('#').pop()!])
+      form.setValue('tagIds', [...current, id])
       setCreatingMarker(false)
       setNewMarkerName('')
       setNewMarkerColor(MARKER_COLORS[4])
