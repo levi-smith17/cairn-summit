@@ -45,6 +45,54 @@ module "iam" {
   project_name       = var.project_name
 }
 
+module "lambda_logs_create" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "logs-create"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_write_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_logs_delete" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "logs-delete"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_delete_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_logs_get" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "logs-get"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_read_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_logs_update" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "logs-update"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_write_policy_arn
+  project_name         = var.project_name
+}
+
 module "lambda_markers_create" {
   source               = "../../modules/lambda"
   cognito_user_pool_id = module.cognito.cognito_user_pool_id
@@ -54,18 +102,6 @@ module "lambda_markers_create" {
   managed_by           = var.managed_by
   owner                = var.owner
   policy_arn           = module.iam.lambda_write_policy_arn
-  project_name         = var.project_name
-}
-
-module "lambda_markers_get" {
-  source               = "../../modules/lambda"
-  cognito_user_pool_id = module.cognito.cognito_user_pool_id
-  dynamodb_table_name  = module.dynamodb.table_name
-  environment          = var.environment
-  function_name        = "markers-get"
-  managed_by           = var.managed_by
-  owner                = var.owner
-  policy_arn           = module.iam.lambda_read_policy_arn
   project_name         = var.project_name
 }
 
@@ -81,12 +117,108 @@ module "lambda_markers_delete" {
   project_name         = var.project_name
 }
 
+module "lambda_markers_get" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "markers-get"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_read_policy_arn
+  project_name         = var.project_name
+}
+
 module "lambda_markers_update" {
   source               = "../../modules/lambda"
   cognito_user_pool_id = module.cognito.cognito_user_pool_id
   dynamodb_table_name  = module.dynamodb.table_name
   environment          = var.environment
   function_name        = "markers-update"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_write_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_signals_contact" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "signals-contact"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_write_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_signals_delete" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "signals-delete"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_delete_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_signals_get" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "signals-get"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_read_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_signals_public_thread_get" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "signals-public-thread-get"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_write_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_signals_public_thread_reply" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "signals-public-thread-reply"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_write_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_signals_reply" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "signals-reply"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_write_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_signals_sync" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "signals-sync"
   managed_by           = var.managed_by
   owner                = var.owner
   policy_arn           = module.iam.lambda_write_policy_arn
@@ -105,18 +237,6 @@ module "lambda_trails_create" {
   project_name         = var.project_name
 }
 
-module "lambda_trails_get" {
-  source               = "../../modules/lambda"
-  cognito_user_pool_id = module.cognito.cognito_user_pool_id
-  dynamodb_table_name  = module.dynamodb.table_name
-  environment          = var.environment
-  function_name        = "trails-get"
-  managed_by           = var.managed_by
-  owner                = var.owner
-  policy_arn           = module.iam.lambda_read_policy_arn
-  project_name         = var.project_name
-}
-
 module "lambda_trails_delete" {
   source               = "../../modules/lambda"
   cognito_user_pool_id = module.cognito.cognito_user_pool_id
@@ -129,12 +249,72 @@ module "lambda_trails_delete" {
   project_name         = var.project_name
 }
 
+module "lambda_trails_get" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "trails-get"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_read_policy_arn
+  project_name         = var.project_name
+}
+
 module "lambda_trails_update" {
   source               = "../../modules/lambda"
   cognito_user_pool_id = module.cognito.cognito_user_pool_id
   dynamodb_table_name  = module.dynamodb.table_name
   environment          = var.environment
   function_name        = "trails-update"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_write_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_waypoints_create" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "waypoints-create"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_write_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_waypoints_delete" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "waypoints-delete"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_delete_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_waypoints_get" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "waypoints-get"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_read_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_waypoints_update" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "waypoints-update"
   managed_by           = var.managed_by
   owner                = var.owner
   policy_arn           = module.iam.lambda_write_policy_arn
