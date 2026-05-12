@@ -9,27 +9,27 @@ const response_1 = require("../../shared/response");
 const handler = async (event) => {
     try {
         const body = JSON.parse(event.body ?? '{}');
-        if (!body.name || !body.color) {
-            return (0, response_1.toApiGatewayResponse)((0, response_1.badRequest)('name and color are required'));
+        if (!body.name) {
+            return (0, response_1.toApiGatewayResponse)((0, response_1.badRequest)('name is required'));
         }
         const pk = (0, auth_1.getPk)(event);
         const id = (0, crypto_1.randomUUID)();
-        const sk = `MARKER#${id}`;
-        const marker = {
+        const sk = `TRAIL#${id}`;
+        const trail = {
             pk,
             sk,
-            gsi1pk: pk, // USER#id — future GSI queries by user
-            gsi1sk: sk, // MARKER#id — sorts markers within user
             name: body.name,
-            color: body.color,
-            icon: body.icon ?? undefined,
             createdAt: new Date().toISOString(),
         };
         await db_1.dynamo.send(new lib_dynamodb_1.PutCommand({
             TableName: db_1.TABLE_NAME,
-            Item: marker,
+            Item: {
+                ...trail,
+                gsi1pk: pk,
+                gsi1sk: sk,
+            },
         }));
-        return (0, response_1.toApiGatewayResponse)((0, response_1.created)(marker));
+        return (0, response_1.toApiGatewayResponse)((0, response_1.created)(trail));
     }
     catch (err) {
         console.error(err);

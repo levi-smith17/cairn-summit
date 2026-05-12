@@ -29,6 +29,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { toast } from 'sonner'
 
 const trailSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -72,9 +73,15 @@ export function TrailForm({ trail, onBack, onSaved, onDeleted }: TrailFormProps)
   async function handleDelete() {
     if (!trail) return
     setDeleting(true)
-    await deleteTrail(trail.id)
-    queryClient.invalidateQueries({ queryKey: ['trails'] })
-    onDeleted()
+    try {
+      await deleteTrail(trail.id)
+      queryClient.invalidateQueries({ queryKey: ['trails'] })
+      onDeleted()
+    } catch {
+      toast.error('Failed to delete trail. Please try again.')
+    } finally {
+      setDeleting(false)
+    }
   }
 
   return (

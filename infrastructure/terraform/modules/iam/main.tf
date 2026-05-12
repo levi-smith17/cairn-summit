@@ -33,6 +33,8 @@ resource "aws_iam_policy" "lambda_delete" {
         Effect = "Allow"
         Action = [
           "dynamodb:DeleteItem",
+          "dynamodb:Query",
+          "dynamodb:UpdateItem",
         ]
         Resource = [
           var.dynamodb_table_arn,
