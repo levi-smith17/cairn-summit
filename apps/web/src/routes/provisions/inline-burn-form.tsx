@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { MarkerPicker } from '@/components/ui/marker-picker'
-import { saveExpense } from '@/lib/api/provisions'
+import { saveBurn } from '@/lib/api/supplylines'
 import { useFormStatus } from '@/hooks/use-form-status'
 import { ImagePlus, X } from 'lucide-react'
 
@@ -24,7 +24,7 @@ interface Marker {
   marker: { id: string; name: string; color: string; icon?: string }
 }
 
-interface Expense {
+interface Burn {
   id: string
   name: string
   amount: number
@@ -41,7 +41,7 @@ interface Props {
   onCancel: () => void
 }
 
-export function InlineExpenseForm({ expense, tags, onSaved, onCancel }: Props) {
+export function InlineBurnForm({ expense, tags, onSaved, onCancel }: Props) {
   const { saving, handleSubmit } = useFormStatus()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [receiptKey, setReceiptKey] = useState<string | null>(expense?.receiptUrl ?? null)
@@ -90,7 +90,7 @@ export function InlineExpenseForm({ expense, tags, onSaved, onCancel }: Props) {
 
   async function onSubmit(values: FormValues) {
     await handleSubmit(async () => {
-      await saveExpense({
+      await saveBurn({
         id: expense?.id,
         name: values.name,
         amount: values.amount,

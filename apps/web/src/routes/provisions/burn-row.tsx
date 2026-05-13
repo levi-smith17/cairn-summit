@@ -18,8 +18,8 @@ import {
 } from '@/components/ui/alert-dialog'
 import { MoreHorizontal, Pencil, Trash2, Receipt } from 'lucide-react'
 import { MarkerBadge } from '@/routes/waypoints/marker-badge'
-import { deleteExpense } from '@/lib/api/provisions'
-import { InlineExpenseForm } from './inline-expense-form'
+import { deleteBurn } from '@/lib/api/supplylines'
+import { InlineBurnForm } from './inline-burn-form'
 import { useTerminology } from '@/contexts/terminology-context'
 
 interface Marker {
@@ -27,7 +27,7 @@ interface Marker {
   marker: { id: string; name: string; color: string; icon?: string }
 }
 
-export interface Expense {
+export interface Burn {
   id: string
   name: string
   amount: number
@@ -38,7 +38,7 @@ export interface Expense {
 }
 
 interface Props {
-  expense: Expense
+  expense: Burn
   tags: any[]
   onSaved: () => void
   onDeleted: () => void
@@ -47,14 +47,14 @@ interface Props {
 const fmt = (n: number) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n)
 
-export function ExpenseRow({ expense, tags, onSaved, onDeleted }: Props) {
+export function BurnRow({ expense, tags, onSaved, onDeleted }: Props) {
   const { terms } = useTerminology()
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   if (editing) {
     return (
-      <InlineExpenseForm
+      <InlineBurnForm
         expense={expense}
         tags={tags}
         onSaved={() => { setEditing(false); onSaved() }}
@@ -122,7 +122,7 @@ export function ExpenseRow({ expense, tags, onSaved, onDeleted }: Props) {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={async () => { await deleteExpense(expense.id); onDeleted() }}
+              onClick={async () => { await deleteBurn(expense.id); onDeleted() }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Remove

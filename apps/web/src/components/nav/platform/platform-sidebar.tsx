@@ -133,7 +133,8 @@ export function PlatformSidebar({ wayfarer, badges, terms, ...props }: PlatformS
   const { state } = useSidebar()
   const { isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === 'collapsed'
-  const navItems = buildNavItems(useTerminology().terms)
+  const { terms: uiTerms } = useTerminology()
+  const navItems = buildNavItems(uiTerms)
 
   function getBadge(url: string): number {
     if (url === '/signals')   return badges?.signals   ?? 0
@@ -169,7 +170,7 @@ export function PlatformSidebar({ wayfarer, badges, terms, ...props }: PlatformS
               <Search className="h-3.5 w-3.5 shrink-0" />
               {!collapsed && (
                 <>
-                  <span className="flex-1 text-left">Search…</span>
+                  <span className="flex-1 text-left">{uiTerms.explore}…</span>
                   <kbd className="text-[10px] font-mono opacity-50">⌘K</kbd>
                 </>
               )}

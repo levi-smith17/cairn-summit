@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { MoreHorizontal, Pencil, Trash2, ExternalLink } from 'lucide-react'
 import { MarkerBadge } from '@/routes/waypoints/marker-badge'
-import { deleteProvision, toggleProvisionActive } from '@/lib/api/provisions'
+import { deleteSupplyline, toggleSupplylineActive } from '@/lib/api/supplylines'
 import { InlineSupplylineForm } from './inline-supplyline-form'
 import { useTerminology } from '@/contexts/terminology-context'
 
@@ -87,7 +87,7 @@ export function SupplylineRow({ provision, tags, onSaved, onDeleted }: Props) {
         <Switch
           checked={provision.active}
           onCheckedChange={async (checked) => {
-            await toggleProvisionActive(provision.id, checked)
+            await toggleSupplylineActive(provision.id, checked)
             onSaved()
           }}
           className="shrink-0 scale-75"
@@ -153,7 +153,7 @@ export function SupplylineRow({ provision, tags, onSaved, onDeleted }: Props) {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={async () => { await deleteProvision(provision.id); onDeleted() }}
+              onClick={async () => { await deleteSupplyline(provision.id); onDeleted() }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Remove

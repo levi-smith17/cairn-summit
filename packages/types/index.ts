@@ -194,8 +194,8 @@ export interface Stop {
     updatedAt: string
 }
 
-// ── Provisions ─────────────────────────────────────────
-export interface Provision {
+// ── Supplylines (recurring costs) ──────────────────────
+export interface Supplyline {
     pk: string
     sk: string
     name: string
@@ -209,7 +209,8 @@ export interface Provision {
     createdAt: string
 }
 
-export interface Expense {
+// ── Burn (one-time expenses) ───────────────────────────
+export interface Burn {
     pk: string
     sk: string
     name: string
@@ -221,7 +222,8 @@ export interface Expense {
     createdAt: string
 }
 
-export interface Budget {
+// ── Cache (marker-based budgets) ───────────────────────
+export interface Cache {
     pk: string
     sk: string
     markerId: string

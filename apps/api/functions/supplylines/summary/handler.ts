@@ -1,0 +1,120 @@
+import { QueryCommand } from '@aws-sdk/lib-dynamodb'
+import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from 'aws-lambda'
+import type { Supplyline, Burn, Cache } from '@cairn/types'
+import { dynamo, TABLE_NAME } from '../../shared/db'
+import { getPk } from '../../shared/auth'
+import { toApiGatewayResponse, ok, badRequest, serverError } from '../../shared/response'
+
+function normalizeToMonthly(amount: number, billingCycle: Supplyline['billingCycle']): number {
+    switch (billingCycle) {
+        case 'WEEKLY': return amount * 52 / 12
+        case 'BIWEEKLY': return amount * 26 / 12
+        case 'MONTHLY': return amount
+        case 'QUARTERLY': return amount / 3
+        case 'ANNUALLY': return amount / 12
+    }
+}
+
+export const handler = async (
+    event: APIGatewayProxyEventV2WithJWTAuthorizer
+): Promise<APIGatewayProxyResultV2> => {
+    try {
+        const params = event.queryStringParameters ?? {}
+
+        if (!params.month || !params.year) {
+            return toApiGatewayResponse(badRequest('month and year are required'))
+        }
+
+        const month = parseInt(params.month, 10)
+        const year = parseInt(params.year, 10)
+
+        if (isNaN(month) || isNaN(year)) {
+            return toApiGatewayResponse(badRequest('month and year must be numbers'))
+        }
+
+        const pk = getPk(event)
+
+        const [supplylineResult, burnResult, cacheResult] = await Promise.all([
+            dynamo.send(new QueryCommand({
+                TableName: TABLE_NAME,
+                KeyConditionExpression: 'pk = :pk AND begins_with(sk, :prefix)',
+                ExpressionAttributeValues: { ':pk': pk, ':prefix': 'SUPPLYLINE#' },
+            })),
+            dynamo.send(new QueryCommand({
+                TableName: TABLE_NAME,
+                KeyConditionExpression: 'pk = :pk AND begins_with(sk, :prefix)',
+                ExpressionAttributeValues: { ':pk': pk, ':prefix': 'BURN#' },
+            })),
+            dynamo.send(new QueryCommand({
+                TableName: TABLE_NAME,
+                KeyConditionExpression: 'pk = :pk AND begins_with(sk, :prefix)',
+                ExpressionAttributeValues: { ':pk': pk, ':prefix': 'CACHE#' },
+            })),
+        ])
+
+        const supplylines = (supplylineResult.Items ?? []) as Supplyline[]
+        const burnItems = (burnResult.Items ?? []) as Burn[]
+        const cacheItems = (cacheResult.Items ?? []) as (Cache & { id: string })[]
+
+        const activeSupplylines = supplylines.filter(s => s.active)
+
+        const monthlySupplylineCost = activeSupplylines.reduce(
+            (sum, s) => sum + normalizeToMonthly(s.amount, s.billingCycle),
+            0
+        )
+
+        const monthPrefix = `${year}-${String(month).padStart(2, '0')}`
+        const monthBurn = burnItems.filter(b => b.date.startsWith(monthPrefix))
+        const totalBurn = monthBurn.reduce((sum, b) => sum + b.amount, 0)
+        const totalMonthSpend = monthlySupplylineCost + totalBurn
+
+        const now = new Date()
+        const sevenDaysOut = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+        const upcomingRenewals = activeSupplylines
+            .filter(s => {
+                const renewal = new Date(s.nextRenewal)
+                return renewal >= now && renewal <= sevenDaysOut
+            })
+            .sort((a, b) => new Date(a.nextRenewal).getTime() - new Date(b.nextRenewal).getTime())
+            .map(s => ({
+                id: s.sk.split('#').pop(),
+                name: s.name,
+                amount: s.amount,
+                nextRenewal: s.nextRenewal,
+                billingCycle: s.billingCycle,
+            }))
+
+        const monthCache = cacheItems.filter(c => {
+            const parts = c.sk.split('#')
+            return parts[2] === String(month) && parts[3] === String(year)
+        })
+
+        const cacheUtilization = monthCache.map(c => {
+            const parts = c.sk.split('#')
+            const markerId = parts[1]
+            const spent = monthBurn
+                .filter(b => b.markers.some(m => m.id === markerId))
+                .reduce((sum, b) => sum + b.amount, 0)
+            return {
+                id: c.id,
+                markerId,
+                limit: c.limit,
+                spent,
+            }
+        })
+
+        return toApiGatewayResponse(ok({
+            summary: {
+                monthlySupplylineCost,
+                totalBurn,
+                totalMonthSpend,
+                activeSupplylines: activeSupplylines.length,
+            },
+            upcomingRenewals,
+            cacheUtilization,
+        }))
+    } catch (err) {
+        console.error(err)
+        return toApiGatewayResponse(serverError())
+    }
+}

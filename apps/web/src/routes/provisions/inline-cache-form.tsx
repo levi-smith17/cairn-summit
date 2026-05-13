@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { MarkerPicker } from '@/components/ui/marker-picker'
-import { saveBudget } from '@/lib/api/provisions'
+import { saveCache } from '@/lib/api/supplylines'
 import { useFormStatus } from '@/hooks/use-form-status'
 
 const schema = z.object({
@@ -46,7 +46,7 @@ export function InlineCacheForm({ budget, markers, month, year, onSaved, onCance
 
   async function onSubmit(values: FormValues) {
     await handleSubmit(async () => {
-      await saveBudget({
+      await saveCache({
         id: budget?.id,
         markerId: values.markerId,
         limit: values.limit,

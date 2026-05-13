@@ -128,7 +128,7 @@ export function applyLogFilters(logs: any[], filters: FilterState): any[] {
 
   if (filters.markerIds.length > 0) {
     result = result.filter(l =>
-      filters.markerIds.some(id => l.markers?.some((m: any) => m.id === id))
+      filters.markerIds.some(id => l.markers?.some((m: any) => m.markerId === id))
     )
   }
 

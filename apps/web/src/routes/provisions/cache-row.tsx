@@ -12,7 +12,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Pencil, Trash2 } from 'lucide-react'
-import { deleteBudget } from '@/lib/api/provisions'
+import { deleteCache } from '@/lib/api/supplylines'
 import { InlineCacheForm } from './inline-cache-form'
 import { useTerminology } from '@/contexts/terminology-context'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -121,7 +121,7 @@ export function CacheRow({ budget, markers, month, year, onSaved, onDeleted }: P
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={async () => { await deleteBudget(budget.id); onDeleted() }}
+              onClick={async () => { await deleteCache(budget.id); onDeleted() }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Remove

@@ -4,6 +4,8 @@ import {
   Search, X, AlignLeft, Bookmark, NotebookPen, Wallet, CalendarDays,
   Folder, Tag, Zap, Clock,
 } from 'lucide-react'
+import { useTerminology } from '@/contexts/terminology-context'
+import type { Terms } from '@/lib/terminology'
 
 const API_BASE = import.meta.env.VITE_API_URL
 
@@ -32,19 +34,21 @@ async function globalSearch(query: string, deep: boolean): Promise<SearchResult[
 
 // ── Type metadata ─────────────────────────────────────────────────────────────
 
-const TYPE_META: Record<SearchResultType, {
+function buildTypeMeta(terms: Terms): Record<SearchResultType, {
   label: string
   Icon: React.ElementType
   bg: string
   text: string
-}> = {
-  waypoint:  { label: 'Waypoint',  Icon: Bookmark,     bg: 'bg-blue-500/15',   text: 'text-blue-600 dark:text-blue-400' },
-  log:       { label: 'Log',       Icon: NotebookPen,  bg: 'bg-purple-500/15', text: 'text-purple-600 dark:text-purple-400' },
-  provision: { label: 'Provision', Icon: Wallet,       bg: 'bg-green-500/15',  text: 'text-green-600 dark:text-green-400' },
-  stop:      { label: 'Stop',      Icon: CalendarDays, bg: 'bg-orange-500/15', text: 'text-orange-600 dark:text-orange-400' },
-  trail:     { label: 'Trail',     Icon: Folder,       bg: 'bg-slate-500/15',  text: 'text-slate-600 dark:text-slate-400' },
-  marker:    { label: 'Marker',    Icon: Tag,          bg: 'bg-slate-500/15',  text: 'text-slate-600 dark:text-slate-400' },
-  signal:    { label: 'Signal',    Icon: Zap,          bg: 'bg-yellow-500/15', text: 'text-yellow-600 dark:text-yellow-400' },
+}> {
+  return {
+    waypoint:  { label: terms.waypoints.slice(0, -1),  Icon: Bookmark,     bg: 'bg-blue-500/15',   text: 'text-blue-600 dark:text-blue-400' },
+    log:       { label: terms.logs.slice(0, -1),       Icon: NotebookPen,  bg: 'bg-purple-500/15', text: 'text-purple-600 dark:text-purple-400' },
+    provision: { label: terms.provisions.slice(0, -1), Icon: Wallet,       bg: 'bg-green-500/15',  text: 'text-green-600 dark:text-green-400' },
+    stop:      { label: terms.stops.slice(0, -1),      Icon: CalendarDays, bg: 'bg-orange-500/15', text: 'text-orange-600 dark:text-orange-400' },
+    trail:     { label: terms.trails.slice(0, -1),     Icon: Folder,       bg: 'bg-slate-500/15',  text: 'text-slate-600 dark:text-slate-400' },
+    marker:    { label: terms.markers.slice(0, -1),    Icon: Tag,          bg: 'bg-slate-500/15',  text: 'text-slate-600 dark:text-slate-400' },
+    signal:    { label: terms.signals.slice(0, -1),    Icon: Zap,          bg: 'bg-yellow-500/15', text: 'text-yellow-600 dark:text-yellow-400' },
+  }
 }
 
 const RECENT_KEY = 'cairn:recent-search'
@@ -72,18 +76,22 @@ function saveRecent(result: SearchResult) {
 
 // ── Result row ────────────────────────────────────────────────────────────────
 
+type TypeMeta = Record<SearchResultType, { label: string; Icon: React.ElementType; bg: string; text: string }>
+
 function ResultRow({
   result,
   active,
   onClick,
   onMouseEnter,
+  typeMeta,
 }: {
   result: SearchResult | StoredResult
   active: boolean
   onClick: () => void
   onMouseEnter: () => void
+  typeMeta: TypeMeta
 }) {
-  const meta = TYPE_META[result.type]
+  const meta = typeMeta[result.type]
   const { Icon } = meta
 
   return (
@@ -124,6 +132,8 @@ interface CommandPaletteProps {
 
 export function CommandPalette({ openInNewTab }: CommandPaletteProps) {
   const navigate = useNavigate()
+  const { terms } = useTerminology()
+  const typeMeta = buildTypeMeta(terms)
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [deep, setDeep] = useState(false)
@@ -257,7 +267,7 @@ export function CommandPalette({ openInNewTab }: CommandPaletteProps) {
             ref={inputRef}
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder={googleMode ? 'Search Google…' : 'Search everything…'}
+            placeholder={googleMode ? 'Search Google…' : `${terms.explore} everything…`}
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
           {googleMode && (
@@ -301,9 +311,9 @@ export function CommandPalette({ openInNewTab }: CommandPaletteProps) {
           {!googleMode && !query.trim() && recents.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-center px-4">
               <Search className="h-8 w-8 text-muted-foreground/30 mb-3" />
-              <p className="text-sm text-muted-foreground">Type to search across all your content.</p>
+              <p className="text-sm text-muted-foreground">Type to {terms.explore.toLowerCase()} across all your content.</p>
               <p className="text-xs text-muted-foreground mt-1 opacity-60">
-                Waypoints, logs, stops, provisions, signals, and more.
+                {terms.waypoints}, {terms.logs.toLowerCase()}, {terms.stops.toLowerCase()}, {terms.provisions.toLowerCase()}, {terms.signals.toLowerCase()}, and more.
               </p>
             </div>
           )}
@@ -321,6 +331,7 @@ export function CommandPalette({ openInNewTab }: CommandPaletteProps) {
                   active={activeIndex === i}
                   onClick={() => go(r as SearchResult)}
                   onMouseEnter={() => setActiveIndex(i)}
+                  typeMeta={typeMeta}
                 />
               ))}
             </>
@@ -353,6 +364,7 @@ export function CommandPalette({ openInNewTab }: CommandPaletteProps) {
               active={activeIndex === i}
               onClick={() => go(r as SearchResult)}
               onMouseEnter={() => setActiveIndex(i)}
+              typeMeta={typeMeta}
             />
           ))}
 

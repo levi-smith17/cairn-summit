@@ -1,4 +1,5 @@
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { NotebookPen, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -22,6 +23,7 @@ interface LogClientProps {
 export function LogsClient({ logs, logbookTrailLogs, trails, waypoints, markers, logsPerPage }: LogClientProps) {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
+  const queryClient = useQueryClient()
   const { terms } = useTerminology()
 
   const filters = parseFiltersFromParams(searchParams)
@@ -49,6 +51,7 @@ export function LogsClient({ logs, logbookTrailLogs, trails, waypoints, markers,
       params.delete('logbook')
       params.delete('id')
       setSearchParams(params)
+      queryClient.invalidateQueries({ queryKey: ['logs'] })
     }
 
     const trailWaypoints = waypoints

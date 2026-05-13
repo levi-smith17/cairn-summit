@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { CustomSelect } from '@/components/ui/custom-select'
 import { MarkerPicker } from '@/components/ui/marker-picker'
-import { saveProvision } from '@/lib/api/provisions'
+import { saveSupplyline } from '@/lib/api/supplylines'
 import { useFormStatus } from '@/hooks/use-form-status'
 
 const schema = z.object({
@@ -74,7 +74,7 @@ export function InlineSupplylineForm({ provision, tags, onSaved, onCancel }: Pro
 
   async function onSubmit(values: FormValues) {
     await handleSubmit(async () => {
-      await saveProvision({
+      await saveSupplyline({
         id: provision?.id,
         name: values.name,
         amount: values.amount,

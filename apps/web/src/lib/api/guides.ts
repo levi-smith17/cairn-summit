@@ -7,7 +7,8 @@ export async function getGuides(): Promise<any[]> {
         headers: await getAuthHeaders()
     })
     if (!res.ok) throw new Error('Failed to fetch guides')
-    return res.json()
+    const json = await res.json()
+    return json.data ?? []
 }
 
 export async function getGuide(id: string): Promise<any> {
@@ -15,7 +16,8 @@ export async function getGuide(id: string): Promise<any> {
         headers: await getAuthHeaders()
     })
     if (!res.ok) throw new Error('Failed to fetch guide')
-    return res.json()
+    const json = await res.json()
+    return json.data
 }
 
 export async function saveGuide(data: {
@@ -48,7 +50,8 @@ export async function getStones(guideId: string): Promise<any[]> {
         headers: await getAuthHeaders()
     })
     if (!res.ok) throw new Error('Failed to fetch stones')
-    return res.json()
+    const json = await res.json()
+    return json.data ?? []
 }
 
 export async function saveStone(data: {
