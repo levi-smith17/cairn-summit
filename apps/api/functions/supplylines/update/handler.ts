@@ -31,7 +31,7 @@ export const handler = async (
         const id = getPathId(event)
 
         if (!id) {
-            return toApiGatewayResponse(badRequest('Missing provision id'))
+            return toApiGatewayResponse(badRequest('Missing supplyline id'))
         }
 
         const body = JSON.parse(event.body ?? '{}')

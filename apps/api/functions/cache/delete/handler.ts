@@ -12,7 +12,7 @@ export const handler = async (
         const id = getPathId(event)
 
         if (!id) {
-            return toApiGatewayResponse(badRequest('Missing budget id'))
+            return toApiGatewayResponse(badRequest('Missing cache id'))
         }
 
         const pk = getPk(event)
@@ -26,15 +26,15 @@ export const handler = async (
             },
         }))
 
-        const budget = (result.Items ?? []).find((b: any) => b.id === id) as (Cache & { id: string }) | undefined
+        const cache = (result.Items ?? []).find((b: any) => b.id === id) as (Cache & { id: string }) | undefined
 
-        if (!budget) {
+        if (!cache) {
             return toApiGatewayResponse(notFound('Cache not found'))
         }
 
         await dynamo.send(new DeleteCommand({
             TableName: TABLE_NAME,
-            Key: { pk, sk: budget.sk },
+            Key: { pk, sk: cache.sk },
         }))
 
         return toApiGatewayResponse(noContent())

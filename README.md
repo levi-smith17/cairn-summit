@@ -1,8 +1,10 @@
-# Cairn
+# Cairn (Summit)
 
 > *A cairn is a stack of stones left by travelers to mark the path for those who follow. This is yours.*
 
 Cairn is a comprehensive personal productivity and life management platform built around a hiking metaphor. Every feature, every data type, and every interaction is named for the language of the trail — because the best systems feel like they were made for the journey, not just the destination.
+
+Now that the platform has reached the Cairn Summit, the journey has ascended from local trails to the vast expanse of the AWS Cloud. By moving the infrastructure into the availability and reliability of serverless architecture, the platform no longer just marks the path—it overlooks the entire horizon. This summit iteration ensures that Waypoints, Logs, and Provisions are anchored in the high-altitude performance of the cloud, providing a stable, scalable peak from which to manage one's digital life.
 
 ---
 

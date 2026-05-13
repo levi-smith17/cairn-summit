@@ -56,10 +56,10 @@ export const handler = async (
 
         await dynamo.send(new PutCommand({
             TableName: TABLE_NAME,
-            Item: expense,
+            Item: burn,
         }))
 
-        return toApiGatewayResponse(created(expense))
+        return toApiGatewayResponse(created(burn))
     } catch (err) {
         console.error(err)
         return toApiGatewayResponse(serverError())

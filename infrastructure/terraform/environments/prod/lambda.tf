@@ -248,7 +248,7 @@ module "lambda_itinerary_subscriptions_create" {
   cognito_user_pool_id = module.cognito.cognito_user_pool_id
   dynamodb_table_name  = module.dynamodb.table_name
   environment          = var.environment
-  function_name        = "itinerary-create"
+  function_name        = "itinerary-subscriptions-create"
   managed_by           = var.managed_by
   owner                = var.owner
   policy_arn           = module.iam.lambda_write_policy_arn
@@ -260,7 +260,7 @@ module "lambda_itinerary_subscriptions_delete" {
   cognito_user_pool_id = module.cognito.cognito_user_pool_id
   dynamodb_table_name  = module.dynamodb.table_name
   environment          = var.environment
-  function_name        = "itinerary-delete"
+  function_name        = "itinerary-subscriptions-delete"
   managed_by           = var.managed_by
   owner                = var.owner
   policy_arn           = module.iam.lambda_delete_policy_arn
@@ -272,7 +272,7 @@ module "lambda_itinerary_subscriptions_update" {
   cognito_user_pool_id = module.cognito.cognito_user_pool_id
   dynamodb_table_name  = module.dynamodb.table_name
   environment          = var.environment
-  function_name        = "itinerary-update"
+  function_name        = "itinerary-subscriptions-update"
   managed_by           = var.managed_by
   owner                = var.owner
   policy_arn           = module.iam.lambda_write_policy_arn

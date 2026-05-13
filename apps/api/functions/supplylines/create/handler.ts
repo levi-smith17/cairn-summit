@@ -58,10 +58,10 @@ export const handler = async (
 
         await dynamo.send(new PutCommand({
             TableName: TABLE_NAME,
-            Item: provision,
+            Item: supplyline,
         }))
 
-        return toApiGatewayResponse(created(provision))
+        return toApiGatewayResponse(created(supplyline))
     } catch (err) {
         console.error(err)
         return toApiGatewayResponse(serverError())

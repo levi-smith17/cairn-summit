@@ -12,7 +12,7 @@ export const handler = async (
         const id = getPathId(event)
 
         if (!id) {
-            return toApiGatewayResponse(badRequest('Missing budget id'))
+            return toApiGatewayResponse(badRequest('Missing cache id'))
         }
 
         const body = JSON.parse(event.body ?? '{}')
@@ -32,15 +32,15 @@ export const handler = async (
             },
         }))
 
-        const budget = (result.Items ?? []).find((b: any) => b.id === id) as (Cache & { id: string }) | undefined
+        const cache = (result.Items ?? []).find((b: any) => b.id === id) as (Cache & { id: string }) | undefined
 
-        if (!budget) {
+        if (!cache) {
             return toApiGatewayResponse(notFound('Cache not found'))
         }
 
         const updateResult = await dynamo.send(new UpdateCommand({
             TableName: TABLE_NAME,
-            Key: { pk, sk: budget.sk },
+            Key: { pk, sk: cache.sk },
             UpdateExpression: 'SET #limit = :limit',
             ExpressionAttributeNames: { '#limit': 'limit' },
             ExpressionAttributeValues: { ':limit': body.limit },

@@ -11,7 +11,7 @@ export const handler = async (
         const id = getPathId(event)
 
         if (!id) {
-            return toApiGatewayResponse(badRequest('Missing expense id'))
+            return toApiGatewayResponse(badRequest('Missing burn id'))
         }
 
         const pk = getPk(event)
