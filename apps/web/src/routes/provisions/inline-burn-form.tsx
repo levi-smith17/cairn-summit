@@ -35,16 +35,16 @@ interface Burn {
 }
 
 interface Props {
-  expense?: Expense
+  burn?: Burn
   tags: any[]
   onSaved: () => void
   onCancel: () => void
 }
 
-export function InlineBurnForm({ expense, tags, onSaved, onCancel }: Props) {
+export function InlineBurnForm({ burn, tags, onSaved, onCancel }: Props) {
   const { saving, handleSubmit } = useFormStatus()
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [receiptKey, setReceiptKey] = useState<string | null>(expense?.receiptUrl ?? null)
+  const [receiptKey, setReceiptKey] = useState<string | null>(burn?.receiptUrl ?? null)
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [dragging, setDragging] = useState(false)
@@ -52,11 +52,11 @@ export function InlineBurnForm({ expense, tags, onSaved, onCancel }: Props) {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      name: expense?.name ?? '',
-      amount: expense?.amount ?? 0,
-      date: expense?.date?.split('T')[0] ?? new Date().toISOString().split('T')[0],
-      notes: expense?.notes ?? '',
-      tagIds: expense?.markers?.map((t: any) => t.markerId) ?? [],
+      name: burn?.name ?? '',
+      amount: burn?.amount ?? 0,
+      date: burn?.date?.split('T')[0] ?? new Date().toISOString().split('T')[0],
+      notes: burn?.notes ?? '',
+      tagIds: burn?.markers?.map((t: any) => t.markerId) ?? [],
     },
   })
 
@@ -91,7 +91,7 @@ export function InlineBurnForm({ expense, tags, onSaved, onCancel }: Props) {
   async function onSubmit(values: FormValues) {
     await handleSubmit(async () => {
       await saveBurn({
-        id: expense?.id,
+        id: burn?.id,
         name: values.name,
         amount: values.amount,
         date: values.date,

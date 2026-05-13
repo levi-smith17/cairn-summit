@@ -38,7 +38,7 @@ export interface Burn {
 }
 
 interface Props {
-  expense: Burn
+  burn: Burn
   tags: any[]
   onSaved: () => void
   onDeleted: () => void
@@ -47,7 +47,7 @@ interface Props {
 const fmt = (n: number) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n)
 
-export function BurnRow({ expense, tags, onSaved, onDeleted }: Props) {
+export function BurnRow({ burn, tags, onSaved, onDeleted }: Props) {
   const { terms } = useTerminology()
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -55,7 +55,7 @@ export function BurnRow({ expense, tags, onSaved, onDeleted }: Props) {
   if (editing) {
     return (
       <InlineBurnForm
-        expense={expense}
+        burn={burn}
         tags={tags}
         onSaved={() => { setEditing(false); onSaved() }}
         onCancel={() => setEditing(false)}
@@ -67,26 +67,26 @@ export function BurnRow({ expense, tags, onSaved, onDeleted }: Props) {
     <>
       <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/30 group">
         <div className="text-xs text-muted-foreground w-14 shrink-0 tabular-nums">
-          {new Date(expense.date.slice(0, 10).replace(/-/g, '/')).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          {new Date(burn.date.slice(0, 10).replace(/-/g, '/')).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-sm font-medium truncate">{expense.name}</span>
-            {expense.markers.map(({ marker }) => <MarkerBadge key={marker.id} marker={marker} />)}
+            <span className="text-sm font-medium truncate">{burn.name}</span>
+            {burn.markers.map(({ marker }) => <MarkerBadge key={marker.id} marker={marker} />)}
           </div>
-          {expense.notes && (
-            <div className="text-xs text-muted-foreground truncate">{expense.notes}</div>
+          {burn.notes && (
+            <div className="text-xs text-muted-foreground truncate">{burn.notes}</div>
           )}
         </div>
-        {expense.receiptUrl && (
+        {burn.receiptUrl && (
           <button
-            onClick={() => window.open(`/api/receipts/${expense.receiptUrl?.split('/').pop()}`, '_blank')}
+            onClick={() => window.open(`/api/receipts/${burn.receiptUrl?.split('/').pop()}`, '_blank')}
             className="text-muted-foreground hover:text-foreground shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
           >
             <Receipt className="h-3.5 w-3.5" />
           </button>
         )}
-        <div className="font-medium text-sm shrink-0 tabular-nums">{fmt(expense.amount)}</div>
+        <div className="font-medium text-sm shrink-0 tabular-nums">{fmt(burn.amount)}</div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -116,13 +116,13 @@ export function BurnRow({ expense, tags, onSaved, onDeleted }: Props) {
           <AlertDialogHeader>
             <AlertDialogTitle>Remove {terms.burn.toLowerCase()}?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove &ldquo;{expense.name}&rdquo; and any attached receipt. This action cannot be undone.
+              This will permanently remove &ldquo;{burn.name}&rdquo; and any attached receipt. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={async () => { await deleteBurn(expense.id); onDeleted() }}
+              onClick={async () => { await deleteBurn(burn.id); onDeleted() }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Remove

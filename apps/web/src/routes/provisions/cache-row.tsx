@@ -27,7 +27,7 @@ export interface BudgetUtilization {
 }
 
 interface Props {
-  budget: BudgetUtilization
+  cache: BudgetUtilization
   markers: any[]
   month: number
   year: number
@@ -44,7 +44,7 @@ const utilizationColor = (pct: number) => {
   return 'bg-primary'
 }
 
-export function CacheRow({ budget, markers, month, year, onSaved, onDeleted }: Props) {
+export function CacheRow({ cache, markers, month, year, onSaved, onDeleted }: Props) {
   const { terms } = useTerminology()
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -52,7 +52,7 @@ export function CacheRow({ budget, markers, month, year, onSaved, onDeleted }: P
   if (editing) {
     return (
       <InlineCacheForm
-        budget={budget}
+        cache={cache}
         markers={markers}
         month={month}
         year={year}
@@ -66,7 +66,7 @@ export function CacheRow({ budget, markers, month, year, onSaved, onDeleted }: P
     <>
       <div className="px-3 py-2.5 hover:bg-muted/30 group">
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-sm font-medium">{budget.marker?.name.split('/').pop() ?? 'Uncategorized'}</span>
+          <span className="text-sm font-medium">{cache.marker?.name.split('/').pop() ?? 'Uncategorized'}</span>
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <Tooltip>
               <TooltipTrigger asChild>
@@ -96,17 +96,17 @@ export function CacheRow({ budget, markers, month, year, onSaved, onDeleted }: P
             </Tooltip>
           </div>
           <span className="text-xs text-muted-foreground tabular-nums group-hover:hidden">
-            {fmt(budget.spent)} / {fmt(budget.limit)}
+            {fmt(cache.spent)} / {fmt(cache.limit)}
           </span>
         </div>
         <Progress
-          value={Math.min(budget.utilization, 100)}
+          value={Math.min(cache.utilization, 100)}
           className="h-1.5"
-          indicatorClassName={utilizationColor(budget.utilization)}
+          indicatorClassName={utilizationColor(cache.utilization)}
         />
         <div className="flex justify-between text-xs text-muted-foreground mt-1">
-          <span>{Math.round(budget.utilization)}% used</span>
-          <span>{fmt(Math.max(budget.limit - budget.spent, 0))} left</span>
+          <span>{Math.round(cache.utilization)}% used</span>
+          <span>{fmt(Math.max(cache.limit - cache.spent, 0))} left</span>
         </div>
       </div>
 
@@ -115,13 +115,13 @@ export function CacheRow({ budget, markers, month, year, onSaved, onDeleted }: P
           <AlertDialogHeader>
             <AlertDialogTitle>Remove {terms.cache.toLowerCase()}?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove the &ldquo;{budget.marker?.name.split('/').pop() ?? 'Uncategorized'}&rdquo; {terms.cache.toLowerCase()} limit for this month. This action cannot be undone.
+              This will remove the &ldquo;{cache.marker?.name.split('/').pop() ?? 'Uncategorized'}&rdquo; {terms.cache.toLowerCase()} limit for this month. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={async () => { await deleteCache(budget.id); onDeleted() }}
+              onClick={async () => { await deleteCache(cache.id); onDeleted() }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Remove

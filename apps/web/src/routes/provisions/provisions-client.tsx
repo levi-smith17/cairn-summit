@@ -12,7 +12,7 @@ import { useDebounce } from '@/hooks/use-debounce'
 import { MarkerPicker } from '@/components/ui/marker-picker'
 import { BurnRow, type Burn } from './burn-row'
 import { InlineBurnForm } from './inline-burn-form'
-import { SupplylineRow, type Provision } from './supplyline-row'
+import { SupplylineRow, type Supplyline } from './supplyline-row'
 import { InlineSupplylineForm } from './inline-supplyline-form'
 import { CacheRow, type BudgetUtilization } from './cache-row'
 import { InlineCacheForm } from './inline-cache-form'
@@ -74,7 +74,7 @@ export function ProvisionsClient({ markers }: Props) {
   const [burnTotal, setBurnTotal] = useState(0)
   const [burnPageSize, setBurnPageSize] = useState(20)
 
-  const [provisions, setProvisions] = useState<Provision[]>([])
+  const [supplylines, setSupplylines] = useState<Supplyline[]>([])
   const [provisionLoading, setProvisionLoading] = useState(true)
   const [addingProvision, setAddingProvision] = useState(false)
 
@@ -134,7 +134,7 @@ export function ProvisionsClient({ markers }: Props) {
       try {
         const res = await fetch(`${API_BASE}/supplylines?${params}`)
         const json = await res.json()
-        setProvisions(json.data ?? [])
+        setSupplylines(json.data ?? [])
       } catch (err) {
         console.error('Failed to load provisions', err)
       } finally {
@@ -363,10 +363,10 @@ export function ProvisionsClient({ markers }: Props) {
                         </span>
                       </div>
                       <div className="divide-y">
-                        {groupedExpenses[label].map((expense) => (
+                        {groupedExpenses[label].map((burn) => (
                           <BurnRow
-                            key={expense.id}
-                            expense={expense}
+                            key={burn.id}
+                            burn={burn}
                             tags={markers}
                             onSaved={refresh}
                             onDeleted={refresh}
@@ -437,13 +437,13 @@ export function ProvisionsClient({ markers }: Props) {
               <div className="divide-y overflow-y-auto max-h-144">
                 {provisionLoading ? (
                   <div className="px-3 py-4 text-sm text-muted-foreground">Loading…</div>
-                ) : provisions.length === 0 ? (
+                ) : supplylines.length === 0 ? (
                   <div className="px-3 py-4 text-sm text-muted-foreground">No {terms.supplylines.toLowerCase()} found.</div>
                 ) : (
-                  provisions.map((p) => (
+                  supplylines.map((p) => (
                     <SupplylineRow
                       key={p.id}
-                      provision={p}
+                      supplyline={p}
                       tags={markers}
                       onSaved={refresh}
                       onDeleted={refresh}
@@ -503,7 +503,7 @@ export function ProvisionsClient({ markers }: Props) {
                   visibleBudgets.map((b) => (
                     <CacheRow
                       key={b.id}
-                      budget={b}
+                      cache={b}
                       markers={markers}
                       month={month}
                       year={year}
