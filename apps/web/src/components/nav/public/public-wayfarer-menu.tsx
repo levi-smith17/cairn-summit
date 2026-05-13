@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { BookOpen, LayoutDashboard, LogOut, Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -23,6 +23,9 @@ interface PublicWayfarerMenuProps {
 
 export function PublicWayfarerMenu({ wayfarer, terms }: PublicWayfarerMenuProps) {
     const navigate = useNavigate()
+    const location = useLocation()
+
+    const isLoginPage = location.pathname === '/login'
 
     const initials = wayfarer?.name
         ? wayfarer.name.split(' ').map(n => n[0]).join('').toUpperCase()
@@ -70,13 +73,15 @@ export function PublicWayfarerMenu({ wayfarer, terms }: PublicWayfarerMenuProps)
                     </DropdownMenuContent>
                 </DropdownMenu>
             ) : (
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigate('/login')}
-                >
-                    Sign in
-                </Button>
+                !isLoginPage && (
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate('/login')}
+                    >
+                        Sign in
+                    </Button>
+                )
             )}
         </>
     )

@@ -19,7 +19,7 @@ export default function PrivacyContact() {
     return (
         <div className="min-h-screen flex flex-col">
             <header className="sticky top-0 z-10 flex items-center justify-between bg-header px-6 py-3 border-b">
-                <img src="/cairn-lockup2.png" alt="Cairn Summit Lockup" height={50} width={160} />
+                <img src="/cairn-lockup.png" alt="Cairn Summit Lockup" height={50} width={160} />
                 <PublicHeader wayfarer={wayfarer} />
             </header>
             <div className="flex-1 flex items-center justify-center px-4 py-12">
