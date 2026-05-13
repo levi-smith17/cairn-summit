@@ -108,19 +108,19 @@ module "api_gateway" {
       function_name = module.lambda_guides_update.function_name
       route_key     = "PUT /guides/{id}"
     }
-    itinerary-create = {
-      invoke_arn    = module.lambda_itinerary_create.invoke_arn
-      function_name = module.lambda_itinerary_create.function_name
+    itinerary-calendars-create = {
+      invoke_arn    = module.lambda_itinerary_calendars_create.invoke_arn
+      function_name = module.lambda_itinerary_calendars_create.function_name
       route_key     = "POST /itinerary"
     }
-    itinerary-delete = {
-      invoke_arn    = module.lambda_itinerary_delete.invoke_arn
-      function_name = module.lambda_itinerary_delete.function_name
+    itinerary-calendars-delete = {
+      invoke_arn    = module.lambda_itinerary_calendars_delete.invoke_arn
+      function_name = module.lambda_itinerary_calendars_delete.function_name
       route_key     = "DELETE /itinerary/{id}"
     }
-    itinerary-update = {
-      invoke_arn    = module.lambda_itinerary_update.invoke_arn
-      function_name = module.lambda_itinerary_update.function_name
+    itinerary-calendars-update = {
+      invoke_arn    = module.lambda_itinerary_calendars_update.invoke_arn
+      function_name = module.lambda_itinerary_calendars_update.function_name
       route_key     = "PUT /itinerary/{id}"
     }
     itinerary-subscriptions-create = {
