@@ -1,3 +1,27 @@
+module "lambda_basecamp_get" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "basecamp-get"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_read_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_basecamp_sidebar" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "basecamp-sidebar"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_read_policy_arn
+  project_name         = var.project_name
+}
+
 module "lambda_burn_create" {
   source               = "../../modules/lambda"
   cognito_user_pool_id = module.cognito.cognito_user_pool_id
@@ -207,36 +231,39 @@ module "lambda_guides_update" {
   project_name         = var.project_name
 }
 
-module "lambda_itinerary_create" {
+module "lambda_itinerary_calendars_create" {
   source               = "../../modules/lambda"
   cognito_user_pool_id = module.cognito.cognito_user_pool_id
   dynamodb_table_name  = module.dynamodb.table_name
   environment          = var.environment
-  function_name        = "itinerary-create"
+  function_name        = "itinerary-calendars-create"
+  handler_path         = "itinerary/calendars-create/handler.handler"
   managed_by           = var.managed_by
   owner                = var.owner
   policy_arn           = module.iam.lambda_write_policy_arn
   project_name         = var.project_name
 }
 
-module "lambda_itinerary_delete" {
+module "lambda_itinerary_calendars_delete" {
   source               = "../../modules/lambda"
   cognito_user_pool_id = module.cognito.cognito_user_pool_id
   dynamodb_table_name  = module.dynamodb.table_name
   environment          = var.environment
-  function_name        = "itinerary-delete"
+  function_name        = "itinerary-calendars-delete"
+  handler_path         = "itinerary/calendars-delete/handler.handler"
   managed_by           = var.managed_by
   owner                = var.owner
   policy_arn           = module.iam.lambda_delete_policy_arn
   project_name         = var.project_name
 }
 
-module "lambda_itinerary_update" {
+module "lambda_itinerary_calendars_update" {
   source               = "../../modules/lambda"
   cognito_user_pool_id = module.cognito.cognito_user_pool_id
   dynamodb_table_name  = module.dynamodb.table_name
   environment          = var.environment
-  function_name        = "itinerary-update"
+  function_name        = "itinerary-calendars-update"
+  handler_path         = "itinerary/calendars-update/handler.handler"
   managed_by           = var.managed_by
   owner                = var.owner
   policy_arn           = module.iam.lambda_write_policy_arn
@@ -249,6 +276,7 @@ module "lambda_itinerary_subscriptions_create" {
   dynamodb_table_name  = module.dynamodb.table_name
   environment          = var.environment
   function_name        = "itinerary-subscriptions-create"
+  handler_path         = "itinerary/subscriptions-create/handler.handler"
   managed_by           = var.managed_by
   owner                = var.owner
   policy_arn           = module.iam.lambda_write_policy_arn
@@ -261,6 +289,7 @@ module "lambda_itinerary_subscriptions_delete" {
   dynamodb_table_name  = module.dynamodb.table_name
   environment          = var.environment
   function_name        = "itinerary-subscriptions-delete"
+  handler_path         = "itinerary/subscriptions-delete/handler.handler"
   managed_by           = var.managed_by
   owner                = var.owner
   policy_arn           = module.iam.lambda_delete_policy_arn
@@ -273,6 +302,7 @@ module "lambda_itinerary_subscriptions_update" {
   dynamodb_table_name  = module.dynamodb.table_name
   environment          = var.environment
   function_name        = "itinerary-subscriptions-update"
+  handler_path         = "itinerary/subscriptions-update/handler.handler"
   managed_by           = var.managed_by
   owner                = var.owner
   policy_arn           = module.iam.lambda_write_policy_arn

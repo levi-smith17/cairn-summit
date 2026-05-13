@@ -13,6 +13,16 @@ module "api_gateway" {
   ]
 
   lambda_functions = {
+    basecamp-get = {
+      invoke_arn    = module.lambda_basecamp_get.invoke_arn
+      function_name = module.lambda_basecamp_get.function_name
+      route_key     = "GET /basecamp"
+    }
+    basecamp-sidebar = {
+      invoke_arn    = module.lambda_basecamp_sidebar.invoke_arn
+      function_name = module.lambda_basecamp_sidebar.function_name
+      route_key     = "GET /basecamp/sidebar"
+    }
     burn-create = {
       invoke_arn    = module.lambda_burn_create.invoke_arn
       function_name = module.lambda_burn_create.function_name
@@ -342,11 +352,6 @@ module "api_gateway" {
       invoke_arn    = module.lambda_signals_reply.invoke_arn
       function_name = module.lambda_signals_reply.function_name
       route_key     = "POST /signals/{id}/replies"
-    }
-    signals-sync = {
-      invoke_arn    = module.lambda_signals_sync.invoke_arn
-      function_name = module.lambda_signals_sync.function_name
-      route_key     = "POST /signals/sync"
     }
     stones-delete = {
       invoke_arn    = module.lambda_stones_delete.invoke_arn

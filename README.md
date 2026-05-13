@@ -38,7 +38,7 @@ Cairn consolidates the tools a person actually needs into a single, cohesive pla
 - **[react-hook-form](https://react-hook-form.com/)** + **[Zod](https://zod.dev/)** — form validation
 
 ### Backend
-- **[AWS Lambda](https://aws.amazon.com/lambda/)** — serverless function handlers, one per feature area
+- **[AWS Lambda](https://aws.amazon.com/lambda/)** — serverless function handlers
 - **[API Gateway HTTP API](https://aws.amazon.com/api-gateway/)** — routes requests to Lambda functions
 - **[DynamoDB](https://aws.amazon.com/dynamodb/)** — single-table design (`cairn-dev` / `cairn-prod`)
 - **[Cognito](https://aws.amazon.com/cognito/)** — authentication and user management
