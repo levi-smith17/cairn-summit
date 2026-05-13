@@ -35,6 +35,7 @@ export async function getBasecamp(params: BasecampParams = {}) {
     tags: Tag[]
     allFolders: { id: string; name: string }[]
     filteredCountMap: Record<string, number>
+    sidebarData: SidebarData
   }
 }
 
@@ -45,6 +46,25 @@ export async function getBasecampSidebar() {
   if (!res.ok) throw new Error('Failed to fetch sidebar')
   const json = await res.json()
   return json.data as SidebarData
+}
+
+interface RawExternalEvent {
+  uid: string
+  title: string
+  startDate: string
+  endDate: string | null
+  allDay: boolean
+  color: string
+  readonly: boolean
+}
+
+export async function fetchExternalCalendarEvents(): Promise<RawExternalEvent[]> {
+  const res = await fetch(`${API_BASE}/itinerary/external`, {
+    headers: await getAuthHeaders(),
+  })
+  if (!res.ok) return []
+  const json = await res.json()
+  return json.data as RawExternalEvent[]
 }
 
 // ─── Types (inline until @cairn/types is updated) ─────────────────────────────
@@ -139,7 +159,7 @@ interface SidebarData {
       createdAt: string
       read: boolean
     }[]
-    emailAccounts: string[]
+    emailAccounts: { id: string; label: string; emailAddress: string; unreadCount: number }[]
   }
   itinerarySummary: {
     stops: {
