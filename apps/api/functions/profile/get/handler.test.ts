@@ -50,7 +50,11 @@ describe('profile/get handler', () => {
     it('returns profile with signal and stop counts', async () => {
         vi.mocked(dynamo.send)
             .mockResolvedValueOnce({ Item: mockProfile })
-            .mockResolvedValueOnce({ Count: 3 })
+            .mockResolvedValueOnce({ Items: [
+                    { sk: 'SIGNAL#s1' },
+                    { sk: 'SIGNAL#s2' },
+                    { sk: 'SIGNAL#s3' },
+                ]})
             .mockResolvedValueOnce({ Count: 7 })
 
         const result = await handler(mockEvent()) as any
@@ -66,7 +70,7 @@ describe('profile/get handler', () => {
     it('returns zero counts when DynamoDB returns no Count', async () => {
         vi.mocked(dynamo.send)
             .mockResolvedValueOnce({ Item: mockProfile })
-            .mockResolvedValueOnce({})
+            .mockResolvedValueOnce({ Items: [] })
             .mockResolvedValueOnce({})
 
         const result = await handler(mockEvent()) as any
@@ -79,7 +83,7 @@ describe('profile/get handler', () => {
     it('returns null for missing optional fields', async () => {
         vi.mocked(dynamo.send)
             .mockResolvedValueOnce({ Item: { pk: 'USER#user-123', sk: 'PROFILE', username: 'levi', email: 'levi@example.com' } })
-            .mockResolvedValueOnce({ Count: 0 })
+            .mockResolvedValueOnce({ Items: [] })
             .mockResolvedValueOnce({ Count: 0 })
 
         const result = await handler(mockEvent()) as any
@@ -93,5 +97,20 @@ describe('profile/get handler', () => {
 
         const result = await handler(mockEvent()) as any
         expect(result.statusCode).toBe(500)
+    })
+
+    it('excludes reply signals from count', async () => {
+        vi.mocked(dynamo.send)
+            .mockResolvedValueOnce({ Item: mockProfile })
+            .mockResolvedValueOnce({ Items: [
+                    { sk: 'SIGNAL#s1' },
+                    { sk: 'SIGNAL#s1#REPLY#r1' }, // should be excluded
+                    { sk: 'SIGNAL#s1#REPLY#r2' }, // should be excluded
+                ]})
+            .mockResolvedValueOnce({ Count: 0 })
+
+        const result = await handler(mockEvent()) as any
+        const data = JSON.parse(result.body).data
+        expect(data.signals).toBe(1)
     })
 })
