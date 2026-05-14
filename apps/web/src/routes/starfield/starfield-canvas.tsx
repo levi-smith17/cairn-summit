@@ -24,6 +24,8 @@ interface StarfieldCanvasProps {
   validations: Map<string, FacilityValidation>
   selectedFacilityId: string | null
   onFacilityClick: (facilityId: string) => void
+  onAddFacilityResource: (facilityId: string) => void
+  onEditFacilityResource: (facilityId: string, resourceId: string) => void
 }
 
 const nodeTypes = { facility: FacilityNode }
@@ -44,6 +46,8 @@ export function StarfieldCanvas({
   validations,
   selectedFacilityId,
   onFacilityClick,
+  onAddFacilityResource,
+  onEditFacilityResource,
 }: StarfieldCanvasProps) {
   const initialNodes = useMemo<Node<FacilityNodeData>[]>(() => {
     return facilities.map(facility => ({
@@ -55,6 +59,8 @@ export function StarfieldCanvas({
         facility,
         validation: validations.get(facility.id),
         onEdit: () => onFacilityClick(facility.id),
+        onAddResource: () => onAddFacilityResource(facility.id),
+        onEditResource: (resourceId: string) => onEditFacilityResource(facility.id, resourceId),
       },
     }))
   }, [])
@@ -74,19 +80,27 @@ export function StarfieldCanvas({
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
 
   useEffect(() => {
-    setNodes(
-      facilities.map(facility => ({
-        id: facility.id,
-        type: 'facility',
-        position: facility.position ?? { x: 0, y: 0 },
-        selected: facility.id === selectedFacilityId,
-        data: {
-          facility,
-          validation: validations.get(facility.id),
-          onEdit: () => onFacilityClick(facility.id),
-        },
-      }))
-    )
+    setNodes(prev => {
+      const prevById = new Map(prev.map(n => [n.id, n]))
+      return facilities.map(facility => {
+        const existing = prevById.get(facility.id)
+        return {
+          id: facility.id,
+          type: 'facility',
+          // Preserve React Flow's live position for existing nodes so drag state
+          // isn't clobbered when selectedFacilityId or validations change.
+          position: existing ? existing.position : (facility.position ?? { x: 0, y: 0 }),
+          selected: facility.id === selectedFacilityId,
+          data: {
+            facility,
+            validation: validations.get(facility.id),
+            onEdit: () => onFacilityClick(facility.id),
+            onAddResource: () => onAddFacilityResource(facility.id),
+            onEditResource: (resourceId: string) => onEditFacilityResource(facility.id, resourceId),
+          },
+        }
+      })
+    })
     setEdges(
       facilities
         .filter(f => !!f.parentId)

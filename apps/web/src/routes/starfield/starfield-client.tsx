@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { ReactFlowProvider } from 'reactflow'
+import { toast } from 'sonner'
 import { PlatformHeader } from '@/components/nav/platform/platform-header'
 import type { SfFacility, SfNetwork, SfResource } from '@cairn/types'
 import { validateNetwork } from '@/lib/starfield-validation'
@@ -8,11 +9,13 @@ import { StarfieldControlBar } from './starfield-control-bar'
 import { StarfieldCanvas } from './starfield-canvas'
 import { ResourcesPanel } from './resources-panel'
 import { FacilityForm } from './facility-form'
+import { FacilityResourceForm } from './facility-resource-form'
 
 type RightPanelState =
   | { mode: 'closed' }
   | { mode: 'resources' }
   | { mode: 'facility-form'; facilityId: string | null }
+  | { mode: 'facility-resource'; facilityId: string; resourceId: string | null }
 
 interface StarfieldClientProps {
   networks: SfNetwork[]
@@ -51,24 +54,44 @@ export function StarfieldClient({
   }
 
   async function handleCreateNetwork(name: string) {
-    await createNetwork({ name })
-    onRefresh()
+    try {
+      await createNetwork({ name })
+      onRefresh()
+      toast.success(`Network "${name}" created.`)
+    } catch {
+      toast.error('Failed to create network.')
+    }
   }
 
   async function handleRenameNetwork(id: string, name: string) {
-    await renameNetwork(id, name)
-    onRefresh()
+    try {
+      await renameNetwork(id, name)
+      onRefresh()
+      toast.success(`Network renamed to "${name}".`)
+    } catch {
+      toast.error('Failed to rename network.')
+    }
   }
 
   async function handleDeleteNetwork(id: string) {
-    await deleteNetwork(id)
-    if (selectedNetworkId === id) {
-      setSelectedNetworkId(networks.find(n => n.sk.replace(/^SF#NETWORK#/, '') !== id)?.sk.replace(/^SF#NETWORK#/, '') ?? null)
+    try {
+      await deleteNetwork(id)
+      if (selectedNetworkId === id) {
+        setSelectedNetworkId(
+          networks.find(n => n.sk.replace(/^SF#NETWORK#/, '') !== id)?.sk.replace(/^SF#NETWORK#/, '') ?? null
+        )
+      }
+      onRefresh()
+      toast.success('Network deleted.')
+    } catch {
+      toast.error('Failed to delete network.')
     }
-    onRefresh()
   }
 
-  const selectedFacilityId = rightPanel.mode === 'facility-form' ? rightPanel.facilityId : null
+  const selectedFacilityId =
+    rightPanel.mode === 'facility-form' || rightPanel.mode === 'facility-resource'
+      ? rightPanel.facilityId
+      : null
 
   return (
     <ReactFlowProvider>
@@ -95,6 +118,10 @@ export function StarfieldClient({
               validations={validations}
               selectedFacilityId={selectedFacilityId}
               onFacilityClick={id => setRightPanel({ mode: 'facility-form', facilityId: id })}
+              onAddFacilityResource={id => setRightPanel({ mode: 'facility-resource', facilityId: id, resourceId: null })}
+              onEditFacilityResource={(facilityId, resourceId) =>
+                setRightPanel({ mode: 'facility-resource', facilityId, resourceId })
+              }
             />
           </div>
 
@@ -117,6 +144,25 @@ export function StarfieldClient({
                   onDone={closePanel}
                   onRefresh={onRefresh}
                 />
+              )}
+
+              {rightPanel.mode === 'facility-resource' && (
+                <div className="flex flex-col h-full">
+                  <div className="flex items-center px-4 py-3 border-b border-border shrink-0">
+                    <span className="text-sm font-medium">
+                      {rightPanel.resourceId ? 'Edit Resource' : 'Add Resource'}
+                    </span>
+                  </div>
+                  <FacilityResourceForm
+                    key={`${rightPanel.facilityId}-${rightPanel.resourceId ?? 'new'}`}
+                    facilityId={rightPanel.facilityId}
+                    resourceId={rightPanel.resourceId}
+                    resources={resources}
+                    facilities={networkFacilities}
+                    onDone={closePanel}
+                    onRefresh={onRefresh}
+                  />
+                </div>
               )}
             </div>
           )}

@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { createFacility, updateFacility } from '@/lib/api/starfield'
 import { Form, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { PlanetPicker } from '@/components/ui/planet-picker'
 import { CustomSelect } from '@/components/ui/custom-select'
 import { FormActions } from '@/components/forms/form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
@@ -30,9 +32,29 @@ interface FacilityFormProps {
 export function FacilityForm({ facility, networkId, facilities, onDone, onRefresh }: FacilityFormProps) {
   const { saving, saved, error, handleSubmit } = useFormStatus()
 
-  const parentOptions = facilities
-    .filter(f => (f.id ?? f.sk?.replace(/^SF#FACILITY#/, '')) !== (facility?.id ?? facility?.sk?.replace(/^SF#FACILITY#/, '')))
-    .map(f => ({ value: f.id ?? f.sk?.replace(/^SF#FACILITY#/, ''), label: `[${f.abbreviation}] ${f.name}` }))
+  const [systems, setSystems] = useState(() => {
+    const systemMap = new Map<string, Set<string>>()
+    for (const f of facilities) {
+      if (f.system) {
+        if (!systemMap.has(f.system)) systemMap.set(f.system, new Set())
+        if (f.planet) systemMap.get(f.system)!.add(f.planet)
+      }
+    }
+    return Array.from(systemMap.entries()).map(([name, planets]) => ({
+      id: name,
+      name,
+      planets: Array.from(planets).map(p => ({ id: p, name: p })),
+    }))
+  })
+
+  const otherFacilities = facilities.filter(
+    f => (f.id ?? f.sk?.replace(/^SF#FACILITY#/, '')) !== (facility?.id ?? facility?.sk?.replace(/^SF#FACILITY#/, ''))
+  )
+
+  const parentOptions = otherFacilities.map(f => ({
+    value: f.id ?? f.sk?.replace(/^SF#FACILITY#/, ''),
+    label: `[${f.abbreviation}] ${f.name}`,
+  }))
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -73,7 +95,7 @@ export function FacilityForm({ facility, networkId, facilities, onDone, onRefres
       </div>
       <div className="flex-1 overflow-y-auto p-4">
         <Form {...form}>
-          <form id="facility-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form id="facility-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField control={form.control} name="name" render={({ field }) => (
               <FormItem>
                 <FormLabel>Name</FormLabel>
@@ -88,20 +110,26 @@ export function FacilityForm({ facility, networkId, facilities, onDone, onRefres
                 <FormMessage />
               </FormItem>
             )} />
-            <FormField control={form.control} name="system" render={({ field }) => (
-              <FormItem>
-                <FormLabel>System</FormLabel>
-                <Input placeholder="Alpha Centauri" {...field} />
-                <FormMessage />
-              </FormItem>
-            )} />
+
             <FormField control={form.control} name="planet" render={({ field }) => (
               <FormItem>
                 <FormLabel>Planet</FormLabel>
-                <Input placeholder="Jemison" {...field} />
+                <PlanetPicker
+                  value={field.value}
+                  onChange={v => {
+                    field.onChange(v)
+                  }}
+                  onSystemChange={v => form.setValue('system', v)}
+                  systems={systems}
+                  onSystemsUpdate={setSystems}
+                />
                 <FormMessage />
+                {form.formState.errors.system && (
+                  <p className="text-sm font-medium text-destructive">{form.formState.errors.system.message}</p>
+                )}
               </FormItem>
             )} />
+
             {parentOptions.length > 0 && (
               <FormField control={form.control} name="parentId" render={({ field }) => (
                 <FormItem>

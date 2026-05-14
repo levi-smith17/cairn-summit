@@ -38,7 +38,6 @@ export function StarfieldControlBar({
           onRenameNetwork={onRenameNetwork}
           onDeleteNetwork={onDeleteNetwork}
         />
-        <div className="flex-1" />
         <Button
           variant="outline"
           size="sm"
@@ -48,6 +47,7 @@ export function StarfieldControlBar({
           <Plus className="h-3.5 w-3.5" />
           Add Facility
         </Button>
+        <div className="flex-1" />
         <Button
           variant="outline"
           size="sm"
