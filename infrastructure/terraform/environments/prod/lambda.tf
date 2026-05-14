@@ -402,7 +402,7 @@ module "lambda_logs_image_url" {
   cognito_user_pool_id = module.cognito.cognito_user_pool_id
   dynamodb_table_name  = module.dynamodb.table_name
   environment          = var.environment
-  function_name        = "logs-image_url"
+  function_name        = "logs-image-url"
   handler_path         = "logs/image-url/handler.handler"
   managed_by           = var.managed_by
   owner                = var.owner
