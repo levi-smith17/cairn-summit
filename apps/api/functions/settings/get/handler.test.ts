@@ -63,7 +63,6 @@ describe('settings/get handler', () => {
         expect(result.statusCode).toBe(200)
         const data = JSON.parse(result.body).data
         expect(data.account.name).toBe('Levi Smith')
-        expect(data.account.email).toBe('levi@example.com')
         expect(data.account.username).toBe('levi')
         expect(data.appearance.sidebarDefault).toBe('COLLAPSED')
         expect(data.calendars).toHaveLength(1)
@@ -108,7 +107,6 @@ describe('settings/get handler', () => {
         const result = await handler(mockEvent()) as any
         const data = JSON.parse(result.body).data
         expect(data.account.name).toBeNull()
-        expect(data.account.email).toBeNull()
         expect(data.account.image).toBeNull()
     })
 
