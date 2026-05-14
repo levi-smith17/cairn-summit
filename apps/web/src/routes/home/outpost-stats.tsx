@@ -1,9 +1,11 @@
 import { MapPin, Users, Wrench } from 'lucide-react'
+import type { Terms } from '@/lib/terminology'
 
 interface OutpostStatsProps {
   totalWayfarers: number
   topGear: { name: string; count: number }[]
   topLocations: { location: string; count: number }[]
+  terms: Terms
 }
 
 function StatCard({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
@@ -18,14 +20,14 @@ function StatCard({ title, icon, children }: { title: string; icon: React.ReactN
   )
 }
 
-export function OutpostStats({ totalWayfarers, topGear, topLocations }: OutpostStatsProps) {
+export function OutpostStats({ totalWayfarers, topGear, topLocations, terms }: OutpostStatsProps) {
   return (
     <div className="flex flex-col gap-4">
-      <StatCard title="Wayfarers" icon={<Users className="h-4 w-4" />}>
+      <StatCard title={terms.wayfarers} icon={<Users className="h-4 w-4" />}>
         <p className="text-3xl font-semibold">{totalWayfarers}</p>
       </StatCard>
 
-      <StatCard title="Top Gear" icon={<Wrench className="h-4 w-4" />}>
+      <StatCard title={`Top ${terms.gear}`} icon={<Wrench className="h-4 w-4" />}>
         <div className="flex flex-wrap gap-2">
           {topGear.map(({ name, count }) => (
             <div key={name} className="flex items-center gap-1">

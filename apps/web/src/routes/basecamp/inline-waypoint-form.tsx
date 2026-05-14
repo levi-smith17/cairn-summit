@@ -65,7 +65,7 @@ export function InlineWaypointForm({
     if (!url) return
     setFetching(true)
     try {
-      const res = await fetch(`${API_BASE}/fetch-url-meta?url=${encodeURIComponent(url)}`)
+      const res = await fetch(`${API_BASE}/waypoints/fetch-meta?url=${encodeURIComponent(url)}`)
       const data = await res.json()
       if (data.title) form.setValue('title', data.title)
       if (data.favicon) setFavicon(data.favicon)

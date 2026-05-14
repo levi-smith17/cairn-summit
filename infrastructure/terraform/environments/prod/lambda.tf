@@ -22,6 +22,19 @@ module "lambda_basecamp_sidebar" {
   project_name         = var.project_name
 }
 
+module "lambda_basecamp_trail_waypoints" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "basecamp-trail-waypoints"
+  handler_path         = "basecamp/trail-waypoints/handler.handler"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_read_policy_arn
+  project_name         = var.project_name
+}
+
 module "lambda_burn_create" {
   source               = "../../modules/lambda"
   cognito_user_pool_id = module.cognito.cognito_user_pool_id
@@ -55,6 +68,45 @@ module "lambda_burn_get" {
   managed_by           = var.managed_by
   owner                = var.owner
   policy_arn           = module.iam.lambda_read_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_burn_receipt_delete" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "burn-receipt-delete"
+  handler_path         = "burn/receipt-delete/handler.handler"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_s3_private_media_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_burn_receipt_upload_url" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "burn-receipt-upload-url"
+  handler_path         = "burn/receipt-upload-url/handler.handler"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_s3_private_media_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_burn_receipt_url" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "burn-receipt-url"
+  handler_path         = "burn/receipt-url/handler.handler"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_s3_private_media_policy_arn
   project_name         = var.project_name
 }
 
@@ -345,6 +397,20 @@ module "lambda_logs_get" {
   project_name         = var.project_name
 }
 
+module "lambda_logs_image_url" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "logs-image_url"
+  handler_path         = "logs/image-url/handler.handler"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_s3_private_media_policy_arn
+  project_name         = var.project_name
+  web_url              = module.cloudfront.cloudfront_url
+}
+
 module "lambda_logs_update" {
   source               = "../../modules/lambda"
   cognito_user_pool_id = module.cognito.cognito_user_pool_id
@@ -354,6 +420,19 @@ module "lambda_logs_update" {
   managed_by           = var.managed_by
   owner                = var.owner
   policy_arn           = module.iam.lambda_write_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_logs_upload_url" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "logs-upload-url"
+  handler_path         = "logs/upload-url/handler.handler"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_s3_private_media_policy_arn
   project_name         = var.project_name
 }
 
@@ -380,6 +459,32 @@ module "lambda_manifest_companions_delete" {
   managed_by           = var.managed_by
   owner                = var.owner
   policy_arn           = module.iam.lambda_delete_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_manifest_companions_media_delete" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "manifest-companions-media-delete"
+  handler_path         = "manifest/companions-media-delete/handler.handler"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_s3_public_media_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_manifest_companions_media_upload" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "manifest-companions-media-upload"
+  handler_path         = "manifest/companions-media-upload/handler.handler"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_s3_public_media_policy_arn
   project_name         = var.project_name
 }
 
@@ -1030,6 +1135,19 @@ module "lambda_waypoints_delete" {
   managed_by           = var.managed_by
   owner                = var.owner
   policy_arn           = module.iam.lambda_delete_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_waypoints_fetch_meta" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "waypoints-fetch-meta"
+  handler_path         = "waypoints/fetch-meta/handler.handler"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_write_policy_arn
   project_name         = var.project_name
 }
 

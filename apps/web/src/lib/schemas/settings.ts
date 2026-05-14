@@ -1,6 +1,8 @@
 import { z } from 'zod'
 
 export const accountSchema = z.object({
+  name: z.string().max(100, 'Name must be less than 100 characters').optional().or(z.literal('')),
+  image: z.string().url('Must be a valid URL').optional().or(z.literal('')),
   username: z
     .string()
     .min(3, 'Username must be at least 3 characters')

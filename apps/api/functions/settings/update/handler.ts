@@ -7,7 +7,7 @@ import { toApiGatewayResponse, ok, badRequest, serverError } from '../../shared/
 const SETTINGS_SECTIONS = ['appearance', 'notifications', 'privacy', 'itinerary', 'waypoints', 'logs', 'signals'] as const
 type SettingsSection = typeof SETTINGS_SECTIONS[number]
 
-const ACCOUNT_FIELDS = ['name', 'email', 'image', 'username', 'timeFormat', 'listed', 'defaultTerminology', 'defaultTheme', 'headline', 'summary', 'location', 'linkedin', 'github', 'customDomain'] as const
+const ACCOUNT_FIELDS = ['name', 'image', 'username', 'timeFormat', 'listed', 'defaultTerminology', 'defaultTheme', 'headline', 'summary', 'location', 'linkedin', 'github', 'customDomain'] as const
 
 export const handler = async (
     event: APIGatewayProxyEventV2WithJWTAuthorizer

@@ -80,7 +80,6 @@ export const handler = async (
         return toApiGatewayResponse(ok({
             account: {
                 name: profile.name ?? null,
-                email: profile.email ?? null,
                 image: profile.image ?? null,
                 username: profile.username ?? null,
                 timeFormat: profile.timeFormat ?? 'TWELVE',

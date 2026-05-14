@@ -30,6 +30,8 @@ import {
 
 interface AccountFormProps {
   defaultValues: {
+    name: string | null
+    image: string | null
     username: string | null
     defaultTerminology: 'CAIRN' | 'STANDARD'
     defaultTheme: 'SYSTEM' | 'LIGHT' | 'DARK'
@@ -58,6 +60,8 @@ export function AccountForm({ defaultValues, isAdmin }: AccountFormProps) {
   const form = useForm<AccountFormValues>({
     resolver: zodResolver(accountSchema),
     defaultValues: {
+      name: defaultValues.name ?? '',
+      image: defaultValues.image ?? '',
       username: defaultValues.username ?? '',
       defaultTerminology: defaultValues.defaultTerminology,
       defaultTheme: defaultValues.defaultTheme,
@@ -67,6 +71,8 @@ export function AccountForm({ defaultValues, isAdmin }: AccountFormProps) {
 
   async function onSubmit(values: AccountFormValues) {
     await handleSubmit(() => saveAccountSettings({
+      name: values.name || null,
+      image: values.image || null,
       username: values.username || null,
       defaultTerminology: values.defaultTerminology,
       defaultTheme: values.defaultTheme,
@@ -76,11 +82,53 @@ export function AccountForm({ defaultValues, isAdmin }: AccountFormProps) {
 
   const username = form.watch('username')
   const customDomain = form.watch('customDomain')
+  const image = form.watch('image')
 
   return (
     <>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Full Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g. Levi Smith" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="image"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Avatar URL</FormLabel>
+                <div className="flex items-center gap-3">
+                  {image && (
+                    <img
+                      src={image}
+                      alt="Avatar preview"
+                      className="h-10 w-10 rounded-full object-cover shrink-0 border"
+                      onError={e => (e.currentTarget.style.display = 'none')}
+                    />
+                  )}
+                  <FormControl>
+                    <Input placeholder="https://..." {...field} />
+                  </FormControl>
+                </div>
+                <FormDescription>
+                  URL of your profile picture. Shown on your public Manifest.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name="username"

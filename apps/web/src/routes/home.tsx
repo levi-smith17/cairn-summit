@@ -8,10 +8,12 @@ import { PublicHeader } from '@/components/nav/public/public-header'
 import { PlatformHeader } from '@/components/nav/platform/platform-header'
 import { OutpostTable } from './home/outpost-table'
 import { OutpostStats } from './home/outpost-stats'
+import { useTerminology } from '@/contexts/terminology-context'
 
 export default function Home() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const { terms } = useTerminology()
 
   const { data, isLoading } = useQuery({
     queryKey: ['outpost'],
@@ -54,9 +56,9 @@ export default function Home() {
   const content = (
     <div className="w-full px-4 py-4 flex flex-col gap-4">
       <div className="flex flex-col gap-1 bg-card rounded-xl px-6 py-4">
-        <h1 className="text-2xl font-semibold">The Outpost</h1>
+        <h1 className="text-2xl font-semibold">{terms.outpost}</h1>
         <p className="text-sm text-muted-foreground">
-          Explore the community of wayfarers on Cairn.
+          Explore the community of {terms.wayfarers.toLowerCase()} on Cairn.
         </p>
       </div>
 
@@ -69,6 +71,7 @@ export default function Home() {
             totalWayfarers={wayfarers.length}
             topGear={topGear}
             topLocations={topLocations}
+            terms={terms}
           />
         </div>
       </div>
@@ -78,7 +81,7 @@ export default function Home() {
   if (user) {
     return (
       <>
-        <PlatformHeader title="The Outpost" />
+        <PlatformHeader title={terms.outpost} />
         {content}
       </>
     )

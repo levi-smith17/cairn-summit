@@ -23,6 +23,11 @@ module "api_gateway" {
       function_name = module.lambda_basecamp_sidebar.function_name
       route_key     = "GET /basecamp/sidebar"
     }
+    basecamp-trails-waypoints = {
+      invoke_arn    = module.lambda_basecamp_trail_waypoints.invoke_arn
+      function_name = module.lambda_basecamp_trail_waypoints.function_name
+      route_key     = "GET /basecamp/trail-waypoints"
+    }
     burn-create = {
       invoke_arn    = module.lambda_burn_create.invoke_arn
       function_name = module.lambda_burn_create.function_name
@@ -37,6 +42,21 @@ module "api_gateway" {
       invoke_arn    = module.lambda_burn_get.invoke_arn
       function_name = module.lambda_burn_get.function_name
       route_key     = "GET /burn"
+    }
+    burn-receipt-delete = {
+      invoke_arn    = module.lambda_burn_receipt_delete.invoke_arn
+      function_name = module.lambda_burn_receipt_delete.function_name
+      route_key     = "DELETE /burn/receipt-url"
+    }
+    burn-receipt-upload-url = {
+      invoke_arn    = module.lambda_burn_receipt_upload_url.invoke_arn
+      function_name = module.lambda_burn_receipt_upload_url.function_name
+      route_key     = "POST /burn/receipt-upload-url"
+    }
+    burn-receipt-url = {
+      invoke_arn    = module.lambda_burn_receipt_url.invoke_arn
+      function_name = module.lambda_burn_receipt_url.function_name
+      route_key     = "GET /burn/receipt-url"
     }
     burn-update = {
       invoke_arn    = module.lambda_burn_update.invoke_arn
@@ -153,10 +173,20 @@ module "api_gateway" {
       function_name = module.lambda_logs_get.function_name
       route_key     = "GET /logs"
     }
+    logs-image-url = {
+      invoke_arn    = module.lambda_logs_image_url.invoke_arn
+      function_name = module.lambda_logs_image_url.function_name
+      route_key     = "GET /logs/image-url"
+    }
     logs-update = {
       invoke_arn    = module.lambda_logs_update.invoke_arn
       function_name = module.lambda_logs_update.function_name
       route_key     = "PUT /logs/{id}"
+    }
+    logs-upload-url = {
+      invoke_arn    = module.lambda_logs_upload_url.invoke_arn
+      function_name = module.lambda_logs_upload_url.function_name
+      route_key     = "POST /logs/upload-url"
     }
     manifest-companions-create = {
       invoke_arn    = module.lambda_manifest_companions_create.invoke_arn
@@ -167,6 +197,16 @@ module "api_gateway" {
       invoke_arn    = module.lambda_manifest_companions_delete.invoke_arn
       function_name = module.lambda_manifest_companions_delete.function_name
       route_key     = "DELETE /companions/{id}"
+    }
+    manifest-companions-media-delete = {
+      invoke_arn    = module.lambda_manifest_companions_media_delete.invoke_arn
+      function_name = module.lambda_manifest_companions_media_delete.function_name
+      route_key     = "DELETE /companions/media"
+    }
+    manifest-companions-media-upload = {
+      invoke_arn    = module.lambda_manifest_companions_media_upload.invoke_arn
+      function_name = module.lambda_manifest_companions_media_upload.function_name
+      route_key     = "POST /companions/upload-url"
     }
     manifest-companions-update = {
       invoke_arn    = module.lambda_manifest_companions_update.invoke_arn
@@ -316,7 +356,7 @@ module "api_gateway" {
     settings-update = {
       invoke_arn    = module.lambda_settings_update.invoke_arn
       function_name = module.lambda_settings_update.function_name
-      route_key     = "PUT /settings/account"
+      route_key     = "PUT /settings/{section}"
     }
     signals-contact = {
       invoke_arn    = module.lambda_signals_contact.invoke_arn
@@ -427,6 +467,11 @@ module "api_gateway" {
       invoke_arn    = module.lambda_waypoints_delete.invoke_arn
       function_name = module.lambda_waypoints_delete.function_name
       route_key     = "DELETE /waypoints/{id}"
+    }
+    waypoints-fetch-meta = {
+      invoke_arn    = module.lambda_waypoints_fetch_meta.invoke_arn
+      function_name = module.lambda_waypoints_fetch_meta.function_name
+      route_key     = "GET /waypoints/fetch-meta"
     }
     waypoints-get = {
       invoke_arn    = module.lambda_waypoints_get.invoke_arn

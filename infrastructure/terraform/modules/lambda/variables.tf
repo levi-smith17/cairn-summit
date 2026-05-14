@@ -47,3 +47,9 @@ variable "timeout" {
   type    = number
   default = 10
 }
+
+variable "web_url" {
+  description = "Web CloudFront URL for CORS allowed origin"
+  type        = string
+  default     = ""
+}

@@ -51,6 +51,7 @@ export const handler = async (
             ...(body.trailId ? { trailId: body.trailId } : {}),
             ...(body.waypointId ? { waypointId: body.waypointId } : {}),
             markers,
+            mediaKeys: [],
             createdAt: now,
             updatedAt: now,
         }

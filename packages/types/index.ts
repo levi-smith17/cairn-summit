@@ -107,6 +107,7 @@ export interface Log {
     trailId?: string
     waypointId?: string
     markers: EmbeddedMarker[]
+    mediaKeys?: string[]
     createdAt: string
     updatedAt: string
 }

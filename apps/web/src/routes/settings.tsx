@@ -6,6 +6,8 @@ import { getSettings } from '@/lib/api/settings'
 
 const DEFAULTS = {
   account: {
+    name: null as string | null,
+    image: null as string | null,
     username: null as string | null,
     listed: true,
     defaultTerminology: 'CAIRN' as const,

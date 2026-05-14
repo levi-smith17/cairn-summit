@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTerminology } from '@/contexts/terminology-context'
 import {
   ArrowLeft,
   Award,
@@ -130,6 +131,7 @@ interface ManifestSectionsProps {
 
 export function ManifestSections({ origins, expeditions, training, gear, landmarks, summits, pathfinding, companions, isAdmin, onRefresh }: ManifestSectionsProps) {
   const navigate = useNavigate()
+  const { terms } = useTerminology()
   const [active, setActive] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
   const { saving, saved, error, handleSubmit: baseHandleSubmit } = useFormStatus()
@@ -143,15 +145,15 @@ export function ManifestSections({ origins, expeditions, training, gear, landmar
   }
 
   const sections = [
-    { value: 'origins',      label: 'Origins',      count: null,               icon: MapPin },
-    { value: 'expeditions',  label: 'Expeditions',  count: expeditions.length, icon: Briefcase },
-    { value: 'training',     label: 'Training',     count: training.length,    icon: GraduationCap },
-    { value: 'gear',         label: 'Gear',         count: gear.length,        icon: Backpack },
-    { value: 'landmarks',    label: 'Landmarks',    count: landmarks.length,   icon: Flag },
-    { value: 'summits',      label: 'Summits',      count: summits.length,     icon: Award },
-    { value: 'pathfinding',  label: 'Pathfinding',  count: pathfinding.length, icon: Compass },
-    { value: 'companions',   label: 'Companions',   count: companions.length,  icon: PawPrint },
-    { value: 'settings',     label: 'Settings',     count: null,               icon: Settings },
+    { value: 'origins',      label: terms.origins,      count: null,               icon: MapPin },
+    { value: 'expeditions',  label: terms.expeditions,  count: expeditions.length, icon: Briefcase },
+    { value: 'training',     label: terms.training,     count: training.length,    icon: GraduationCap },
+    { value: 'gear',         label: terms.gear,         count: gear.length,        icon: Backpack },
+    { value: 'landmarks',    label: terms.landmarks,    count: landmarks.length,   icon: Flag },
+    { value: 'summits',      label: terms.summits,      count: summits.length,     icon: Award },
+    { value: 'pathfinding',  label: terms.pathfinding,  count: pathfinding.length, icon: Compass },
+    { value: 'companions',   label: terms.companions,   count: companions.length,  icon: PawPrint },
+    { value: 'settings',     label: 'Settings',         count: null,               icon: Settings },
   ]
 
   function handleSectionChange(value: string) {
@@ -164,13 +166,13 @@ export function ManifestSections({ origins, expeditions, training, gear, landmar
   }
 
   const addLabels: Record<string, string> = {
-    expeditions: 'Add Expedition',
-    training:    'Add Training',
-    gear:        'Add Gear',
-    landmarks:   'Add Landmark',
-    summits:     'Add Summit',
-    pathfinding: 'Add Pathfinding',
-    companions:  'Add Companion',
+    expeditions: `Add ${terms.expeditions}`,
+    training:    `Add ${terms.training}`,
+    gear:        `Add ${terms.gear}`,
+    landmarks:   `Add ${terms.landmarks}`,
+    summits:     `Add ${terms.summits}`,
+    pathfinding: `Add ${terms.pathfinding}`,
+    companions:  `Add ${terms.companions}`,
   }
 
   const selectedSection = active ?? 'origins'

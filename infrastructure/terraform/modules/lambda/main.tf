@@ -59,6 +59,7 @@ resource "aws_lambda_function" "main" {
       COGNITO_USER_POOL_ID = var.cognito_user_pool_id
       DYNAMODB_TABLE       = var.dynamodb_table_name
       NODE_ENV             = var.environment
+      WEB_URL              = var.web_url
     }
   }
 

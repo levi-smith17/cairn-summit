@@ -113,7 +113,8 @@ export async function getTrails(): Promise<any[]> {
         headers: await getAuthHeaders()
     })
     if (!res.ok) throw new Error('Failed to fetch trails')
-    return res.json()
+    const json = await res.json()
+    return json.data ?? []
 }
 
 export async function getMarkers(): Promise<any[]> {
@@ -121,5 +122,6 @@ export async function getMarkers(): Promise<any[]> {
         headers: await getAuthHeaders()
     })
     if (!res.ok) throw new Error('Failed to fetch markers')
-    return res.json()
+    const json = await res.json()
+    return json.data ?? []
 }

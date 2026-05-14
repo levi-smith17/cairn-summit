@@ -154,7 +154,7 @@ jobs:
         env:
           ENVIRONMENT: prod
           AWS_REGION: us-east-2
-        run: node scripts/deploy.mjs burn/get burn/create burn/update burn/delete
+        run: node scripts/deploy.mjs burn/create burn/delete burn/get burn/receipt-delete burn/receipt-upload-url burn/receipt-url burn/update
 
   deploy-lambda-cache:
     name: Deploy Lambda — Cache
@@ -266,7 +266,7 @@ jobs:
         env:
           ENVIRONMENT: prod
           AWS_REGION: us-east-2
-        run: node scripts/deploy.mjs logs/get logs/create logs/update logs/delete
+        run: node scripts/deploy.mjs logs/create logs/delete logs/get logs/image-url logs/update logs/upload-url
 
   deploy-lambda-manifest:
     name: Deploy Lambda — Manifest
@@ -294,7 +294,7 @@ jobs:
         env:
           ENVIRONMENT: prod
           AWS_REGION: us-east-2
-        run: node scripts/deploy.mjs manifest/get manifest/origins-update manifest/settings-update manifest/expeditions-create manifest/expeditions-update manifest/expeditions-delete manifest/training-create manifest/training-update manifest/training-delete manifest/gear-create manifest/gear-update manifest/gear-delete manifest/landmarks-create manifest/landmarks-update manifest/landmarks-delete manifest/summits-create manifest/summits-update manifest/summits-delete manifest/pathfinding-create manifest/pathfinding-update manifest/pathfinding-delete manifest/companions-create manifest/companions-update manifest/companions-delete
+        run: node scripts/deploy.mjs manifest/companions-create manifest/companions-delete manifest/companions-media-delete manifest/companions-media-upload manifest/companions-update manifest/expeditions-create manifest/expeditions-delete manifest/expeditions-update manifest/gear-create manifest/gear-delete manifest/gear-update manifest/get manifest/landmarks-create manifest/landmarks-delete manifest/landmarks-update manifest/origins-update manifest/pathfinding-create manifest/pathfinding-delete manifest/pathfinding-update manifest/settings-update manifest/summits-create manifest/summits-delete manifest/summits-update manifest/training-create manifest/training-delete manifest/training-update
 
   deploy-lambda-markers:
     name: Deploy Lambda — Markers
@@ -518,7 +518,7 @@ jobs:
         env:
           ENVIRONMENT: prod
           AWS_REGION: us-east-2
-        run: node scripts/deploy.mjs waypoints/get waypoints/create waypoints/update waypoints/delete
+        run: node scripts/deploy.mjs waypoints/get waypoints/create waypoints/fetch-meta waypoints/update waypoints/delete
 
   deploy-web:
     name: Deploy Web

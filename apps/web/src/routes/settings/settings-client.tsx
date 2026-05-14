@@ -17,6 +17,8 @@ type Section = 'account' | 'appearance' | 'notifications' | 'privacy' | 'itinera
 interface SettingsClientProps {
   initialSection: string
   account: {
+    name: string | null
+    image: string | null
     username: string | null
     listed: boolean
     defaultTerminology: 'CAIRN' | 'STANDARD'

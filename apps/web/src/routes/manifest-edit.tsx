@@ -5,10 +5,12 @@ import { ManifestSections } from './manifest-edit/manifest-sections'
 import { WayfarerOverview } from './manifest-edit/wayfarer-overview'
 import { PlatformHeader } from '@/components/nav/platform/platform-header'
 import { getManifestData } from '@/lib/api/manifest'
+import { useTerminology } from '@/contexts/terminology-context'
 
 export default function Manifest() {
   const { user } = useAuth()
   const queryClient = useQueryClient()
+  const { terms } = useTerminology()
 
   const { data } = useQuery({
     queryKey: ['manifest'],
@@ -31,7 +33,7 @@ export default function Manifest() {
 
   return (
     <>
-      <PlatformHeader title="My Manifest" />
+      <PlatformHeader title={`My ${terms.manifest}`} />
       <div className="flex flex-col flex-1 min-h-0 gap-4 p-4 overflow-hidden">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 shrink-0">
           <WayfarerOverview
@@ -48,13 +50,13 @@ export default function Manifest() {
           />
           <ManifestSummary
             sections={[
-              { label: 'Expeditions', count: expeditions.length },
-              { label: 'Training', count: training.length },
-              { label: 'Gear', count: gear.length },
-              { label: 'Landmarks', count: landmarks.length },
-              { label: 'Summits', count: summits.length },
-              { label: 'Pathfinding', count: pathfinding.length },
-              { label: 'Companions', count: companions.length },
+              { label: terms.expeditions, count: expeditions.length },
+              { label: terms.training,    count: training.length },
+              { label: terms.gear,        count: gear.length },
+              { label: terms.landmarks,   count: landmarks.length },
+              { label: terms.summits,     count: summits.length },
+              { label: terms.pathfinding, count: pathfinding.length },
+              { label: terms.companions,  count: companions.length },
             ]}
             mostRecentExpedition={expeditions[0] ?? null}
             mostRecentTraining={training[0] ?? null}

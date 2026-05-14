@@ -67,6 +67,7 @@ export function WaypointForm({ waypoint, folders, tags, defaultTrailId, onBack, 
   const queryClient = useQueryClient()
   const { terms } = useTerminology()
   const { saving, saved, error, handleSubmit } = useFormStatus()
+  const API_BASE = import.meta.env.VITE_API_URL
   const [fetching, setFetching] = useState(false)
   const [favicon, setFavicon] = useState<string | null>(waypoint?.favicon ?? null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -108,7 +109,7 @@ export function WaypointForm({ waypoint, folders, tags, defaultTrailId, onBack, 
     if (!url) return
     try {
       setFetching(true)
-      const res = await fetch(`/api/fetch-url-meta?url=${encodeURIComponent(url)}`)
+      const res = await fetch(`${API_BASE}/waypoints/fetch-meta?url=${encodeURIComponent(url)}`)
       const data = await res.json()
       if (data.title) form.setValue('title', data.title)
       if (data.favicon) setFavicon(data.favicon)
