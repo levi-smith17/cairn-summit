@@ -10,7 +10,7 @@ export const handler = async (
     try {
         const pk = getPk(event)
 
-        const [profileResult, signalCountResult, stopCountResult] = await Promise.all([
+        const [profileResult, signalResult, stopCountResult] = await Promise.all([
             dynamo.send(new GetCommand({
                 TableName: TABLE_NAME,
                 Key: { pk, sk: 'PROFILE' },
@@ -18,13 +18,10 @@ export const handler = async (
             dynamo.send(new QueryCommand({
                 TableName: TABLE_NAME,
                 KeyConditionExpression: 'pk = :pk AND begins_with(sk, :prefix)',
-                FilterExpression: 'NOT contains(sk, :replyMarker)',
                 ExpressionAttributeValues: {
                     ':pk': pk,
                     ':prefix': 'SIGNAL#',
-                    ':replyMarker': '#REPLY#',
                 },
-                Select: 'COUNT',
             })),
             dynamo.send(new QueryCommand({
                 TableName: TABLE_NAME,
@@ -41,13 +38,17 @@ export const handler = async (
 
         const profile = profileResult.Item
 
+        const signals = (signalResult.Items ?? []).filter(
+            (s: any) => !s.sk.includes('#REPLY#')
+        )
+
         return toApiGatewayResponse(ok({
             username: profile.username ?? null,
             name: profile.name ?? null,
             email: profile.email ?? null,
             image: profile.image ?? null,
             isAdmin: profile.isAdmin ?? false,
-            signals: signalCountResult.Count ?? 0,
+            signals: signals.length,
             itinerary: stopCountResult.Count ?? 0,
         }))
     } catch (err) {

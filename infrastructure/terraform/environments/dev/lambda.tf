@@ -866,7 +866,7 @@ module "lambda_settings_update" {
   function_name        = "settings-update"
   managed_by           = var.managed_by
   owner                = var.owner
-  policy_arn           = module.iam.lambda_read_policy_arn
+  policy_arn           = module.iam.lambda_write_policy_arn
   project_name         = var.project_name
 }
 
