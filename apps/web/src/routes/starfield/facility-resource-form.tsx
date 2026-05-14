@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { saveFacilityResource } from '@/lib/api/starfield'
+import { upsertFacilityResource } from '@/lib/api/starfield'
 import { Form, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Checkbox } from '@/components/ui/checkbox'
 import { CustomSelect } from '@/components/ui/custom-select'
@@ -54,15 +54,7 @@ export function FacilityResourceForm({ facilityResource, facilities, resources, 
 
   async function onSubmit(values: FormValues) {
     await handleSubmit(async () => {
-      await saveFacilityResource({
-        id: facilityResource?.id,
-        facilityId: values.facilityId,
-        resourceId: values.resourceId,
-        planetId: values.planetId,
-        subfacility1Id: values.subfacility1Id || null,
-        subfacility2Id: values.subfacility2Id || null,
-        subfacility3Id: values.subfacility3Id || null,
-        relayId: values.relayId || null,
+      await upsertFacilityResource(values.facilityId, values.resourceId, {
         onsite: values.onsite,
       })
       onRefresh()

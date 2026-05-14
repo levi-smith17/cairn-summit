@@ -5,8 +5,6 @@ import {
   Bookmark,
   CalendarDays,
   ChevronRight,
-  Database,
-  Factory,
   Folder,
   LayoutDashboard,
   LayoutList,
@@ -97,16 +95,7 @@ function buildNavItems(terms: Terms): { group: string; items: NavItem[] }[] {
     {
       group: 'Apps',
       items: [
-        {
-          title: 'Starfield',
-          url: '/starfield',
-          icon: Rocket,
-          tooltip: 'Starfield',
-          children: [
-            { title: 'Facilities', url: '/starfield/facilities', icon: Factory },
-            { title: 'Resources', url: '/starfield/resources', icon: Database },
-          ],
-        },
+        { title: 'Starfield', url: '/starfield', icon: Rocket, tooltip: 'Starfield' },
       ],
     },
   ]

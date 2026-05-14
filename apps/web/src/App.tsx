@@ -39,8 +39,6 @@ import Provisions from '@/routes/provisions'
 import Settings from '@/routes/settings'
 import Signals from '@/routes/signals'
 import Starfield from '@/routes/starfield'
-import StarfieldFacilities from '@/routes/starfield/facilities'
-import StarfieldResources from '@/routes/starfield/resources'
 import Trails from '@/routes/trails'
 import Waypoints from '@/routes/waypoints'
 
@@ -88,8 +86,6 @@ export default function App() {
                                 <Route path="/signals" element={<Signals />} />
                                 <Route path="/manifest" element={<ManifestEdit />} />
                                 <Route path="/starfield" element={<Starfield />} />
-                                <Route path="/starfield/facilities" element={<StarfieldFacilities />} />
-                                <Route path="/starfield/resources" element={<StarfieldResources />} />
                                 <Route path="/settings" element={<Settings />} />
                             </Route>
                         </Route>

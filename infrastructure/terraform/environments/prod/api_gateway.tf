@@ -483,5 +483,80 @@ module "api_gateway" {
       function_name = module.lambda_waypoints_update.function_name
       route_key     = "PUT /waypoints/{id}"
     }
+    starfield-networks-get = {
+      invoke_arn    = module.lambda_starfield_networks_get.invoke_arn
+      function_name = module.lambda_starfield_networks_get.function_name
+      route_key     = "GET /starfield/networks"
+    }
+    starfield-network-create = {
+      invoke_arn    = module.lambda_starfield_network_create.invoke_arn
+      function_name = module.lambda_starfield_network_create.function_name
+      route_key     = "POST /starfield/networks"
+    }
+    starfield-network-update = {
+      invoke_arn    = module.lambda_starfield_network_update.invoke_arn
+      function_name = module.lambda_starfield_network_update.function_name
+      route_key     = "PUT /starfield/networks/{id}"
+    }
+    starfield-network-delete = {
+      invoke_arn    = module.lambda_starfield_network_delete.invoke_arn
+      function_name = module.lambda_starfield_network_delete.function_name
+      route_key     = "DELETE /starfield/networks/{id}"
+    }
+    starfield-facilities-get = {
+      invoke_arn    = module.lambda_starfield_facilities_get.invoke_arn
+      function_name = module.lambda_starfield_facilities_get.function_name
+      route_key     = "GET /starfield/facilities"
+    }
+    starfield-facility-create = {
+      invoke_arn    = module.lambda_starfield_facility_create.invoke_arn
+      function_name = module.lambda_starfield_facility_create.function_name
+      route_key     = "POST /starfield/facilities"
+    }
+    starfield-facility-update = {
+      invoke_arn    = module.lambda_starfield_facility_update.invoke_arn
+      function_name = module.lambda_starfield_facility_update.function_name
+      route_key     = "PUT /starfield/facilities/{id}"
+    }
+    starfield-facility-delete = {
+      invoke_arn    = module.lambda_starfield_facility_delete.invoke_arn
+      function_name = module.lambda_starfield_facility_delete.function_name
+      route_key     = "DELETE /starfield/facilities/{id}"
+    }
+    starfield-facility-position = {
+      invoke_arn    = module.lambda_starfield_facility_position.invoke_arn
+      function_name = module.lambda_starfield_facility_position.function_name
+      route_key     = "PATCH /starfield/facilities/{id}/position"
+    }
+    starfield-facility-resource-upsert = {
+      invoke_arn    = module.lambda_starfield_facility_resource_upsert.invoke_arn
+      function_name = module.lambda_starfield_facility_resource_upsert.function_name
+      route_key     = "PUT /starfield/facilities/{facilityId}/resources/{resourceId}"
+    }
+    starfield-facility-resource-delete = {
+      invoke_arn    = module.lambda_starfield_facility_resource_delete.invoke_arn
+      function_name = module.lambda_starfield_facility_resource_delete.function_name
+      route_key     = "DELETE /starfield/facilities/{facilityId}/resources/{resourceId}"
+    }
+    starfield-resources-get = {
+      invoke_arn    = module.lambda_starfield_resources_get.invoke_arn
+      function_name = module.lambda_starfield_resources_get.function_name
+      route_key     = "GET /starfield/resources"
+    }
+    starfield-resource-create = {
+      invoke_arn    = module.lambda_starfield_resource_create.invoke_arn
+      function_name = module.lambda_starfield_resource_create.function_name
+      route_key     = "POST /starfield/resources"
+    }
+    starfield-resource-update = {
+      invoke_arn    = module.lambda_starfield_resource_update.invoke_arn
+      function_name = module.lambda_starfield_resource_update.function_name
+      route_key     = "PUT /starfield/resources/{id}"
+    }
+    starfield-resource-delete = {
+      invoke_arn    = module.lambda_starfield_resource_delete.invoke_arn
+      function_name = module.lambda_starfield_resource_delete.function_name
+      route_key     = "DELETE /starfield/resources/{id}"
+    }
   }
 }

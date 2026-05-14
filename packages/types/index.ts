@@ -351,7 +351,7 @@ export interface SfNetwork {
     pk: string
     sk: string
     name: string
-    rootFacilityId: string
+    rootFacilityId?: string
     createdAt: string
 }
 
@@ -360,6 +360,7 @@ export interface SfFacility {
     sk: string
     networkId: string
     name: string
+    abbreviation: string
     system: string
     planet: string
     parentId?: string

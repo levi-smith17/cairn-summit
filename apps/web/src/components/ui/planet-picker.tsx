@@ -13,7 +13,11 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Globe, ChevronRight, ArrowLeft, Check, Plus, Pencil, X, Trash2 } from 'lucide-react'
-import { saveSystem, savePlanet, deleteSystem, deletePlanet } from '@/lib/api/starfield'
+// PlanetPicker is deprecated — system/planet are now plain text strings on facilities
+async function saveSystem(_: { id?: string; name: string }) { return _ as any }
+async function savePlanet(_: { id?: string; name: string; systemId: string }) { return _ as any }
+async function deleteSystem(_: string) { /* no-op */ }
+async function deletePlanet(_: string) { /* no-op */ }
 
 interface Planet {
   id: string
