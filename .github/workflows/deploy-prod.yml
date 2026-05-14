@@ -408,6 +408,34 @@ jobs:
           AWS_REGION: us-east-2
         run: node scripts/deploy.mjs signals/get signals/delete signals/contact signals/mark-read signals/public-thread-get signals/public-thread-reply signals/reply signals/sync
 
+  deploy-lambda-starfield:
+    name: Deploy Lambda — Starfield
+    runs-on: ubuntu-latest
+    needs: [ build-lambda, terraform-apply ]
+    environment: prod
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-dist
+          path: apps/api/dist
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.PROD_AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy Lambda functions
+        working-directory: apps/api
+        env:
+          ENVIRONMENT: prod
+          AWS_REGION: us-east-2
+        run: node scripts/deploy.mjs starfield/facilities-get starfield/facility-create starfield/facility-delete starfield/facility-position starfield/facility-resource-delete starfield/facility-resource-upsert starfield/facility-update starfield/network-create starfield/network-delete starfield/network-update starfield/networks-get starfield/resource-create starfield/resource-delete starfield/resource-update starfield/resources-get
+
   deploy-lambda-stones:
     name: Deploy Lambda — Stones
     runs-on: ubuntu-latest

@@ -969,6 +969,201 @@ module "lambda_signals_sync" {
   project_name         = var.project_name
 }
 
+module "lambda_starfield_facility_create" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "starfield-facility-create"
+  handler_path         = "starfield/facility-create/handler.handler"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_write_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_starfield_facility_delete" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "starfield-facility-delete"
+  handler_path         = "starfield/facility-delete/handler.handler"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_delete_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_starfield_facilities_get" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "starfield-facilities-get"
+  handler_path         = "starfield/facilities-get/handler.handler"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_read_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_starfield_facility_position" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "starfield-facility-position"
+  handler_path         = "starfield/facility-position/handler.handler"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_write_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_starfield_facility_resource_delete" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "starfield-facility-resource-delete"
+  handler_path         = "starfield/facility-resource-delete/handler.handler"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_write_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_starfield_facility_resource_upsert" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "starfield-facility-resource-upsert"
+  handler_path         = "starfield/facility-resource-upsert/handler.handler"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_write_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_starfield_facility_update" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "starfield-facility-update"
+  handler_path         = "starfield/facility-update/handler.handler"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_write_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_starfield_network_create" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "starfield-network-create"
+  handler_path         = "starfield/network-create/handler.handler"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_write_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_starfield_network_delete" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "starfield-network-delete"
+  handler_path         = "starfield/network-delete/handler.handler"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_delete_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_starfield_networks_get" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "starfield-networks-get"
+  handler_path         = "starfield/networks-get/handler.handler"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_read_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_starfield_network_update" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "starfield-network-update"
+  handler_path         = "starfield/network-update/handler.handler"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_write_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_starfield_resource_create" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "starfield-resource-create"
+  handler_path         = "starfield/resource-create/handler.handler"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_write_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_starfield_resource_delete" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "starfield-resource-delete"
+  handler_path         = "starfield/resource-delete/handler.handler"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_delete_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_starfield_resources_get" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "starfield-resources-get"
+  handler_path         = "starfield/resources-get/handler.handler"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_read_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_starfield_resource_update" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "starfield-resource-update"
+  handler_path         = "starfield/resource-update/handler.handler"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_write_policy_arn
+  project_name         = var.project_name
+}
+
 module "lambda_stones_delete" {
   source               = "../../modules/lambda"
   cognito_user_pool_id = module.cognito.cognito_user_pool_id
