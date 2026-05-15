@@ -10,7 +10,7 @@ import { PlanetPicker } from '@/components/ui/planet-picker'
 import { FormActions } from '@/components/forms/form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
 import { Button } from '@/components/ui/button'
-import { Trash2 } from 'lucide-react'
+import { Trash2, X, CheckCircle2, XCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   AlertDialog,
@@ -82,54 +82,98 @@ export function OutpostResourceForm({
     },
   })
 
+  const watchResourceId = form.watch('resourceId')
   const watchFromPlanet = form.watch('fromPlanet')
   const watchOnsite = form.watch('onsite')
   const watchOrigin = form.watch('origin')
   const watchRelayPlanet = form.watch('relayPlanet')
 
-  // Build systems list from all OTHER outposts in the network (for "supplied from" picker)
+  const ingredientList = useMemo(() => {
+    const activeId = watchResourceId || resourceId
+    if (!activeId) return []
+    const def = resources.find((r: any) => (r.id ?? r.sk?.replace(/^RESOURCE#/, '')) === activeId)
+    if (!def?.ingredients?.length) return []
+
+    const resourceDefMap = new Map<string, any>()
+    for (const r of resources) {
+      resourceDefMap.set(r.id ?? r.sk?.replace(/^RESOURCE#/, ''), r)
+    }
+
+    const outpostResourceSet = new Set<string>()
+    for (const fr of (currentOutpost?.resources ?? [])) {
+      if (fr.onsite || fr.fromOutpostId || fr.fromPlanet || fr.origin) {
+        outpostResourceSet.add(fr.resourceId)
+      }
+    }
+
+    return def.ingredients
+      .map((ingredientId: string) => {
+        const ingredientDef = resourceDefMap.get(ingredientId)
+        return {
+          id: ingredientId,
+          name: ingredientDef?.name ?? ingredientId,
+          abbreviation: ingredientDef?.abbreviation ?? '?',
+          satisfied: outpostResourceSet.has(ingredientId),
+        }
+      })
+      .sort((a: any, b: any) => a.name.localeCompare(b.name))
+  }, [watchResourceId, resourceId, resources, currentOutpost])
+
+  // Build systems list for "supplied from" picker:
+  // - all outpost locations in the network (except the current outpost)
+  // - all saved freeform fromPlanet/fromSystem values on any resource in the network
   const [fromSystems, setFromSystems] = useState(() => {
     const systemMap = new Map<string, { id: string; name: string; planets: { id: string; name: string }[] }>()
+
+    function addPlanet(system: string, planet: string, id: string) {
+      if (!systemMap.has(system)) {
+        systemMap.set(system, { id: system, name: system, planets: [] })
+      }
+      const sys = systemMap.get(system)!
+      if (!sys.planets.find(p => p.name === planet)) {
+        sys.planets.push({ id, name: planet })
+      }
+    }
+
     for (const o of outposts) {
-      if ((o.id ?? o.sk?.replace(/^SF#FACILITY#/, '')) === outpostId) continue
-      if (!o.system || !o.planet) continue
-      if (!systemMap.has(o.system)) {
-        systemMap.set(o.system, { id: o.system, name: o.system, planets: [] })
-      }
       const oId = o.id ?? o.sk?.replace(/^SF#FACILITY#/, '')
-      const sys = systemMap.get(o.system)!
-      if (!sys.planets.find(p => p.name === o.planet)) {
-        sys.planets.push({ id: oId, name: o.planet })
+      // Outpost location (skip the current outpost itself)
+      if (oId !== outpostId && o.system && o.planet) {
+        addPlanet(o.system, o.planet, oId)
+      }
+      // Freeform from-locations saved on any resource across the network
+      for (const r of (o.resources ?? [])) {
+        if (r.fromPlanet && r.fromSystem && !r.fromOutpostId) {
+          addPlanet(r.fromSystem, r.fromPlanet, r.fromPlanet)
+        }
       }
     }
-    // Also seed with any saved freeform from-location not backed by an outpost
-    if (existingEntry?.fromPlanet && existingEntry?.fromSystem && !existingEntry.fromOutpostId) {
-      const sys = existingEntry.fromSystem
-      const planet = existingEntry.fromPlanet
-      if (!systemMap.has(sys)) {
-        systemMap.set(sys, { id: sys, name: sys, planets: [] })
-      }
-      const sysEntry = systemMap.get(sys)!
-      if (!sysEntry.planets.find(p => p.name === planet)) {
-        sysEntry.planets.push({ id: planet, name: planet })
-      }
-    }
+
     return Array.from(systemMap.values())
   })
 
   // Same systems list for the relay picker (all known planets in network, editable)
   const [relaySystems, setRelaySystems] = useState(() => {
-    const systemMap = new Map<string, Set<string>>()
+    const systemMap = new Map<string, { id: string; name: string; planets: { id: string; name: string }[] }>()
+
+    function addPlanet(system: string, planet: string) {
+      if (!systemMap.has(system)) systemMap.set(system, { id: system, name: system, planets: [] })
+      const sys = systemMap.get(system)!
+      if (!sys.planets.find(p => p.name === planet)) sys.planets.push({ id: planet, name: planet })
+    }
+
     for (const o of outposts) {
-      if (o.system) {
-        if (!systemMap.has(o.system)) systemMap.set(o.system, new Set())
-        if (o.planet) systemMap.get(o.system)!.add(o.planet)
+      if (o.system && o.planet) addPlanet(o.system, o.planet)
+      for (const r of (o.resources ?? [])) {
+        if (r.fromPlanet && r.fromSystem) addPlanet(r.fromSystem, r.fromPlanet)
+        if (r.relay?.planet && r.relay?.system) addPlanet(r.relay.system, r.relay.planet)
       }
     }
-    return Array.from(systemMap.entries()).map(([name, planets]) => ({
-      id: name,
-      name,
-      planets: Array.from(planets).map(p => ({ id: p, name: p })),
+
+    return Array.from(systemMap.values()).map(s => ({
+      id: s.id,
+      name: s.name,
+      planets: s.planets,
     }))
   })
 
@@ -218,6 +262,14 @@ export function OutpostResourceForm({
             <TooltipContent>Remove resource</TooltipContent>
           </Tooltip>
         )}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={onDone}>
+              <X className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Close</TooltipContent>
+        </Tooltip>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4">
@@ -242,6 +294,22 @@ export function OutpostResourceForm({
               </FormItem>
             )} />
 
+            {ingredientList.length > 0 && (
+              <div className="space-y-1.5 rounded-md border border-border/60 p-3">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Ingredients</p>
+                {ingredientList.map((ing: any) => (
+                  <div key={ing.id} className="flex items-center gap-2">
+                    {ing.satisfied
+                      ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-green-500" />
+                      : <XCircle className="h-3.5 w-3.5 shrink-0 text-red-500" />
+                    }
+                    <span className="font-mono text-[10px] text-muted-foreground shrink-0">{ing.abbreviation}</span>
+                    <span className="text-xs">{ing.name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <FormField control={form.control} name="onsite" render={({ field }) => (
               <FormItem className="flex items-center gap-2 space-y-0">
                 <Checkbox checked={field.value} onCheckedChange={field.onChange} id="onsite" />
@@ -261,7 +329,7 @@ export function OutpostResourceForm({
               )} />
             )}
 
-            {!watchOnsite && !watchOrigin && (
+            {!watchOnsite && (
               <FormField control={form.control} name="fromPlanet" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Supplied from</FormLabel>
@@ -285,7 +353,7 @@ export function OutpostResourceForm({
               )} />
             )}
 
-            {watchFromPlanet && !watchOnsite && !watchOrigin && (
+            {watchFromPlanet && !watchOnsite && (
               <div className="space-y-3 rounded-md border border-border/60 p-3">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Relay (optional)</p>
                 <FormField control={form.control} name="relayPlanet" render={({ field }) => (

@@ -384,6 +384,34 @@ export interface SfOutpostResource {
     }
 }
 
+// ── Headwaters ─────────────────────────────────────────
+export interface Kin {
+    pk: string
+    sk: string
+    givenName: string
+    middleName?: string
+    surname: string
+    birthDate?: string
+    deathDate?: string
+    fatherId?: string
+    fatherUnknown: boolean
+    motherId?: string
+    motherUnknown: boolean
+    bloodlines: Bloodline[]
+    createdAt: string
+    updatedAt: string
+}
+
+export interface Bloodline {
+    id: string
+    kinId: string
+    kinName: string
+    startDate?: string
+    endDate?: string
+    endReason?: 'DIVORCE' | 'DEATH' | 'SEPARATION'
+    current: boolean
+}
+
 // ── API response wrapper ───────────────────────────────
 export interface ApiResponse<T> {
     data?: T

@@ -239,6 +239,11 @@
   max-height: 14px;
 }
 
+/* Edges rendered above nodes so lines stay visible when nodes are adjacent */
+.starfield-flow .react-flow__edges {
+  z-index: 1000;
+}
+
 @media print {
   @page {
     margin: 0.75in;

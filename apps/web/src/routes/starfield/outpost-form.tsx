@@ -10,7 +10,7 @@ import { PlanetPicker } from '@/components/ui/planet-picker'
 import { CustomSelect } from '@/components/ui/custom-select'
 import { FormActions } from '@/components/forms/form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
-import { Trash2 } from 'lucide-react'
+import { Trash2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   AlertDialog,
@@ -46,17 +46,26 @@ export function OutpostForm({ outpost, networkId, outposts, onDone, onRefresh }:
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false)
 
   const [systems, setSystems] = useState(() => {
-    const systemMap = new Map<string, Set<string>>()
+    const systemMap = new Map<string, { id: string; name: string; planets: { id: string; name: string }[] }>()
+
+    function addPlanet(system: string, planet: string) {
+      if (!systemMap.has(system)) systemMap.set(system, { id: system, name: system, planets: [] })
+      const sys = systemMap.get(system)!
+      if (!sys.planets.find(p => p.name === planet)) sys.planets.push({ id: planet, name: planet })
+    }
+
     for (const o of outposts) {
-      if (o.system) {
-        if (!systemMap.has(o.system)) systemMap.set(o.system, new Set())
-        if (o.planet) systemMap.get(o.system)!.add(o.planet)
+      if (o.system && o.planet) addPlanet(o.system, o.planet)
+      for (const r of (o.resources ?? [])) {
+        if (r.fromPlanet && r.fromSystem) addPlanet(r.fromSystem, r.fromPlanet)
+        if (r.relay?.planet && r.relay?.system) addPlanet(r.relay.system, r.relay.planet)
       }
     }
-    return Array.from(systemMap.entries()).map(([name, planets]) => ({
-      id: name,
-      name,
-      planets: Array.from(planets).map(p => ({ id: p, name: p })),
+
+    return Array.from(systemMap.values()).map(s => ({
+      id: s.id,
+      name: s.name,
+      planets: s.planets,
     }))
   })
 
@@ -130,6 +139,14 @@ export function OutpostForm({ outpost, networkId, outposts, onDone, onRefresh }:
             <TooltipContent>Delete outpost</TooltipContent>
           </Tooltip>
         )}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={onDone}>
+              <X className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Close</TooltipContent>
+        </Tooltip>
       </div>
       <div className="flex-1 overflow-y-auto p-4">
         <Form {...form}>

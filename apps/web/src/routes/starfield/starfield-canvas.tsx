@@ -74,8 +74,10 @@ export function StarfieldCanvas({
       .map(o => ({
         id: `${o.id}-${o.parentId}`,
         source: o.id,
+        sourceHandle: 'left',
         target: o.parentId!,
-        markerEnd: { type: MarkerType.ArrowClosed },
+        targetHandle: 'right',
+        markerEnd: { type: MarkerType.ArrowClosed, width: 20, height: 20 },
       }))
   }, [])
 
@@ -112,8 +114,10 @@ export function StarfieldCanvas({
         .map(o => ({
           id: `${o.id}-${o.parentId}`,
           source: o.id,
+          sourceHandle: 'left',
           target: o.parentId!,
-          markerEnd: { type: MarkerType.ArrowClosed },
+          targetHandle: 'right',
+          markerEnd: { type: MarkerType.ArrowClosed, width: 30, height: 30 },
         }))
     )
   }, [outposts, validations, selectedOutpostId])
@@ -133,18 +137,20 @@ export function StarfieldCanvas({
   }
 
   return (
-    <ReactFlow
-      nodes={nodes}
-      edges={edges}
-      nodeTypes={nodeTypes}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
-      onNodeDragStop={handleNodeDragStop}
-      fitView
-    >
-      <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
-      <Controls />
-      <ZoomDisplay />
-    </ReactFlow>
+    <div className="starfield-flow h-full w-full">
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        nodeTypes={nodeTypes}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onNodeDragStop={handleNodeDragStop}
+        fitView
+      >
+        <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
+        <Controls />
+        <ZoomDisplay />
+      </ReactFlow>
+    </div>
   )
 }
