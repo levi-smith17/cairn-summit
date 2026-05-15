@@ -180,13 +180,13 @@ export function SystemsPanel({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 text-destructive hover:text-destructive/80"
-                    onClick={() => setConfirmDelete({ type: 'system', id: activeSystem.id, name: activeSystem.name })}
+                    className="h-7 w-7"
+                    onClick={() => { setAddingPlanet(true); setEditingPlanetId(null); setPlanetInput('') }}
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Plus className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Remove system</TooltipContent>
+                <TooltipContent>Add planet</TooltipContent>
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -200,6 +200,15 @@ export function SystemsPanel({
           </div>
 
           <div className="flex-1 overflow-y-auto">
+            {addingPlanet && (
+              <InlineInput
+                value={planetInput}
+                onChange={setPlanetInput}
+                onSave={savePlanet}
+                onCancel={() => { setAddingPlanet(false); setPlanetInput('') }}
+                placeholder="Planet name…"
+              />
+            )}
             {sortedPlanets.length === 0 && !addingPlanet && (
               <p className="px-4 py-6 text-sm text-muted-foreground text-center">No planets yet.</p>
             )}
@@ -234,26 +243,6 @@ export function SystemsPanel({
             ))}
           </div>
 
-          <div className="border-t border-border shrink-0">
-            {addingPlanet ? (
-              <InlineInput
-                value={planetInput}
-                onChange={setPlanetInput}
-                onSave={savePlanet}
-                onCancel={() => { setAddingPlanet(false); setPlanetInput('') }}
-                placeholder="Planet name…"
-              />
-            ) : (
-              <button
-                type="button"
-                onClick={() => { setAddingPlanet(true); setEditingPlanetId(null); setPlanetInput('') }}
-                className="w-full flex items-center gap-3 px-4 py-3.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-              >
-                <Plus className="h-4 w-4" />
-                Add Planet
-              </button>
-            )}
-          </div>
         </div>
 
         <AlertDialog open={!!confirmDelete} onOpenChange={open => { if (!open) setConfirmDelete(null) }}>

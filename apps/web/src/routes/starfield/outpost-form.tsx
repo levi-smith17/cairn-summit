@@ -92,8 +92,10 @@ export function OutpostForm({ outpost, networkId, outposts, systems, onSystemsUp
       }
       if (outpost?.id) {
         await updateOutpost(outpost.id, payload)
+        toast.success('Outpost updated.')
       } else {
         await createOutpost({ ...payload, networkId })
+        toast.success('Outpost created.')
       }
       onRefresh()
       onDone()

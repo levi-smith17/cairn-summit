@@ -333,13 +333,9 @@ export function PlanetPicker({
           {/* Header: search + optional back button */}
           <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border">
             {view === 'planets' && !isSearching && (
-              <button
-                type="button"
-                onClick={goBack}
-                className="p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground shrink-0"
-              >
+              <Button type="button" variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={goBack}>
                 <ArrowLeft className="h-4 w-4" />
-              </button>
+              </Button>
             )}
             <input
               placeholder="Search planets…"
@@ -420,7 +416,7 @@ export function PlanetPicker({
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0"
+                            className="h-7 w-7 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0 mr-1"
                             onClick={e => startEditSystem(sys, e)}
                           >
                             <Pencil className="h-3.5 w-3.5" />
@@ -430,7 +426,7 @@ export function PlanetPicker({
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7 shrink-0 mr-1"
+                          className="h-7 w-7 shrink-0 mr-3"
                           onClick={() => drillIntoSystem(sys.id)}
                         >
                           <ChevronRight className="h-4 w-4" />
@@ -482,7 +478,7 @@ export function PlanetPicker({
                               type="button"
                               variant="ghost"
                               size="icon"
-                              className="h-7 w-7 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0 mr-1"
+                              className="h-7 w-7 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0 mr-3"
                               onClick={e => startEditPlanet(planet, e)}
                             >
                               <Pencil className="h-3.5 w-3.5" />

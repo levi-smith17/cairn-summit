@@ -6,6 +6,7 @@ import type { Kin } from '@cairn/types'
 export interface KinNodeData {
   kin: Kin & { id: string }
   isValid: boolean
+  isPlaceholder?: boolean
   onEdit: () => void
 }
 
@@ -19,7 +20,7 @@ export function kinFullName(kin: Pick<Kin, 'givenName' | 'middleName' | 'surname
 }
 
 export const KinNode = memo(function KinNode({ data }: NodeProps<KinNodeData>) {
-  const { kin, isValid, onEdit } = data
+  const { kin, isValid, isPlaceholder, onEdit } = data
   const currentBloodline = kin.bloodlines.find(b => b.current)
   const birthYear = formatYear(kin.birthDate)
   const deathYear = formatYear(kin.deathDate)
@@ -31,7 +32,7 @@ export const KinNode = memo(function KinNode({ data }: NodeProps<KinNodeData>) {
 
   return (
     <div
-      className={`w-52 rounded-lg bg-card border border-border/50 shadow-sm hover:shadow-md transition-shadow cursor-pointer ${!isValid ? 'ring-2 ring-red-500/50' : ''}`}
+      className={`w-52 rounded-lg bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer ${isPlaceholder ? 'border border-dashed border-border opacity-60' : `border border-border/50 ${!isValid ? 'ring-2 ring-red-500/50' : ''}`}`}
       onClick={onEdit}
     >
       <Handle id="top" type="target" position={Position.Top} style={{ background: 'var(--border)' }} />

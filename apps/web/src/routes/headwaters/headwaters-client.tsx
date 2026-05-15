@@ -66,6 +66,7 @@ export function HeadwatersClient({ kins, wayfarerSeedId, onRefresh, panel, onSet
               kins={kinsWithId}
               selectedKinId={selectedKinId}
               onKinClick={id => onSetPanel({ mode: 'kin-form', kinId: id })}
+              wayfarerSeedId={wayfarerSeedId}
             />
           </div>
 

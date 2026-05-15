@@ -26,7 +26,8 @@ function isKinValid(kin: Kin): boolean {
 
 function buildLayout(
   kins: (Kin & { id: string })[],
-  onKinClick: (id: string) => void
+  onKinClick: (id: string) => void,
+  wayfarerSeedId?: string | null
 ): { nodes: Node<KinNodeData>[]; edges: Edge[] } {
   const graph = new dagre.graphlib.Graph()
   graph.setDefaultEdgeLabel(() => ({}))
@@ -81,6 +82,7 @@ function buildLayout(
       data: {
         kin,
         isValid: isKinValid(kin),
+        isPlaceholder: !!wayfarerSeedId && kin.id === wayfarerSeedId,
         onEdit: () => onKinClick(kin.id),
       },
     }
@@ -104,11 +106,12 @@ interface HeadwatersCanvasProps {
   kins: (Kin & { id: string })[]
   selectedKinId: string | null
   onKinClick: (kinId: string) => void
+  wayfarerSeedId?: string | null
 }
 
-export function HeadwatersCanvas({ kins, selectedKinId, onKinClick }: HeadwatersCanvasProps) {
+export function HeadwatersCanvas({ kins, selectedKinId, onKinClick, wayfarerSeedId }: HeadwatersCanvasProps) {
   const { nodes: initialNodes, edges: initialEdges } = useMemo(
-    () => buildLayout(kins, onKinClick),
+    () => buildLayout(kins, onKinClick, wayfarerSeedId),
     []
   )
 
@@ -116,13 +119,13 @@ export function HeadwatersCanvas({ kins, selectedKinId, onKinClick }: Headwaters
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
 
   useEffect(() => {
-    const { nodes: layoutedNodes, edges: layoutedEdges } = buildLayout(kins, onKinClick)
+    const { nodes: layoutedNodes, edges: layoutedEdges } = buildLayout(kins, onKinClick, wayfarerSeedId)
     setNodes(layoutedNodes.map(n => ({
       ...n,
       selected: n.id === selectedKinId,
     })))
     setEdges(layoutedEdges)
-  }, [kins, selectedKinId, onKinClick])
+  }, [kins, selectedKinId, onKinClick, wayfarerSeedId])
 
   if (kins.length === 0) {
     return (

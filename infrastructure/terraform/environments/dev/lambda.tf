@@ -283,6 +283,58 @@ module "lambda_guides_update" {
   project_name         = var.project_name
 }
 
+module "lambda_headwaters_kin_create" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "headwaters-kin-create"
+  handler_path         = "headwaters/kin-create/handler.handler"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_write_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_headwaters_kin_delete" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "headwaters-kin-delete"
+  handler_path         = "headwaters/kin-delete/handler.handler"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_delete_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_headwaters_kin_get" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "headwaters-kin-get"
+  handler_path         = "headwaters/kin-get/handler.handler"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_write_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_headwaters_kin_update" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "headwaters-kin-update"
+  handler_path         = "headwaters/kin-update/handler.handler"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_write_policy_arn
+  project_name         = var.project_name
+}
+
 module "lambda_itinerary_calendars_create" {
   source               = "../../modules/lambda"
   cognito_user_pool_id = module.cognito.cognito_user_pool_id

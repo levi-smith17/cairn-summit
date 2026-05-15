@@ -197,7 +197,7 @@ export function KinForm({ kin, isNew = false, allKin, onDone, onRefresh }: KinFo
     <>
       <div className="flex flex-col h-full">
         <div className="flex items-center px-4 py-3 border-b border-border shrink-0">
-          <span className="text-sm font-medium flex-1">{kin && !isNew ? 'Edit Kin' : 'Add Kin'}</span>
+          <span className="text-sm font-medium flex-1">{isNew && kin ? 'Add Yourself' : kin && !isNew ? 'Edit Kin' : 'Add Kin'}</span>
           {kin && !isNew && (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -482,7 +482,7 @@ export function KinForm({ kin, isNew = false, allKin, onDone, onRefresh }: KinFo
                 saving={saving}
                 saved={saved}
                 error={error}
-                saveLabel={kin && !isNew ? 'Save Changes' : 'Add Kin'}
+                saveLabel={isNew && kin ? 'Add to Tree' : kin && !isNew ? 'Save Changes' : 'Add Kin'}
                 formId="kin-form"
                 onCancel={onDone}
               />

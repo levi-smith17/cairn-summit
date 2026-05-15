@@ -99,6 +99,7 @@ export function StarfieldClient({
     try {
       await updateNetwork(id, { name, abbreviation })
       onRefresh()
+      toast.success('Network updated.')
     } catch {
       toast.error('Failed to update network.')
     }
@@ -124,16 +125,19 @@ export function StarfieldClient({
   const handleSystemCreate = useCallback((name: string) => {
     const id = name.toLowerCase().replace(/\s+/g, '-')
     setLocalSystems(prev => [...prev, { id, name, planets: [] }])
+    toast.success('System created.')
     createSystem(name).catch(() => toast.error('Failed to save system.'))
   }, [])
 
   const handleSystemRename = useCallback((id: string, newName: string) => {
     setLocalSystems(prev => prev.map(s => s.id === id ? { ...s, name: newName } : s))
+    toast.success('System renamed.')
     updateSystem(id, newName).catch(() => toast.error('Failed to update system.'))
   }, [])
 
   const handleSystemDelete = useCallback((id: string) => {
     setLocalSystems(prev => prev.filter(s => s.id !== id))
+    toast.success('System removed.')
     deleteSystem(id).catch(() => toast.error('Failed to remove system.'))
   }, [])
 
@@ -142,6 +146,7 @@ export function StarfieldClient({
     setLocalSystems(prev => prev.map(s =>
       s.id === systemId ? { ...s, planets: [...s.planets, { id, name }] } : s
     ))
+    toast.success('Planet added.')
     addPlanet(systemId, name).catch(() => toast.error('Failed to save planet.'))
   }, [])
 
@@ -151,6 +156,7 @@ export function StarfieldClient({
         ? { ...s, planets: s.planets.map(p => p.id === planetId ? { id: newName.toLowerCase().replace(/\s+/g, '-'), name: newName } : p) }
         : s
     ))
+    toast.success('Planet renamed.')
     updatePlanet(systemId, planetId, newName).catch(() => toast.error('Failed to update planet.'))
   }, [])
 
@@ -158,6 +164,7 @@ export function StarfieldClient({
     setLocalSystems(prev => prev.map(s =>
       s.id === systemId ? { ...s, planets: s.planets.filter(p => p.id !== planetId) } : s
     ))
+    toast.success('Planet removed.')
     deletePlanet(systemId, planetId).catch(() => toast.error('Failed to remove planet.'))
   }, [])
 

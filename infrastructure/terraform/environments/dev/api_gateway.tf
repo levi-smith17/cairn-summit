@@ -128,6 +128,26 @@ module "api_gateway" {
       function_name = module.lambda_guides_update.function_name
       route_key     = "PUT /guides/{id}"
     }
+    headwaters-kin-create = {
+      invoke_arn    = module.lambda_headwaters_kin_create.invoke_arn
+      function_name = module.lambda_headwaters_kin_create.function_name
+      route_key     = "POST /headwaters/kin"
+    }
+    headwaters-kin-delete = {
+      invoke_arn    = module.lambda_headwaters_kin_delete.invoke_arn
+      function_name = module.lambda_headwaters_kin_delete.function_name
+      route_key     = "DELETE /headwaters/kin/{id}"
+    }
+    headwaters-kin-get = {
+      invoke_arn    = module.lambda_headwaters_kin_get.invoke_arn
+      function_name = module.lambda_headwaters_kin_get.function_name
+      route_key     = "GET /headwaters/kin"
+    }
+    headwaters-kin-update = {
+      invoke_arn    = module.lambda_headwaters_kin_update.invoke_arn
+      function_name = module.lambda_headwaters_kin_update.function_name
+      route_key     = "PUT /headwaters/kin/{id}"
+    }
     itinerary-calendars-create = {
       invoke_arn    = module.lambda_itinerary_calendars_create.invoke_arn
       function_name = module.lambda_itinerary_calendars_create.function_name

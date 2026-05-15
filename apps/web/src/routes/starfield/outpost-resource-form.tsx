@@ -180,6 +180,7 @@ export function OutpostResourceForm({
         fromSystem: values.fromSystem || null,
         relay,
       })
+      toast.success(isEditing ? 'Resource updated.' : 'Resource added.')
       onRefresh()
       onDone()
     })
@@ -263,11 +264,6 @@ export function OutpostResourceForm({
             {ingredientList.length > 0 && (
               <div className="space-y-1.5 rounded-md border border-border/60 p-3">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Ingredients</p>
-                {watchFromPlanet && !watchOnsite && (
-                  <p className="text-xs text-muted-foreground">
-                    Transferred in from {watchFromPlanet}{watchFromSystem ? ` (${watchFromSystem})` : ''} — manufactured at source outpost.
-                  </p>
-                )}
                 {ingredientList.map((ing: any) => (
                   <div key={ing.id} className="flex items-center gap-2">
                     {ing.satisfied
@@ -278,6 +274,11 @@ export function OutpostResourceForm({
                     <span className="text-xs">{ing.name}</span>
                   </div>
                 ))}
+                {watchFromPlanet && !watchOnsite && (
+                    <p className="text-xs text-muted-foreground pt-1">
+                      Transferred in from {watchFromPlanet}{watchFromSystem ? ` (${watchFromSystem})` : ''} — manufactured at source outpost.
+                    </p>
+                )}
               </div>
             )}
 
