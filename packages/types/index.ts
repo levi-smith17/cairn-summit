@@ -336,6 +336,19 @@ export interface CompanionMedia {
 }
 
 // ── Starfield ──────────────────────────────────────────
+export interface SfSystem {
+    pk: 'SF#SYSTEM'
+    sk: string
+    name: string
+    planets: SfPlanet[]
+    createdAt: string
+}
+
+export interface SfPlanet {
+    id: string
+    name: string
+}
+
 export interface SfResource {
     pk: 'SF#RESOURCE'
     sk: string

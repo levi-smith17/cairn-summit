@@ -34,6 +34,12 @@ interface PlanetPickerProps {
   onSelectId?: (planetId: string) => void
   systems: SystemWithPlanets[]
   onSystemsUpdate: (systems: SystemWithPlanets[]) => void
+  onSystemCreate?: (name: string) => void
+  onSystemRename?: (id: string, newName: string) => void
+  onSystemDelete?: (id: string) => void
+  onPlanetCreate?: (systemId: string, name: string) => void
+  onPlanetRename?: (systemId: string, planetId: string, newName: string) => void
+  onPlanetDelete?: (systemId: string, planetId: string) => void
   placeholder?: string
   disabled?: boolean
   readonly?: boolean
@@ -99,6 +105,12 @@ export function PlanetPicker({
   onSelectId,
   systems,
   onSystemsUpdate,
+  onSystemCreate,
+  onSystemRename,
+  onSystemDelete,
+  onPlanetCreate,
+  onPlanetRename,
+  onPlanetDelete,
   placeholder = 'Select a planet…',
   disabled = false,
   readonly = false,
@@ -177,10 +189,12 @@ export function PlanetPicker({
       onSystemsUpdate(systems.map(s =>
         s.id === editingSystemId ? { ...s, name, id: name } : s
       ))
+      onSystemRename?.(editingSystemId, name)
       setEditingSystemId(null)
     } else {
       if (!systems.find(s => s.name.toLowerCase() === name.toLowerCase())) {
         onSystemsUpdate([...systems, { id: name, name, planets: [] }])
+        onSystemCreate?.(name)
       }
       setAddingSystem(false)
     }
@@ -211,6 +225,7 @@ export function PlanetPicker({
           ? { ...s, planets: s.planets.map(p => p.id === editingPlanetId ? { id: name, name } : p) }
           : s
       ))
+      onPlanetRename?.(activeSystemId, editingPlanetId, name)
       setEditingPlanetId(null)
     } else {
       onSystemsUpdate(systems.map(s =>
@@ -218,6 +233,7 @@ export function PlanetPicker({
           ? { ...s, planets: [...s.planets, { id: name, name }] }
           : s
       ))
+      onPlanetCreate?.(activeSystemId, name)
       setAddingPlanet(false)
     }
     setPlanetNameInput('')
@@ -247,6 +263,7 @@ export function PlanetPicker({
         onSystemChange?.('')
       }
       onSystemsUpdate(systems.filter(s => s.id !== confirmRemove.id))
+      onSystemDelete?.(confirmRemove.id)
       cancelSystem()
       if (activeSystemId === confirmRemove.id) goBack()
     } else {
@@ -258,6 +275,7 @@ export function PlanetPicker({
         ...s,
         planets: s.planets.filter(p => p.id !== confirmRemove.id),
       })))
+      onPlanetDelete?.(activeSystemId!, confirmRemove.id)
       cancelPlanet()
     }
     setConfirmRemove(null)

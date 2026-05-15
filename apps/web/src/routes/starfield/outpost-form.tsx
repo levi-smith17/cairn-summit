@@ -33,41 +33,35 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>
 
+interface SystemEntry {
+  id: string
+  name: string
+  planets: { id: string; name: string }[]
+}
+
+interface SystemCrudCallbacks {
+  onSystemCreate: (name: string) => void
+  onSystemRename: (id: string, newName: string) => void
+  onSystemDelete: (id: string) => void
+  onPlanetCreate: (systemId: string, name: string) => void
+  onPlanetRename: (systemId: string, planetId: string, newName: string) => void
+  onPlanetDelete: (systemId: string, planetId: string) => void
+}
+
 interface OutpostFormProps {
   outpost?: any
   networkId: string
   outposts: any[]
+  systems: SystemEntry[]
+  onSystemsUpdate: (systems: SystemEntry[]) => void
+  systemCrudCallbacks: SystemCrudCallbacks
   onDone: () => void
   onRefresh: () => void
 }
 
-export function OutpostForm({ outpost, networkId, outposts, onDone, onRefresh }: OutpostFormProps) {
+export function OutpostForm({ outpost, networkId, outposts, systems, onSystemsUpdate, systemCrudCallbacks, onDone, onRefresh }: OutpostFormProps) {
   const { saving, saved, error, handleSubmit } = useFormStatus()
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false)
-
-  const [systems, setSystems] = useState(() => {
-    const systemMap = new Map<string, { id: string; name: string; planets: { id: string; name: string }[] }>()
-
-    function addPlanet(system: string, planet: string) {
-      if (!systemMap.has(system)) systemMap.set(system, { id: system, name: system, planets: [] })
-      const sys = systemMap.get(system)!
-      if (!sys.planets.find(p => p.name === planet)) sys.planets.push({ id: planet, name: planet })
-    }
-
-    for (const o of outposts) {
-      if (o.system && o.planet) addPlanet(o.system, o.planet)
-      for (const r of (o.resources ?? [])) {
-        if (r.fromPlanet && r.fromSystem) addPlanet(r.fromSystem, r.fromPlanet)
-        if (r.relay?.planet && r.relay?.system) addPlanet(r.relay.system, r.relay.planet)
-      }
-    }
-
-    return Array.from(systemMap.values()).map(s => ({
-      id: s.id,
-      name: s.name,
-      planets: s.planets,
-    }))
-  })
 
   const otherOutposts = outposts.filter(
     o => (o.id ?? o.sk?.replace(/^SF#FACILITY#/, '')) !== (outpost?.id ?? outpost?.sk?.replace(/^SF#FACILITY#/, ''))
@@ -156,12 +150,11 @@ export function OutpostForm({ outpost, networkId, outposts, onDone, onRefresh }:
                 <FormLabel>Planet</FormLabel>
                 <PlanetPicker
                   value={field.value}
-                  onChange={v => {
-                    field.onChange(v)
-                  }}
+                  onChange={v => field.onChange(v)}
                   onSystemChange={v => form.setValue('system', v)}
                   systems={systems}
-                  onSystemsUpdate={setSystems}
+                  onSystemsUpdate={onSystemsUpdate}
+                  {...systemCrudCallbacks}
                 />
                 <FormMessage />
                 {form.formState.errors.system && (

@@ -37,11 +37,29 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>
 
+interface SystemEntry {
+  id: string
+  name: string
+  planets: { id: string; name: string }[]
+}
+
+interface SystemCrudCallbacks {
+  onSystemCreate: (name: string) => void
+  onSystemRename: (id: string, newName: string) => void
+  onSystemDelete: (id: string) => void
+  onPlanetCreate: (systemId: string, name: string) => void
+  onPlanetRename: (systemId: string, planetId: string, newName: string) => void
+  onPlanetDelete: (systemId: string, planetId: string) => void
+}
+
 interface OutpostResourceFormProps {
   outpostId: string
   resourceId?: string | null
   resources: any[]
   outposts: any[]
+  systems: SystemEntry[]
+  onSystemsUpdate: (systems: SystemEntry[]) => void
+  systemCrudCallbacks: SystemCrudCallbacks
   onDone: () => void
   onRefresh: () => void
 }
@@ -51,6 +69,9 @@ export function OutpostResourceForm({
   resourceId,
   resources,
   outposts,
+  systems,
+  onSystemsUpdate,
+  systemCrudCallbacks,
   onDone,
   onRefresh,
 }: OutpostResourceFormProps) {
@@ -119,63 +140,7 @@ export function OutpostResourceForm({
       .sort((a: any, b: any) => a.name.localeCompare(b.name))
   }, [watchResourceId, resourceId, resources, currentOutpost])
 
-  // Build systems list for "supplied from" picker:
-  // - all outpost locations in the network (except the current outpost)
-  // - all saved freeform fromPlanet/fromSystem values on any resource in the network
-  const [fromSystems, setFromSystems] = useState(() => {
-    const systemMap = new Map<string, { id: string; name: string; planets: { id: string; name: string }[] }>()
-
-    function addPlanet(system: string, planet: string, id: string) {
-      if (!systemMap.has(system)) {
-        systemMap.set(system, { id: system, name: system, planets: [] })
-      }
-      const sys = systemMap.get(system)!
-      if (!sys.planets.find(p => p.name === planet)) {
-        sys.planets.push({ id, name: planet })
-      }
-    }
-
-    for (const o of outposts) {
-      const oId = o.id ?? o.sk?.replace(/^SF#FACILITY#/, '')
-      // Outpost location (skip the current outpost itself)
-      if (oId !== outpostId && o.system && o.planet) {
-        addPlanet(o.system, o.planet, oId)
-      }
-      // Freeform from-locations saved on any resource across the network
-      for (const r of (o.resources ?? [])) {
-        if (r.fromPlanet && r.fromSystem && !r.fromOutpostId) {
-          addPlanet(r.fromSystem, r.fromPlanet, r.fromPlanet)
-        }
-      }
-    }
-
-    return Array.from(systemMap.values())
-  })
-
-  // Same systems list for the relay picker (all known planets in network, editable)
-  const [relaySystems, setRelaySystems] = useState(() => {
-    const systemMap = new Map<string, { id: string; name: string; planets: { id: string; name: string }[] }>()
-
-    function addPlanet(system: string, planet: string) {
-      if (!systemMap.has(system)) systemMap.set(system, { id: system, name: system, planets: [] })
-      const sys = systemMap.get(system)!
-      if (!sys.planets.find(p => p.name === planet)) sys.planets.push({ id: planet, name: planet })
-    }
-
-    for (const o of outposts) {
-      if (o.system && o.planet) addPlanet(o.system, o.planet)
-      for (const r of (o.resources ?? [])) {
-        if (r.fromPlanet && r.fromSystem) addPlanet(r.fromSystem, r.fromPlanet)
-        if (r.relay?.planet && r.relay?.system) addPlanet(r.relay.system, r.relay.planet)
-      }
-    }
-
-    return Array.from(systemMap.values()).map(s => ({
-      id: s.id,
-      name: s.name,
-      planets: s.planets,
-    }))
-  })
+  // Both pickers use the global systems list from the client
 
   const pickerOptions = useMemo(() => {
     const assigned = new Set(currentOutpost?.resources?.map((r: any) => r.resourceId) ?? [])
@@ -344,9 +309,10 @@ export function OutpostResourceForm({
                     }}
                     onSystemChange={v => form.setValue('fromSystem', v)}
                     onSelectId={id => form.setValue('fromOutpostId', id)}
-                    systems={fromSystems}
-                    onSystemsUpdate={setFromSystems}
+                    systems={systems}
+                    onSystemsUpdate={onSystemsUpdate}
                     placeholder="Select outpost…"
+                    {...systemCrudCallbacks}
                   />
                   <FormMessage />
                 </FormItem>
@@ -366,8 +332,9 @@ export function OutpostResourceForm({
                         if (!v) form.setValue('relaySystem', '')
                       }}
                       onSystemChange={v => form.setValue('relaySystem', v)}
-                      systems={relaySystems}
-                      onSystemsUpdate={setRelaySystems}
+                      systems={systems}
+                      onSystemsUpdate={onSystemsUpdate}
+                      {...systemCrudCallbacks}
                       placeholder="Select relay planet…"
                     />
                   </FormItem>
