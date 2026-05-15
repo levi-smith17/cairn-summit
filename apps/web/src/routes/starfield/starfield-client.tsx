@@ -2,24 +2,24 @@ import { useState, useMemo } from 'react'
 import { ReactFlowProvider } from 'reactflow'
 import { toast } from 'sonner'
 import { PlatformHeader } from '@/components/nav/platform/platform-header'
-import type { SfFacility, SfNetwork, SfResource } from '@cairn/types'
+import type { SfOutpost, SfNetwork, SfResource } from '@cairn/types'
 import { validateNetwork } from '@/lib/starfield-validation'
-import { createNetwork, renameNetwork, deleteNetwork } from '@/lib/api/starfield'
+import { createNetwork, updateNetwork, deleteNetwork } from '@/lib/api/starfield'
 import { StarfieldControlBar } from './starfield-control-bar'
 import { StarfieldCanvas } from './starfield-canvas'
 import { ResourcesPanel } from './resources-panel'
-import { FacilityForm } from './facility-form'
-import { FacilityResourceForm } from './facility-resource-form'
+import { OutpostForm } from './outpost-form'
+import { OutpostResourceForm } from './outpost-resource-form'
 
 type RightPanelState =
   | { mode: 'closed' }
   | { mode: 'resources' }
-  | { mode: 'facility-form'; facilityId: string | null }
-  | { mode: 'facility-resource'; facilityId: string; resourceId: string | null }
+  | { mode: 'outpost-form'; outpostId: string | null }
+  | { mode: 'outpost-resource'; outpostId: string; resourceId: string | null }
 
 interface StarfieldClientProps {
   networks: SfNetwork[]
-  facilities: (SfFacility & { id: string })[]
+  outposts: (SfOutpost & { id: string })[]
   resources: SfResource[]
   resourceTypes: any[]
   systems: any[]
@@ -28,7 +28,7 @@ interface StarfieldClientProps {
 
 export function StarfieldClient({
   networks,
-  facilities,
+  outposts,
   resources,
   onRefresh,
 }: StarfieldClientProps) {
@@ -37,14 +37,14 @@ export function StarfieldClient({
   )
   const [rightPanel, setRightPanel] = useState<RightPanelState>({ mode: 'closed' })
 
-  const networkFacilities = useMemo(
-    () => facilities.filter(f => f.networkId === selectedNetworkId),
-    [facilities, selectedNetworkId]
+  const networkOutposts = useMemo(
+    () => outposts.filter(o => o.networkId === selectedNetworkId),
+    [outposts, selectedNetworkId]
   )
 
   const validations = useMemo(
-    () => validateNetwork(networkFacilities, resources),
-    [networkFacilities, resources]
+    () => validateNetwork(networkOutposts, resources),
+    [networkOutposts, resources]
   )
 
   const showRightPanel = rightPanel.mode !== 'closed'
@@ -53,9 +53,9 @@ export function StarfieldClient({
     setRightPanel({ mode: 'closed' })
   }
 
-  async function handleCreateNetwork(name: string) {
+  async function handleCreateNetwork(name: string, abbreviation: string) {
     try {
-      await createNetwork({ name })
+      await createNetwork({ name, abbreviation })
       onRefresh()
       toast.success(`Network "${name}" created.`)
     } catch {
@@ -63,13 +63,13 @@ export function StarfieldClient({
     }
   }
 
-  async function handleRenameNetwork(id: string, name: string) {
+  async function handleUpdateNetwork(id: string, name: string, abbreviation: string) {
     try {
-      await renameNetwork(id, name)
+      await updateNetwork(id, { name, abbreviation })
       onRefresh()
-      toast.success(`Network renamed to "${name}".`)
+      toast.success(`Network updated.`)
     } catch {
-      toast.error('Failed to rename network.')
+      toast.error('Failed to update network.')
     }
   }
 
@@ -88,9 +88,9 @@ export function StarfieldClient({
     }
   }
 
-  const selectedFacilityId =
-    rightPanel.mode === 'facility-form' || rightPanel.mode === 'facility-resource'
-      ? rightPanel.facilityId
+  const selectedOutpostId =
+    rightPanel.mode === 'outpost-form' || rightPanel.mode === 'outpost-resource'
+      ? rightPanel.outpostId
       : null
 
   return (
@@ -103,9 +103,9 @@ export function StarfieldClient({
           selectedNetworkId={selectedNetworkId}
           onSelectNetwork={setSelectedNetworkId}
           onCreateNetwork={handleCreateNetwork}
-          onRenameNetwork={handleRenameNetwork}
+          onUpdateNetwork={handleUpdateNetwork}
           onDeleteNetwork={handleDeleteNetwork}
-          onAddFacility={() => setRightPanel({ mode: 'facility-form', facilityId: null })}
+          onAddOutpost={() => setRightPanel({ mode: 'outpost-form', outpostId: null })}
           onManageResources={() => setRightPanel({ mode: 'resources' })}
         />
 
@@ -114,13 +114,13 @@ export function StarfieldClient({
             className={`${showRightPanel ? 'hidden md:flex' : 'flex'} flex-1 rounded-lg border border-border bg-card overflow-hidden`}
           >
             <StarfieldCanvas
-              facilities={networkFacilities}
+              outposts={networkOutposts}
               validations={validations}
-              selectedFacilityId={selectedFacilityId}
-              onFacilityClick={id => setRightPanel({ mode: 'facility-form', facilityId: id })}
-              onAddFacilityResource={id => setRightPanel({ mode: 'facility-resource', facilityId: id, resourceId: null })}
-              onEditFacilityResource={(facilityId, resourceId) =>
-                setRightPanel({ mode: 'facility-resource', facilityId, resourceId })
+              selectedOutpostId={selectedOutpostId}
+              onOutpostClick={id => setRightPanel({ mode: 'outpost-form', outpostId: id })}
+              onAddOutpostResource={id => setRightPanel({ mode: 'outpost-resource', outpostId: id, resourceId: null })}
+              onEditOutpostResource={(outpostId, resourceId) =>
+                setRightPanel({ mode: 'outpost-resource', outpostId, resourceId })
               }
             />
           </div>
@@ -135,30 +135,25 @@ export function StarfieldClient({
                 />
               )}
 
-              {rightPanel.mode === 'facility-form' && (
-                <FacilityForm
-                  key={rightPanel.facilityId ?? 'new'}
-                  facility={networkFacilities.find(f => f.id === rightPanel.facilityId) ?? undefined}
+              {rightPanel.mode === 'outpost-form' && (
+                <OutpostForm
+                  key={rightPanel.outpostId ?? 'new'}
+                  outpost={networkOutposts.find(o => o.id === rightPanel.outpostId) ?? undefined}
                   networkId={selectedNetworkId ?? ''}
-                  facilities={networkFacilities}
+                  outposts={networkOutposts}
                   onDone={closePanel}
                   onRefresh={onRefresh}
                 />
               )}
 
-              {rightPanel.mode === 'facility-resource' && (
+              {rightPanel.mode === 'outpost-resource' && (
                 <div className="flex flex-col h-full">
-                  <div className="flex items-center px-4 py-3 border-b border-border shrink-0">
-                    <span className="text-sm font-medium">
-                      {rightPanel.resourceId ? 'Edit Resource' : 'Add Resource'}
-                    </span>
-                  </div>
-                  <FacilityResourceForm
-                    key={`${rightPanel.facilityId}-${rightPanel.resourceId ?? 'new'}`}
-                    facilityId={rightPanel.facilityId}
+                  <OutpostResourceForm
+                    key={`${rightPanel.outpostId}-${rightPanel.resourceId ?? 'new'}`}
+                    outpostId={rightPanel.outpostId}
                     resourceId={rightPanel.resourceId}
                     resources={resources}
-                    facilities={networkFacilities}
+                    outposts={networkOutposts}
                     onDone={closePanel}
                     onRefresh={onRefresh}
                   />

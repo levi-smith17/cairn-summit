@@ -16,7 +16,7 @@ export default function Starfield() {
   return (
     <StarfieldClient
       networks={data?.networks ?? []}
-      facilities={data?.facilities ?? []}
+      outposts={data?.outposts ?? []}
       resources={data?.resources ?? []}
       resourceTypes={data?.resourceTypes ?? []}
       systems={data?.systems ?? []}

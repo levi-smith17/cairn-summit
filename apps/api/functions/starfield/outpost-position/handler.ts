@@ -11,7 +11,7 @@ export const handler = async (
         const id = event.pathParameters?.id
 
         if (!id) {
-            return toApiGatewayResponse(badRequest('Missing facility id'))
+            return toApiGatewayResponse(badRequest('Missing outpost id'))
         }
 
         const body = JSON.parse(event.body ?? '{}')

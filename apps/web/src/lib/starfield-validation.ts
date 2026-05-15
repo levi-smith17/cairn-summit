@@ -1,4 +1,4 @@
-import type { SfFacility, SfResource } from '@cairn/types'
+import type { SfOutpost, SfOutpostResource, SfResource } from '@cairn/types'
 
 export type ValidationStatus = 'satisfied' | 'partial' | 'missing'
 
@@ -8,58 +8,65 @@ export interface ResourceValidation {
   missingIngredients: string[]
 }
 
-export interface FacilityValidation {
-  facilityId: string
+export interface OutpostValidation {
+  outpostId: string
   status: ValidationStatus
   resources: Map<string, ResourceValidation>
 }
 
-function stripResourcePrefix(sk: string): string {
-  return sk.replace(/^RESOURCE#/, '')
-}
-
+// visited: "outpostId:resourceId" pairs to prevent cross-outpost cycles
 function validateResource(
   resourceId: string,
-  facilityResourceMap: Map<string, { onsite: boolean; fromFacilityId?: string }>,
+  outpostId: string,
+  outpostResourceMaps: Map<string, Map<string, SfOutpostResource>>,
   resourceDefMap: Map<string, SfResource>,
   visited: Set<string>
 ): ResourceValidation {
-  if (visited.has(resourceId)) {
+  const visitKey = `${outpostId}:${resourceId}`
+  if (visited.has(visitKey)) {
     return { resourceId, status: 'missing', missingIngredients: [resourceId] }
   }
 
-  const fr = facilityResourceMap.get(resourceId)
+  const outpostResourceMap = outpostResourceMaps.get(outpostId)
+  if (!outpostResourceMap) {
+    return { resourceId, status: 'missing', missingIngredients: [resourceId] }
+  }
+
+  const fr = outpostResourceMap.get(resourceId)
   if (!fr) {
     return { resourceId, status: 'missing', missingIngredients: [resourceId] }
+  }
+
+  // Sourced from another outpost — validate it is actually satisfied there
+  if (fr.fromOutpostId) {
+    const nextVisited = new Set(visited)
+    nextVisited.add(visitKey)
+    return validateResource(resourceId, fr.fromOutpostId, outpostResourceMaps, resourceDefMap, nextVisited)
   }
 
   const def = resourceDefMap.get(resourceId)
   const isMined = def ? (def.mined === true || def.tier === 0) : false
 
-  if (isMined) {
-    const satisfied = fr.onsite === true || (!!fr.fromFacilityId && fr.fromFacilityId.length > 0)
+  // Mined or no ingredients: satisfied only if produced onsite
+  if (isMined || !def?.ingredients?.length) {
     return {
       resourceId,
-      status: satisfied ? 'satisfied' : 'missing',
-      missingIngredients: satisfied ? [] : [resourceId],
+      status: fr.onsite ? 'satisfied' : 'missing',
+      missingIngredients: fr.onsite ? [] : [resourceId],
     }
   }
 
-  if (!def || !def.ingredients || def.ingredients.length === 0) {
-    const satisfied = fr.onsite === true || (!!fr.fromFacilityId && fr.fromFacilityId.length > 0)
-    return {
-      resourceId,
-      status: satisfied ? 'satisfied' : 'missing',
-      missingIngredients: satisfied ? [] : [resourceId],
-    }
+  // Manufactured with ingredients: must be marked onsite; ingredients checked within same outpost
+  if (!fr.onsite) {
+    return { resourceId, status: 'missing', missingIngredients: [resourceId] }
   }
 
   const nextVisited = new Set(visited)
-  nextVisited.add(resourceId)
+  nextVisited.add(visitKey)
 
   const missingIngredients: string[] = []
   for (const ingredientId of def.ingredients) {
-    const child = validateResource(ingredientId, facilityResourceMap, resourceDefMap, nextVisited)
+    const child = validateResource(ingredientId, outpostId, outpostResourceMaps, resourceDefMap, nextVisited)
     if (child.status === 'missing' || child.status === 'partial') {
       missingIngredients.push(...child.missingIngredients)
     }
@@ -78,48 +85,58 @@ function validateResource(
 }
 
 export function validateNetwork(
-  facilities: SfFacility[],
+  outposts: (SfOutpost & { id: string })[],
   resources: SfResource[]
-): Map<string, FacilityValidation> {
+): Map<string, OutpostValidation> {
   const resourceDefMap = new Map<string, SfResource>()
   for (const r of resources) {
-    const id = stripResourcePrefix(r.sk)
+    const id = r.sk.replace(/^RESOURCE#/, '')
     resourceDefMap.set(id, r)
   }
 
-  const result = new Map<string, FacilityValidation>()
-
-  for (const facility of facilities) {
-    const facilityId = facility.sk.replace(/^SF#FACILITY#/, '')
-
-    const facilityResourceMap = new Map<string, { onsite: boolean; fromFacilityId?: string }>()
-    for (const fr of facility.resources) {
-      facilityResourceMap.set(fr.resourceId, { onsite: fr.onsite, fromFacilityId: fr.fromFacilityId })
+  // Build a flat map: outpostId → Map<resourceId, outpostResource>
+  const outpostResourceMaps = new Map<string, Map<string, SfOutpostResource>>()
+  for (const outpost of outposts) {
+    const map = new Map<string, SfOutpostResource>()
+    for (const fr of outpost.resources) {
+      map.set(fr.resourceId, fr)
     }
+    outpostResourceMaps.set(outpost.id, map)
+  }
 
+  const result = new Map<string, OutpostValidation>()
+
+  for (const outpost of outposts) {
     const resourceValidations = new Map<string, ResourceValidation>()
-    for (const fr of facility.resources) {
-      const rv = validateResource(fr.resourceId, facilityResourceMap, resourceDefMap, new Set())
+
+    for (const fr of outpost.resources) {
+      const rv = validateResource(
+        fr.resourceId,
+        outpost.id,
+        outpostResourceMaps,
+        resourceDefMap,
+        new Set()
+      )
       resourceValidations.set(fr.resourceId, rv)
     }
 
-    let facilityStatus: ValidationStatus
+    let outpostStatus: ValidationStatus
     if (resourceValidations.size === 0) {
-      facilityStatus = 'missing'
+      outpostStatus = 'missing'
     } else {
       const statuses = Array.from(resourceValidations.values()).map(rv => rv.status)
       if (statuses.every(s => s === 'satisfied')) {
-        facilityStatus = 'satisfied'
+        outpostStatus = 'satisfied'
       } else if (statuses.some(s => s === 'satisfied' || s === 'partial')) {
-        facilityStatus = 'partial'
+        outpostStatus = 'partial'
       } else {
-        facilityStatus = 'missing'
+        outpostStatus = 'missing'
       }
     }
 
-    result.set(facilityId, {
-      facilityId,
-      status: facilityStatus,
+    result.set(outpost.id, {
+      outpostId: outpost.id,
+      status: outpostStatus,
       resources: resourceValidations,
     })
   }

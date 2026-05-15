@@ -8,16 +8,16 @@ interface NetworkSelectorProps {
   networks: SfNetwork[]
   selectedNetworkId: string | null
   onSelect: (id: string) => void
-  onCreateNetwork: (name: string) => Promise<void>
-  onRenameNetwork: (id: string, name: string) => Promise<void>
+  onCreateNetwork: (name: string, abbreviation: string) => Promise<void>
+  onUpdateNetwork: (id: string, name: string, abbreviation: string) => Promise<void>
   onDeleteNetwork: (id: string) => Promise<void>
 }
 
 type EditState =
   | { type: 'none' }
-  | { type: 'rename'; id: string; value: string }
+  | { type: 'rename'; id: string; name: string; abbreviation: string }
   | { type: 'delete'; id: string }
-  | { type: 'new'; value: string }
+  | { type: 'new'; name: string; abbreviation: string }
 
 function extractNetworkId(sk: string): string {
   return sk.replace(/^SF#NETWORK#/, '')
@@ -28,7 +28,7 @@ export function NetworkSelector({
   selectedNetworkId,
   onSelect,
   onCreateNetwork,
-  onRenameNetwork,
+  onUpdateNetwork,
   onDeleteNetwork,
 }: NetworkSelectorProps) {
   const [open, setOpen] = useState(false)
@@ -38,8 +38,8 @@ export function NetworkSelector({
 
   const selectedNetwork = networks.find(n => extractNetworkId(n.sk) === selectedNetworkId)
 
-  function startRename(id: string, currentName: string) {
-    setEditState({ type: 'rename', id, value: currentName })
+  function startRename(id: string, currentName: string, currentAbbreviation: string) {
+    setEditState({ type: 'rename', id, name: currentName, abbreviation: currentAbbreviation })
     setTimeout(() => renameInputRef.current?.focus(), 0)
   }
 
@@ -48,14 +48,15 @@ export function NetworkSelector({
   }
 
   function startNew() {
-    setEditState({ type: 'new', value: '' })
+    setEditState({ type: 'new', name: '', abbreviation: '' })
     setTimeout(() => newInputRef.current?.focus(), 0)
   }
 
   async function commitRename() {
     if (editState.type !== 'rename') return
-    const trimmed = editState.value.trim()
-    if (trimmed) await onRenameNetwork(editState.id, trimmed)
+    const name = editState.name.trim()
+    const abbreviation = editState.abbreviation.trim()
+    if (name && abbreviation) await onUpdateNetwork(editState.id, name, abbreviation)
     setEditState({ type: 'none' })
   }
 
@@ -67,27 +68,28 @@ export function NetworkSelector({
 
   async function commitNew() {
     if (editState.type !== 'new') return
-    const trimmed = editState.value.trim()
-    if (trimmed) await onCreateNetwork(trimmed)
+    const name = editState.name.trim()
+    const abbreviation = editState.abbreviation.trim()
+    if (name && abbreviation) await onCreateNetwork(name, abbreviation)
     setEditState({ type: 'none' })
   }
 
   function handleRenameKeyDown(e: React.KeyboardEvent) {
-    if (e.key === 'Enter') commitRename()
     if (e.key === 'Escape') setEditState({ type: 'none' })
   }
 
   function handleNewKeyDown(e: React.KeyboardEvent) {
-    if (e.key === 'Enter') commitNew()
     if (e.key === 'Escape') setEditState({ type: 'none' })
   }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 gap-1.5 text-sm max-w-48">
+        <Button variant="outline" size="sm" className="h-8 gap-1.5 text-sm max-w-52">
           <span className="truncate">
-            {selectedNetwork?.name ?? 'Select network…'}
+            {selectedNetwork
+              ? `[${selectedNetwork.abbreviation}] ${selectedNetwork.name}`
+              : 'Select network…'}
           </span>
           <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         </Button>
@@ -102,31 +104,32 @@ export function NetworkSelector({
 
             if (isRenaming) {
               return (
-                <div key={id} className="flex items-center gap-1 px-2 py-1">
+                <div key={id} className="px-2 py-1.5 space-y-1">
                   <input
                     ref={renameInputRef}
-                    value={editState.value}
-                    onChange={e => setEditState({ type: 'rename', id, value: e.target.value })}
+                    value={editState.name}
+                    onChange={e => setEditState({ type: 'rename', id, name: e.target.value, abbreviation: (editState as any).abbreviation })}
                     onKeyDown={handleRenameKeyDown}
-                    onBlur={commitRename}
-                    className="flex-1 text-sm bg-transparent outline-none border-b border-border min-w-0"
+                    placeholder="Network name…"
+                    className="w-full text-sm bg-transparent outline-none border-b border-border min-w-0 placeholder:text-muted-foreground"
                   />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-5 w-5 shrink-0"
-                    onMouseDown={e => { e.preventDefault(); setEditState({ type: 'none' }) }}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-5 w-5 shrink-0"
-                    onMouseDown={e => { e.preventDefault(); commitRename() }}
-                  >
-                    <Check className="h-3 w-3" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <input
+                      value={editState.abbreviation}
+                      onChange={e => setEditState({ type: 'rename', id, name: (editState as any).name, abbreviation: e.target.value })}
+                      onKeyDown={handleRenameKeyDown}
+                      placeholder="Abbrev…"
+                      className="flex-1 text-sm bg-transparent outline-none border-b border-border min-w-0 placeholder:text-muted-foreground"
+                    />
+                    <Button variant="ghost" size="icon" className="h-5 w-5 shrink-0"
+                      onMouseDown={e => { e.preventDefault(); setEditState({ type: 'none' }) }}>
+                      <X className="h-3 w-3" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-5 w-5 shrink-0"
+                      onMouseDown={e => { e.preventDefault(); commitRename() }}>
+                      <Check className="h-3 w-3" />
+                    </Button>
+                  </div>
                 </div>
               )
             }
@@ -134,22 +137,14 @@ export function NetworkSelector({
             if (isDeleting) {
               return (
                 <div key={id} className="flex items-center gap-1.5 px-2 py-1.5">
-                  <span className="text-xs text-muted-foreground flex-1">Delete?</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 px-2 text-xs"
-                    onClick={() => setEditState({ type: 'none' })}
-                  >
+                  <span className="text-xs text-muted-foreground flex-1">Remove?</span>
+                  <Button variant="ghost" size="sm" className="h-6 px-2 text-xs"
+                    onClick={() => setEditState({ type: 'none' })}>
                     Cancel
                   </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    className="h-6 px-2 text-xs"
-                    onClick={commitDelete}
-                  >
-                    Delete
+                  <Button variant="destructive" size="sm" className="h-6 px-2 text-xs"
+                    onClick={commitDelete}>
+                    Remove
                   </Button>
                 </div>
               )
@@ -165,25 +160,20 @@ export function NetworkSelector({
                   ? <Check className="h-3.5 w-3.5 shrink-0 text-primary" />
                   : <div className="h-3.5 w-3.5 shrink-0" />
                 }
+                <span className="font-mono text-[10px] text-muted-foreground bg-muted px-1 rounded shrink-0">
+                  {network.abbreviation}
+                </span>
                 <span className="text-sm flex-1 truncate">{network.name}</span>
                 <div
                   className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
                   onClick={e => e.stopPropagation()}
                 >
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-5 w-5"
-                    onClick={() => startRename(id, network.name)}
-                  >
+                  <Button variant="ghost" size="icon" className="h-5 w-5"
+                    onClick={() => startRename(id, network.name, network.abbreviation)}>
                     <Pencil className="h-3 w-3" />
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-5 w-5"
-                    onClick={() => startDelete(id)}
-                  >
+                  <Button variant="ghost" size="icon" className="h-5 w-5"
+                    onClick={() => startDelete(id)}>
                     <Trash2 className="h-3 w-3 text-destructive" />
                   </Button>
                 </div>
@@ -194,31 +184,32 @@ export function NetworkSelector({
           {networks.length > 0 && <div className="border-t border-border/50 my-1" />}
 
           {editState.type === 'new' ? (
-            <div className="flex items-center gap-1 px-2 py-1">
+            <div className="px-2 py-1.5 space-y-1">
               <input
                 ref={newInputRef}
-                value={editState.value}
-                onChange={e => setEditState({ type: 'new', value: e.target.value })}
+                value={editState.name}
+                onChange={e => setEditState({ type: 'new', name: e.target.value, abbreviation: (editState as any).abbreviation })}
                 onKeyDown={handleNewKeyDown}
                 placeholder="Network name…"
-                className="flex-1 text-sm bg-transparent outline-none border-b border-border min-w-0 placeholder:text-muted-foreground"
+                className="w-full text-sm bg-transparent outline-none border-b border-border min-w-0 placeholder:text-muted-foreground"
               />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-5 w-5 shrink-0"
-                onMouseDown={e => { e.preventDefault(); setEditState({ type: 'none' }) }}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-5 w-5 shrink-0"
-                onMouseDown={e => { e.preventDefault(); commitNew() }}
-              >
-                <Check className="h-3 w-3" />
-              </Button>
+              <div className="flex items-center gap-1">
+                <input
+                  value={editState.abbreviation}
+                  onChange={e => setEditState({ type: 'new', name: (editState as any).name, abbreviation: e.target.value })}
+                  onKeyDown={handleNewKeyDown}
+                  placeholder="Abbrev…"
+                  className="flex-1 text-sm bg-transparent outline-none border-b border-border min-w-0 placeholder:text-muted-foreground"
+                />
+                <Button variant="ghost" size="icon" className="h-5 w-5 shrink-0"
+                  onMouseDown={e => { e.preventDefault(); setEditState({ type: 'none' }) }}>
+                  <X className="h-3 w-3" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-5 w-5 shrink-0"
+                  onMouseDown={e => { e.preventDefault(); commitNew() }}>
+                  <Check className="h-3 w-3" />
+                </Button>
+              </div>
             </div>
           ) : (
             <button

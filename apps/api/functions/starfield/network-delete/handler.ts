@@ -16,8 +16,8 @@ export const handler = async (
 
         const pk = getPk(event)
 
-        // Step 1: Query all facilities belonging to this network
-        const facilitiesResult = await dynamo.send(new QueryCommand({
+        // Step 1: Query all outposts belonging to this network
+        const outpostsResult = await dynamo.send(new QueryCommand({
             TableName: TABLE_NAME,
             KeyConditionExpression: 'pk = :pk AND begins_with(sk, :prefix)',
             FilterExpression: 'networkId = :nid',
@@ -28,12 +28,12 @@ export const handler = async (
             },
         }))
 
-        // Step 2: Delete each matching facility
+        // Step 2: Delete each matching outpost
         await Promise.all(
-            (facilitiesResult.Items ?? []).map(facility =>
+            (outpostsResult.Items ?? []).map(outpost =>
                 dynamo.send(new DeleteCommand({
                     TableName: TABLE_NAME,
-                    Key: { pk, sk: facility.sk },
+                    Key: { pk, sk: outpost.sk },
                 }))
             )
         )

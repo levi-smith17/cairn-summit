@@ -1,4 +1,4 @@
-import { DeleteCommand } from '@aws-sdk/lib-dynamodb'
+import { UpdateCommand } from '@aws-sdk/lib-dynamodb'
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from 'aws-lambda'
 import { dynamo, TABLE_NAME } from '../../shared/db'
 import { getPk } from '../../shared/auth'
@@ -8,17 +8,23 @@ export const handler = async (
     event: APIGatewayProxyEventV2WithJWTAuthorizer
 ): Promise<APIGatewayProxyResultV2> => {
     try {
-        const id = event.pathParameters?.id
+        const outpostId = event.pathParameters?.outpostId
+        const resourceId = event.pathParameters?.resourceId
 
-        if (!id) {
-            return toApiGatewayResponse(badRequest('Missing facility id'))
+        if (!outpostId || !resourceId) {
+            return toApiGatewayResponse(badRequest('Missing outpostId or resourceId'))
         }
 
         const pk = getPk(event)
 
-        await dynamo.send(new DeleteCommand({
+        await dynamo.send(new UpdateCommand({
             TableName: TABLE_NAME,
-            Key: { pk, sk: `SF#FACILITY#${id}` },
+            Key: { pk, sk: `SF#FACILITY#${outpostId}` },
+            UpdateExpression: 'REMOVE #resources.#rid',
+            ExpressionAttributeNames: {
+                '#resources': 'resources',
+                '#rid': resourceId,
+            },
         }))
 
         return toApiGatewayResponse(noContent())

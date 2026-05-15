@@ -11,8 +11,8 @@ export const handler = async (
     try {
         const body = JSON.parse(event.body ?? '{}')
 
-        if (!body.name) {
-            return toApiGatewayResponse(badRequest('name is required'))
+        if (!body.name || !body.abbreviation) {
+            return toApiGatewayResponse(badRequest('name and abbreviation are required'))
         }
 
         const pk = getPk(event)
@@ -23,6 +23,7 @@ export const handler = async (
             pk,
             sk,
             name: body.name,
+            abbreviation: body.abbreviation,
             createdAt: new Date().toISOString(),
         }
 

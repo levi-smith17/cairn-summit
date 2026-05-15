@@ -16,8 +16,8 @@ export const handler = async (
 
         const body = JSON.parse(event.body ?? '{}')
 
-        if (!body.name) {
-            return toApiGatewayResponse(badRequest('name is required'))
+        if (!body.name || !body.abbreviation) {
+            return toApiGatewayResponse(badRequest('name and abbreviation are required'))
         }
 
         const pk = getPk(event)
@@ -25,9 +25,9 @@ export const handler = async (
         const result = await dynamo.send(new UpdateCommand({
             TableName: TABLE_NAME,
             Key: { pk, sk: `SF#NETWORK#${id}` },
-            UpdateExpression: 'SET #name = :name',
+            UpdateExpression: 'SET #name = :name, abbreviation = :abbreviation',
             ExpressionAttributeNames: { '#name': 'name' },
-            ExpressionAttributeValues: { ':name': body.name },
+            ExpressionAttributeValues: { ':name': body.name, ':abbreviation': body.abbreviation },
             ReturnValues: 'ALL_NEW',
         }))
 

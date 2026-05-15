@@ -19,7 +19,7 @@ export async function getNetworks(): Promise<any[]> {
     return apiFetch(`${API_BASE}/starfield/networks`) ?? []
 }
 
-export async function createNetwork(data: { name: string }): Promise<any> {
+export async function createNetwork(data: { name: string; abbreviation: string }): Promise<any> {
     return apiFetch(`${API_BASE}/starfield/networks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -27,11 +27,11 @@ export async function createNetwork(data: { name: string }): Promise<any> {
     })
 }
 
-export async function renameNetwork(id: string, name: string): Promise<any> {
+export async function updateNetwork(id: string, data: { name: string; abbreviation: string }): Promise<any> {
     return apiFetch(`${API_BASE}/starfield/networks/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify(data),
     })
 }
 
@@ -39,62 +39,60 @@ export async function deleteNetwork(id: string): Promise<void> {
     await apiFetch(`${API_BASE}/starfield/networks/${id}`, { method: 'DELETE' })
 }
 
-// ── Facilities ────────────────────────────────────────────────────────────────
+// ── Outposts ──────────────────────────────────────────────────────────────────
 
-export async function getAllFacilities(): Promise<any[]> {
-    return apiFetch(`${API_BASE}/starfield/facilities`) ?? []
+export async function getAllOutposts(): Promise<any[]> {
+    return apiFetch(`${API_BASE}/starfield/outposts`) ?? []
 }
 
-export async function createFacility(data: {
+export async function createOutpost(data: {
     networkId: string
-    name: string
-    abbreviation: string
     system: string
     planet: string
     parentId?: string
     transferStationLimit?: number
 }): Promise<any> {
-    return apiFetch(`${API_BASE}/starfield/facilities`, {
+    return apiFetch(`${API_BASE}/starfield/outposts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
     })
 }
 
-export async function updateFacility(id: string, data: Record<string, unknown>): Promise<any> {
-    return apiFetch(`${API_BASE}/starfield/facilities/${id}`, {
+export async function updateOutpost(id: string, data: Record<string, unknown>): Promise<any> {
+    return apiFetch(`${API_BASE}/starfield/outposts/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
     })
 }
 
-export async function deleteFacility(id: string): Promise<void> {
-    await apiFetch(`${API_BASE}/starfield/facilities/${id}`, { method: 'DELETE' })
+export async function deleteOutpost(id: string): Promise<void> {
+    await apiFetch(`${API_BASE}/starfield/outposts/${id}`, { method: 'DELETE' })
 }
 
-export async function updateFacilityPosition(id: string, position: { x: number; y: number }): Promise<void> {
-    await apiFetch(`${API_BASE}/starfield/facilities/${id}/position`, {
+export async function updateOutpostPosition(id: string, position: { x: number; y: number }): Promise<void> {
+    await apiFetch(`${API_BASE}/starfield/outposts/${id}/position`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(position),
     })
 }
 
-export async function upsertFacilityResource(
-    facilityId: string,
+export async function upsertOutpostResource(
+    outpostId: string,
     resourceId: string,
-    data: { onsite: boolean; fromFacilityId?: string | null; relay?: { planet: string; system: string } | null }
+    data: { onsite: boolean; fromOutpostId?: string | null; relay?: { planet: string; system: string } | null }
 ): Promise<void> {
-    await apiFetch(`${API_BASE}/starfield/facilities/${facilityId}/resources/${resourceId}`, {
+    await apiFetch(`${API_BASE}/starfield/outposts/${outpostId}/resources/${resourceId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
     })
 }
 
-export async function removeFacilityResource(facilityId: string, resourceId: string): Promise<void> {
-    await apiFetch(`${API_BASE}/starfield/facilities/${facilityId}/resources/${resourceId}`, {
+export async function removeOutpostResource(outpostId: string, resourceId: string): Promise<void> {
+    await apiFetch(`${API_BASE}/starfield/outposts/${outpostId}/resources/${resourceId}`, {
         method: 'DELETE',
     })
 }
@@ -131,15 +129,15 @@ export async function deleteResource(id: string): Promise<void> {
 // ── Composite ─────────────────────────────────────────────────────────────────
 
 export async function fetchStarfieldData() {
-    const [networks, facilities, resources] = await Promise.all([
+    const [networks, outposts, resources] = await Promise.all([
         getNetworks(),
-        getAllFacilities(),
+        getAllOutposts(),
         getResources(),
     ])
 
     return {
         networks: networks ?? [],
-        facilities: (facilities ?? []).map((f: any) => ({
+        outposts: (outposts ?? []).map((f: any) => ({
             ...f,
             id: f.id ?? f.sk?.replace(/^SF#FACILITY#/, ''),
         })),

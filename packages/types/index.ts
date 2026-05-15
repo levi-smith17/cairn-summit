@@ -351,31 +351,30 @@ export interface SfNetwork {
     pk: string
     sk: string
     name: string
-    rootFacilityId?: string
+    abbreviation: string
+    rootOutpostId?: string
     createdAt: string
 }
 
-export interface SfFacility {
+export interface SfOutpost {
     pk: string
     sk: string
     networkId: string
-    name: string
-    abbreviation: string
     system: string
     planet: string
     parentId?: string
     depth: number
     position: { x: number; y: number }
-    resources: SfFacilityResource[]
+    resources: SfOutpostResource[]
     transferStationLimit: number
 }
 
-export interface SfFacilityResource {
+export interface SfOutpostResource {
     resourceId: string
     name: string
     abbreviation: string
     onsite: boolean
-    fromFacilityId?: string
+    fromOutpostId?: string
     relay?: {
         planet: string
         system: string

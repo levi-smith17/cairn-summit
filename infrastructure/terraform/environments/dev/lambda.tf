@@ -969,91 +969,91 @@ module "lambda_signals_sync" {
   project_name         = var.project_name
 }
 
-module "lambda_starfield_facility_create" {
+module "lambda_starfield_outpost_create" {
   source               = "../../modules/lambda"
   cognito_user_pool_id = module.cognito.cognito_user_pool_id
   dynamodb_table_name  = module.dynamodb.table_name
   environment          = var.environment
-  function_name        = "starfield-facility-create"
-  handler_path         = "starfield/facility-create/handler.handler"
+  function_name        = "starfield-outpost-create"
+  handler_path         = "starfield/outpost-create/handler.handler"
   managed_by           = var.managed_by
   owner                = var.owner
   policy_arn           = module.iam.lambda_write_policy_arn
   project_name         = var.project_name
 }
 
-module "lambda_starfield_facility_delete" {
+module "lambda_starfield_outpost_delete" {
   source               = "../../modules/lambda"
   cognito_user_pool_id = module.cognito.cognito_user_pool_id
   dynamodb_table_name  = module.dynamodb.table_name
   environment          = var.environment
-  function_name        = "starfield-facility-delete"
-  handler_path         = "starfield/facility-delete/handler.handler"
+  function_name        = "starfield-outpost-delete"
+  handler_path         = "starfield/outpost-delete/handler.handler"
   managed_by           = var.managed_by
   owner                = var.owner
   policy_arn           = module.iam.lambda_delete_policy_arn
   project_name         = var.project_name
 }
 
-module "lambda_starfield_facilities_get" {
+module "lambda_starfield_outposts_get" {
   source               = "../../modules/lambda"
   cognito_user_pool_id = module.cognito.cognito_user_pool_id
   dynamodb_table_name  = module.dynamodb.table_name
   environment          = var.environment
-  function_name        = "starfield-facilities-get"
-  handler_path         = "starfield/facilities-get/handler.handler"
+  function_name        = "starfield-outposts-get"
+  handler_path         = "starfield/outposts-get/handler.handler"
   managed_by           = var.managed_by
   owner                = var.owner
   policy_arn           = module.iam.lambda_read_policy_arn
   project_name         = var.project_name
 }
 
-module "lambda_starfield_facility_position" {
+module "lambda_starfield_outpost_position" {
   source               = "../../modules/lambda"
   cognito_user_pool_id = module.cognito.cognito_user_pool_id
   dynamodb_table_name  = module.dynamodb.table_name
   environment          = var.environment
-  function_name        = "starfield-facility-position"
-  handler_path         = "starfield/facility-position/handler.handler"
+  function_name        = "starfield-outpost-position"
+  handler_path         = "starfield/outpost-position/handler.handler"
   managed_by           = var.managed_by
   owner                = var.owner
   policy_arn           = module.iam.lambda_write_policy_arn
   project_name         = var.project_name
 }
 
-module "lambda_starfield_facility_resource_delete" {
+module "lambda_starfield_outpost_resource_delete" {
   source               = "../../modules/lambda"
   cognito_user_pool_id = module.cognito.cognito_user_pool_id
   dynamodb_table_name  = module.dynamodb.table_name
   environment          = var.environment
-  function_name        = "starfield-facility-resource-delete"
-  handler_path         = "starfield/facility-resource-delete/handler.handler"
+  function_name        = "starfield-outpost-resource-delete"
+  handler_path         = "starfield/outpost-resource-delete/handler.handler"
   managed_by           = var.managed_by
   owner                = var.owner
   policy_arn           = module.iam.lambda_write_policy_arn
   project_name         = var.project_name
 }
 
-module "lambda_starfield_facility_resource_upsert" {
+module "lambda_starfield_outpost_resource_upsert" {
   source               = "../../modules/lambda"
   cognito_user_pool_id = module.cognito.cognito_user_pool_id
   dynamodb_table_name  = module.dynamodb.table_name
   environment          = var.environment
-  function_name        = "starfield-facility-resource-upsert"
-  handler_path         = "starfield/facility-resource-upsert/handler.handler"
+  function_name        = "starfield-outpost-resource-upsert"
+  handler_path         = "starfield/outpost-resource-upsert/handler.handler"
   managed_by           = var.managed_by
   owner                = var.owner
   policy_arn           = module.iam.lambda_write_policy_arn
   project_name         = var.project_name
 }
 
-module "lambda_starfield_facility_update" {
+module "lambda_starfield_outpost_update" {
   source               = "../../modules/lambda"
   cognito_user_pool_id = module.cognito.cognito_user_pool_id
   dynamodb_table_name  = module.dynamodb.table_name
   environment          = var.environment
-  function_name        = "starfield-facility-update"
-  handler_path         = "starfield/facility-update/handler.handler"
+  function_name        = "starfield-outpost-update"
+  handler_path         = "starfield/outpost-update/handler.handler"
   managed_by           = var.managed_by
   owner                = var.owner
   policy_arn           = module.iam.lambda_write_policy_arn

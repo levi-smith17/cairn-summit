@@ -11,8 +11,8 @@ export const handler = async (
     try {
         const body = JSON.parse(event.body ?? '{}')
 
-        if (!body.networkId || !body.name || !body.abbreviation || !body.system || !body.planet) {
-            return toApiGatewayResponse(badRequest('networkId, name, abbreviation, system, and planet are required'))
+        if (!body.networkId || !body.system || !body.planet) {
+            return toApiGatewayResponse(badRequest('networkId, system, and planet are required'))
         }
 
         const pk = getPk(event)
@@ -23,15 +23,13 @@ export const handler = async (
             pk,
             sk,
             networkId: body.networkId,
-            name: body.name,
-            abbreviation: body.abbreviation,
             system: body.system,
             planet: body.planet,
             parentId: body.parentId,
             depth: body.parentId ? 1 : 0,
             position: { x: 0, y: 0 },
             resources: {},
-            transferStationLimit: body.transferStationLimit ?? 5,
+            transferStationLimit: body.transferStationLimit ?? 32,
             createdAt: new Date().toISOString(),
         }
 

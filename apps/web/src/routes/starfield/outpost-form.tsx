@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { createFacility, updateFacility } from '@/lib/api/starfield'
+import { createOutpost, updateOutpost } from '@/lib/api/starfield'
 import { Form, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { PlanetPicker } from '@/components/ui/planet-picker'
@@ -11,8 +11,6 @@ import { FormActions } from '@/components/forms/form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
 
 const schema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  abbreviation: z.string().min(1).max(6, 'Max 6 characters'),
   system: z.string().min(1, 'System is required'),
   planet: z.string().min(1, 'Planet is required'),
   parentId: z.string().optional(),
@@ -21,23 +19,23 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>
 
-interface FacilityFormProps {
-  facility?: any
+interface OutpostFormProps {
+  outpost?: any
   networkId: string
-  facilities: any[]
+  outposts: any[]
   onDone: () => void
   onRefresh: () => void
 }
 
-export function FacilityForm({ facility, networkId, facilities, onDone, onRefresh }: FacilityFormProps) {
+export function OutpostForm({ outpost, networkId, outposts, onDone, onRefresh }: OutpostFormProps) {
   const { saving, saved, error, handleSubmit } = useFormStatus()
 
   const [systems, setSystems] = useState(() => {
     const systemMap = new Map<string, Set<string>>()
-    for (const f of facilities) {
-      if (f.system) {
-        if (!systemMap.has(f.system)) systemMap.set(f.system, new Set())
-        if (f.planet) systemMap.get(f.system)!.add(f.planet)
+    for (const o of outposts) {
+      if (o.system) {
+        if (!systemMap.has(o.system)) systemMap.set(o.system, new Set())
+        if (o.planet) systemMap.get(o.system)!.add(o.planet)
       }
     }
     return Array.from(systemMap.entries()).map(([name, planets]) => ({
@@ -47,41 +45,37 @@ export function FacilityForm({ facility, networkId, facilities, onDone, onRefres
     }))
   })
 
-  const otherFacilities = facilities.filter(
-    f => (f.id ?? f.sk?.replace(/^SF#FACILITY#/, '')) !== (facility?.id ?? facility?.sk?.replace(/^SF#FACILITY#/, ''))
+  const otherOutposts = outposts.filter(
+    o => (o.id ?? o.sk?.replace(/^SF#FACILITY#/, '')) !== (outpost?.id ?? outpost?.sk?.replace(/^SF#FACILITY#/, ''))
   )
 
-  const parentOptions = otherFacilities.map(f => ({
-    value: f.id ?? f.sk?.replace(/^SF#FACILITY#/, ''),
-    label: `[${f.abbreviation}] ${f.name}`,
+  const parentOptions = otherOutposts.map(o => ({
+    value: o.id ?? o.sk?.replace(/^SF#FACILITY#/, ''),
+    label: `${o.planet} (${o.system})`,
   }))
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      name: facility?.name ?? '',
-      abbreviation: facility?.abbreviation ?? '',
-      system: facility?.system ?? '',
-      planet: facility?.planet ?? '',
-      parentId: facility?.parentId ?? '',
-      transferStationLimit: String(facility?.transferStationLimit ?? 5),
+      system: outpost?.system ?? '',
+      planet: outpost?.planet ?? '',
+      parentId: outpost?.parentId ?? '',
+      transferStationLimit: String(outpost?.transferStationLimit ?? 32),
     },
   })
 
   async function onSubmit(values: FormValues) {
     await handleSubmit(async () => {
       const payload = {
-        name: values.name,
-        abbreviation: values.abbreviation,
         system: values.system,
         planet: values.planet,
         parentId: values.parentId || undefined,
-        transferStationLimit: parseInt(values.transferStationLimit, 10) || 5,
+        transferStationLimit: parseInt(values.transferStationLimit, 10) || 32,
       }
-      if (facility?.id) {
-        await updateFacility(facility.id, payload)
+      if (outpost?.id) {
+        await updateOutpost(outpost.id, payload)
       } else {
-        await createFacility({ ...payload, networkId })
+        await createOutpost({ ...payload, networkId })
       }
       onRefresh()
       onDone()
@@ -91,26 +85,11 @@ export function FacilityForm({ facility, networkId, facilities, onDone, onRefres
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center px-4 py-3 border-b border-border shrink-0">
-        <span className="text-sm font-medium">{facility ? 'Edit Facility' : 'Add Facility'}</span>
+        <span className="text-sm font-medium">{outpost ? 'Edit Outpost' : 'Add Outpost'}</span>
       </div>
       <div className="flex-1 overflow-y-auto p-4">
         <Form {...form}>
-          <form id="facility-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField control={form.control} name="name" render={({ field }) => (
-              <FormItem>
-                <FormLabel>Name</FormLabel>
-                <Input placeholder="Central Manufacturing Hub" {...field} />
-                <FormMessage />
-              </FormItem>
-            )} />
-            <FormField control={form.control} name="abbreviation" render={({ field }) => (
-              <FormItem>
-                <FormLabel>Abbreviation</FormLabel>
-                <Input placeholder="CMH" maxLength={6} {...field} />
-                <FormMessage />
-              </FormItem>
-            )} />
-
+          <form id="outpost-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField control={form.control} name="planet" render={({ field }) => (
               <FormItem>
                 <FormLabel>Planet</FormLabel>
@@ -133,7 +112,7 @@ export function FacilityForm({ facility, networkId, facilities, onDone, onRefres
             {parentOptions.length > 0 && (
               <FormField control={form.control} name="parentId" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Parent Facility <span className="text-muted-foreground text-xs font-normal">(optional)</span></FormLabel>
+                  <FormLabel>Parent Outpost <span className="text-muted-foreground text-xs font-normal">(optional)</span></FormLabel>
                   <CustomSelect
                     options={[{ value: '', label: 'None (root)' }, ...parentOptions]}
                     value={field.value ?? ''}
@@ -153,7 +132,7 @@ export function FacilityForm({ facility, networkId, facilities, onDone, onRefres
               </FormItem>
             )} />
             <div className="-mx-4 border-t" />
-            <FormActions saving={saving} saved={saved} error={error} saveLabel={facility ? 'Save Changes' : 'Add Facility'} formId="facility-form" onCancel={onDone} />
+            <FormActions saving={saving} saved={saved} error={error} saveLabel={outpost ? 'Save Changes' : 'Add Outpost'} formId="outpost-form" onCancel={onDone} />
           </form>
         </Form>
       </div>

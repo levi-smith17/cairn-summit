@@ -8,11 +8,11 @@ export const handler = async (
     event: APIGatewayProxyEventV2WithJWTAuthorizer
 ): Promise<APIGatewayProxyResultV2> => {
     try {
-        const facilityId = event.pathParameters?.facilityId
+        const outpostId = event.pathParameters?.outpostId
         const resourceId = event.pathParameters?.resourceId
 
-        if (!facilityId || !resourceId) {
-            return toApiGatewayResponse(badRequest('Missing facilityId or resourceId'))
+        if (!outpostId || !resourceId) {
+            return toApiGatewayResponse(badRequest('Missing outpostId or resourceId'))
         }
 
         const body = JSON.parse(event.body ?? '{}')
@@ -38,10 +38,10 @@ export const handler = async (
 
         const pk = getPk(event)
 
-        // Step 2: Upsert the resource entry on the facility
+        // Step 2: Upsert the resource entry on the outpost
         await dynamo.send(new UpdateCommand({
             TableName: TABLE_NAME,
-            Key: { pk, sk: `SF#FACILITY#${facilityId}` },
+            Key: { pk, sk: `SF#FACILITY#${outpostId}` },
             UpdateExpression: 'SET #resources.#rid = :value',
             ExpressionAttributeNames: {
                 '#resources': 'resources',
@@ -53,7 +53,7 @@ export const handler = async (
                     name: resourceItem.name,
                     abbreviation: resourceItem.abbreviation,
                     onsite: body.onsite,
-                    fromFacilityId: body.fromFacilityId ?? null,
+                    fromOutpostId: body.fromOutpostId ?? null,
                     relay: body.relay ?? null,
                 },
             },

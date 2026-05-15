@@ -2,7 +2,6 @@ import { useMemo, useEffect, useCallback } from 'react'
 import ReactFlow, {
   Background,
   Controls,
-  MiniMap,
   useNodesState,
   useEdgesState,
   Panel,
@@ -14,21 +13,21 @@ import ReactFlow, {
   type NodeDragHandler,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
-import type { SfFacility } from '@cairn/types'
-import type { FacilityValidation } from '@/lib/starfield-validation'
-import { updateFacilityPosition } from '@/lib/api/starfield'
-import { FacilityNode, type FacilityNodeData } from './facility-node'
+import type { SfOutpost } from '@cairn/types'
+import type { OutpostValidation } from '@/lib/starfield-validation'
+import { updateOutpostPosition } from '@/lib/api/starfield'
+import { OutpostNode, type OutpostNodeData } from './outpost-node'
 
 interface StarfieldCanvasProps {
-  facilities: (SfFacility & { id: string })[]
-  validations: Map<string, FacilityValidation>
-  selectedFacilityId: string | null
-  onFacilityClick: (facilityId: string) => void
-  onAddFacilityResource: (facilityId: string) => void
-  onEditFacilityResource: (facilityId: string, resourceId: string) => void
+  outposts: (SfOutpost & { id: string })[]
+  validations: Map<string, OutpostValidation>
+  selectedOutpostId: string | null
+  onOutpostClick: (outpostId: string) => void
+  onAddOutpostResource: (outpostId: string) => void
+  onEditOutpostResource: (outpostId: string, resourceId: string) => void
 }
 
-const nodeTypes = { facility: FacilityNode }
+const nodeTypes = { outpost: OutpostNode }
 
 function ZoomDisplay() {
   const { zoom } = useViewport()
@@ -42,36 +41,36 @@ function ZoomDisplay() {
 }
 
 export function StarfieldCanvas({
-  facilities,
+  outposts,
   validations,
-  selectedFacilityId,
-  onFacilityClick,
-  onAddFacilityResource,
-  onEditFacilityResource,
+  selectedOutpostId,
+  onOutpostClick,
+  onAddOutpostResource,
+  onEditOutpostResource,
 }: StarfieldCanvasProps) {
-  const initialNodes = useMemo<Node<FacilityNodeData>[]>(() => {
-    return facilities.map(facility => ({
-      id: facility.id,
-      type: 'facility',
-      position: facility.position ?? { x: 0, y: 0 },
-      selected: facility.id === selectedFacilityId,
+  const initialNodes = useMemo<Node<OutpostNodeData>[]>(() => {
+    return outposts.map(outpost => ({
+      id: outpost.id,
+      type: 'outpost',
+      position: outpost.position ?? { x: 0, y: 0 },
+      selected: outpost.id === selectedOutpostId,
       data: {
-        facility,
-        validation: validations.get(facility.id),
-        onEdit: () => onFacilityClick(facility.id),
-        onAddResource: () => onAddFacilityResource(facility.id),
-        onEditResource: (resourceId: string) => onEditFacilityResource(facility.id, resourceId),
+        outpost,
+        validation: validations.get(outpost.id),
+        onEdit: () => onOutpostClick(outpost.id),
+        onAddResource: () => onAddOutpostResource(outpost.id),
+        onEditResource: (resourceId: string) => onEditOutpostResource(outpost.id, resourceId),
       },
     }))
   }, [])
 
   const initialEdges = useMemo<Edge[]>(() => {
-    return facilities
-      .filter(f => !!f.parentId)
-      .map(f => ({
-        id: `${f.parentId}-${f.id}`,
-        source: f.parentId!,
-        target: f.id,
+    return outposts
+      .filter(o => !!o.parentId)
+      .map(o => ({
+        id: `${o.id}-${o.parentId}`,
+        source: o.id,
+        target: o.parentId!,
         markerEnd: { type: MarkerType.ArrowClosed },
       }))
   }, [])
@@ -82,46 +81,46 @@ export function StarfieldCanvas({
   useEffect(() => {
     setNodes(prev => {
       const prevById = new Map(prev.map(n => [n.id, n]))
-      return facilities.map(facility => {
-        const existing = prevById.get(facility.id)
+      return outposts.map(outpost => {
+        const existing = prevById.get(outpost.id)
         return {
-          id: facility.id,
-          type: 'facility',
+          id: outpost.id,
+          type: 'outpost',
           // Preserve React Flow's live position for existing nodes so drag state
-          // isn't clobbered when selectedFacilityId or validations change.
-          position: existing ? existing.position : (facility.position ?? { x: 0, y: 0 }),
-          selected: facility.id === selectedFacilityId,
+          // isn't clobbered when selectedOutpostId or validations change.
+          position: existing ? existing.position : (outpost.position ?? { x: 0, y: 0 }),
+          selected: outpost.id === selectedOutpostId,
           data: {
-            facility,
-            validation: validations.get(facility.id),
-            onEdit: () => onFacilityClick(facility.id),
-            onAddResource: () => onAddFacilityResource(facility.id),
-            onEditResource: (resourceId: string) => onEditFacilityResource(facility.id, resourceId),
+            outpost,
+            validation: validations.get(outpost.id),
+            onEdit: () => onOutpostClick(outpost.id),
+            onAddResource: () => onAddOutpostResource(outpost.id),
+            onEditResource: (resourceId: string) => onEditOutpostResource(outpost.id, resourceId),
           },
         }
       })
     })
     setEdges(
-      facilities
-        .filter(f => !!f.parentId)
-        .map(f => ({
-          id: `${f.parentId}-${f.id}`,
-          source: f.parentId!,
-          target: f.id,
+      outposts
+        .filter(o => !!o.parentId)
+        .map(o => ({
+          id: `${o.id}-${o.parentId}`,
+          source: o.id,
+          target: o.parentId!,
           markerEnd: { type: MarkerType.ArrowClosed },
         }))
     )
-  }, [facilities, validations, selectedFacilityId])
+  }, [outposts, validations, selectedOutpostId])
 
   const handleNodeDragStop: NodeDragHandler = useCallback((_, node) => {
-    updateFacilityPosition(node.id, node.position).catch(console.error)
+    updateOutpostPosition(node.id, node.position).catch(console.error)
   }, [])
 
-  if (facilities.length === 0) {
+  if (outposts.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full w-full text-center px-8">
         <p className="text-sm text-muted-foreground">
-          No facilities yet. Add one to get started.
+          No outposts yet. Add one to get started.
         </p>
       </div>
     )
@@ -139,7 +138,6 @@ export function StarfieldCanvas({
     >
       <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
       <Controls />
-      <MiniMap />
       <ZoomDisplay />
     </ReactFlow>
   )

@@ -1,12 +1,12 @@
 import { memo } from 'react'
 import { Handle, Position, type NodeProps } from 'reactflow'
 import { Pencil, Plus } from 'lucide-react'
-import type { SfFacility, SfFacilityResource } from '@cairn/types'
-import type { FacilityValidation, ValidationStatus } from '@/lib/starfield-validation'
+import type { SfOutpost, SfOutpostResource } from '@cairn/types'
+import type { OutpostValidation, ValidationStatus } from '@/lib/starfield-validation'
 
-export interface FacilityNodeData {
-  facility: SfFacility & { id: string }
-  validation: FacilityValidation | undefined
+export interface OutpostNodeData {
+  outpost: SfOutpost & { id: string }
+  validation: OutpostValidation | undefined
   onEdit: () => void
   onAddResource: () => void
   onEditResource: (resourceId: string) => void
@@ -25,41 +25,36 @@ const STATUS_BORDER: Record<ValidationStatus, string> = {
 }
 
 function getResourceSourceLabel(
-  fr: SfFacilityResource,
+  fr: SfOutpostResource,
   status: ValidationStatus | undefined
 ): string {
   if (fr.onsite) return '[onsite]'
-  if (fr.fromFacilityId) return '[←]'
+  if (fr.fromOutpostId) return '[←]'
   if (!status || status === 'missing') return '[!]'
   if (status === 'partial') return '[~]'
   return '[✓]'
 }
 
-export const FacilityNode = memo(function FacilityNode({ data }: NodeProps<FacilityNodeData>) {
-  const { facility, validation, onEdit, onAddResource, onEditResource } = data
+export const OutpostNode = memo(function OutpostNode({ data }: NodeProps<OutpostNodeData>) {
+  const { outpost, validation, onEdit, onAddResource, onEditResource } = data
   const status: ValidationStatus = validation?.status ?? 'missing'
-  const transferCount = facility.resources.filter(fr => fr.fromFacilityId).length
+  const transferCount = outpost.resources.filter(fr => fr.fromOutpostId).length
 
   return (
     <div
       className={`w-52 rounded-lg border-2 bg-card shadow-sm hover:shadow-md transition-shadow ${STATUS_BORDER[status]}`}
     >
-      <Handle type="target" position={Position.Top} />
+      <Handle type="target" position={Position.Bottom} />
 
       <div className="px-3 pt-2.5 pb-1">
         <div className="flex items-center gap-1.5 mb-0.5">
           <div className={`h-2 w-2 rounded-full shrink-0 ${STATUS_DOT[status]}`} />
-          <span className="text-sm font-medium truncate flex-1">{facility.name}</span>
-          <span className="font-mono text-[10px] text-muted-foreground shrink-0 bg-muted px-1 rounded">
-            {facility.abbreviation}
-          </span>
+          <span className="text-sm font-medium truncate flex-1">{outpost.planet}</span>
+          <span className="text-xs text-muted-foreground shrink-0">{outpost.system}</span>
         </div>
-        <p className="text-xs text-muted-foreground truncate mb-1">
-          {facility.planet} · {facility.system}
-        </p>
         <div className="flex items-center gap-1">
           <span className="text-[10px] text-muted-foreground">
-            {facility.resources.length} {facility.resources.length === 1 ? 'resource' : 'resources'}
+            {outpost.resources.length} {outpost.resources.length === 1 ? 'resource' : 'resources'}
           </span>
           <div className="flex-1" />
           <button
@@ -72,19 +67,19 @@ export const FacilityNode = memo(function FacilityNode({ data }: NodeProps<Facil
           <button
             className="h-5 w-5 inline-flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors shrink-0"
             onClick={e => { e.stopPropagation(); onEdit() }}
-            aria-label="Edit facility"
+            aria-label="Edit outpost"
           >
             <Pencil className="h-3 w-3" />
           </button>
         </div>
       </div>
 
-      {facility.resources.length > 0 && (
+      {outpost.resources.length > 0 && (
         <div className="border-t border-border/50 mx-2 mb-1" />
       )}
 
       <div className="px-3 pb-2 space-y-1">
-        {facility.resources.map(fr => {
+        {outpost.resources.map(fr => {
           const rv = validation?.resources.get(fr.resourceId)
           const rvStatus = rv?.status
           return (
@@ -111,18 +106,18 @@ export const FacilityNode = memo(function FacilityNode({ data }: NodeProps<Facil
         })}
       </div>
 
-      {facility.transferStationLimit > 0 && (
+      {outpost.transferStationLimit > 0 && (
         <div className="border-t border-border/50 mx-2 mb-2" />
       )}
-      {facility.transferStationLimit > 0 && (
+      {outpost.transferStationLimit > 0 && (
         <div className="px-3 pb-2">
           <span className="text-[10px] text-muted-foreground">
-            Transfer Stations: {transferCount} / {facility.transferStationLimit}
+            Transfer Stations: {transferCount} / {outpost.transferStationLimit}
           </span>
         </div>
       )}
 
-      <Handle type="source" position={Position.Bottom} />
+      <Handle type="source" position={Position.Top} />
     </div>
   )
 })
