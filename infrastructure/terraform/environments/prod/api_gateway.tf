@@ -398,6 +398,106 @@ module "api_gateway" {
       function_name = module.lambda_signals_sync.function_name
       route_key     = "POST /signals/sync"
     }
+    starfield-network-delete = {
+      invoke_arn    = module.lambda_starfield_network_delete.invoke_arn
+      function_name = module.lambda_starfield_network_delete.function_name
+      route_key     = "DELETE /starfield/networks/{id}"
+    }
+    starfield-network-update = {
+      invoke_arn    = module.lambda_starfield_network_update.invoke_arn
+      function_name = module.lambda_starfield_network_update.function_name
+      route_key     = "PUT /starfield/networks/{id}"
+    }
+    starfield-outpost-create = {
+      invoke_arn    = module.lambda_starfield_outpost_create.invoke_arn
+      function_name = module.lambda_starfield_outpost_create.function_name
+      route_key     = "POST /starfield/outposts"
+    }
+    starfield-outpost-delete = {
+      invoke_arn    = module.lambda_starfield_outpost_delete.invoke_arn
+      function_name = module.lambda_starfield_outpost_delete.function_name
+      route_key     = "DELETE /starfield/outposts/{id}"
+    }
+    starfield-outpost-position = {
+      invoke_arn    = module.lambda_starfield_outpost_position.invoke_arn
+      function_name = module.lambda_starfield_outpost_position.function_name
+      route_key     = "PATCH /starfield/outposts/{id}/position"
+    }
+    starfield-outpost-resource-delete = {
+      invoke_arn    = module.lambda_starfield_outpost_resource_delete.invoke_arn
+      function_name = module.lambda_starfield_outpost_resource_delete.function_name
+      route_key     = "DELETE /starfield/outposts/{outpostId}/resources/{resourceId}"
+    }
+    starfield-outpost-resource-upsert = {
+      invoke_arn    = module.lambda_starfield_outpost_resource_upsert.invoke_arn
+      function_name = module.lambda_starfield_outpost_resource_upsert.function_name
+      route_key     = "PUT /starfield/outposts/{outpostId}/resources/{resourceId}"
+    }
+    starfield-outpost-update = {
+      invoke_arn    = module.lambda_starfield_outpost_update.invoke_arn
+      function_name = module.lambda_starfield_outpost_update.function_name
+      route_key     = "PUT /starfield/outposts/{id}"
+    }
+    starfield-outposts-get = {
+      invoke_arn    = module.lambda_starfield_outposts_get.invoke_arn
+      function_name = module.lambda_starfield_outposts_get.function_name
+      route_key     = "GET /starfield/outposts"
+    }
+    starfield-resource-create = {
+      invoke_arn    = module.lambda_starfield_resource_create.invoke_arn
+      function_name = module.lambda_starfield_resource_create.function_name
+      route_key     = "POST /starfield/resources"
+    }
+    starfield-resource-delete = {
+      invoke_arn    = module.lambda_starfield_resource_delete.invoke_arn
+      function_name = module.lambda_starfield_resource_delete.function_name
+      route_key     = "DELETE /starfield/resources/{id}"
+    }
+    starfield-resource-update = {
+      invoke_arn    = module.lambda_starfield_resource_update.invoke_arn
+      function_name = module.lambda_starfield_resource_update.function_name
+      route_key     = "PUT /starfield/resources/{id}"
+    }
+    starfield-resources-get = {
+      invoke_arn    = module.lambda_starfield_resources_get.invoke_arn
+      function_name = module.lambda_starfield_resources_get.function_name
+      route_key     = "GET /starfield/resources"
+    }
+    starfield-system-create = {
+      invoke_arn    = module.lambda_starfield_system_create.invoke_arn
+      function_name = module.lambda_starfield_system_create.function_name
+      route_key     = "POST /starfield/systems"
+    }
+    starfield-system-delete = {
+      invoke_arn    = module.lambda_starfield_system_delete.invoke_arn
+      function_name = module.lambda_starfield_system_delete.function_name
+      route_key     = "DELETE /starfield/systems/{id}"
+    }
+    starfield-system-planet-create = {
+      invoke_arn    = module.lambda_starfield_system_planet_create.invoke_arn
+      function_name = module.lambda_starfield_system_planet_create.function_name
+      route_key     = "POST /starfield/systems/{id}/planets"
+    }
+    starfield-system-planet-delete = {
+      invoke_arn    = module.lambda_starfield_system_planet_delete.invoke_arn
+      function_name = module.lambda_starfield_system_planet_delete.function_name
+      route_key     = "DELETE /starfield/systems/{id}/planets/{planetId}"
+    }
+    starfield-system-planet-update = {
+      invoke_arn    = module.lambda_starfield_system_planet_update.invoke_arn
+      function_name = module.lambda_starfield_system_planet_update.function_name
+      route_key     = "PUT /starfield/systems/{id}/planets/{planetId}"
+    }
+    starfield-system-update = {
+      invoke_arn    = module.lambda_starfield_system_update.invoke_arn
+      function_name = module.lambda_starfield_system_update.function_name
+      route_key     = "PUT /starfield/systems/{id}"
+    }
+    starfield-systems-get = {
+      invoke_arn    = module.lambda_starfield_systems_get.invoke_arn
+      function_name = module.lambda_starfield_systems_get.function_name
+      route_key     = "GET /starfield/systems"
+    }
     stones-delete = {
       invoke_arn    = module.lambda_stones_delete.invoke_arn
       function_name = module.lambda_stones_delete.function_name
@@ -482,116 +582,6 @@ module "api_gateway" {
       invoke_arn    = module.lambda_waypoints_update.invoke_arn
       function_name = module.lambda_waypoints_update.function_name
       route_key     = "PUT /waypoints/{id}"
-    }
-    starfield-networks-get = {
-      invoke_arn    = module.lambda_starfield_networks_get.invoke_arn
-      function_name = module.lambda_starfield_networks_get.function_name
-      route_key     = "GET /starfield/networks"
-    }
-    starfield-network-create = {
-      invoke_arn    = module.lambda_starfield_network_create.invoke_arn
-      function_name = module.lambda_starfield_network_create.function_name
-      route_key     = "POST /starfield/networks"
-    }
-    starfield-network-update = {
-      invoke_arn    = module.lambda_starfield_network_update.invoke_arn
-      function_name = module.lambda_starfield_network_update.function_name
-      route_key     = "PUT /starfield/networks/{id}"
-    }
-    starfield-network-delete = {
-      invoke_arn    = module.lambda_starfield_network_delete.invoke_arn
-      function_name = module.lambda_starfield_network_delete.function_name
-      route_key     = "DELETE /starfield/networks/{id}"
-    }
-    starfield-outposts-get = {
-      invoke_arn    = module.lambda_starfield_outposts_get.invoke_arn
-      function_name = module.lambda_starfield_outposts_get.function_name
-      route_key     = "GET /starfield/outposts"
-    }
-    starfield-outpost-create = {
-      invoke_arn    = module.lambda_starfield_outpost_create.invoke_arn
-      function_name = module.lambda_starfield_outpost_create.function_name
-      route_key     = "POST /starfield/outposts"
-    }
-    starfield-outpost-update = {
-      invoke_arn    = module.lambda_starfield_outpost_update.invoke_arn
-      function_name = module.lambda_starfield_outpost_update.function_name
-      route_key     = "PUT /starfield/outposts/{id}"
-    }
-    starfield-outpost-delete = {
-      invoke_arn    = module.lambda_starfield_outpost_delete.invoke_arn
-      function_name = module.lambda_starfield_outpost_delete.function_name
-      route_key     = "DELETE /starfield/outposts/{id}"
-    }
-    starfield-outpost-position = {
-      invoke_arn    = module.lambda_starfield_outpost_position.invoke_arn
-      function_name = module.lambda_starfield_outpost_position.function_name
-      route_key     = "PATCH /starfield/outposts/{id}/position"
-    }
-    starfield-outpost-resource-upsert = {
-      invoke_arn    = module.lambda_starfield_outpost_resource_upsert.invoke_arn
-      function_name = module.lambda_starfield_outpost_resource_upsert.function_name
-      route_key     = "PUT /starfield/outposts/{outpostId}/resources/{resourceId}"
-    }
-    starfield-outpost-resource-delete = {
-      invoke_arn    = module.lambda_starfield_outpost_resource_delete.invoke_arn
-      function_name = module.lambda_starfield_outpost_resource_delete.function_name
-      route_key     = "DELETE /starfield/outposts/{outpostId}/resources/{resourceId}"
-    }
-    starfield-resources-get = {
-      invoke_arn    = module.lambda_starfield_resources_get.invoke_arn
-      function_name = module.lambda_starfield_resources_get.function_name
-      route_key     = "GET /starfield/resources"
-    }
-    starfield-resource-create = {
-      invoke_arn    = module.lambda_starfield_resource_create.invoke_arn
-      function_name = module.lambda_starfield_resource_create.function_name
-      route_key     = "POST /starfield/resources"
-    }
-    starfield-resource-update = {
-      invoke_arn    = module.lambda_starfield_resource_update.invoke_arn
-      function_name = module.lambda_starfield_resource_update.function_name
-      route_key     = "PUT /starfield/resources/{id}"
-    }
-    starfield-resource-delete = {
-      invoke_arn    = module.lambda_starfield_resource_delete.invoke_arn
-      function_name = module.lambda_starfield_resource_delete.function_name
-      route_key     = "DELETE /starfield/resources/{id}"
-    }
-    starfield-systems-get = {
-      invoke_arn    = module.lambda_starfield_systems_get.invoke_arn
-      function_name = module.lambda_starfield_systems_get.function_name
-      route_key     = "GET /starfield/systems"
-    }
-    starfield-system-create = {
-      invoke_arn    = module.lambda_starfield_system_create.invoke_arn
-      function_name = module.lambda_starfield_system_create.function_name
-      route_key     = "POST /starfield/systems"
-    }
-    starfield-system-update = {
-      invoke_arn    = module.lambda_starfield_system_update.invoke_arn
-      function_name = module.lambda_starfield_system_update.function_name
-      route_key     = "PUT /starfield/systems/{id}"
-    }
-    starfield-system-delete = {
-      invoke_arn    = module.lambda_starfield_system_delete.invoke_arn
-      function_name = module.lambda_starfield_system_delete.function_name
-      route_key     = "DELETE /starfield/systems/{id}"
-    }
-    starfield-system-planet-create = {
-      invoke_arn    = module.lambda_starfield_system_planet_create.invoke_arn
-      function_name = module.lambda_starfield_system_planet_create.function_name
-      route_key     = "POST /starfield/systems/{id}/planets"
-    }
-    starfield-system-planet-update = {
-      invoke_arn    = module.lambda_starfield_system_planet_update.invoke_arn
-      function_name = module.lambda_starfield_system_planet_update.function_name
-      route_key     = "PUT /starfield/systems/{id}/planets/{planetId}"
-    }
-    starfield-system-planet-delete = {
-      invoke_arn    = module.lambda_starfield_system_planet_delete.invoke_arn
-      function_name = module.lambda_starfield_system_planet_delete.function_name
-      route_key     = "DELETE /starfield/systems/{id}/planets/{planetId}"
     }
   }
 }

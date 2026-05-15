@@ -434,7 +434,7 @@ jobs:
         env:
           ENVIRONMENT: dev
           AWS_REGION: us-east-2
-        run: node scripts/deploy.mjs starfield/network-create starfield/network-delete starfield/network-update starfield/networks-get starfield/outposts-get starfield/outpost-create starfield/outpost-delete starfield/outpost-position starfield/outpost-resource-delete starfield/outpost-resource-upsert starfield/outpost-update starfield/resource-create starfield/resource-delete starfield/resource-update starfield/resources-get
+        run: node scripts/deploy.mjs starfield/network-create starfield/network-delete starfield/network-update starfield/networks-get starfield/outposts-get starfield/outpost-create starfield/outpost-delete starfield/outpost-position starfield/outpost-resource-delete starfield/outpost-resource-upsert starfield/outpost-update starfield/resource-create starfield/resource-delete starfield/resource-update starfield/resources-get starfield/system-create starfield/system-delete starfield/system-planet-create starfield/system-planet-delete starfield/system-planet-update starfield/system-update starfield/systems-get
 
   deploy-lambda-stones:
     name: Deploy Lambda — Stones

@@ -1164,18 +1164,7 @@ module "lambda_starfield_resource_update" {
   project_name         = var.project_name
 }
 
-module "lambda_starfield_systems_get" {
-  source               = "../../modules/lambda"
-  cognito_user_pool_id = module.cognito.cognito_user_pool_id
-  dynamodb_table_name  = module.dynamodb.table_name
-  environment          = var.environment
-  function_name        = "starfield-systems-get"
-  handler_path         = "starfield/systems-get/handler.handler"
-  managed_by           = var.managed_by
-  owner                = var.owner
-  policy_arn           = module.iam.lambda_read_policy_arn
-  project_name         = var.project_name
-}
+
 
 module "lambda_starfield_system_create" {
   source               = "../../modules/lambda"
@@ -1190,16 +1179,16 @@ module "lambda_starfield_system_create" {
   project_name         = var.project_name
 }
 
-module "lambda_starfield_system_update" {
+module "lambda_starfield_systems_get" {
   source               = "../../modules/lambda"
   cognito_user_pool_id = module.cognito.cognito_user_pool_id
   dynamodb_table_name  = module.dynamodb.table_name
   environment          = var.environment
-  function_name        = "starfield-system-update"
-  handler_path         = "starfield/system-update/handler.handler"
+  function_name        = "starfield-systems-get"
+  handler_path         = "starfield/systems-get/handler.handler"
   managed_by           = var.managed_by
   owner                = var.owner
-  policy_arn           = module.iam.lambda_write_policy_arn
+  policy_arn           = module.iam.lambda_read_policy_arn
   project_name         = var.project_name
 }
 
@@ -1216,6 +1205,19 @@ module "lambda_starfield_system_delete" {
   project_name         = var.project_name
 }
 
+module "lambda_starfield_system_update" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "starfield-system-update"
+  handler_path         = "starfield/system-update/handler.handler"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_write_policy_arn
+  project_name         = var.project_name
+}
+
 module "lambda_starfield_system_planet_create" {
   source               = "../../modules/lambda"
   cognito_user_pool_id = module.cognito.cognito_user_pool_id
@@ -1223,19 +1225,6 @@ module "lambda_starfield_system_planet_create" {
   environment          = var.environment
   function_name        = "starfield-system-planet-create"
   handler_path         = "starfield/system-planet-create/handler.handler"
-  managed_by           = var.managed_by
-  owner                = var.owner
-  policy_arn           = module.iam.lambda_write_policy_arn
-  project_name         = var.project_name
-}
-
-module "lambda_starfield_system_planet_update" {
-  source               = "../../modules/lambda"
-  cognito_user_pool_id = module.cognito.cognito_user_pool_id
-  dynamodb_table_name  = module.dynamodb.table_name
-  environment          = var.environment
-  function_name        = "starfield-system-planet-update"
-  handler_path         = "starfield/system-planet-update/handler.handler"
   managed_by           = var.managed_by
   owner                = var.owner
   policy_arn           = module.iam.lambda_write_policy_arn
@@ -1252,6 +1241,19 @@ module "lambda_starfield_system_planet_delete" {
   managed_by           = var.managed_by
   owner                = var.owner
   policy_arn           = module.iam.lambda_delete_policy_arn
+  project_name         = var.project_name
+}
+
+module "lambda_starfield_system_planet_update" {
+  source               = "../../modules/lambda"
+  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  dynamodb_table_name  = module.dynamodb.table_name
+  environment          = var.environment
+  function_name        = "starfield-system-planet-update"
+  handler_path         = "starfield/system-planet-update/handler.handler"
+  managed_by           = var.managed_by
+  owner                = var.owner
+  policy_arn           = module.iam.lambda_write_policy_arn
   project_name         = var.project_name
 }
 
