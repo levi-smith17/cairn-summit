@@ -49,7 +49,7 @@ interface SnapshotData {
     emailAccounts: { id: string; label: string; emailAddress: string; unreadCount: number }[]
   }
   itinerarySummary: {
-    stops: { id: string; title: string; startDate: Date; endDate: Date | null; allDay: boolean; color: string }[]
+    stops: { id: string; title: string; startDate: Date | string; endDate: Date | string | null; allDay: boolean; color: string }[]
   }
 }
 

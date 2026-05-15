@@ -1,172 +1,151 @@
+import { getAuthHeaders } from '@/lib/api/auth-headers'
+
 const API_BASE = import.meta.env.VITE_API_URL
 
-async function getAuthHeaders(): Promise<Record<string, string>> {
-    return {}
-}
-
-// ── Systems ───────────────────────────────────────────────────────────────────
-
-export async function saveSystem(data: { id?: string; name: string }) {
-    const method = data.id ? 'PUT' : 'POST'
-    const url = data.id ? `${API_BASE}/starfield/systems/${data.id}` : `${API_BASE}/starfield/systems`
+async function apiFetch(url: string, options: RequestInit = {}) {
     const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json', ...await getAuthHeaders() },
-        body: JSON.stringify(data),
+        ...options,
+        headers: { ...options.headers, ...await getAuthHeaders() },
     })
-    if (!res.ok) throw new Error('Failed to save system')
-    return res.json()
-}
-
-export async function deleteSystem(id: string) {
-    const res = await fetch(`${API_BASE}/starfield/systems/${id}`, {
-        method: 'DELETE',
-        headers: await getAuthHeaders(),
-    })
-    if (!res.ok) throw new Error('Failed to delete system')
-}
-
-// ── Planets ───────────────────────────────────────────────────────────────────
-
-export async function savePlanet(data: { id?: string; name: string; systemId: string }) {
-    const method = data.id ? 'PUT' : 'POST'
-    const url = data.id ? `${API_BASE}/starfield/planets/${data.id}` : `${API_BASE}/starfield/planets`
-    const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json', ...await getAuthHeaders() },
-        body: JSON.stringify(data),
-    })
-    if (!res.ok) throw new Error('Failed to save planet')
-    return res.json()
-}
-
-export async function deletePlanet(id: string) {
-    const res = await fetch(`${API_BASE}/starfield/planets/${id}`, {
-        method: 'DELETE',
-        headers: await getAuthHeaders(),
-    })
-    if (!res.ok) throw new Error('Failed to delete planet')
+    if (!res.ok) throw new Error(`API error ${res.status}: ${url}`)
+    if (res.status === 204) return null
+    const json = await res.json()
+    return json.data ?? json
 }
 
 // ── Networks ──────────────────────────────────────────────────────────────────
 
-export async function getNetworks() {
-    const res = await fetch(`${API_BASE}/starfield/networks`, { headers: await getAuthHeaders() })
-    if (!res.ok) throw new Error('Failed to fetch networks')
-    return res.json()
+export async function getNetworks(): Promise<any[]> {
+    return apiFetch(`${API_BASE}/starfield/networks`) ?? []
 }
 
-export async function createNetwork(data: { name: string }) {
-    const res = await fetch(`${API_BASE}/starfield/networks`, {
+export async function createNetwork(data: { name: string; abbreviation: string }): Promise<any> {
+    return apiFetch(`${API_BASE}/starfield/networks`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...await getAuthHeaders() },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
     })
-    if (!res.ok) throw new Error('Failed to create network')
-    return res.json()
 }
 
-// ── Facilities ────────────────────────────────────────────────────────────────
-
-export async function getFacilities(networkId: string) {
-    const res = await fetch(`${API_BASE}/starfield/networks/${networkId}/facilities`, { headers: await getAuthHeaders() })
-    if (!res.ok) throw new Error('Failed to fetch facilities')
-    return res.json()
-}
-
-export async function getFacilitiesPageData(): Promise<{ facilities: any[]; resources: any[]; systems: any[] }> {
-    const res = await fetch(`${API_BASE}/starfield/facilities`, { headers: await getAuthHeaders() })
-    if (!res.ok) throw new Error('Failed to fetch facilities page data')
-    return res.json()
-}
-
-export async function getResourcesPageData(page: number, pageSize: number): Promise<{
-    resources: any[]
-    resourceTypes: any[]
-    totalCount: number
-}> {
-    const res = await fetch(`${API_BASE}/starfield/resources?page=${page}&pageSize=${pageSize}`, { headers: await getAuthHeaders() })
-    if (!res.ok) throw new Error('Failed to fetch resources page data')
-    return res.json()
-}
-
-export async function saveFacilityResource(data: {
-    id?: string
-    facilityId: string
-    resourceId: string
-    planetId: string
-    subfacility1Id: string | null
-    subfacility2Id: string | null
-    subfacility3Id: string | null
-    relayId: string | null
-    onsite: boolean
-}) {
-    const method = data.id ? 'PUT' : 'POST'
-    const url = data.id
-        ? `${API_BASE}/starfield/facility-resources/${data.id}`
-        : `${API_BASE}/starfield/facility-resources`
-    const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json', ...await getAuthHeaders() },
+export async function updateNetwork(id: string, data: { name: string; abbreviation: string }): Promise<any> {
+    return apiFetch(`${API_BASE}/starfield/networks/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
     })
-    if (!res.ok) throw new Error('Failed to save facility resource')
-    return res.json()
 }
 
-export async function deleteFacilityResource(id: string) {
-    const res = await fetch(`${API_BASE}/starfield/facility-resources/${id}`, {
+export async function deleteNetwork(id: string): Promise<void> {
+    await apiFetch(`${API_BASE}/starfield/networks/${id}`, { method: 'DELETE' })
+}
+
+// ── Outposts ──────────────────────────────────────────────────────────────────
+
+export async function getAllOutposts(): Promise<any[]> {
+    return apiFetch(`${API_BASE}/starfield/outposts`) ?? []
+}
+
+export async function createOutpost(data: {
+    networkId: string
+    system: string
+    planet: string
+    parentId?: string
+    transferStationLimit?: number
+}): Promise<any> {
+    return apiFetch(`${API_BASE}/starfield/outposts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+    })
+}
+
+export async function updateOutpost(id: string, data: Record<string, unknown>): Promise<any> {
+    return apiFetch(`${API_BASE}/starfield/outposts/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+    })
+}
+
+export async function deleteOutpost(id: string): Promise<void> {
+    await apiFetch(`${API_BASE}/starfield/outposts/${id}`, { method: 'DELETE' })
+}
+
+export async function updateOutpostPosition(id: string, position: { x: number; y: number }): Promise<void> {
+    await apiFetch(`${API_BASE}/starfield/outposts/${id}/position`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(position),
+    })
+}
+
+export async function upsertOutpostResource(
+    outpostId: string,
+    resourceId: string,
+    data: { onsite: boolean; fromOutpostId?: string | null; fromPlanet?: string | null; fromSystem?: string | null; origin?: boolean; relay?: { planet: string; system: string } | null }
+): Promise<void> {
+    await apiFetch(`${API_BASE}/starfield/outposts/${outpostId}/resources/${resourceId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+    })
+}
+
+export async function removeOutpostResource(outpostId: string, resourceId: string): Promise<void> {
+    await apiFetch(`${API_BASE}/starfield/outposts/${outpostId}/resources/${resourceId}`, {
         method: 'DELETE',
-        headers: await getAuthHeaders(),
     })
-    if (!res.ok) throw new Error('Failed to delete facility resource')
-}
-
-export async function saveFacility(data: Record<string, unknown>) {
-    const method = data.id ? 'PUT' : 'POST'
-    const url = data.id ? `${API_BASE}/starfield/facilities/${data.id}` : `${API_BASE}/starfield/facilities`
-    const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json', ...await getAuthHeaders() },
-        body: JSON.stringify(data),
-    })
-    if (!res.ok) throw new Error('Failed to save facility')
-    return res.json()
-}
-
-export async function deleteFacility(id: string) {
-    const res = await fetch(`${API_BASE}/starfield/facilities/${id}`, {
-        method: 'DELETE',
-        headers: await getAuthHeaders(),
-    })
-    if (!res.ok) throw new Error('Failed to delete facility')
 }
 
 // ── Resources ─────────────────────────────────────────────────────────────────
 
-export async function getResources(page?: number, pageSize?: number) {
-    const params = page != null ? `?page=${page}&pageSize=${pageSize ?? 25}` : ''
-    const res = await fetch(`${API_BASE}/starfield/resources${params}`, { headers: await getAuthHeaders() })
-    if (!res.ok) throw new Error('Failed to fetch resources')
-    return res.json()
+export async function getResources(): Promise<any[]> {
+    return apiFetch(`${API_BASE}/starfield/resources`) ?? []
 }
 
-export async function saveResource(data: Record<string, unknown>) {
-    const method = data.id ? 'PUT' : 'POST'
-    const url = data.id ? `${API_BASE}/starfield/resources/${data.id}` : `${API_BASE}/starfield/resources`
-    const res = await fetch(url, {
+export async function saveResource(data: {
+    id?: string
+    name: string
+    abbreviation: string
+    type: string
+    tier?: number | null
+    mined?: boolean
+    ingredients?: string[]
+}): Promise<any> {
+    const { id, ...body } = data
+    const method = id ? 'PUT' : 'POST'
+    const url = id ? `${API_BASE}/starfield/resources/${id}` : `${API_BASE}/starfield/resources`
+    return apiFetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json', ...await getAuthHeaders() },
-        body: JSON.stringify(data),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
     })
-    if (!res.ok) throw new Error('Failed to save resource')
-    return res.json()
 }
 
-export async function deleteResource(id: string) {
-    const res = await fetch(`${API_BASE}/starfield/resources/${id}`, {
-        method: 'DELETE',
-        headers: await getAuthHeaders(),
-    })
-    if (!res.ok) throw new Error('Failed to delete resource')
+export async function deleteResource(id: string): Promise<void> {
+    await apiFetch(`${API_BASE}/starfield/resources/${id}`, { method: 'DELETE' })
+}
+
+// ── Composite ─────────────────────────────────────────────────────────────────
+
+export async function fetchStarfieldData() {
+    const [networks, outposts, resources] = await Promise.all([
+        getNetworks(),
+        getAllOutposts(),
+        getResources(),
+    ])
+
+    return {
+        networks: networks ?? [],
+        outposts: (outposts ?? []).map((f: any) => ({
+            ...f,
+            id: f.id ?? f.sk?.replace(/^SF#FACILITY#/, ''),
+        })),
+        resources: (resources ?? []).map((r: any) => ({
+            ...r,
+            id: r.id ?? r.sk?.replace(/^RESOURCE#/, ''),
+        })),
+        resourceTypes: [],
+        systems: [],
+    }
 }

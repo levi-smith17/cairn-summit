@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/hooks/use-auth'
 import { BasecampClient } from './basecamp/basecamp-client'
-import { getBasecampData } from '@/lib/api/basecamp'
+import { getBasecamp, type BasecampParams } from '@/lib/api/basecamp'
 
 const DEFAULTS = {
   folders: [],
@@ -27,7 +27,7 @@ export default function Basecamp() {
 
   const { data } = useQuery({
     queryKey: ['basecamp', searchParams.toString()],
-    queryFn: () => getBasecampData(searchParams.toString()),
+    queryFn: () => getBasecamp(Object.fromEntries(searchParams) as BasecampParams),
     enabled: !!user,
   })
 

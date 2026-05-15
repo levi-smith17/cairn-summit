@@ -1,15 +1,6 @@
-variable "aws_profile" {
-  type    = string
-  default = "cairn-dev"
-}
-
 variable "environment" {
   type    = string
   default = "dev"
-}
-
-variable "github_repo" {
-  type = string
 }
 
 variable "managed_by" {

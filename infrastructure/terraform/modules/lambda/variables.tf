@@ -37,7 +37,19 @@ variable "project_name" {
   type = string
 }
 
+variable "handler_path" {
+  description = "Explicit handler path override (e.g. guides/stones-get/handler.handler). Required when the function directory uses a hyphenated sub-path that would be mangled by the default dash→slash replacement."
+  type        = string
+  default     = null
+}
+
 variable "timeout" {
   type    = number
   default = 10
+}
+
+variable "web_url" {
+  description = "Web CloudFront URL for CORS allowed origin"
+  type        = string
+  default     = ""
 }

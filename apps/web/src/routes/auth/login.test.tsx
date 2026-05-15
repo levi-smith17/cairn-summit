@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import LoginPage from './login'
 
 vi.mock('@/hooks/use-auth', () => ({
@@ -19,12 +20,14 @@ const mockSignIn = vi.mocked(signIn)
 
 function renderLoginPage() {
     return render(
-        <MemoryRouter initialEntries={['/login']}>
-            <Routes>
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/" element={<div>Home Page</div>} />
-            </Routes>
-        </MemoryRouter>
+        <TooltipProvider>
+            <MemoryRouter initialEntries={['/login']}>
+                <Routes>
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/" element={<div>Home Page</div>} />
+                </Routes>
+            </MemoryRouter>
+        </TooltipProvider>
     )
 }
 

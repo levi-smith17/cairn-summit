@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { MoreHorizontal, Pencil, Trash2, ExternalLink } from 'lucide-react'
 import { MarkerBadge } from '@/routes/waypoints/marker-badge'
-import { deleteProvision, toggleProvisionActive } from '@/lib/api/provisions'
+import { deleteSupplyline, toggleSupplylineActive } from '@/lib/api/supplylines'
 import { InlineSupplylineForm } from './inline-supplyline-form'
 import { useTerminology } from '@/contexts/terminology-context'
 
@@ -30,7 +30,7 @@ interface Marker {
   marker: { id: string; name: string; color: string; icon?: string }
 }
 
-export interface Provision {
+export interface Supplyline {
   id: string
   name: string
   amount: number
@@ -43,7 +43,7 @@ export interface Provision {
 }
 
 interface Props {
-  provision: Provision
+  supplyline: Supplyline
   tags: any[]
   onSaved: () => void
   onDeleted: () => void
@@ -60,20 +60,20 @@ const CYCLE_LABELS: Record<string, string> = {
 const fmt = (n: number) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n)
 
-export function SupplylineRow({ provision, tags, onSaved, onDeleted }: Props) {
+export function SupplylineRow({ supplyline, tags, onSaved, onDeleted }: Props) {
   const { terms } = useTerminology()
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   const daysUntil = Math.ceil(
-    (new Date(provision.nextRenewal).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+    (new Date(supplyline.nextRenewal).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
   )
-  const renewingSoon = daysUntil <= 7 && provision.active
+  const renewingSoon = daysUntil <= 7 && supplyline.active
 
   if (editing) {
     return (
       <InlineSupplylineForm
-        provision={provision}
+        supplyline={supplyline}
         tags={tags}
         onSaved={() => { setEditing(false); onSaved() }}
         onCancel={() => setEditing(false)}
@@ -83,32 +83,32 @@ export function SupplylineRow({ provision, tags, onSaved, onDeleted }: Props) {
 
   return (
     <>
-      <div className={`flex items-center gap-2 px-3 py-2 hover:bg-muted/30 group ${!provision.active ? 'opacity-50' : ''}`}>
+      <div className={`flex items-center gap-2 px-3 py-2 hover:bg-muted/30 group ${!supplyline.active ? 'opacity-50' : ''}`}>
         <Switch
-          checked={provision.active}
+          checked={supplyline.active}
           onCheckedChange={async (checked) => {
-            await toggleProvisionActive(provision.id, checked)
+            await toggleSupplylineActive(supplyline.id, checked)
             onSaved()
           }}
           className="shrink-0 scale-75"
         />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-sm font-medium truncate">{provision.name}</span>
+            <span className="text-sm font-medium truncate">{supplyline.name}</span>
             {renewingSoon && (
               <Badge className="text-xs py-0 px-1.5 bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30">
                 {daysUntil}d
               </Badge>
             )}
-            {provision.markers.map(({ marker }) => <MarkerBadge key={marker.id} marker={marker} />)}
+            {supplyline.markers.map(({ marker }) => <MarkerBadge key={marker.id} marker={marker} />)}
           </div>
           <div className="text-xs text-muted-foreground">
-            renews {new Date(provision.nextRenewal).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            renews {new Date(supplyline.nextRenewal).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
           </div>
         </div>
         <div className="text-right shrink-0">
-          <div className="text-sm font-medium tabular-nums">{fmt(provision.amount)}</div>
-          <div className="text-xs text-muted-foreground">{CYCLE_LABELS[provision.billingCycle]}</div>
+          <div className="text-sm font-medium tabular-nums">{fmt(supplyline.amount)}</div>
+          <div className="text-xs text-muted-foreground">{CYCLE_LABELS[supplyline.billingCycle]}</div>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -124,9 +124,9 @@ export function SupplylineRow({ provision, tags, onSaved, onDeleted }: Props) {
             <DropdownMenuItem onClick={() => setEditing(true)}>
               <Pencil className="h-4 w-4 mr-2" /> Edit
             </DropdownMenuItem>
-            {provision.url && (
+            {supplyline.url && (
               <DropdownMenuItem asChild>
-                <a href={provision.url} target="_blank" rel="noopener noreferrer">
+                <a href={supplyline.url} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="h-4 w-4 mr-2" /> Open link
                 </a>
               </DropdownMenuItem>
@@ -147,13 +147,13 @@ export function SupplylineRow({ provision, tags, onSaved, onDeleted }: Props) {
           <AlertDialogHeader>
             <AlertDialogTitle>Remove {terms.supplylines.slice(0, -1).toLowerCase()}?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove &ldquo;{provision.name}&rdquo;. This action cannot be undone.
+              This will permanently remove &ldquo;{supplyline.name}&rdquo;. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={async () => { await deleteProvision(provision.id); onDeleted() }}
+              onClick={async () => { await deleteSupplyline(supplyline.id); onDeleted() }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Remove

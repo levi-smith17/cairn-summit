@@ -8,12 +8,24 @@ import { CustomSelect } from '@/components/ui/custom-select'
 import { ResourcePicker } from '@/components/ui/resource-picker'
 import { FormActions } from '@/components/forms/form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
+import { Cuboid, Droplet, Wind, Component } from 'lucide-react'
+
+const RESOURCE_TYPE_OPTIONS = [
+  { value: 'Gas', label: 'Gas', icon: Wind },
+  { value: 'Liquid', label: 'Liquid', icon: Droplet },
+  { value: 'Manufactured', label: 'Manufactured', icon: Component },
+  { value: 'Solid', label: 'Solid', icon: Cuboid },
+]
 
 const schema = z.object({
   name: z.string().min(1, 'Name is required'),
   abbreviation: z.string().min(1, 'Abbreviation is required'),
-  typeId: z.string().min(1, 'Type is required'),
-  ingredientIds: z.array(z.string()).max(4).optional(),
+  type: z.string().min(1, 'Type is required'),
+  ingredients: z.array(z.string()).optional(),
+}).superRefine((data, ctx) => {
+  if (data.type === 'Manufactured' && (!data.ingredients || data.ingredients.length < 2)) {
+    ctx.addIssue({ code: 'custom', message: 'Manufactured resources require at least 2 ingredients', path: ['ingredients'] })
+  }
 })
 
 type FormValues = z.infer<typeof schema>
@@ -21,12 +33,11 @@ type FormValues = z.infer<typeof schema>
 interface ResourceFormProps {
   resource?: any
   resources: any[]
-  resourceTypes: any[]
   onDone: () => void
   onRefresh: () => void
 }
 
-export function ResourceForm({ resource, resources, resourceTypes, onDone, onRefresh }: ResourceFormProps) {
+export function ResourceForm({ resource, resources, onDone, onRefresh }: ResourceFormProps) {
   const { saving, saved, error, handleSubmit } = useFormStatus()
 
   const form = useForm<FormValues>({
@@ -34,72 +45,83 @@ export function ResourceForm({ resource, resources, resourceTypes, onDone, onRef
     defaultValues: {
       name: resource?.name ?? '',
       abbreviation: resource?.abbreviation ?? '',
-      typeId: resource?.typeId ?? '',
-      ingredientIds: [resource?.resource1Id, resource?.resource2Id, resource?.resource3Id, resource?.resource4Id].filter(Boolean) as string[],
+      type: resource?.type ?? '',
+      ingredients: resource?.ingredients ?? [],
     },
   })
 
   async function onSubmit(values: FormValues) {
+    const others = resources.filter(r => r.id !== resource?.id)
+    const nameTaken = others.find(r => r.name.toLowerCase() === values.name.toLowerCase())
+    if (nameTaken) {
+      form.setError('name', { message: 'A resource with this name already exists' })
+      return
+    }
+    const abbrevTaken = others.find(r => r.abbreviation.toLowerCase() === values.abbreviation.toLowerCase())
+    if (abbrevTaken) {
+      form.setError('abbreviation', { message: 'A resource with this abbreviation already exists' })
+      return
+    }
     await handleSubmit(async () => {
-      const ids = values.ingredientIds ?? []
       await saveResource({
         id: resource?.id,
         name: values.name,
         abbreviation: values.abbreviation,
-        typeId: values.typeId,
-        resource1Id: ids[0] ?? null,
-        resource2Id: ids[1] ?? null,
-        resource3Id: ids[2] ?? null,
-        resource4Id: ids[3] ?? null,
+        type: values.type,
+        ingredients: values.ingredients ?? [],
       })
       onRefresh()
       onDone()
     })
   }
 
-  const ingredientOptions = resources.filter(r => r.id !== resource?.id)
+  const watchType = form.watch('type')
+  const ingredientOptions = resources.filter(r => (r.id ?? r.sk) !== (resource?.id ?? resource?.sk))
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-        <span className="text-sm font-medium">{resource ? 'Edit Resource' : 'Add Resource'}</span>
-      </div>
-      <div className="flex-1 overflow-y-auto p-4">
-        <Form {...form}>
-          <form id="resource-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField control={form.control} name="name" render={({ field }) => (
+    <div className="flex-1 overflow-y-auto p-4">
+      <Form {...form}>
+        <form id="resource-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <FormField control={form.control} name="name" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Name</FormLabel>
+              <Input placeholder="Aluminum" className="md:h-8" {...field} />
+              <FormMessage />
+            </FormItem>
+          )} />
+          <FormField control={form.control} name="abbreviation" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Abbreviation</FormLabel>
+              <Input placeholder="Al" className="md:h-8" {...field} />
+              <FormMessage />
+            </FormItem>
+          )} />
+          <FormField control={form.control} name="type" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Type</FormLabel>
+              <CustomSelect
+                options={RESOURCE_TYPE_OPTIONS}
+                value={field.value}
+                onChange={field.onChange}
+                placeholder="Select type…"
+                triggerClassName="w-full"
+              />
+              <FormMessage />
+            </FormItem>
+          )} />
+          {watchType === 'Manufactured' && (
+            <FormField control={form.control} name="ingredients" render={({ field }) => (
               <FormItem>
-                <FormLabel>Name</FormLabel>
-                <Input placeholder="Aluminum" {...field} />
-                <FormMessage />
-              </FormItem>
-            )} />
-            <FormField control={form.control} name="abbreviation" render={({ field }) => (
-              <FormItem>
-                <FormLabel>Abbreviation</FormLabel>
-                <Input placeholder="Al" {...field} />
-                <FormMessage />
-              </FormItem>
-            )} />
-            <FormField control={form.control} name="typeId" render={({ field }) => (
-              <FormItem>
-                <FormLabel>Type</FormLabel>
-                <CustomSelect options={resourceTypes.map(t => ({ value: t.id, label: t.name }))} value={field.value} onChange={field.onChange} placeholder="Select type…" triggerClassName="w-full h-9!" />
-                <FormMessage />
-              </FormItem>
-            )} />
-            <FormField control={form.control} name="ingredientIds" render={({ field }) => (
-              <FormItem>
-                <FormLabel>Ingredients</FormLabel>
+                <FormLabel>Ingredients <span className="text-muted-foreground text-xs font-normal">(min. 2)</span></FormLabel>
                 <ResourcePicker value={field.value ?? []} onChange={field.onChange} options={ingredientOptions} />
                 <FormMessage />
               </FormItem>
             )} />
-            <div className="-mx-4 border-t" />
-            <FormActions saving={saving} saved={saved} error={error} saveLabel={resource ? 'Save Changes' : 'Add Resource'} formId="resource-form" onCancel={onDone} />
-          </form>
-        </Form>
-      </div>
+          )}
+          <div className="-mx-4 border-t" />
+          <FormActions saving={saving} saved={saved} error={error} saveLabel={resource ? 'Save Changes' : 'Add Resource'} formId="resource-form" onCancel={onDone} />
+        </form>
+      </Form>
     </div>
   )
 }

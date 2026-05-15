@@ -1,8 +1,6 @@
-const API_BASE = import.meta.env.VITE_API_URL ?? ''
+import { getAuthHeaders } from '@/lib/api/auth-headers'
 
-async function getAuthHeaders(): Promise<Record<string, string>> {
-  return {}
-}
+const API_BASE = import.meta.env.VITE_API_URL ?? ''
 
 export interface ProfileData {
   username: string | null
@@ -14,8 +12,13 @@ export interface ProfileData {
   itinerary: number
 }
 
-export async function getProfile(): Promise<ProfileData> {
-  const res = await fetch(`${API_BASE}/me`, { headers: await getAuthHeaders() })
-  if (!res.ok) throw new Error('Failed to fetch profile')
-  return res.json()
+export async function getProfile(): Promise<ProfileData | null> {
+  try {
+    const res = await fetch(`${API_BASE}/profile`, { headers: await getAuthHeaders() })
+    if (!res.ok) return null
+    const json = await res.json()
+    return json.data ?? null
+  } catch {
+    return null
+  }
 }

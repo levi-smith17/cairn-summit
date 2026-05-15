@@ -1,15 +1,14 @@
-const API_BASE = import.meta.env.VITE_API_URL
+import { getAuthHeaders } from '@/lib/api/auth-headers'
 
-async function getAuthHeaders(): Promise<Record<string, string>> {
-  return {}
-}
+const API_BASE = import.meta.env.VITE_API_URL
 
 export async function getSettings(): Promise<any> {
   const res = await fetch(`${API_BASE}/settings`, {
     headers: await getAuthHeaders(),
   })
   if (!res.ok) throw new Error('Failed to fetch settings')
-  return res.json()
+  const json = await res.json()
+  return json.data ?? json
 }
 
 export async function saveAccountSettings(data: Record<string, any>): Promise<any> {
@@ -121,7 +120,7 @@ export async function updateItinerarySettings(data: Record<string, any>): Promis
 }
 
 export async function addICloudCalendar(data: Record<string, any>): Promise<any> {
-  const res = await fetch(`${API_BASE}/calendars`, {
+  const res = await fetch(`${API_BASE}/itinerary`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...await getAuthHeaders() },
     body: JSON.stringify(data),
@@ -131,7 +130,7 @@ export async function addICloudCalendar(data: Record<string, any>): Promise<any>
 }
 
 export async function updateICloudCalendar(id: string, data: Record<string, any>): Promise<any> {
-  const res = await fetch(`${API_BASE}/calendars/${id}`, {
+  const res = await fetch(`${API_BASE}/itinerary/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...await getAuthHeaders() },
     body: JSON.stringify(data),
@@ -141,7 +140,7 @@ export async function updateICloudCalendar(id: string, data: Record<string, any>
 }
 
 export async function deleteICloudCalendar(id: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/calendars/${id}`, {
+  const res = await fetch(`${API_BASE}/itinerary/${id}`, {
     method: 'DELETE',
     headers: await getAuthHeaders(),
   })
@@ -149,7 +148,7 @@ export async function deleteICloudCalendar(id: string): Promise<void> {
 }
 
 export async function addCalendarSubscription(data: Record<string, any>): Promise<any> {
-  const res = await fetch(`${API_BASE}/calendar-subscriptions`, {
+  const res = await fetch(`${API_BASE}/itinerary-subscriptions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...await getAuthHeaders() },
     body: JSON.stringify(data),
@@ -159,7 +158,7 @@ export async function addCalendarSubscription(data: Record<string, any>): Promis
 }
 
 export async function updateCalendarSubscription(id: string, data: Record<string, any>): Promise<any> {
-  const res = await fetch(`${API_BASE}/calendar-subscriptions/${id}`, {
+  const res = await fetch(`${API_BASE}/itinerary-subscriptions/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...await getAuthHeaders() },
     body: JSON.stringify(data),
@@ -169,7 +168,7 @@ export async function updateCalendarSubscription(id: string, data: Record<string
 }
 
 export async function deleteCalendarSubscription(id: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/calendar-subscriptions/${id}`, {
+  const res = await fetch(`${API_BASE}/itinerary-subscriptions/${id}`, {
     method: 'DELETE',
     headers: await getAuthHeaders(),
   })

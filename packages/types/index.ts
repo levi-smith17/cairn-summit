@@ -107,6 +107,7 @@ export interface Log {
     trailId?: string
     waypointId?: string
     markers: EmbeddedMarker[]
+    mediaKeys?: string[]
     createdAt: string
     updatedAt: string
 }
@@ -194,8 +195,8 @@ export interface Stop {
     updatedAt: string
 }
 
-// ── Provisions ─────────────────────────────────────────
-export interface Provision {
+// ── Supplylines (recurring costs) ──────────────────────
+export interface Supplyline {
     pk: string
     sk: string
     name: string
@@ -209,7 +210,8 @@ export interface Provision {
     createdAt: string
 }
 
-export interface Expense {
+// ── Burn (one-time expenses) ───────────────────────────
+export interface Burn {
     pk: string
     sk: string
     name: string
@@ -221,7 +223,8 @@ export interface Expense {
     createdAt: string
 }
 
-export interface Budget {
+// ── Cache (marker-based budgets) ───────────────────────
+export interface Cache {
     pk: string
     sk: string
     markerId: string
@@ -348,30 +351,33 @@ export interface SfNetwork {
     pk: string
     sk: string
     name: string
-    rootFacilityId: string
+    abbreviation: string
+    rootOutpostId?: string
     createdAt: string
 }
 
-export interface SfFacility {
+export interface SfOutpost {
     pk: string
     sk: string
     networkId: string
-    name: string
     system: string
     planet: string
     parentId?: string
     depth: number
     position: { x: number; y: number }
-    resources: SfFacilityResource[]
+    resources: SfOutpostResource[]
     transferStationLimit: number
 }
 
-export interface SfFacilityResource {
+export interface SfOutpostResource {
     resourceId: string
     name: string
     abbreviation: string
     onsite: boolean
-    fromFacilityId?: string
+    fromOutpostId?: string
+    fromPlanet?: string
+    fromSystem?: string
+    origin?: boolean
     relay?: {
         planet: string
         system: string

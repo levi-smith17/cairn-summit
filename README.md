@@ -1,8 +1,10 @@
-# Cairn
+# Cairn (Summit)
 
 > *A cairn is a stack of stones left by travelers to mark the path for those who follow. This is yours.*
 
 Cairn is a comprehensive personal productivity and life management platform built around a hiking metaphor. Every feature, every data type, and every interaction is named for the language of the trail — because the best systems feel like they were made for the journey, not just the destination.
+
+Now that the platform has reached the Cairn Summit, the journey has ascended from local trails to the vast expanse of the AWS Cloud. By moving the infrastructure into the availability and reliability of serverless architecture, the platform no longer just marks the path—it overlooks the entire horizon. This summit iteration ensures that Waypoints, Logs, and Provisions are anchored in the high-altitude performance of the cloud, providing a stable, scalable peak from which to manage one's digital life.
 
 ---
 
@@ -36,7 +38,7 @@ Cairn consolidates the tools a person actually needs into a single, cohesive pla
 - **[react-hook-form](https://react-hook-form.com/)** + **[Zod](https://zod.dev/)** — form validation
 
 ### Backend
-- **[AWS Lambda](https://aws.amazon.com/lambda/)** — serverless function handlers, one per feature area
+- **[AWS Lambda](https://aws.amazon.com/lambda/)** — serverless function handlers
 - **[API Gateway HTTP API](https://aws.amazon.com/api-gateway/)** — routes requests to Lambda functions
 - **[DynamoDB](https://aws.amazon.com/dynamodb/)** — single-table design (`cairn-dev` / `cairn-prod`)
 - **[Cognito](https://aws.amazon.com/cognito/)** — authentication and user management

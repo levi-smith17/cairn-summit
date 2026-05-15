@@ -20,8 +20,6 @@ export default function Invite() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-white">
       <div className="flex flex-col items-center gap-6 w-full max-w-sm px-4 sm:px-6">
-        <img src="/cairn-lockup.svg" alt="Cairn" width={240} height={86} />
-
         {isLoading ? null : invalid ? (
           <div className="text-center space-y-2">
             <p className="text-sm font-medium">Invitation not found</p>

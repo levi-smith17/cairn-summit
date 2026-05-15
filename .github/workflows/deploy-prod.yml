@@ -10,8 +10,8 @@ permissions:
   contents: read
 
 jobs:
-  test:
-    name: Test
+  test-lambda:
+    name: Test Lambda
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,13 +27,27 @@ jobs:
       - name: Run Lambda tests
         run: npm run test --workspace=apps/api -- --run --reporter=verbose
 
+  test-web:
+    name: Test Web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
       - name: Run  Web tests
         run: npm run test:run --workspace=apps/web --reporter=verbose
 
   build-lambda:
     name: Build Lambda
     runs-on: ubuntu-latest
-    needs: test
+    needs: test-lambda
     steps:
       - uses: actions/checkout@v4
 
@@ -56,10 +70,40 @@ jobs:
           path: apps/api/dist
           retention-days: 1
 
-  deploy-lambda-logs:
-    name: Deploy Lambda — Logs
+  terraform-apply:
+    name: Terraform Apply
     runs-on: ubuntu-latest
-    needs: build-lambda
+    needs: [ test-lambda, test-web ]
+    environment: prod
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.PROD_AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: infrastructure/terraform/environments/prod
+        run: terraform init
+
+      - name: Terraform Apply
+        working-directory: infrastructure/terraform/environments/prod
+        run: |
+          terraform apply \
+            -var-file="../shared.tfvars" \
+            -var-file="prod.tfvars" \
+            -auto-approve
+
+  deploy-lambda-basecamp:
+    name: Deploy Lambda — Basecamp
+    runs-on: ubuntu-latest
+    needs: [build-lambda, terraform-apply]
     environment: prod
 
     steps:
@@ -82,12 +126,180 @@ jobs:
         env:
           ENVIRONMENT: prod
           AWS_REGION: us-east-2
-        run: node scripts/deploy.mjs logs/get logs/create logs/update logs/delete
+        run: node scripts/deploy.mjs basecamp/get basecamp/sidebar
+
+  deploy-lambda-burn:
+    name: Deploy Lambda — Burn
+    runs-on: ubuntu-latest
+    needs: [build-lambda, terraform-apply]
+    environment: prod
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-dist
+          path: apps/api/dist
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.prod_AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy Lambda functions
+        working-directory: apps/api
+        env:
+          ENVIRONMENT: prod
+          AWS_REGION: us-east-2
+        run: node scripts/deploy.mjs burn/create burn/delete burn/get burn/receipt-delete burn/receipt-upload-url burn/receipt-url burn/update
+
+  deploy-lambda-cache:
+    name: Deploy Lambda — Cache
+    runs-on: ubuntu-latest
+    needs: [build-lambda, terraform-apply]
+    environment: prod
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-dist
+          path: apps/api/dist
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.PROD_AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy Lambda functions
+        working-directory: apps/api
+        env:
+          ENVIRONMENT: prod
+          AWS_REGION: us-east-2
+        run: node scripts/deploy.mjs cache/get cache/create cache/update cache/delete cache/carry-over
+
+  deploy-lambda-guides:
+    name: Deploy Lambda — Guides
+    runs-on: ubuntu-latest
+    needs: [build-lambda, terraform-apply]
+    environment: prod
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-dist
+          path: apps/api/dist
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.PROD_AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy Lambda functions
+        working-directory: apps/api
+        env:
+          ENVIRONMENT: prod
+          AWS_REGION: us-east-2
+        run: node scripts/deploy.mjs guides/get guides/create guides/update guides/delete guides/stones-get guides/stones-create guides/stones-import guides/placements-reset
+
+  deploy-lambda-itinerary:
+    name: Deploy Lambda — Itinerary
+    runs-on: ubuntu-latest
+    needs: [build-lambda, terraform-apply]
+    environment: prod
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-dist
+          path: apps/api/dist
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.PROD_AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy Lambda functions
+        working-directory: apps/api
+        env:
+          ENVIRONMENT: prod
+          AWS_REGION: us-east-2
+        run: node scripts/deploy.mjs itinerary/calendars-create itinerary/calendars-delete itinerary/calendars-update itinerary/subscriptions-create itinerary/subscriptions-delete itinerary/subscriptions-update
+
+  deploy-lambda-logs:
+    name: Deploy Lambda — Logs
+    runs-on: ubuntu-latest
+    needs: [build-lambda, terraform-apply]
+    environment: prod
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-dist
+          path: apps/api/dist
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.PROD_AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy Lambda functions
+        working-directory: apps/api
+        env:
+          ENVIRONMENT: prod
+          AWS_REGION: us-east-2
+        run: node scripts/deploy.mjs logs/create logs/delete logs/get logs/image-url logs/update logs/upload-url
+
+  deploy-lambda-manifest:
+    name: Deploy Lambda — Manifest
+    runs-on: ubuntu-latest
+    needs: [build-lambda, terraform-apply]
+    environment: prod
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-dist
+          path: apps/api/dist
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.PROD_AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy Lambda functions
+        working-directory: apps/api
+        env:
+          ENVIRONMENT: prod
+          AWS_REGION: us-east-2
+        run: node scripts/deploy.mjs manifest/companions-create manifest/companions-delete manifest/companions-media-delete manifest/companions-media-upload manifest/companions-update manifest/expeditions-create manifest/expeditions-delete manifest/expeditions-update manifest/gear-create manifest/gear-delete manifest/gear-update manifest/get manifest/landmarks-create manifest/landmarks-delete manifest/landmarks-update manifest/origins-update manifest/pathfinding-create manifest/pathfinding-delete manifest/pathfinding-update manifest/settings-update manifest/summits-create manifest/summits-delete manifest/summits-update manifest/training-create manifest/training-delete manifest/training-update
 
   deploy-lambda-markers:
     name: Deploy Lambda — Markers
     runs-on: ubuntu-latest
-    needs: build-lambda
+    needs: [build-lambda, terraform-apply]
     environment: prod
 
     steps:
@@ -112,10 +324,66 @@ jobs:
           AWS_REGION: us-east-2
         run: node scripts/deploy.mjs markers/get markers/create markers/update markers/delete
 
+  deploy-lambda-profile:
+    name: Deploy Lambda — Profile
+    runs-on: ubuntu-latest
+    needs: [build-lambda, terraform-apply]
+    environment: prod
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-dist
+          path: apps/api/dist
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.PROD_AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy Lambda functions
+        working-directory: apps/api
+        env:
+          ENVIRONMENT: prod
+          AWS_REGION: us-east-2
+        run: node scripts/deploy.mjs profile/get
+
+  deploy-lambda-settings:
+    name: Deploy Lambda — Settings
+    runs-on: ubuntu-latest
+    needs: [build-lambda, terraform-apply]
+    environment: prod
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-dist
+          path: apps/api/dist
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.PROD_AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy Lambda functions
+        working-directory: apps/api
+        env:
+          ENVIRONMENT: prod
+          AWS_REGION: us-east-2
+        run: node scripts/deploy.mjs settings/delete-account settings/get settings/update
+
   deploy-lambda-signals:
     name: Deploy Lambda — Signals
     runs-on: ubuntu-latest
-    needs: build-lambda
+    needs: [build-lambda, terraform-apply]
     environment: prod
 
     steps:
@@ -140,10 +408,94 @@ jobs:
           AWS_REGION: us-east-2
         run: node scripts/deploy.mjs signals/get signals/delete signals/contact signals/mark-read signals/public-thread-get signals/public-thread-reply signals/reply signals/sync
 
+  deploy-lambda-starfield:
+    name: Deploy Lambda — Starfield
+    runs-on: ubuntu-latest
+    needs: [ build-lambda, terraform-apply ]
+    environment: prod
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-dist
+          path: apps/api/dist
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.PROD_AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy Lambda functions
+        working-directory: apps/api
+        env:
+          ENVIRONMENT: prod
+          AWS_REGION: us-east-2
+        run: node scripts/deploy.mjs starfield/network-create starfield/network-delete starfield/network-update starfield/networks-get starfield/outposts-get starfield/outpost-create starfield/outpost-delete starfield/outpost-position starfield/outpost-resource-delete starfield/outpost-resource-upsert starfield/outpost-update starfield/resource-create starfield/resource-delete starfield/resource-update starfield/resources-get
+
+  deploy-lambda-stones:
+    name: Deploy Lambda — Stones
+    runs-on: ubuntu-latest
+    needs: [build-lambda, terraform-apply]
+    environment: prod
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-dist
+          path: apps/api/dist
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.PROD_AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy Lambda functions
+        working-directory: apps/api
+        env:
+          ENVIRONMENT: prod
+          AWS_REGION: us-east-2
+        run: node scripts/deploy.mjs stones/update stones/delete stones/placement-update
+
+  deploy-lambda-supplylines:
+    name: Deploy Lambda — Supplylines
+    runs-on: ubuntu-latest
+    needs: [build-lambda, terraform-apply]
+    environment: prod
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-dist
+          path: apps/api/dist
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.PROD_AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy Lambda functions
+        working-directory: apps/api
+        env:
+          ENVIRONMENT: prod
+          AWS_REGION: us-east-2
+        run: node scripts/deploy.mjs supplylines/get supplylines/create supplylines/update supplylines/delete supplylines/summary
+
   deploy-lambda-trails:
     name: Deploy Lambda — Trails
     runs-on: ubuntu-latest
-    needs: build-lambda
+    needs: [build-lambda, terraform-apply]
     environment: prod
 
     steps:
@@ -171,7 +523,7 @@ jobs:
   deploy-lambda-waypoints:
     name: Deploy Lambda — Waypoints
     runs-on: ubuntu-latest
-    needs: build-lambda
+    needs: [build-lambda, terraform-apply]
     environment: prod
 
     steps:
@@ -194,12 +546,12 @@ jobs:
         env:
           ENVIRONMENT: prod
           AWS_REGION: us-east-2
-        run: node scripts/deploy.mjs waypoints/get waypoints/create waypoints/update waypoints/delete
+        run: node scripts/deploy.mjs waypoints/get waypoints/create waypoints/fetch-meta waypoints/update waypoints/delete
 
   deploy-web:
     name: Deploy Web
     runs-on: ubuntu-latest
-    needs: test
+    needs: [test-web, terraform-apply]
     environment: prod
 
     steps:
@@ -242,33 +594,3 @@ jobs:
           aws cloudfront create-invalidation \
             --distribution-id ${{ secrets.PROD_CLOUDFRONT_DISTRIBUTION_ID }} \
             --paths "/*"
-
-  terraform-apply:
-    name: Terraform Apply
-    runs-on: ubuntu-latest
-    needs: test
-    environment: prod
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.PROD_AWS_ROLE_ARN }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-
-      - name: Terraform Init
-        working-directory: infrastructure/terraform/environments/prod
-        run: terraform init
-
-      - name: Terraform Apply
-        working-directory: infrastructure/terraform/environments/prod
-        run: |
-          terraform apply \
-            -var-file="../shared.tfvars" \
-            -var-file="prod.tfvars" \
-            -auto-approve

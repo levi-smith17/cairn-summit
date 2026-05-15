@@ -1,4 +1,5 @@
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { NotebookPen, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -8,6 +9,7 @@ import { FilterBar } from '@/components/filters/filter-bar'
 import { LogList } from './log-list'
 import { LogForm } from './log-form'
 import { Logbook } from './logbook'
+import { parseFiltersFromParams, applyLogFilters } from '@/lib/filters'
 
 interface LogClientProps {
   logs: any[]
@@ -15,15 +17,17 @@ interface LogClientProps {
   trails: any[]
   waypoints: any[]
   markers: any[]
-  totalCount: number
-  currentPage: number
   logsPerPage: number
 }
 
-export function LogsClient({ logs, logbookTrailLogs, trails, waypoints, markers, totalCount, currentPage, logsPerPage }: LogClientProps) {
+export function LogsClient({ logs, logbookTrailLogs, trails, waypoints, markers, logsPerPage }: LogClientProps) {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
+  const queryClient = useQueryClient()
   const { terms } = useTerminology()
+
+  const filters = parseFiltersFromParams(searchParams)
+  const currentPage = Math.max(1, Number(searchParams.get('page') ?? 1))
 
   // ── Logbook mode ────────────────────────────────────────────────────────────
   const logbookTrailId = searchParams.get('logbook')
@@ -47,6 +51,7 @@ export function LogsClient({ logs, logbookTrailLogs, trails, waypoints, markers,
       params.delete('logbook')
       params.delete('id')
       setSearchParams(params)
+      queryClient.invalidateQueries({ queryKey: ['logs'] })
     }
 
     const trailWaypoints = waypoints
@@ -74,6 +79,7 @@ export function LogsClient({ logs, logbookTrailLogs, trails, waypoints, markers,
   }
 
   // ── Standard two-column mode ────────────────────────────────────────────────
+  const filteredLogs = applyLogFilters(logs, filters)
   const selectedId = searchParams.get('id')
   const selectedLog = logs.find((l: any) => l.id === selectedId) ?? null
   const showRightPanel = selectedId !== null
@@ -157,12 +163,12 @@ export function LogsClient({ logs, logbookTrailLogs, trails, waypoints, markers,
             className={`${showRightPanel ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-1/3 rounded-lg border border-border bg-card overflow-hidden`}
           >
             <LogList
-              logs={logs}
+              logs={filteredLogs}
               selectedId={selectedId}
               onSelect={selectLog}
               onNew={showNew}
               onOpenLogbook={openLogbook}
-              totalCount={totalCount}
+              totalCount={filteredLogs.length}
               currentPage={currentPage}
               logsPerPage={logsPerPage}
             />

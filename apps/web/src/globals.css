@@ -204,6 +204,41 @@
   }
 }
 
+/* ── React Flow Controls ───────────────────────────────────────────────────── */
+.react-flow__controls {
+  box-shadow: none;
+  background: hsl(var(--card));
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.react-flow__controls-button {
+  background: var(--muted);
+  border-bottom: none;
+  color: hsl(var(--foreground));
+  width: 32px;
+  height: 32px;
+  padding: 7px;
+  cursor: default;
+  transition: background-color 0.15s;
+}
+
+.react-flow__controls-button:last-child {
+  border-bottom: none;
+}
+
+.react-flow__controls-button:hover {
+  background: var(--accent);
+  cursor: default;
+}
+
+.react-flow__controls-button svg {
+  fill: currentColor;
+  max-width: 14px;
+  max-height: 14px;
+}
+
 @media print {
   @page {
     margin: 0.75in;

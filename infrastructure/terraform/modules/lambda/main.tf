@@ -47,7 +47,7 @@ resource "aws_iam_role_policy_attachment" "feature" {
 resource "aws_lambda_function" "main" {
   filename         = data.archive_file.placeholder.output_path
   function_name    = "${var.project_name}-${var.environment}-${var.function_name}"
-  handler          = "${replace(var.function_name, "-", "/")}/handler.handler"
+  handler          = var.handler_path != null ? var.handler_path : "${replace(var.function_name, "-", "/")}/handler.handler"
   memory_size      = var.memory_size
   role             = aws_iam_role.lambda.arn
   runtime          = "nodejs22.x"
@@ -59,6 +59,7 @@ resource "aws_lambda_function" "main" {
       COGNITO_USER_POOL_ID = var.cognito_user_pool_id
       DYNAMODB_TABLE       = var.dynamodb_table_name
       NODE_ENV             = var.environment
+      WEB_URL              = var.web_url
     }
   }
 

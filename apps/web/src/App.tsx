@@ -1,10 +1,16 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Outlet } from 'react-router-dom'
 import { ThemeProvider } from '@/components/theme/provider'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { Toaster } from '@/components/ui/sonner'
 import { TerminologyProvider } from '@/contexts/terminology-context'
 import ProtectedRoute from '@/components/auth/protected-route'
 import PlatformLayout from '@/components/nav/platform/layout'
+import { useAuth } from '@/hooks/use-auth'
+
+function ConditionalPlatformLayout() {
+    const { user } = useAuth()
+    return user ? <PlatformLayout /> : <Outlet />
+}
 
 // Public Routes
 import Home from '@/routes/home'
@@ -33,8 +39,6 @@ import Provisions from '@/routes/provisions'
 import Settings from '@/routes/settings'
 import Signals from '@/routes/signals'
 import Starfield from '@/routes/starfield'
-import StarfieldFacilities from '@/routes/starfield/facilities'
-import StarfieldResources from '@/routes/starfield/resources'
 import Trails from '@/routes/trails'
 import Waypoints from '@/routes/waypoints'
 
@@ -49,8 +53,12 @@ export default function App() {
             <TooltipProvider>
                 <TerminologyProvider>
                     <Routes>
+                        {/* Home — platform layout when logged in, public layout when not */}
+                        <Route element={<ConditionalPlatformLayout />}>
+                            <Route path="/" element={<Home />} />
+                        </Route>
+
                         {/* Public routes */}
-                        <Route path="/" element={<Home />} />
                         <Route path="/login" element={<Login />} />
                         <Route path="/privacy" element={<Privacy />} />
                         <Route path="/privacy-contact" element={<PrivacyContact />} />
@@ -78,8 +86,6 @@ export default function App() {
                                 <Route path="/signals" element={<Signals />} />
                                 <Route path="/manifest" element={<ManifestEdit />} />
                                 <Route path="/starfield" element={<Starfield />} />
-                                <Route path="/starfield/facilities" element={<StarfieldFacilities />} />
-                                <Route path="/starfield/resources" element={<StarfieldResources />} />
                                 <Route path="/settings" element={<Settings />} />
                             </Route>
                         </Route>

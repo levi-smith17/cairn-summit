@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 export interface SelectOption {
   value: string
   label: string
+  icon?: LucideIcon
 }
 
 interface CustomSelectProps {
@@ -40,6 +41,7 @@ export function CustomSelect({
   const selected = options.find(o => o.value === value)
   const isPlaceholderState = placeholderValue !== undefined && value === placeholderValue
   const muted = isPlaceholderState || !selected
+  const TriggerIcon = selected?.icon ?? Icon
 
   function handleSelect(optionValue: string) {
     onChange(optionValue)
@@ -55,7 +57,7 @@ export function CustomSelect({
           disabled={disabled}
           className={cn('h-9 md:h-8 gap-1.5 text-sm justify-start', triggerClassName)}
         >
-          {Icon && <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
+          {TriggerIcon && <TriggerIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
           <span className={`flex-1 text-left truncate ${muted ? 'text-muted-foreground' : ''}`}>
             {selected ? selected.label : placeholder}
           </span>
@@ -77,6 +79,7 @@ export function CustomSelect({
                 option.value === value ? 'bg-muted/50' : 'hover:bg-muted/40'
               }`}
             >
+              {option.icon && <option.icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
               <span className="flex-1 truncate">{option.label}</span>
               {option.value === value && <Check className="h-3 w-3 shrink-0 text-foreground/60" />}
             </button>

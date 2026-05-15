@@ -10,21 +10,21 @@ import { PlatformHeader } from '@/components/nav/platform/platform-header'
 import { useTerminology } from '@/contexts/terminology-context'
 import { useDebounce } from '@/hooks/use-debounce'
 import { MarkerPicker } from '@/components/ui/marker-picker'
-import { ExpenseRow, type Expense } from './expense-row'
-import { InlineExpenseForm } from './inline-expense-form'
-import { SupplylineRow, type Provision } from './supplyline-row'
+import { BurnRow, type Burn } from './burn-row'
+import { InlineBurnForm } from './inline-burn-form'
+import { SupplylineRow, type Supplyline } from './supplyline-row'
 import { InlineSupplylineForm } from './inline-supplyline-form'
 import { CacheRow, type BudgetUtilization } from './cache-row'
 import { InlineCacheForm } from './inline-cache-form'
-import { carryOverBudgets } from '@/lib/api/provisions'
+import { carryOverCache } from '@/lib/api/supplylines'
 
 const API_BASE = import.meta.env.VITE_API_URL
 
 interface Summary {
-  monthlyProvisionCost: number
-  totalExpenses: number
+  monthlySupplylineCost: number
+  totalBurn: number
   totalMonthSpend: number
-  activeProvisions: number
+  activeSupplylines: number
 }
 
 interface UpcomingRenewal {
@@ -64,17 +64,17 @@ export function ProvisionsClient({ markers }: Props) {
 
   const [summary, setSummary] = useState<Summary | null>(null)
   const [upcomingRenewals, setUpcomingRenewals] = useState<UpcomingRenewal[]>([])
-  const [budgetUtilization, setBudgetUtilization] = useState<BudgetUtilization[]>([])
+  const [cacheUtilization, setCacheUtilization] = useState<BudgetUtilization[]>([])
   const [summaryLoading, setSummaryLoading] = useState(true)
 
-  const [expenses, setExpenses] = useState<Expense[]>([])
-  const [expenseLoading, setExpenseLoading] = useState(true)
-  const [addingExpense, setAddingExpense] = useState(false)
-  const [expensePage, setExpensePage] = useState(1)
-  const [expenseTotal, setExpenseTotal] = useState(0)
-  const [expensePageSize, setExpensePageSize] = useState(20)
+  const [burnItems, setBurnItems] = useState<Burn[]>([])
+  const [burnLoading, setBurnLoading] = useState(true)
+  const [addingBurn, setAddingBurn] = useState(false)
+  const [burnPage, setBurnPage] = useState(1)
+  const [burnTotal, setBurnTotal] = useState(0)
+  const [burnPageSize, setBurnPageSize] = useState(20)
 
-  const [provisions, setProvisions] = useState<Provision[]>([])
+  const [supplylines, setSupplylines] = useState<Supplyline[]>([])
   const [provisionLoading, setProvisionLoading] = useState(true)
   const [addingProvision, setAddingProvision] = useState(false)
 
@@ -84,11 +84,12 @@ export function ProvisionsClient({ markers }: Props) {
     const fetchSummary = async () => {
       setSummaryLoading(true)
       try {
-        const res = await fetch(`${API_BASE}/provisions/summary?month=${month}&year=${year}`)
-        const data = await res.json()
+        const res = await fetch(`${API_BASE}/supplylines/summary?month=${month}&year=${year}`)
+        const json = await res.json()
+        const data = json.data
         setSummary(data.summary)
         setUpcomingRenewals(data.upcomingRenewals)
-        setBudgetUtilization(data.budgetUtilization)
+        setCacheUtilization(data.cacheUtilization)
       } catch (err) {
         console.error('Failed to load summary', err)
       } finally {
@@ -99,29 +100,29 @@ export function ProvisionsClient({ markers }: Props) {
   }, [month, year, refreshKey])
 
   useEffect(() => {
-    setExpensePage(1)
+    setBurnPage(1)
   }, [month, year, debouncedSearch, markerFilter])
 
   useEffect(() => {
-    const fetchExpenses = async () => {
-      setExpenseLoading(true)
-      const params = new URLSearchParams({ month: String(month), year: String(year), page: String(expensePage) })
+    const fetchBurn = async () => {
+      setBurnLoading(true)
+      const params = new URLSearchParams({ month: String(month), year: String(year), page: String(burnPage) })
       if (debouncedSearch) params.set('search', debouncedSearch)
       if (markerFilter !== 'all') params.set('markerId', markerFilter)
       try {
-        const res = await fetch(`${API_BASE}/expenses?${params}`)
-        const data = await res.json()
-        setExpenses(data.expenses ?? [])
-        setExpenseTotal(data.total ?? 0)
-        setExpensePageSize(data.pageSize ?? 20)
+        const res = await fetch(`${API_BASE}/burn?${params}`)
+        const json = await res.json()
+        setBurnItems(json.data?.burn ?? [])
+        setBurnTotal(json.data?.total ?? 0)
+        setBurnPageSize(json.data?.pageSize ?? 20)
       } catch (err) {
-        console.error('Failed to load expenses', err)
+        console.error('Failed to load burn', err)
       } finally {
-        setExpenseLoading(false)
+        setBurnLoading(false)
       }
     }
-    fetchExpenses()
-  }, [month, year, debouncedSearch, markerFilter, refreshKey, expensePage])
+    fetchBurn()
+  }, [month, year, debouncedSearch, markerFilter, refreshKey, burnPage])
 
   useEffect(() => {
     const fetchProvisions = async () => {
@@ -131,9 +132,9 @@ export function ProvisionsClient({ markers }: Props) {
       if (markerFilter !== 'all') params.set('markerId', markerFilter)
       if (activeFilter !== 'all') params.set('active', activeFilter)
       try {
-        const res = await fetch(`${API_BASE}/provisions?${params}`)
-        const data = await res.json()
-        setProvisions(data.provisions ?? [])
+        const res = await fetch(`${API_BASE}/supplylines?${params}`)
+        const json = await res.json()
+        setSupplylines(json.data ?? [])
       } catch (err) {
         console.error('Failed to load provisions', err)
       } finally {
@@ -144,8 +145,8 @@ export function ProvisionsClient({ markers }: Props) {
   }, [debouncedSearch, markerFilter, activeFilter, refreshKey])
 
   const visibleBudgets = markerFilter === 'all'
-    ? budgetUtilization
-    : budgetUtilization.filter(b => b.markerId === markerFilter)
+    ? cacheUtilization
+    : cacheUtilization.filter(b => b.markerId === markerFilter)
 
   const prevMonth = () => {
     if (month === 1) { setMonth(12); setYear(year - 1) }
@@ -157,7 +158,7 @@ export function ProvisionsClient({ markers }: Props) {
   }
   const monthName = new Date(year, month - 1).toLocaleString('default', { month: 'long', year: 'numeric' })
 
-  const groupedExpenses = expenses.reduce<Record<string, Expense[]>>((acc, e) => {
+  const groupedExpenses = burnItems.reduce<Record<string, Burn[]>>((acc, e) => {
     const label = e.markers[0]?.marker?.name.split('/').pop() ?? 'Uncategorized'
     if (!acc[label]) acc[label] = []
     acc[label].push(e)
@@ -182,8 +183,8 @@ export function ProvisionsClient({ markers }: Props) {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{summaryLoading ? '—' : fmt(summary?.monthlyProvisionCost ?? 0)}</div>
-              <p className="text-xs text-muted-foreground mt-1">{summary?.activeProvisions ?? 0} active</p>
+              <div className="text-2xl font-bold">{summaryLoading ? '—' : fmt(summary?.monthlySupplylineCost ?? 0)}</div>
+              <p className="text-xs text-muted-foreground mt-1">{summary?.activeSupplylines ?? 0} active</p>
             </CardContent>
           </Card>
 
@@ -194,7 +195,7 @@ export function ProvisionsClient({ markers }: Props) {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{summaryLoading ? '—' : fmt(summary?.totalExpenses ?? 0)}</div>
+              <div className="text-2xl font-bold">{summaryLoading ? '—' : fmt(summary?.totalBurn ?? 0)}</div>
               <p className="text-xs text-muted-foreground mt-1">recorded this month</p>
             </CardContent>
           </Card>
@@ -322,7 +323,7 @@ export function ProvisionsClient({ markers }: Props) {
                     size="sm"
                     variant="ghost"
                     className="h-7 w-7 p-0"
-                    onClick={() => setAddingExpense((v) => !v)}
+                    onClick={() => setAddingBurn((v) => !v)}
                   >
                     <Plus className="h-3.5 w-3.5" />
                   </Button>
@@ -331,20 +332,20 @@ export function ProvisionsClient({ markers }: Props) {
               </Tooltip>
             </div>
 
-            {addingExpense && (
+            {addingBurn && (
               <div className="shrink-0">
-                <InlineExpenseForm
+                <InlineBurnForm
                   tags={markers}
-                  onSaved={() => { setAddingExpense(false); refresh() }}
-                  onCancel={() => setAddingExpense(false)}
+                  onSaved={() => { setAddingBurn(false); refresh() }}
+                  onCancel={() => setAddingBurn(false)}
                 />
               </div>
             )}
 
             <div className="flex-1 lg:overflow-y-auto">
-              {expenseLoading ? (
+              {burnLoading ? (
                 <div className="px-4 py-6 text-sm text-muted-foreground">Loading…</div>
-              ) : expenses.length === 0 ? (
+              ) : burnItems.length === 0 ? (
                 <div className="px-4 py-6 text-sm text-muted-foreground">No {terms.burn.toLowerCase()} found.</div>
               ) : (
                 <div className="flex flex-col divide-y">
@@ -362,10 +363,10 @@ export function ProvisionsClient({ markers }: Props) {
                         </span>
                       </div>
                       <div className="divide-y">
-                        {groupedExpenses[label].map((expense) => (
-                          <ExpenseRow
-                            key={expense.id}
-                            expense={expense}
+                        {groupedExpenses[label].map((burn) => (
+                          <BurnRow
+                            key={burn.id}
+                            burn={burn}
                             tags={markers}
                             onSaved={refresh}
                             onDeleted={refresh}
@@ -378,26 +379,26 @@ export function ProvisionsClient({ markers }: Props) {
               )}
             </div>
 
-            {expenseTotal > expensePageSize && (
+            {burnTotal > burnPageSize && (
               <div className="flex items-center justify-between px-4 py-2 border-t shrink-0">
                 <Button
                   variant="ghost"
                   size="icon"
                   className="h-7 w-7"
-                  onClick={() => setExpensePage(p => p - 1)}
-                  disabled={expensePage <= 1}
+                  onClick={() => setBurnPage(p => p - 1)}
+                  disabled={burnPage <= 1}
                 >
                   <ChevronLeft className="h-3.5 w-3.5" />
                 </Button>
                 <span className="text-xs text-muted-foreground">
-                  {expensePage} / {Math.ceil(expenseTotal / expensePageSize)}
+                  {burnPage} / {Math.ceil(burnTotal / burnPageSize)}
                 </span>
                 <Button
                   variant="ghost"
                   size="icon"
                   className="h-7 w-7"
-                  onClick={() => setExpensePage(p => p + 1)}
-                  disabled={expensePage >= Math.ceil(expenseTotal / expensePageSize)}
+                  onClick={() => setBurnPage(p => p + 1)}
+                  disabled={burnPage >= Math.ceil(burnTotal / burnPageSize)}
                 >
                   <ChevronRight className="h-3.5 w-3.5" />
                 </Button>
@@ -436,13 +437,13 @@ export function ProvisionsClient({ markers }: Props) {
               <div className="divide-y overflow-y-auto max-h-144">
                 {provisionLoading ? (
                   <div className="px-3 py-4 text-sm text-muted-foreground">Loading…</div>
-                ) : provisions.length === 0 ? (
+                ) : supplylines.length === 0 ? (
                   <div className="px-3 py-4 text-sm text-muted-foreground">No {terms.supplylines.toLowerCase()} found.</div>
                 ) : (
-                  provisions.map((p) => (
+                  supplylines.map((p) => (
                     <SupplylineRow
                       key={p.id}
-                      provision={p}
+                      supplyline={p}
                       tags={markers}
                       onSaved={refresh}
                       onDeleted={refresh}
@@ -462,7 +463,7 @@ export function ProvisionsClient({ markers }: Props) {
                         size="sm"
                         variant="ghost"
                         className="h-7 w-7 p-0"
-                        onClick={async () => { await carryOverBudgets({ month, year }); refresh() }}
+                        onClick={async () => { await carryOverCache({ month, year }); refresh() }}
                       >
                         <Copy className="h-3.5 w-3.5" />
                       </Button>
@@ -502,7 +503,7 @@ export function ProvisionsClient({ markers }: Props) {
                   visibleBudgets.map((b) => (
                     <CacheRow
                       key={b.id}
-                      budget={b}
+                      cache={b}
                       markers={markers}
                       month={month}
                       year={year}

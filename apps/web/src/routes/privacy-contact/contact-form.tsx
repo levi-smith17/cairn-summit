@@ -113,7 +113,7 @@ export function PrivacyContactForm() {
                 <p className="text-sm text-destructive">{state.error}</p>
             )}
 
-            <div className="flex justify-end">
+            <div className="flex flex-col md:flex-row md:justify-end">
                 <Button type="submit" disabled={pending}>
                     {pending ? 'Sending…' : 'Submit request'}
                 </Button>

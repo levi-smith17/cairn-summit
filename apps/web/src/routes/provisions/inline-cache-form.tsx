@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { MarkerPicker } from '@/components/ui/marker-picker'
-import { saveBudget } from '@/lib/api/provisions'
+import { saveCache } from '@/lib/api/supplylines'
 import { useFormStatus } from '@/hooks/use-form-status'
 
 const schema = z.object({
@@ -14,7 +14,7 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>
 
-interface Budget {
+interface cache {
   id: string
   markerId: string
   limit: number
@@ -23,7 +23,7 @@ interface Budget {
 }
 
 interface Props {
-  budget?: Budget
+  cache?: cache
   markers: any[]
   month: number
   year: number
@@ -31,14 +31,14 @@ interface Props {
   onCancel: () => void
 }
 
-export function InlineCacheForm({ budget, markers, month, year, onSaved, onCancel }: Props) {
+export function InlineCacheForm({ cache, markers, month, year, onSaved, onCancel }: Props) {
   const { saving, handleSubmit } = useFormStatus()
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      markerId: budget?.markerId ?? '',
-      limit: budget?.limit ?? undefined,
+      markerId: cache?.markerId ?? '',
+      limit: cache?.limit ?? undefined,
     },
   })
 
@@ -46,8 +46,8 @@ export function InlineCacheForm({ budget, markers, month, year, onSaved, onCance
 
   async function onSubmit(values: FormValues) {
     await handleSubmit(async () => {
-      await saveBudget({
-        id: budget?.id,
+      await saveCache({
+        id: cache?.id,
         markerId: values.markerId,
         limit: values.limit,
         month,

@@ -23,11 +23,6 @@ variable "dynamodb_table_arn" {
   type = string
 }
 
-variable "lambda_function_arns" {
-  description = "List of Lambda function ARNs CI can update"
-  type        = list(string)
-}
-
 variable "terraform_state_bucket" {
   type = string
 }

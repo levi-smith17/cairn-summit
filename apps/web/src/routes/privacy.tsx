@@ -1,5 +1,4 @@
 import { useAuth } from '@/hooks/use-auth'
-import { CairnLockup } from '@/components/cairn-lockup'
 import { FooterNav } from '@/components/nav/footer'
 import { PublicHeader } from '@/components/nav/public/public-header'
 
@@ -8,7 +7,7 @@ export const metadata = {
     description: 'Privacy Policy for Cairn.',
 }
 
-export default async function Privacy() {
+export default function Privacy() {
     const { user } = useAuth()
     const wayfarer = user ? {
         name: user.name ?? null,
@@ -19,11 +18,12 @@ export default async function Privacy() {
     return (
         <div className="min-h-screen flex flex-col">
             <header className="sticky top-0 z-10 flex items-center justify-between bg-header px-6 py-3 border-b">
-                <CairnLockup className="h-8" />
+                <img src="/cairn-lockup.png" alt="Cairn Summit Lockup" height={50} width={160} />
                 <PublicHeader wayfarer={wayfarer} />
             </header>
 
             <div className="max-w-3xl mx-auto w-full px-6 py-12">
+                <div className="bg-card border rounded-xl px-10 py-10">
                 <div
                     className="prose prose-neutral dark:prose-invert prose-sm max-w-none"
                     dangerouslySetInnerHTML={{ __html: `<h1>PRIVACY POLICY</h1><div><strong>Last updated March 11, 2026</strong></div><div>This Privacy Notice for Levi Smith ("<strong>we</strong>," "<strong>us</strong>," or "<strong>our</strong>"), describes how and why we might access, collect, store, use, and/or share ("<strong>process</strong>") your personal information when you use our services ("<strong>Services</strong>"), including when you:</div><ul><li>Visit our website at <a href="https://cairn.ing">https://cairn.ing</a> or any website of ours that links to this Privacy Notice</li><li>Use Cairn. Cairn is a personal profile platform for outdoor enthusiasts and adventurers. It allows users ("Wayfarers") to create a public manifest showcasing their expeditions, gear, training, landmarks, summits, pathfinding experience, and travel companions. Wayfarers can share their manifest with others via a public URL, and visitors can send messages to Wayfarers through a built-in contact form.
@@ -33,6 +33,9 @@ Cairn also provides a private dashboard where Wayfarers can manage their profile
       <br><div><span data-custom-class='body_text'>` }}
                 />
 
+                </div>
+            </div>
+            <div className="pb-6 flex justify-center">
                 <FooterNav showCairn={true} />
             </div>
         </div>

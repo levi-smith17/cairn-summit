@@ -63,18 +63,18 @@ export function ResourceInfo({ resource, onBack, onEdit, onDelete }: ResourceInf
         <div>
           <div className="px-4 py-2 bg-muted/30 border-b border-border/50">
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Produced at · {resource.facilityResources.length}
+              Produced at · {resource.outpostResources.length}
             </span>
           </div>
-          {resource.facilityResources.length === 0 ? (
+          {resource.outpostResources.length === 0 ? (
             <div className="flex items-center justify-center h-24 text-muted-foreground text-sm">
-              Not assigned to any facility.
+              Not assigned to any outpost.
             </div>
           ) : (
-            resource.facilityResources.map((fr: any) => (
+            resource.outpostResources.map((fr: any) => (
               <div key={fr.id} className="flex items-center gap-2 px-4 py-2.5 border-b border-border/50 text-sm">
-                <Badge variant="secondary" className="text-xs font-mono shrink-0">{fr.facility.abbreviation}</Badge>
-                <span>{fr.facility.name}</span>
+                <Badge variant="secondary" className="text-xs font-mono shrink-0">{fr.outpost.abbreviation}</Badge>
+                <span>{fr.outpost.name}</span>
                 <span className="text-muted-foreground text-xs ml-auto shrink-0">
                   {fr.planet.name} ({fr.planet.system.name})
                 </span>

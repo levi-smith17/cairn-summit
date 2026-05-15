@@ -82,6 +82,54 @@ resource "aws_iam_policy" "lambda_read" {
   }
 }
 
+resource "aws_iam_policy" "lambda_s3_private_media" {
+  name        = "${var.project_name}-${var.environment}-lambda-s3-private-media"
+  description = "Lambda access to private media bucket (logs, receipts)"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:DeleteObject",
+          "s3:ListBucket",
+        ]
+        Resource = [
+          "arn:aws:s3:::${var.project_name}-${var.environment}-private-media",
+          "arn:aws:s3:::${var.project_name}-${var.environment}-private-media/*",
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_policy" "lambda_s3_public_media" {
+  name        = "${var.project_name}-${var.environment}-lambda-s3-public-media"
+  description = "Lambda access to public media bucket (companions)"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:DeleteObject",
+          "s3:ListBucket",
+        ]
+        Resource = [
+          "arn:aws:s3:::${var.project_name}-${var.environment}-public-media",
+          "arn:aws:s3:::${var.project_name}-${var.environment}-public-media/*",
+        ]
+      }
+    ]
+  })
+}
+
 resource "aws_iam_policy" "lambda_write" {
   name = "${var.project_name}-${var.environment}-lambda-write"
 
@@ -91,6 +139,7 @@ resource "aws_iam_policy" "lambda_write" {
       {
         Effect = "Allow"
         Action = [
+          "dynamodb:BatchGetItem",
           "dynamodb:BatchWriteItem",
           "dynamodb:PutItem",
           "dynamodb:TransactWriteItems",
@@ -110,25 +159,4 @@ resource "aws_iam_policy" "lambda_write" {
     owner       = var.owner
     project     = var.project_name
   }
-}
-
-# Policy attachments — depend on role and policies
-resource "aws_iam_role_policy_attachment" "lambda_basic" {
-  role       = aws_iam_role.lambda_execution.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-}
-
-resource "aws_iam_role_policy_attachment" "lambda_delete" {
-  role       = aws_iam_role.lambda_execution.name
-  policy_arn = aws_iam_policy.lambda_delete.arn
-}
-
-resource "aws_iam_role_policy_attachment" "lambda_read" {
-  role       = aws_iam_role.lambda_execution.name
-  policy_arn = aws_iam_policy.lambda_read.arn
-}
-
-resource "aws_iam_role_policy_attachment" "lambda_write" {
-  role       = aws_iam_role.lambda_execution.name
-  policy_arn = aws_iam_policy.lambda_write.arn
 }

@@ -1,8 +1,6 @@
-const API_BASE = import.meta.env.VITE_API_URL ?? ''
+import { getAuthHeaders } from '@/lib/api/auth-headers'
 
-async function getAuthHeaders(): Promise<Record<string, string>> {
-  return {}
-}
+const API_BASE = import.meta.env.VITE_API_URL ?? ''
 
 export async function getManifestData() {
   const res = await fetch(`${API_BASE}/manifest`, {

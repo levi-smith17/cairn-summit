@@ -89,7 +89,7 @@ resource "aws_iam_policy" "lambda_deploy" {
           "lambda:UpdateFunctionCode",
           "lambda:UpdateFunctionConfiguration",
         ]
-        Resource = var.lambda_function_arns
+        Resource = "arn:aws:lambda:*:*:function:${var.project_name}-${var.environment}-*"
       }
     ]
   })

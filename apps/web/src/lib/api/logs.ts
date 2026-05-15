@@ -1,16 +1,14 @@
-const API_BASE = import.meta.env.VITE_API_URL
+import { getAuthHeaders } from '@/lib/api/auth-headers'
 
-async function getAuthHeaders(): Promise<Record<string, string>> {
-    // Will be replaced with Cognito token once auth is set up
-    return {}
-}
+const API_BASE = import.meta.env.VITE_API_URL
 
 export async function getLogs(): Promise<any[]> {
     const res = await fetch(`${API_BASE}/logs`, {
         headers: await getAuthHeaders()
     })
     if (!res.ok) throw new Error('Failed to fetch logs')
-    return res.json()
+    const json = await res.json()
+    return json.data
 }
 
 export async function createLog(data: Record<string, unknown>): Promise<any> {
@@ -23,7 +21,9 @@ export async function createLog(data: Record<string, unknown>): Promise<any> {
         body: JSON.stringify(data)
     })
     if (!res.ok) throw new Error('Failed to create log')
-    return res.json()
+    const json = await res.json()
+    const log = json.data
+    return { ...log, id: log.sk?.split('#').pop() }
 }
 
 export async function updateLog(id: string, data: Record<string, unknown>): Promise<any> {
@@ -36,7 +36,9 @@ export async function updateLog(id: string, data: Record<string, unknown>): Prom
         body: JSON.stringify(data)
     })
     if (!res.ok) throw new Error('Failed to update log')
-    return res.json()
+    const json = await res.json()
+    const log = json.data
+    return { ...log, id: log.sk?.split('#').pop() }
 }
 
 export async function saveLog(data: {
@@ -47,9 +49,7 @@ export async function saveLog(data: {
     waypointId?: string | null
     markerIds?: string[]
 }): Promise<any> {
-    if (data.id) {
-        return updateLog(data.id, data)
-    }
+    if (data.id) return updateLog(data.id, data)
     return createLog(data)
 }
 
@@ -71,41 +71,4 @@ export async function reorderLogs(orderedIds: string[]): Promise<void> {
         body: JSON.stringify({ orderedIds })
     })
     if (!res.ok) throw new Error('Failed to reorder logs')
-}
-
-export async function getTrails(): Promise<any[]> {
-    const res = await fetch(`${API_BASE}/trails`, {
-        headers: await getAuthHeaders()
-    })
-    if (!res.ok) throw new Error('Failed to fetch trails')
-    return res.json()
-}
-
-export async function getMarkers(): Promise<any[]> {
-    const res = await fetch(`${API_BASE}/markers`, {
-        headers: await getAuthHeaders()
-    })
-    if (!res.ok) throw new Error('Failed to fetch markers')
-    return res.json()
-}
-
-export async function getWaypoints(): Promise<any[]> {
-    const res = await fetch(`${API_BASE}/waypoints`, {
-        headers: await getAuthHeaders()
-    })
-    if (!res.ok) throw new Error('Failed to fetch waypoints')
-    return res.json()
-}
-
-export async function createTrail(name: string): Promise<any> {
-    const res = await fetch(`${API_BASE}/trails`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            ...await getAuthHeaders()
-        },
-        body: JSON.stringify({ name })
-    })
-    if (!res.ok) throw new Error('Failed to create trail')
-    return res.json()
 }

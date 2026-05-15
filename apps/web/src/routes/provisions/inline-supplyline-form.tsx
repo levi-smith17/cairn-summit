@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { CustomSelect } from '@/components/ui/custom-select'
 import { MarkerPicker } from '@/components/ui/marker-picker'
-import { saveProvision } from '@/lib/api/provisions'
+import { saveSupplyline } from '@/lib/api/supplylines'
 import { useFormStatus } from '@/hooks/use-form-status'
 
 const schema = z.object({
@@ -34,7 +34,7 @@ interface Marker {
   marker: { id: string; name: string; color: string; icon?: string }
 }
 
-interface Provision {
+interface Supplyline {
   id: string
   name: string
   amount: number
@@ -47,25 +47,25 @@ interface Provision {
 }
 
 interface Props {
-  provision?: Provision
+  supplyline?: Supplyline
   tags: any[]
   onSaved: () => void
   onCancel: () => void
 }
 
-export function InlineSupplylineForm({ provision, tags, onSaved, onCancel }: Props) {
+export function InlineSupplylineForm({ supplyline, tags, onSaved, onCancel }: Props) {
   const { saving, handleSubmit } = useFormStatus()
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      name: provision?.name ?? '',
-      amount: provision?.amount ?? 0,
-      billingCycle: (provision?.billingCycle as FormValues['billingCycle']) ?? 'MONTHLY',
-      nextRenewal: provision?.nextRenewal?.split('T')[0] ?? '',
-      url: provision?.url ?? '',
-      notes: provision?.notes ?? '',
-      tagIds: provision?.markers?.map((t: any) => t.markerId) ?? [],
+      name: supplyline?.name ?? '',
+      amount: supplyline?.amount ?? 0,
+      billingCycle: (supplyline?.billingCycle as FormValues['billingCycle']) ?? 'MONTHLY',
+      nextRenewal: supplyline?.nextRenewal?.split('T')[0] ?? '',
+      url: supplyline?.url ?? '',
+      notes: supplyline?.notes ?? '',
+      tagIds: supplyline?.markers?.map((t: any) => t.markerId) ?? [],
     },
   })
 
@@ -74,8 +74,8 @@ export function InlineSupplylineForm({ provision, tags, onSaved, onCancel }: Pro
 
   async function onSubmit(values: FormValues) {
     await handleSubmit(async () => {
-      await saveProvision({
-        id: provision?.id,
+      await saveSupplyline({
+        id: supplyline?.id,
         name: values.name,
         amount: values.amount,
         billingCycle: values.billingCycle,

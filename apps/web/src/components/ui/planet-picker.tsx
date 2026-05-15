@@ -1,3 +1,5 @@
+'use client'
+
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,7 +15,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Globe, ChevronRight, ArrowLeft, Check, Plus, Pencil, X, Trash2 } from 'lucide-react'
-import { saveSystem, savePlanet, deleteSystem, deletePlanet } from '@/lib/api/starfield'
 
 interface Planet {
   id: string
@@ -28,11 +29,14 @@ interface SystemWithPlanets {
 
 interface PlanetPickerProps {
   value: string
-  onChange: (id: string) => void
+  onChange: (planetName: string) => void
+  onSystemChange?: (systemName: string) => void
+  onSelectId?: (planetId: string) => void
   systems: SystemWithPlanets[]
   onSystemsUpdate: (systems: SystemWithPlanets[]) => void
   placeholder?: string
   disabled?: boolean
+  readonly?: boolean
 }
 
 // ── InlineInput ───────────────────────────────────────────────────────────────
@@ -43,12 +47,11 @@ interface InlineInputProps {
   onChange: (v: string) => void
   onSave: () => void
   onCancel: () => void
-  onRemove?: () => void   // only provided when editing (not adding)
+  onRemove?: () => void
   placeholder: string
-  saving: boolean
 }
 
-function InlineInput({ value: v, onChange: oc, onSave, onCancel, onRemove, placeholder: ph, saving }: InlineInputProps) {
+function InlineInput({ value: v, onChange: oc, onSave, onCancel, onRemove, placeholder: ph }: InlineInputProps) {
   return (
     <div className="flex items-center gap-2 px-3 py-2">
       <Input
@@ -67,7 +70,7 @@ function InlineInput({ value: v, onChange: oc, onSave, onCancel, onRemove, place
         size="sm"
         className="h-9 px-3 shrink-0"
         onClick={onSave}
-        disabled={saving || !v.trim()}
+        disabled={!v.trim()}
       >
         Save
       </Button>
@@ -92,10 +95,13 @@ function InlineInput({ value: v, onChange: oc, onSave, onCancel, onRemove, place
 export function PlanetPicker({
   value,
   onChange,
+  onSystemChange,
+  onSelectId,
   systems,
   onSystemsUpdate,
   placeholder = 'Select a planet…',
   disabled = false,
+  readonly = false,
 }: PlanetPickerProps) {
   const [open, setOpen] = useState(false)
   const [view, setView] = useState<'systems' | 'planets'>('systems')
@@ -112,25 +118,21 @@ export function PlanetPicker({
   const [editingPlanetId, setEditingPlanetId] = useState<string | null>(null)
   const [planetNameInput, setPlanetNameInput] = useState('')
 
-  const [saving, setSaving] = useState(false)
-
   // Confirmation dialog state
   const [confirmRemove, setConfirmRemove] = useState<{
     type: 'system' | 'planet'
     id: string
     name: string
   } | null>(null)
-  const [removing, setRemoving] = useState(false)
 
   // Derived display label
-  const allPlanets = systems.flatMap(s => s.planets.map(p => ({ ...p, systemName: s.name })))
-  const selectedPlanet = allPlanets.find(p => p.id === value)
-  const displayLabel = selectedPlanet ? `${selectedPlanet.name} (${selectedPlanet.systemName})` : null
+  const allPlanets = systems.flatMap(s => s.planets.map(p => ({ ...p, systemName: s.name, systemId: s.id })))
+  const selectedPlanet = allPlanets.find(p => p.name === value)
+  const displayLabel = selectedPlanet ? `${selectedPlanet.name} (${selectedPlanet.systemName})` : value || null
 
   const activeSystem = systems.find(s => s.id === activeSystemId) ?? null
 
   function handleOpenChange(isOpen: boolean) {
-    // Don't close while a confirmation dialog is active
     if (!isOpen && confirmRemove !== null) return
     setOpen(isOpen)
     if (!isOpen) {
@@ -166,26 +168,23 @@ export function PlanetPicker({
     setSystemNameInput('')
   }
 
-  // ── System CRUD ──────────────────────────────────────────────────────────────
+  // ── System CRUD (local state only) ───────────────────────────────────────────
 
-  async function saveSystemInline() {
+  function saveSystemInline() {
     const name = systemNameInput.trim()
     if (!name) return
-    setSaving(true)
-    try {
-      if (editingSystemId) {
-        const updated = await saveSystem({ id: editingSystemId, name })
-        onSystemsUpdate(systems.map(s => s.id === editingSystemId ? { ...s, name: updated.name } : s))
-        setEditingSystemId(null)
-      } else {
-        const created = await saveSystem({ name })
-        onSystemsUpdate([...systems, { ...created, planets: [] }])
-        setAddingSystem(false)
+    if (editingSystemId) {
+      onSystemsUpdate(systems.map(s =>
+        s.id === editingSystemId ? { ...s, name, id: name } : s
+      ))
+      setEditingSystemId(null)
+    } else {
+      if (!systems.find(s => s.name.toLowerCase() === name.toLowerCase())) {
+        onSystemsUpdate([...systems, { id: name, name, planets: [] }])
       }
-      setSystemNameInput('')
-    } finally {
-      setSaving(false)
+      setAddingSystem(false)
     }
+    setSystemNameInput('')
   }
 
   function startEditSystem(sys: SystemWithPlanets, e: React.MouseEvent) {
@@ -201,32 +200,27 @@ export function PlanetPicker({
     setSystemNameInput('')
   }
 
-  // ── Planet CRUD ──────────────────────────────────────────────────────────────
+  // ── Planet CRUD (local state only) ───────────────────────────────────────────
 
-  async function savePlanetInline() {
+  function savePlanetInline() {
     const name = planetNameInput.trim()
     if (!name || !activeSystemId) return
-    setSaving(true)
-    try {
-      if (editingPlanetId) {
-        const updated = await savePlanet({ id: editingPlanetId, name, systemId: activeSystemId })
-        onSystemsUpdate(systems.map(s =>
-          s.id === activeSystemId
-            ? { ...s, planets: s.planets.map(p => p.id === editingPlanetId ? { ...p, name: updated.name } : p) }
-            : s
-        ))
-        setEditingPlanetId(null)
-      } else {
-        const created = await savePlanet({ name, systemId: activeSystemId })
-        onSystemsUpdate(systems.map(s =>
-          s.id === activeSystemId ? { ...s, planets: [...s.planets, created] } : s
-        ))
-        setAddingPlanet(false)
-      }
-      setPlanetNameInput('')
-    } finally {
-      setSaving(false)
+    if (editingPlanetId) {
+      onSystemsUpdate(systems.map(s =>
+        s.id === activeSystemId
+          ? { ...s, planets: s.planets.map(p => p.id === editingPlanetId ? { id: name, name } : p) }
+          : s
+      ))
+      setEditingPlanetId(null)
+    } else {
+      onSystemsUpdate(systems.map(s =>
+        s.id === activeSystemId
+          ? { ...s, planets: [...s.planets, { id: name, name }] }
+          : s
+      ))
+      setAddingPlanet(false)
     }
+    setPlanetNameInput('')
   }
 
   function startEditPlanet(planet: Planet, e: React.MouseEvent) {
@@ -244,32 +238,29 @@ export function PlanetPicker({
 
   // ── Remove (with confirmation) ────────────────────────────────────────────────
 
-  async function executeRemove() {
+  function executeRemove() {
     if (!confirmRemove) return
-    setRemoving(true)
-    try {
-      if (confirmRemove.type === 'system') {
-        await deleteSystem(confirmRemove.id)
-        // If selected planet was in this system, clear selection
-        const removedSystem = systems.find(s => s.id === confirmRemove.id)
-        if (removedSystem?.planets.some(p => p.id === value)) onChange('')
-        onSystemsUpdate(systems.filter(s => s.id !== confirmRemove.id))
-        cancelSystem()
-        if (activeSystemId === confirmRemove.id) goBack()
-      } else {
-        await deletePlanet(confirmRemove.id)
-        if (value === confirmRemove.id) onChange('')
-        onSystemsUpdate(systems.map(s =>
-          s.id === activeSystemId
-            ? { ...s, planets: s.planets.filter(p => p.id !== confirmRemove.id) }
-            : s
-        ))
-        cancelPlanet()
+    if (confirmRemove.type === 'system') {
+      const removedSystem = systems.find(s => s.id === confirmRemove.id)
+      if (removedSystem?.planets.some(p => p.name === value)) {
+        onChange('')
+        onSystemChange?.('')
       }
-    } finally {
-      setRemoving(false)
-      setConfirmRemove(null)
+      onSystemsUpdate(systems.filter(s => s.id !== confirmRemove.id))
+      cancelSystem()
+      if (activeSystemId === confirmRemove.id) goBack()
+    } else {
+      if (value === confirmRemove.id) {
+        onChange('')
+        onSystemChange?.('')
+      }
+      onSystemsUpdate(systems.map(s => ({
+        ...s,
+        planets: s.planets.filter(p => p.id !== confirmRemove.id),
+      })))
+      cancelPlanet()
     }
+    setConfirmRemove(null)
   }
 
   // ── Filtered lists ────────────────────────────────────────────────────────────
@@ -292,11 +283,15 @@ export function PlanetPicker({
         .sort((a, b) => a.name.localeCompare(b.name))
     : []
 
-  function selectPlanet(planetId: string) {
-    if (value === planetId) {
+  function selectPlanet(planetName: string, systemName?: string, planetId?: string) {
+    if (value === planetName) {
       onChange('')
+      onSystemChange?.('')
+      onSelectId?.('')
     } else {
-      onChange(planetId)
+      onChange(planetName)
+      if (systemName) onSystemChange?.(systemName)
+      if (planetId !== undefined) onSelectId?.(planetId)
       setOpen(false)
     }
   }
@@ -310,7 +305,7 @@ export function PlanetPicker({
             variant="outline"
             size="sm"
             disabled={disabled}
-            className="h-10 gap-1.5 text-sm justify-start w-full"
+            className="h-9 md:h-8 gap-1.5 text-sm justify-start w-full"
           >
             <Globe className="h-4 w-4 shrink-0 text-muted-foreground" />
             <span className={`flex-1 text-left truncate ${!displayLabel ? 'text-muted-foreground' : ''}`}>
@@ -361,12 +356,12 @@ export function PlanetPicker({
               searchResults.length === 0
                 ? <p className="px-4 py-5 text-sm text-muted-foreground text-center">No planets found.</p>
                 : searchResults.map(planet => {
-                    const isSelected = value === planet.id
+                    const isSelected = value === planet.name
                     return (
                       <button
-                        key={planet.id}
+                        key={`${planet.systemId}-${planet.id}`}
                         type="button"
-                        onClick={() => selectPlanet(planet.id)}
+                        onClick={() => selectPlanet(planet.name, planet.systemName, planet.id)}
                         className={`w-full flex items-center gap-3 px-4 py-3.5 text-sm text-left transition-colors
                           ${isSelected ? 'bg-primary/15' : 'hover:bg-muted/50'}`}
                       >
@@ -398,22 +393,23 @@ export function PlanetPicker({
                           onCancel={cancelSystem}
                           onRemove={() => setConfirmRemove({ type: 'system', id: sys.id, name: sys.name })}
                           placeholder="System name…"
-                          saving={saving}
                         />
                       </div>
                     ) : (
                       <>
-                        <button
-                          type="button"
-                          onClick={e => startEditSystem(sys, e)}
-                          className="p-3.5 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </button>
+                        {!readonly && (
+                          <button
+                            type="button"
+                            onClick={e => startEditSystem(sys, e)}
+                            className="p-3.5 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => drillIntoSystem(sys.id)}
-                          className="flex-1 flex items-center gap-3 pr-4 py-3.5 text-sm text-left hover:bg-muted/50 transition-colors"
+                          className={`flex-1 flex items-center gap-3 pr-4 py-3.5 text-sm text-left hover:bg-muted/50 transition-colors${readonly ? ' pl-4' : ''}`}
                         >
                           <span className="flex-1">{sys.name} ({sys.planets.length})</span>
                           <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -432,7 +428,7 @@ export function PlanetPicker({
                   <p className="px-4 py-5 text-sm text-muted-foreground text-center">No planets in this system.</p>
                 )}
                 {filteredPlanets.map(planet => {
-                  const isSelected = value === planet.id
+                  const isSelected = value === planet.name
                   return (
                     <div key={planet.id} className="flex items-center group border-b border-border/50 last:border-0">
                       {editingPlanetId === planet.id ? (
@@ -444,22 +440,23 @@ export function PlanetPicker({
                             onCancel={cancelPlanet}
                             onRemove={() => setConfirmRemove({ type: 'planet', id: planet.id, name: planet.name })}
                             placeholder="Planet name…"
-                            saving={saving}
                           />
                         </div>
                       ) : (
                         <>
+                          {!readonly && (
+                            <button
+                              type="button"
+                              onClick={e => startEditPlanet(planet, e)}
+                              className="p-3.5 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                          )}
                           <button
                             type="button"
-                            onClick={e => startEditPlanet(planet, e)}
-                            className="p-3.5 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => selectPlanet(planet.id)}
-                            className={`flex-1 flex items-center gap-3 pr-4 py-3.5 text-sm text-left transition-colors
+                            onClick={() => selectPlanet(planet.name, activeSystem?.name, planet.id)}
+                            className={`flex-1 flex items-center gap-3 pr-4 py-3.5 text-sm text-left transition-colors${readonly ? ' pl-4' : ''}
                               ${isSelected ? 'bg-primary/15' : 'hover:bg-muted/50'}`}
                           >
                             <span className={`h-5 w-5 rounded border-2 flex items-center justify-center shrink-0
@@ -477,8 +474,8 @@ export function PlanetPicker({
             )}
           </div>
 
-          {/* Fixed footer — Add button (hidden while searching) */}
-          {!isSearching && (
+          {/* Fixed footer — Add button (hidden while searching or readonly) */}
+          {!isSearching && !readonly && (
             <div className="border-t border-border shrink-0">
               {view === 'systems' && (
                 addingSystem ? (
@@ -488,7 +485,6 @@ export function PlanetPicker({
                     onSave={saveSystemInline}
                     onCancel={cancelSystem}
                     placeholder="System name…"
-                    saving={saving}
                   />
                 ) : (
                   <button
@@ -509,7 +505,6 @@ export function PlanetPicker({
                     onSave={savePlanetInline}
                     onCancel={cancelPlanet}
                     placeholder="Planet name…"
-                    saving={saving}
                   />
                 ) : (
                   <button
@@ -536,15 +531,14 @@ export function PlanetPicker({
             </AlertDialogTitle>
             <AlertDialogDescription>
               {confirmRemove?.type === 'system'
-                ? 'This will permanently remove the system and all its planets. This cannot be undone.'
-                : 'This will permanently remove the planet. This cannot be undone.'}
+                ? 'This will remove the system and all its planets from the list.'
+                : 'This will remove the planet from the list.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={executeRemove}
-              disabled={removing}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Remove

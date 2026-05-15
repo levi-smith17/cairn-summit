@@ -19,7 +19,9 @@ import { Button } from '@/components/ui/button'
 import { MarkerPicker } from '@/components/ui/marker-picker'
 import { FormActions } from '@/components/forms/form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
-import { createWaypoint, updateWaypoint, deleteWaypoint, createTrail, createMarker } from '@/lib/api/waypoints'
+import { createWaypoint, updateWaypoint, deleteWaypoint } from '@/lib/api/waypoints'
+import { createTrail } from '@/lib/api/trails'
+import { createMarker } from '@/lib/api/markers'
 import { toast } from 'sonner'
 import {
   AlertDialog,
@@ -33,6 +35,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useTerminology } from '@/contexts/terminology-context'
+import { extractId } from '@/lib/utils'
 
 const MARKER_COLORS = [
   '#ef4444', '#f97316', '#eab308', '#22c55e',
@@ -64,6 +67,7 @@ export function WaypointForm({ waypoint, folders, tags, defaultTrailId, onBack, 
   const queryClient = useQueryClient()
   const { terms } = useTerminology()
   const { saving, saved, error, handleSubmit } = useFormStatus()
+  const API_BASE = import.meta.env.VITE_API_URL
   const [fetching, setFetching] = useState(false)
   const [favicon, setFavicon] = useState<string | null>(waypoint?.favicon ?? null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -105,7 +109,7 @@ export function WaypointForm({ waypoint, folders, tags, defaultTrailId, onBack, 
     if (!url) return
     try {
       setFetching(true)
-      const res = await fetch(`/api/fetch-url-meta?url=${encodeURIComponent(url)}`)
+      const res = await fetch(`${API_BASE}/waypoints/fetch-meta?url=${encodeURIComponent(url)}`)
       const data = await res.json()
       if (data.title) form.setValue('title', data.title)
       if (data.favicon) setFavicon(data.favicon)
@@ -121,7 +125,7 @@ export function WaypointForm({ waypoint, folders, tags, defaultTrailId, onBack, 
     if (!name) return
     setTrailCreating(true)
     try {
-      const trail = await createTrail(name)
+      const trail = await createTrail({ name })
       setLocalTrails(prev => [...prev, trail])
       form.setValue('folderId', trail.id)
       setCreatingTrail(false)
@@ -137,9 +141,10 @@ export function WaypointForm({ waypoint, folders, tags, defaultTrailId, onBack, 
     setMarkerCreating(true)
     try {
       const marker = await createMarker({ name, color: newMarkerColor })
-      setLocalMarkers(prev => [...prev, marker])
+      const id = extractId(marker.sk)
+      setLocalMarkers(prev => [...prev, { ...marker, id }])
       const current = form.getValues('tagIds')
-      form.setValue('tagIds', [...current, marker.id])
+      form.setValue('tagIds', [...current, id])
       setCreatingMarker(false)
       setNewMarkerName('')
       setNewMarkerColor(MARKER_COLORS[4])
