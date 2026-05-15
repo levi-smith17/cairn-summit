@@ -91,6 +91,7 @@ export interface Log {
     trailId?: string;
     waypointId?: string;
     markers: EmbeddedMarker[];
+    mediaKeys?: string[];
     createdAt: string;
     updatedAt: string;
 }
@@ -164,7 +165,7 @@ export interface Stop {
     createdAt: string;
     updatedAt: string;
 }
-export interface Provision {
+export interface Supplyline {
     pk: string;
     sk: string;
     name: string;
@@ -177,7 +178,7 @@ export interface Provision {
     markers: EmbeddedMarker[];
     createdAt: string;
 }
-export interface Expense {
+export interface Burn {
     pk: string;
     sk: string;
     name: string;
@@ -188,7 +189,7 @@ export interface Expense {
     markers: EmbeddedMarker[];
     createdAt: string;
 }
-export interface Budget {
+export interface Cache {
     pk: string;
     sk: string;
     markerId: string;
@@ -289,6 +290,17 @@ export interface CompanionMedia {
     order: number;
     createdAt: string;
 }
+export interface SfSystem {
+    pk: 'SF#SYSTEM';
+    sk: string;
+    name: string;
+    planets: SfPlanet[];
+    createdAt: string;
+}
+export interface SfPlanet {
+    id: string;
+    name: string;
+}
 export interface SfResource {
     pk: 'SF#RESOURCE';
     sk: string;
@@ -303,14 +315,14 @@ export interface SfNetwork {
     pk: string;
     sk: string;
     name: string;
-    rootFacilityId: string;
+    abbreviation: string;
+    rootOutpostId?: string;
     createdAt: string;
 }
-export interface SfFacility {
+export interface SfOutpost {
     pk: string;
     sk: string;
     networkId: string;
-    name: string;
     system: string;
     planet: string;
     parentId?: string;
@@ -319,19 +331,47 @@ export interface SfFacility {
         x: number;
         y: number;
     };
-    resources: SfFacilityResource[];
+    resources: SfOutpostResource[];
     transferStationLimit: number;
 }
-export interface SfFacilityResource {
+export interface SfOutpostResource {
     resourceId: string;
     name: string;
     abbreviation: string;
     onsite: boolean;
-    fromFacilityId?: string;
+    fromOutpostId?: string;
+    fromPlanet?: string;
+    fromSystem?: string;
+    origin?: boolean;
     relay?: {
         planet: string;
         system: string;
     };
+}
+export interface Kin {
+    pk: string;
+    sk: string;
+    givenName: string;
+    middleName?: string;
+    surname: string;
+    birthDate?: string;
+    deathDate?: string;
+    fatherId?: string;
+    fatherUnknown: boolean;
+    motherId?: string;
+    motherUnknown: boolean;
+    bloodlines: Bloodline[];
+    createdAt: string;
+    updatedAt: string;
+}
+export interface Bloodline {
+    id: string;
+    kinId: string;
+    kinName: string;
+    startDate?: string;
+    endDate?: string;
+    endReason?: 'DIVORCE' | 'DEATH' | 'SEPARATION';
+    current: boolean;
 }
 export interface ApiResponse<T> {
     data?: T;

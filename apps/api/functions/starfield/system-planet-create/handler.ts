@@ -1,5 +1,4 @@
 import { UpdateCommand } from '@aws-sdk/lib-dynamodb'
-import { randomUUID } from 'crypto'
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from 'aws-lambda'
 import { dynamo, TABLE_NAME } from '../../shared/db'
 import { toApiGatewayResponse, created, badRequest, serverError } from '../../shared/response'
