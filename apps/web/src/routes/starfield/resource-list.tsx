@@ -15,13 +15,20 @@ interface ResourceListProps {
   pageSize: number
   isSearching: boolean
   hideHeader?: boolean
+  onPageChange?: (page: number) => void
+  onNewWithType?: (type: string) => void
+  allResources?: any[]
 }
 
-export function ResourceList({ resources, selectedResourceId, onSelect, onNew, onEdit, onDelete, totalCount, currentPage, pageSize, isSearching, hideHeader }: ResourceListProps) {
+export function ResourceList({ resources, selectedResourceId, onSelect, onNew, onEdit, onDelete, totalCount, currentPage, pageSize, isSearching, hideHeader, onPageChange, onNewWithType, allResources }: ResourceListProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
 
   function goToPage(page: number) {
+    if (onPageChange) {
+      onPageChange(page)
+      return
+    }
     const next = new URLSearchParams(searchParams)
     next.set('page', String(page))
     setSearchParams(next, { preventScrollReset: true })
@@ -65,33 +72,55 @@ export function ResourceList({ resources, selectedResourceId, onSelect, onNew, o
         {groups.map(({ type, items }) => (
           <div key={`${type}-${currentPage}`}>
             <div className="px-4 py-1.5 bg-muted/50 border-b border-border/50 flex items-center gap-2">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex-1">
                 {type}
               </span>
               {!isSearching && currentPage > 1 && groups[0].type === type && (
                 <span className="text-[10px] text-muted-foreground/60">(continued)</span>
               )}
+              {onNewWithType && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={e => { e.stopPropagation(); onNewWithType(type) }}
+                  aria-label={`Add ${type} resource`}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              )}
             </div>
-            {items.map(resource => (
-              <div
-                key={resource.id ?? resource.sk}
-                className={`flex items-center justify-between px-4 py-3 border-b border-border/50 cursor-pointer transition-colors group ${selectedResourceId === (resource.id ?? resource.sk) ? 'bg-primary/20' : 'hover:bg-muted/50'}`}
-                onClick={() => onSelect(resource.id ?? resource.sk)}
-              >
-                <div className="flex flex-col min-w-0">
-                  <span className="text-sm font-medium truncate">{resource.name}</span>
-                  <span className="text-xs text-muted-foreground">{resource.abbreviation}</span>
+            {items.map(resource => {
+              const ingredients = allResources && resource.ingredients?.length
+                ? resource.ingredients
+                    .map((id: string) => allResources.find(r => r.id === id))
+                    .filter(Boolean)
+                    .sort((a: any, b: any) => a.name.localeCompare(b.name))
+                : []
+              return (
+                <div
+                  key={resource.id ?? resource.sk}
+                  className={`flex items-center justify-between px-4 py-3 border-b border-border/50 cursor-pointer transition-colors group ${selectedResourceId === (resource.id ?? resource.sk) ? 'bg-primary/20' : 'hover:bg-muted/50'}`}
+                  onClick={() => onSelect(resource.id ?? resource.sk)}
+                >
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-medium truncate">{resource.name}</span>
+                    <span className="font-mono text-xs text-muted-foreground truncate">
+                      {resource.abbreviation}
+                      {ingredients.length > 0 && ` — ${ingredients.map((i: any) => i.abbreviation).join(' · ')}`}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" onClick={e => e.stopPropagation()}>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEdit(resource)}>
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onDelete(resource.id ?? resource.sk, resource.name)}>
+                      <Trash2 className="h-3 w-3 text-destructive" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" onClick={e => e.stopPropagation()}>
-                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEdit(resource)}>
-                    <Pencil className="h-3 w-3" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onDelete(resource.id ?? resource.sk, resource.name)}>
-                    <Trash2 className="h-3 w-3 text-destructive" />
-                  </Button>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         ))}
       </div>

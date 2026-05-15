@@ -1,21 +1,23 @@
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
 import { Handle, Position, type NodeProps } from 'reactflow'
-import { Pencil, Plus } from 'lucide-react'
-import type { SfOutpost, SfOutpostResource } from '@cairn/types'
+import { Pencil, Plus, House, Factory, Cuboid, Droplet, Wind, Component, type LucideIcon } from 'lucide-react'
+import type { SfOutpost, SfOutpostResource, SfResource } from '@cairn/types'
 import type { OutpostValidation, ValidationStatus } from '@/lib/starfield-validation'
 
 export interface OutpostNodeData {
   outpost: SfOutpost & { id: string }
+  outposts: (SfOutpost & { id: string })[]
+  resources: SfResource[]
   validation: OutpostValidation | undefined
   onEdit: () => void
   onAddResource: () => void
   onEditResource: (resourceId: string) => void
 }
 
-const STATUS_DOT: Record<ValidationStatus, string> = {
-  satisfied: 'bg-green-500',
-  partial: 'bg-yellow-500',
-  missing: 'bg-red-500',
+const STATUS_ICON_COLOR: Record<ValidationStatus, string> = {
+  satisfied: 'text-green-500',
+  partial: 'text-yellow-500',
+  missing: 'text-red-500',
 }
 
 const STATUS_BORDER: Record<ValidationStatus, string> = {
@@ -24,10 +26,14 @@ const STATUS_BORDER: Record<ValidationStatus, string> = {
   missing: 'border-red-500/40',
 }
 
-function getResourceSourceLabel(
-  fr: SfOutpostResource,
-  status: ValidationStatus | undefined
-): string {
+const RESOURCE_TYPE_ICON: Record<string, LucideIcon> = {
+  solid: Cuboid,
+  liquid: Droplet,
+  gas: Wind,
+  manufactured: Component,
+}
+
+function getSourceLabel(fr: SfOutpostResource, status: ValidationStatus | undefined): string {
   if (fr.onsite) return '[onsite]'
   if (fr.fromOutpostId) return '[←]'
   if (!status || status === 'missing') return '[!]'
@@ -36,9 +42,32 @@ function getResourceSourceLabel(
 }
 
 export const OutpostNode = memo(function OutpostNode({ data }: NodeProps<OutpostNodeData>) {
-  const { outpost, validation, onEdit, onAddResource, onEditResource } = data
+  const { outpost, outposts, resources, validation, onEdit, onAddResource, onEditResource } = data
   const status: ValidationStatus = validation?.status ?? 'missing'
   const transferCount = outpost.resources.filter(fr => fr.fromOutpostId).length
+
+  const resourceTypeMap = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const r of resources) {
+      map.set(r.sk.replace(/^RESOURCE#/, ''), r.type ?? '')
+    }
+    return map
+  }, [resources])
+
+  const outpostMap = useMemo(() => {
+    const map = new Map<string, SfOutpost & { id: string }>()
+    for (const o of outposts) map.set(o.id, o)
+    return map
+  }, [outposts])
+
+  const sortedResources = useMemo(() => {
+    return [...outpost.resources].sort((a, b) => {
+      const typeA = resourceTypeMap.get(a.resourceId) ?? ''
+      const typeB = resourceTypeMap.get(b.resourceId) ?? ''
+      if (typeA !== typeB) return typeA.localeCompare(typeB)
+      return a.name.localeCompare(b.name)
+    })
+  }, [outpost.resources, resourceTypeMap])
 
   return (
     <div
@@ -48,7 +77,10 @@ export const OutpostNode = memo(function OutpostNode({ data }: NodeProps<Outpost
 
       <div className="px-3 pt-2.5 pb-1">
         <div className="flex items-center gap-1.5 mb-0.5">
-          <div className={`h-2 w-2 rounded-full shrink-0 ${STATUS_DOT[status]}`} />
+          {outpost.parentId
+            ? <Factory className={`h-3.5 w-3.5 shrink-0 ${STATUS_ICON_COLOR[status]}`} />
+            : <House className={`h-3.5 w-3.5 shrink-0 ${STATUS_ICON_COLOR[status]}`} />
+          }
           <span className="text-sm font-medium truncate flex-1">{outpost.planet}</span>
           <span className="text-xs text-muted-foreground shrink-0">{outpost.system}</span>
         </div>
@@ -79,28 +111,45 @@ export const OutpostNode = memo(function OutpostNode({ data }: NodeProps<Outpost
       )}
 
       <div className="px-3 pb-2 space-y-1">
-        {outpost.resources.map(fr => {
+        {sortedResources.map(fr => {
           const rv = validation?.resources.get(fr.resourceId)
           const rvStatus = rv?.status
+          const sourceOutpost = fr.fromOutpostId ? outpostMap.get(fr.fromOutpostId) : undefined
+          const sourcePlanet = sourceOutpost?.planet ?? fr.fromPlanet
+          const sourceSystem = sourceOutpost?.system ?? fr.fromSystem
+          const resourceType = resourceTypeMap.get(fr.resourceId) ?? ''
+          const ResourceIcon = RESOURCE_TYPE_ICON[resourceType.toLowerCase()] ?? Cuboid
           return (
-            <div key={fr.resourceId} className="group flex items-center gap-1.5">
-              <div
-                className={`h-1.5 w-1.5 rounded-full shrink-0 ${rvStatus ? STATUS_DOT[rvStatus] : 'bg-muted-foreground/40'}`}
-              />
-              <span className="font-mono text-[10px] text-muted-foreground shrink-0">
-                {fr.abbreviation}
-              </span>
-              <span className="text-xs truncate flex-1">{fr.name}</span>
-              <span className="text-[10px] text-muted-foreground shrink-0 font-mono">
-                {getResourceSourceLabel(fr, rvStatus)}
-              </span>
-              <button
-                className="h-4 w-4 inline-flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={e => { e.stopPropagation(); onEditResource(fr.resourceId) }}
-                aria-label="Edit resource"
-              >
-                <Pencil className="h-2.5 w-2.5" />
-              </button>
+            <div key={fr.resourceId} className="flex flex-col gap-0.5">
+              <div className="group flex items-center gap-1.5">
+                <ResourceIcon
+                  className={`h-3 w-3 shrink-0 ${rvStatus ? STATUS_ICON_COLOR[rvStatus] : 'text-muted-foreground/40'}`}
+                />
+                <span className="font-mono text-[10px] text-muted-foreground shrink-0">
+                  {fr.abbreviation}
+                </span>
+                <span className="text-xs truncate flex-1">{fr.name}</span>
+                <span className="text-[10px] text-muted-foreground shrink-0 font-mono">
+                  {getSourceLabel(fr, rvStatus)}
+                </span>
+                <button
+                  className="h-4 w-4 inline-flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-[colors,opacity] shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                  onClick={e => { e.stopPropagation(); onEditResource(fr.resourceId) }}
+                  aria-label="Edit resource"
+                >
+                  <Pencil className="h-2.5 w-2.5" />
+                </button>
+              </div>
+              {sourcePlanet && (
+                <div className="pl-3 text-[9px] text-muted-foreground leading-none">
+                  ← {sourcePlanet} ({sourceSystem ?? '?'})
+                </div>
+              )}
+              {fr.relay && (
+                <div className="pl-3 text-[9px] text-muted-foreground leading-none">
+                  ⟳ {fr.relay.planet} ({fr.relay.system})
+                </div>
+              )}
             </div>
           )
         })}

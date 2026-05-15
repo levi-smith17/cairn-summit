@@ -26,7 +26,7 @@ export function StarfieldControlBar({
 }: StarfieldControlBarProps) {
   return (
     <div className="rounded-lg border border-border bg-card p-2 shrink-0">
-      <div className="flex items-center gap-1.5">
+      <div className="flex flex-col md:flex-row items-center gap-1.5">
         <NetworkSelector
           networks={networks}
           selectedNetworkId={selectedNetworkId}
@@ -35,26 +35,27 @@ export function StarfieldControlBar({
           onUpdateNetwork={onUpdateNetwork}
           onDeleteNetwork={onDeleteNetwork}
         />
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-8 gap-1.5 text-sm"
-          onClick={onAddOutpost}
-          disabled={!selectedNetworkId}
-        >
-          <Plus className="h-3.5 w-3.5" />
-          Add Outpost
-        </Button>
-        <div className="flex-1" />
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-8 gap-1.5 text-sm"
-          onClick={onManageResources}
-        >
-          <Boxes className="h-3.5 w-3.5" />
-          Resources
-        </Button>
+        <div className="flex items-center gap-1.5 w-full">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 text-sm flex-1 md:flex-none justify-start"
+            onClick={onAddOutpost}
+            disabled={!selectedNetworkId}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Add Outpost
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 text-sm flex-1 md:flex-none justify-start ml-auto"
+            onClick={onManageResources}
+          >
+            <Boxes className="h-3.5 w-3.5" />
+            Resources
+          </Button>
+        </div>
       </div>
     </div>
   )

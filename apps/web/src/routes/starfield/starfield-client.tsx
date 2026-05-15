@@ -115,6 +115,7 @@ export function StarfieldClient({
           >
             <StarfieldCanvas
               outposts={networkOutposts}
+              resources={resources}
               validations={validations}
               selectedOutpostId={selectedOutpostId}
               onOutpostClick={id => setRightPanel({ mode: 'outpost-form', outpostId: id })}

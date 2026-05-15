@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { X, ArrowLeft, Search, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -30,18 +30,35 @@ type SubMode =
   | { mode: 'detail'; resource: any }
   | { mode: 'form'; resource: any | null }
 
+const PAGE_SIZE = 25
+
 export function ResourcesPanel({ resources, onClose, onRefresh }: ResourcesPanelProps) {
   const [subMode, setSubMode] = useState<SubMode>({ mode: 'list' })
   const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
 
-  const filteredResources = search.trim()
-    ? resources.filter(r =>
+  const sortedResources = useMemo(() =>
+    [...resources].sort((a, b) => {
+      const typeA = (a.type ?? '').localeCompare(b.type ?? '')
+      if (typeA !== 0) return typeA
+      return a.name.localeCompare(b.name)
+    }), [resources])
+
+  const filteredResources = useMemo(() => search.trim()
+    ? sortedResources.filter(r =>
         r.name.toLowerCase().includes(search.toLowerCase()) ||
         r.abbreviation.toLowerCase().includes(search.toLowerCase()) ||
         (r.type ?? '').toLowerCase().includes(search.toLowerCase())
       )
-    : resources
+    : sortedResources, [sortedResources, search])
+
+  useEffect(() => { setPage(1) }, [search])
+
+  const isSearching = !!search.trim()
+  const pagedResources = isSearching
+    ? filteredResources
+    : filteredResources.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   async function handleConfirmDelete() {
     if (!deleteTarget) return
@@ -62,7 +79,7 @@ export function ResourcesPanel({ resources, onClose, onRefresh }: ResourcesPanel
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <span className="text-sm font-medium">
-              {subMode.resource ? 'Edit Resource' : 'Add Resource'}
+              {subMode.resource?.id ? 'Edit Resource' : 'Add Resource'}
             </span>
           </div>
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
@@ -158,14 +175,14 @@ export function ResourcesPanel({ resources, onClose, onRefresh }: ResourcesPanel
     )
   }
 
-  const displayCount = search.trim() ? filteredResources.length : resources.length
+  const displayCount = isSearching ? filteredResources.length : resources.length
 
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
         <span className="text-sm font-medium">
           {displayCount} resource{displayCount !== 1 ? 's' : ''}
-          {search.trim() && filteredResources.length < resources.length && (
+          {isSearching && filteredResources.length < resources.length && (
             <span className="text-xs text-muted-foreground ml-1">(filtered)</span>
           )}
         </span>
@@ -218,7 +235,7 @@ export function ResourcesPanel({ resources, onClose, onRefresh }: ResourcesPanel
 
       <div className="flex-1 overflow-y-auto">
         <ResourceList
-          resources={filteredResources}
+          resources={pagedResources}
           selectedResourceId={null}
           onSelect={id => {
             const resource = resources.find(r => (r.id ?? r.sk) === id)
@@ -227,10 +244,13 @@ export function ResourcesPanel({ resources, onClose, onRefresh }: ResourcesPanel
           onNew={() => setSubMode({ mode: 'form', resource: null })}
           onEdit={resource => setSubMode({ mode: 'form', resource })}
           onDelete={(id, name) => setDeleteTarget({ id, name })}
-          totalCount={resources.length}
-          currentPage={1}
-          pageSize={resources.length}
-          isSearching={!!search.trim()}
+          totalCount={filteredResources.length}
+          currentPage={page}
+          pageSize={PAGE_SIZE}
+          isSearching={isSearching}
+          onPageChange={setPage}
+          onNewWithType={type => setSubMode({ mode: 'form', resource: { type } })}
+          allResources={resources}
           hideHeader
         />
       </div>

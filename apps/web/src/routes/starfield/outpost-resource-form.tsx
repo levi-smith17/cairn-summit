@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { upsertOutpostResource, removeOutpostResource } from '@/lib/api/starfield'
 import { Form, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Checkbox } from '@/components/ui/checkbox'
-import { CustomSelect } from '@/components/ui/custom-select'
+import { ResourcePicker } from '@/components/ui/resource-picker'
 import { PlanetPicker } from '@/components/ui/planet-picker'
 import { FormActions } from '@/components/forms/form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
@@ -73,8 +73,8 @@ export function OutpostResourceForm({
       resourceId: resourceId ?? '',
       onsite: existingEntry?.onsite ?? false,
       fromOutpostId: existingEntry?.fromOutpostId ?? '',
-      fromPlanet: existingFromOutpost?.planet ?? '',
-      fromSystem: existingFromOutpost?.system ?? '',
+      fromPlanet: existingFromOutpost?.planet ?? existingEntry?.fromPlanet ?? '',
+      fromSystem: existingFromOutpost?.system ?? existingEntry?.fromSystem ?? '',
       relayPlanet: existingEntry?.relay?.planet ?? '',
       relaySystem: existingEntry?.relay?.system ?? '',
     },
@@ -85,7 +85,7 @@ export function OutpostResourceForm({
   const watchRelayPlanet = form.watch('relayPlanet')
 
   // Build systems list from all OTHER outposts in the network (for "supplied from" picker)
-  const fromSystems = useMemo(() => {
+  const [fromSystems, setFromSystems] = useState(() => {
     const systemMap = new Map<string, { id: string; name: string; planets: { id: string; name: string }[] }>()
     for (const o of outposts) {
       if ((o.id ?? o.sk?.replace(/^SF#FACILITY#/, '')) === outpostId) continue
@@ -100,7 +100,7 @@ export function OutpostResourceForm({
       }
     }
     return Array.from(systemMap.values())
-  }, [outposts, outpostId])
+  })
 
   // Same systems list for the relay picker (all known planets in network, editable)
   const [relaySystems, setRelaySystems] = useState(() => {
@@ -118,10 +118,18 @@ export function OutpostResourceForm({
     }))
   })
 
-  const resourceOptions = resources.map((r: any) => ({
-    value: r.id ?? r.sk?.replace(/^RESOURCE#/, ''),
-    label: `[${r.abbreviation}] ${r.name}`,
-  }))
+  const pickerOptions = useMemo(() => {
+    const assigned = new Set(currentOutpost?.resources?.map((r: any) => r.resourceId) ?? [])
+    return resources
+      .filter((r: any) => !assigned.has(r.id ?? r.sk?.replace(/^RESOURCE#/, '')))
+      .map((r: any) => ({
+        id: r.id ?? r.sk?.replace(/^RESOURCE#/, ''),
+        name: r.name,
+        abbreviation: r.abbreviation,
+        typeId: r.type ?? 'Other',
+        type: { id: r.type ?? 'Other', name: r.type ?? 'Other' },
+      }))
+  }, [resources, currentOutpost])
 
   async function onSubmit(values: FormValues) {
     await handleSubmit(async () => {
@@ -142,6 +150,8 @@ export function OutpostResourceForm({
       await upsertOutpostResource(outpostId, values.resourceId, {
         onsite: values.onsite,
         fromOutpostId: resolvedFromOutpostId,
+        fromPlanet: values.fromPlanet || null,
+        fromSystem: values.fromSystem || null,
         relay,
       })
       onRefresh()
@@ -168,9 +178,14 @@ export function OutpostResourceForm({
   return (
     <>
       <div className="flex items-center px-4 py-3 border-b border-border shrink-0">
-        <span className="text-sm font-medium flex-1">
-          {isEditing ? 'Edit Resource' : 'Add Resource'}
-        </span>
+        <div className="flex-1 min-w-0">
+          <span className="text-sm font-medium">{isEditing ? 'Edit Resource' : 'Add Resource'}</span>
+          {currentOutpost && (
+            <p className="text-xs text-muted-foreground truncate">
+              {currentOutpost.planet} ({currentOutpost.system})
+            </p>
+          )}
+        </div>
         {isEditing && (
           <Tooltip>
             <TooltipTrigger asChild>
@@ -195,14 +210,18 @@ export function OutpostResourceForm({
             <FormField control={form.control} name="resourceId" render={({ field }) => (
               <FormItem>
                 <FormLabel>Resource</FormLabel>
-                <CustomSelect
-                  options={resourceOptions}
-                  value={field.value}
-                  onChange={field.onChange}
-                  placeholder="Select resource…"
-                  triggerClassName="w-full"
-                  disabled={isEditing}
-                />
+                {isEditing ? (
+                  <div className="text-sm px-3 py-1.5 bg-muted/30 rounded-md border border-border text-muted-foreground">
+                    {selectedResource?.name ?? resourceId}
+                  </div>
+                ) : (
+                  <ResourcePicker
+                    value={field.value ? [field.value] : []}
+                    onChange={ids => field.onChange(ids[0] ?? '')}
+                    options={pickerOptions}
+                    maxSelect={1}
+                  />
+                )}
                 <FormMessage />
               </FormItem>
             )} />
@@ -217,7 +236,7 @@ export function OutpostResourceForm({
             {!watchOnsite && (
               <FormField control={form.control} name="fromPlanet" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Supplied from <span className="text-muted-foreground text-xs font-normal">(optional)</span></FormLabel>
+                  <FormLabel>Supplied from</FormLabel>
                   <PlanetPicker
                     value={field.value ?? ''}
                     onChange={v => {
@@ -230,9 +249,8 @@ export function OutpostResourceForm({
                     onSystemChange={v => form.setValue('fromSystem', v)}
                     onSelectId={id => form.setValue('fromOutpostId', id)}
                     systems={fromSystems}
-                    onSystemsUpdate={() => {}}
+                    onSystemsUpdate={setFromSystems}
                     placeholder="Select outpost…"
-                    readonly
                   />
                   <FormMessage />
                 </FormItem>

@@ -8,12 +8,13 @@ import { CustomSelect } from '@/components/ui/custom-select'
 import { ResourcePicker } from '@/components/ui/resource-picker'
 import { FormActions } from '@/components/forms/form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
+import { Cuboid, Droplet, Wind, Component } from 'lucide-react'
 
 const RESOURCE_TYPE_OPTIONS = [
-  { value: 'Gas', label: 'Gas' },
-  { value: 'Solid', label: 'Solid' },
-  { value: 'Liquid', label: 'Liquid' },
-  { value: 'Manufactured', label: 'Manufactured' },
+  { value: 'Gas', label: 'Gas', icon: Wind },
+  { value: 'Liquid', label: 'Liquid', icon: Droplet },
+  { value: 'Manufactured', label: 'Manufactured', icon: Component },
+  { value: 'Solid', label: 'Solid', icon: Cuboid },
 ]
 
 const schema = z.object({
@@ -50,6 +51,17 @@ export function ResourceForm({ resource, resources, onDone, onRefresh }: Resourc
   })
 
   async function onSubmit(values: FormValues) {
+    const others = resources.filter(r => r.id !== resource?.id)
+    const nameTaken = others.find(r => r.name.toLowerCase() === values.name.toLowerCase())
+    if (nameTaken) {
+      form.setError('name', { message: 'A resource with this name already exists' })
+      return
+    }
+    const abbrevTaken = others.find(r => r.abbreviation.toLowerCase() === values.abbreviation.toLowerCase())
+    if (abbrevTaken) {
+      form.setError('abbreviation', { message: 'A resource with this abbreviation already exists' })
+      return
+    }
     await handleSubmit(async () => {
       await saveResource({
         id: resource?.id,
@@ -73,14 +85,14 @@ export function ResourceForm({ resource, resources, onDone, onRefresh }: Resourc
           <FormField control={form.control} name="name" render={({ field }) => (
             <FormItem>
               <FormLabel>Name</FormLabel>
-              <Input placeholder="Aluminum" {...field} />
+              <Input placeholder="Aluminum" className="md:h-8" {...field} />
               <FormMessage />
             </FormItem>
           )} />
           <FormField control={form.control} name="abbreviation" render={({ field }) => (
             <FormItem>
               <FormLabel>Abbreviation</FormLabel>
-              <Input placeholder="Al" {...field} />
+              <Input placeholder="Al" className="md:h-8" {...field} />
               <FormMessage />
             </FormItem>
           )} />

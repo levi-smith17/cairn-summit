@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
@@ -61,6 +61,7 @@ export function ResourcePicker({
 }: ResourcePickerProps) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
+  const searchRef = useRef<HTMLInputElement>(null)
 
   const isSingleSelect = maxSelect === 1
   const defaultPlaceholder = isSingleSelect ? 'Select resource…' : 'Select resources…'
@@ -91,6 +92,8 @@ export function ResourcePicker({
       onChange(next)
       if (isSingleSelect) setOpen(false)
     }
+    setSearch('')
+    searchRef.current?.focus()
   }
 
   function removeChip(id: string) {
@@ -102,7 +105,10 @@ export function ResourcePicker({
     if (!next) setSearch('')
   }
 
-  const selectedResources = value.map(id => options.find(o => o.id === id)).filter(Boolean) as Resource[]
+  const selectedResources = value
+    .map(id => options.find(o => o.id === id))
+    .filter(Boolean)
+    .sort((a, b) => a!.name.localeCompare(b!.name)) as Resource[]
   const hasValue = value.length > 0
   const atMax = value.length >= maxSelect
 
@@ -119,7 +125,7 @@ export function ResourcePicker({
             variant="outline"
             size="sm"
             disabled={disabled}
-            className="h-10 gap-1.5 text-sm justify-start w-full"
+            className="h-9 md:h-8 gap-1.5 text-sm justify-start w-full"
           >
             <Database className="h-4 w-4 shrink-0 text-muted-foreground" />
             <span className={`flex-1 text-left truncate ${!hasValue ? 'text-muted-foreground' : ''}`}>
@@ -134,6 +140,7 @@ export function ResourcePicker({
           <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border">
             <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
             <input
+              ref={searchRef}
               placeholder="Search resources…"
               value={search}
               onChange={e => setSearch(e.target.value)}

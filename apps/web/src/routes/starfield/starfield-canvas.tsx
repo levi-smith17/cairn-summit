@@ -13,13 +13,14 @@ import ReactFlow, {
   type NodeDragHandler,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
-import type { SfOutpost } from '@cairn/types'
+import type { SfOutpost, SfResource } from '@cairn/types'
 import type { OutpostValidation } from '@/lib/starfield-validation'
 import { updateOutpostPosition } from '@/lib/api/starfield'
 import { OutpostNode, type OutpostNodeData } from './outpost-node'
 
 interface StarfieldCanvasProps {
   outposts: (SfOutpost & { id: string })[]
+  resources: SfResource[]
   validations: Map<string, OutpostValidation>
   selectedOutpostId: string | null
   onOutpostClick: (outpostId: string) => void
@@ -42,6 +43,7 @@ function ZoomDisplay() {
 
 export function StarfieldCanvas({
   outposts,
+  resources,
   validations,
   selectedOutpostId,
   onOutpostClick,
@@ -56,6 +58,8 @@ export function StarfieldCanvas({
       selected: outpost.id === selectedOutpostId,
       data: {
         outpost,
+        outposts,
+        resources,
         validation: validations.get(outpost.id),
         onEdit: () => onOutpostClick(outpost.id),
         onAddResource: () => onAddOutpostResource(outpost.id),
@@ -92,6 +96,8 @@ export function StarfieldCanvas({
           selected: outpost.id === selectedOutpostId,
           data: {
             outpost,
+            outposts,
+            resources,
             validation: validations.get(outpost.id),
             onEdit: () => onOutpostClick(outpost.id),
             onAddResource: () => onAddOutpostResource(outpost.id),

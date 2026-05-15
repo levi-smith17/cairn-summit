@@ -85,7 +85,7 @@ export function NetworkSelector({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 gap-1.5 text-sm max-w-52">
+        <Button variant="outline" size="sm" className="h-8 gap-1.5 text-sm md:max-w-52 w-full justify-between">
           <span className="truncate">
             {selectedNetwork
               ? `[${selectedNetwork.abbreviation}] ${selectedNetwork.name}`

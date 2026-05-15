@@ -305,7 +305,7 @@ export function PlanetPicker({
             variant="outline"
             size="sm"
             disabled={disabled}
-            className="h-10 gap-1.5 text-sm justify-start w-full"
+            className="h-9 md:h-8 gap-1.5 text-sm justify-start w-full"
           >
             <Globe className="h-4 w-4 shrink-0 text-muted-foreground" />
             <span className={`flex-1 text-left truncate ${!displayLabel ? 'text-muted-foreground' : ''}`}>
@@ -409,7 +409,7 @@ export function PlanetPicker({
                         <button
                           type="button"
                           onClick={() => drillIntoSystem(sys.id)}
-                          className="flex-1 flex items-center gap-3 pr-4 py-3.5 text-sm text-left hover:bg-muted/50 transition-colors"
+                          className={`flex-1 flex items-center gap-3 pr-4 py-3.5 text-sm text-left hover:bg-muted/50 transition-colors${readonly ? ' pl-4' : ''}`}
                         >
                           <span className="flex-1">{sys.name} ({sys.planets.length})</span>
                           <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -456,7 +456,7 @@ export function PlanetPicker({
                           <button
                             type="button"
                             onClick={() => selectPlanet(planet.name, activeSystem?.name, planet.id)}
-                            className={`flex-1 flex items-center gap-3 pr-4 py-3.5 text-sm text-left transition-colors
+                            className={`flex-1 flex items-center gap-3 pr-4 py-3.5 text-sm text-left transition-colors${readonly ? ' pl-4' : ''}
                               ${isSelected ? 'bg-primary/15' : 'hover:bg-muted/50'}`}
                           >
                             <span className={`h-5 w-5 rounded border-2 flex items-center justify-center shrink-0

@@ -2,13 +2,27 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { createOutpost, updateOutpost } from '@/lib/api/starfield'
+import { createOutpost, updateOutpost, deleteOutpost } from '@/lib/api/starfield'
 import { Form, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 import { PlanetPicker } from '@/components/ui/planet-picker'
 import { CustomSelect } from '@/components/ui/custom-select'
 import { FormActions } from '@/components/forms/form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
+import { Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 const schema = z.object({
   system: z.string().min(1, 'System is required'),
@@ -29,6 +43,7 @@ interface OutpostFormProps {
 
 export function OutpostForm({ outpost, networkId, outposts, onDone, onRefresh }: OutpostFormProps) {
   const { saving, saved, error, handleSubmit } = useFormStatus()
+  const [removeDialogOpen, setRemoveDialogOpen] = useState(false)
 
   const [systems, setSystems] = useState(() => {
     const systemMap = new Map<string, Set<string>>()
@@ -82,10 +97,39 @@ export function OutpostForm({ outpost, networkId, outposts, onDone, onRefresh }:
     })
   }
 
+  async function handleDelete() {
+    if (!outpost?.id) return
+    try {
+      await deleteOutpost(outpost.id)
+      toast.success('Outpost deleted.')
+      onRefresh()
+      onDone()
+    } catch {
+      toast.error('Failed to delete outpost.')
+    }
+  }
+
   return (
+    <>
     <div className="flex flex-col h-full">
       <div className="flex items-center px-4 py-3 border-b border-border shrink-0">
-        <span className="text-sm font-medium">{outpost ? 'Edit Outpost' : 'Add Outpost'}</span>
+        <span className="text-sm font-medium flex-1">{outpost ? 'Edit Outpost' : 'Add Outpost'}</span>
+        {outpost && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-destructive hover:text-destructive/80"
+                onClick={() => setRemoveDialogOpen(true)}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Delete outpost</TooltipContent>
+          </Tooltip>
+        )}
       </div>
       <div className="flex-1 overflow-y-auto p-4">
         <Form {...form}>
@@ -127,7 +171,7 @@ export function OutpostForm({ outpost, networkId, outposts, onDone, onRefresh }:
             <FormField control={form.control} name="transferStationLimit" render={({ field }) => (
               <FormItem>
                 <FormLabel>Transfer Station Limit</FormLabel>
-                <Input type="number" min={0} max={99} {...field} />
+                <Input type="number" min={0} max={99} className="md:h-8" {...field} />
                 <FormMessage />
               </FormItem>
             )} />
@@ -137,5 +181,26 @@ export function OutpostForm({ outpost, networkId, outposts, onDone, onRefresh }:
         </Form>
       </div>
     </div>
+
+    <AlertDialog open={removeDialogOpen} onOpenChange={setRemoveDialogOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete outpost</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to delete{outpost ? ` "${outpost.planet} (${outpost.system})"` : ' this outpost'}? This cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleDelete}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   )
 }

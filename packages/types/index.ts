@@ -375,6 +375,8 @@ export interface SfOutpostResource {
     abbreviation: string
     onsite: boolean
     fromOutpostId?: string
+    fromPlanet?: string
+    fromSystem?: string
     relay?: {
         planet: string
         system: string

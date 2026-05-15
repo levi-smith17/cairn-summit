@@ -54,6 +54,8 @@ export const handler = async (
                     abbreviation: resourceItem.abbreviation,
                     onsite: body.onsite,
                     fromOutpostId: body.fromOutpostId ?? null,
+                    fromPlanet: body.fromPlanet ?? null,
+                    fromSystem: body.fromSystem ?? null,
                     relay: body.relay ?? null,
                 },
             },
