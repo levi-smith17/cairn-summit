@@ -318,7 +318,7 @@ module "lambda_headwaters_kin_get" {
   handler_path         = "headwaters/kin-get/handler.handler"
   managed_by           = var.managed_by
   owner                = var.owner
-  policy_arn           = module.iam.lambda_write_policy_arn
+  policy_arn           = module.iam.lambda_read_policy_arn
   project_name         = var.project_name
 }
 
