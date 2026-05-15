@@ -33,6 +33,7 @@ resource "aws_iam_policy" "lambda_delete" {
         Effect = "Allow"
         Action = [
           "dynamodb:DeleteItem",
+          "dynamodb:GetItem",
           "dynamodb:Query",
           "dynamodb:UpdateItem",
         ]
@@ -141,6 +142,7 @@ resource "aws_iam_policy" "lambda_write" {
         Action = [
           "dynamodb:BatchGetItem",
           "dynamodb:BatchWriteItem",
+          "dynamodb:GetItem",
           "dynamodb:PutItem",
           "dynamodb:TransactWriteItems",
           "dynamodb:UpdateItem",

@@ -41,10 +41,11 @@ interface InlineInputProps {
   onChange: (v: string) => void
   onSave: () => void
   onCancel: () => void
+  onRemove?: () => void
   placeholder: string
 }
 
-function InlineInput({ value, onChange, onSave, onCancel, placeholder }: InlineInputProps) {
+function InlineInput({ value, onChange, onSave, onCancel, onRemove, placeholder }: InlineInputProps) {
   return (
     <div className="flex items-center gap-2 px-3 py-2 border-b border-border/50">
       <Input
@@ -61,9 +62,14 @@ function InlineInput({ value, onChange, onSave, onCancel, placeholder }: InlineI
       <Button type="button" size="sm" className="h-8 px-3 shrink-0" onClick={onSave} disabled={!value.trim()}>
         Save
       </Button>
-      <button type="button" onClick={onCancel} className="p-1 text-muted-foreground hover:text-foreground shrink-0">
+      {onRemove && (
+        <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive/80 shrink-0" onClick={onRemove}>
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      )}
+      <Button type="button" variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={onCancel}>
         <X className="h-4 w-4" />
-      </button>
+      </Button>
     </div>
   )
 }
@@ -180,7 +186,7 @@ export function SystemsPanel({
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Delete system</TooltipContent>
+                <TooltipContent>Remove system</TooltipContent>
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -206,26 +212,22 @@ export function SystemsPanel({
                       onChange={setPlanetInput}
                       onSave={savePlanet}
                       onCancel={() => { setEditingPlanetId(null); setPlanetInput('') }}
+                      onRemove={() => setConfirmDelete({ type: 'planet', id: planet.id, name: planet.name, systemId: activeSystem.id })}
                       placeholder="Planet name…"
                     />
                   </div>
                 ) : (
                   <>
-                    <button
+                    <span className="flex-1 py-3.5 pl-4 pr-2 text-sm">{planet.name}</span>
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0 mr-3"
                       onClick={() => { setEditingPlanetId(planet.id); setPlanetInput(planet.name); setAddingPlanet(false) }}
-                      className="p-3.5 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                     >
                       <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <span className="flex-1 py-3.5 text-sm">{planet.name}</span>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmDelete({ type: 'planet', id: planet.id, name: planet.name, systemId: activeSystem.id })}
-                      className="p-3.5 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    </Button>
                   </>
                 )}
               </div>
@@ -258,18 +260,18 @@ export function SystemsPanel({
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>
-                Delete {confirmDelete?.type === 'system' ? 'system' : 'planet'} "{confirmDelete?.name}"?
+                Remove {confirmDelete?.type === 'system' ? 'system' : 'planet'} "{confirmDelete?.name}"?
               </AlertDialogTitle>
               <AlertDialogDescription>
                 {confirmDelete?.type === 'system'
-                  ? 'This will delete the system and all its planets. Outposts referencing it will not be affected.'
+                  ? 'This will remove the system and all its planets. Outposts referencing it will not be affected.'
                   : 'This will remove the planet from the list.'}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={executeDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                Delete
+                Remove
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -323,34 +325,34 @@ export function SystemsPanel({
                     onChange={setSystemInput}
                     onSave={saveSystem}
                     onCancel={() => { setEditingSystemId(null); setSystemInput('') }}
+                    onRemove={() => setConfirmDelete({ type: 'system', id: sys.id, name: sys.name })}
                     placeholder="System name…"
                   />
                 </div>
               ) : (
                 <>
-                  <button
+                  <div className="flex-1 flex flex-col justify-center py-3 pl-4 pr-2 min-w-0">
+                    <span className="text-sm truncate">{sys.name}</span>
+                    <span className="font-mono text-[10px] text-muted-foreground">{sys.planets.length} {sys.planets.length === 1 ? 'planet' : 'planets'}</span>
+                  </div>
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0 mr-1"
                     onClick={() => { setEditingSystemId(sys.id); setSystemInput(sys.name); setAddingSystem(false) }}
-                    className="p-3.5 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                   >
                     <Pencil className="h-3.5 w-3.5" />
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 shrink-0 mr-3"
                     onClick={() => drillInto(sys.id)}
-                    className="flex-1 flex items-center gap-3 pr-4 py-3.5 text-sm text-left hover:bg-muted/50 transition-colors"
                   >
-                    <span className="flex-1">{sys.name}</span>
-                    <span className="text-xs text-muted-foreground shrink-0">{sys.planets.length}</span>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setConfirmDelete({ type: 'system', id: sys.id, name: sys.name })}
-                    className="p-3.5 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
                 </>
               )}
             </div>
@@ -370,15 +372,15 @@ export function SystemsPanel({
       <AlertDialog open={!!confirmDelete} onOpenChange={open => { if (!open) setConfirmDelete(null) }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete system "{confirmDelete?.name}"?</AlertDialogTitle>
+            <AlertDialogTitle>Remove system "{confirmDelete?.name}"?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will delete the system and all its planets. Outposts referencing it will not be affected.
+              This will remove the system and all its planets. Outposts referencing it will not be affected.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={executeDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
+              Remove
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -105,6 +105,7 @@ export function OutpostResourceForm({
 
   const watchResourceId = form.watch('resourceId')
   const watchFromPlanet = form.watch('fromPlanet')
+  const watchFromSystem = form.watch('fromSystem')
   const watchOnsite = form.watch('onsite')
   const watchOrigin = form.watch('origin')
   const watchRelayPlanet = form.watch('relayPlanet')
@@ -262,6 +263,11 @@ export function OutpostResourceForm({
             {ingredientList.length > 0 && (
               <div className="space-y-1.5 rounded-md border border-border/60 p-3">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Ingredients</p>
+                {watchFromPlanet && !watchOnsite && (
+                  <p className="text-xs text-muted-foreground">
+                    Transferred in from {watchFromPlanet}{watchFromSystem ? ` (${watchFromSystem})` : ''} — manufactured at source outpost.
+                  </p>
+                )}
                 {ingredientList.map((ing: any) => (
                   <div key={ing.id} className="flex items-center gap-2">
                     {ing.satisfied

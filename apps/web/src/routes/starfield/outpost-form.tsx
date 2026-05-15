@@ -104,11 +104,11 @@ export function OutpostForm({ outpost, networkId, outposts, systems, onSystemsUp
     if (!outpost?.id) return
     try {
       await deleteOutpost(outpost.id)
-      toast.success('Outpost deleted.')
+      toast.success('Outpost removed.')
       onRefresh()
       onDone()
     } catch {
-      toast.error('Failed to delete outpost.')
+      toast.error('Failed to remove outpost.')
     }
   }
 
@@ -130,7 +130,7 @@ export function OutpostForm({ outpost, networkId, outposts, systems, onSystemsUp
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Delete outpost</TooltipContent>
+            <TooltipContent>Remove outpost</TooltipContent>
           </Tooltip>
         )}
         <Tooltip>
@@ -195,9 +195,9 @@ export function OutpostForm({ outpost, networkId, outposts, systems, onSystemsUp
     <AlertDialog open={removeDialogOpen} onOpenChange={setRemoveDialogOpen}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete outpost</AlertDialogTitle>
+          <AlertDialogTitle>Remove outpost</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete{outpost ? ` "${outpost.planet} (${outpost.system})"` : ' this outpost'}? This cannot be undone.
+            Are you sure you want to remove{outpost ? ` "${outpost.planet} (${outpost.system})"` : ' this outpost'}? This cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -206,7 +206,7 @@ export function OutpostForm({ outpost, networkId, outposts, systems, onSystemsUp
             onClick={handleDelete}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            Delete
+            Remove
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

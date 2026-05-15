@@ -113,9 +113,9 @@ export function StarfieldClient({
         )
       }
       onRefresh()
-      toast.success('Network deleted.')
+      toast.success('Network removed.')
     } catch {
-      toast.error('Failed to delete network.')
+      toast.error('Failed to remove network.')
     }
   }
 
@@ -134,7 +134,7 @@ export function StarfieldClient({
 
   const handleSystemDelete = useCallback((id: string) => {
     setLocalSystems(prev => prev.filter(s => s.id !== id))
-    deleteSystem(id).catch(() => toast.error('Failed to delete system.'))
+    deleteSystem(id).catch(() => toast.error('Failed to remove system.'))
   }, [])
 
   const handlePlanetCreate = useCallback((systemId: string, name: string) => {
@@ -158,7 +158,7 @@ export function StarfieldClient({
     setLocalSystems(prev => prev.map(s =>
       s.id === systemId ? { ...s, planets: s.planets.filter(p => p.id !== planetId) } : s
     ))
-    deletePlanet(systemId, planetId).catch(() => toast.error('Failed to delete planet.'))
+    deletePlanet(systemId, planetId).catch(() => toast.error('Failed to remove planet.'))
   }, [])
 
   // Called by PlanetPicker's onSystemsUpdate (local picker state sync)
