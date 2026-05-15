@@ -411,7 +411,7 @@ module "api_gateway" {
     starfield-networks-get = {
       invoke_arn    = module.lambda_starfield_networks_get.invoke_arn
       function_name = module.lambda_starfield_networks_get.function_name
-      route_key     = "GET /starfield/networks/"
+      route_key     = "GET /starfield/networks"
     }
     starfield-network-update = {
       invoke_arn    = module.lambda_starfield_network_update.invoke_arn

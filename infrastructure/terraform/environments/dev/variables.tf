@@ -17,3 +17,7 @@ variable "project_name" {
   type    = string
   default = "cairn"
 }
+
+variable "github_repo" {
+  type = string
+}
