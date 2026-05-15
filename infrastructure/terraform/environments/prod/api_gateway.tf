@@ -398,10 +398,20 @@ module "api_gateway" {
       function_name = module.lambda_signals_sync.function_name
       route_key     = "POST /signals/sync"
     }
+    starfield-network-create = {
+      invoke_arn    = module.lambda_starfield_network_create.invoke_arn
+      function_name = module.lambda_starfield_network_create.function_name
+      route_key     = "POST /starfield/networks"
+    }
     starfield-network-delete = {
       invoke_arn    = module.lambda_starfield_network_delete.invoke_arn
       function_name = module.lambda_starfield_network_delete.function_name
       route_key     = "DELETE /starfield/networks/{id}"
+    }
+    starfield-networks-get = {
+      invoke_arn    = module.lambda_starfield_networks_get.invoke_arn
+      function_name = module.lambda_starfield_networks_get.function_name
+      route_key     = "GET /starfield/networks/"
     }
     starfield-network-update = {
       invoke_arn    = module.lambda_starfield_network_update.invoke_arn
