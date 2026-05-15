@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import type { APIGatewayProxyEventV2WithJWTAuthorizer } from 'aws-lambda'
 
 vi.mock('../../shared/db', () => ({
@@ -50,7 +50,13 @@ const mockEvent = (
 
 describe('supplylines/summary handler', () => {
     beforeEach(() => {
+        vi.useFakeTimers()
+        vi.setSystemTime(new Date('2026-05-14T00:00:00.000Z'))
         vi.clearAllMocks()
+    })
+
+    afterEach(() => {
+        vi.useRealTimers()
     })
 
     it('returns summary with monthly costs and upcoming renewals', async () => {
