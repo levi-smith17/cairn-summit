@@ -56,6 +56,7 @@ export const handler = async (
                     fromOutpostId: body.fromOutpostId ?? null,
                     fromPlanet: body.fromPlanet ?? null,
                     fromSystem: body.fromSystem ?? null,
+                    origin: body.origin ?? false,
                     relay: body.relay ?? null,
                 },
             },

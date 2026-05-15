@@ -35,7 +35,8 @@ const RESOURCE_TYPE_ICON: Record<string, LucideIcon> = {
 
 function getSourceLabel(fr: SfOutpostResource, status: ValidationStatus | undefined): string {
   if (fr.onsite) return '[onsite]'
-  if (fr.fromOutpostId) return '[←]'
+  if (fr.origin) return '[origin]'
+  if (fr.fromOutpostId || fr.fromPlanet) return '[←]'
   if (!status || status === 'missing') return '[!]'
   if (status === 'partial') return '[~]'
   return '[✓]'

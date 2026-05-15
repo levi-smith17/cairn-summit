@@ -27,6 +27,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 const schema = z.object({
   resourceId: z.string().min(1, 'Resource is required'),
   onsite: z.boolean(),
+  origin: z.boolean(),
   fromOutpostId: z.string().optional(),
   fromPlanet: z.string().optional(),
   fromSystem: z.string().optional(),
@@ -72,6 +73,7 @@ export function OutpostResourceForm({
     defaultValues: {
       resourceId: resourceId ?? '',
       onsite: existingEntry?.onsite ?? false,
+      origin: existingEntry?.origin ?? false,
       fromOutpostId: existingEntry?.fromOutpostId ?? '',
       fromPlanet: existingFromOutpost?.planet ?? existingEntry?.fromPlanet ?? '',
       fromSystem: existingFromOutpost?.system ?? existingEntry?.fromSystem ?? '',
@@ -82,6 +84,7 @@ export function OutpostResourceForm({
 
   const watchFromPlanet = form.watch('fromPlanet')
   const watchOnsite = form.watch('onsite')
+  const watchOrigin = form.watch('origin')
   const watchRelayPlanet = form.watch('relayPlanet')
 
   // Build systems list from all OTHER outposts in the network (for "supplied from" picker)
@@ -97,6 +100,18 @@ export function OutpostResourceForm({
       const sys = systemMap.get(o.system)!
       if (!sys.planets.find(p => p.name === o.planet)) {
         sys.planets.push({ id: oId, name: o.planet })
+      }
+    }
+    // Also seed with any saved freeform from-location not backed by an outpost
+    if (existingEntry?.fromPlanet && existingEntry?.fromSystem && !existingEntry.fromOutpostId) {
+      const sys = existingEntry.fromSystem
+      const planet = existingEntry.fromPlanet
+      if (!systemMap.has(sys)) {
+        systemMap.set(sys, { id: sys, name: sys, planets: [] })
+      }
+      const sysEntry = systemMap.get(sys)!
+      if (!sysEntry.planets.find(p => p.name === planet)) {
+        sysEntry.planets.push({ id: planet, name: planet })
       }
     }
     return Array.from(systemMap.values())
@@ -149,6 +164,7 @@ export function OutpostResourceForm({
 
       await upsertOutpostResource(outpostId, values.resourceId, {
         onsite: values.onsite,
+        origin: values.origin,
         fromOutpostId: resolvedFromOutpostId,
         fromPlanet: values.fromPlanet || null,
         fromSystem: values.fromSystem || null,
@@ -234,6 +250,18 @@ export function OutpostResourceForm({
             )} />
 
             {!watchOnsite && (
+              <FormField control={form.control} name="origin" render={({ field }) => (
+                <FormItem className="flex items-start gap-2 space-y-0">
+                  <Checkbox checked={field.value} onCheckedChange={field.onChange} id="origin" className="mt-0.5" />
+                  <div>
+                    <FormLabel htmlFor="origin" className="font-normal cursor-pointer">Supply origin</FormLabel>
+                    <p className="text-xs text-muted-foreground">Marks this as the end of the supply chain. Validation stops here.</p>
+                  </div>
+                </FormItem>
+              )} />
+            )}
+
+            {!watchOnsite && !watchOrigin && (
               <FormField control={form.control} name="fromPlanet" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Supplied from</FormLabel>
@@ -257,7 +285,7 @@ export function OutpostResourceForm({
               )} />
             )}
 
-            {watchFromPlanet && !watchOnsite && (
+            {watchFromPlanet && !watchOnsite && !watchOrigin && (
               <div className="space-y-3 rounded-md border border-border/60 p-3">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Relay (optional)</p>
                 <FormField control={form.control} name="relayPlanet" render={({ field }) => (

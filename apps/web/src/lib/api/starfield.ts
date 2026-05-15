@@ -82,7 +82,7 @@ export async function updateOutpostPosition(id: string, position: { x: number; y
 export async function upsertOutpostResource(
     outpostId: string,
     resourceId: string,
-    data: { onsite: boolean; fromOutpostId?: string | null; fromPlanet?: string | null; fromSystem?: string | null; relay?: { planet: string; system: string } | null }
+    data: { onsite: boolean; fromOutpostId?: string | null; fromPlanet?: string | null; fromSystem?: string | null; origin?: boolean; relay?: { planet: string; system: string } | null }
 ): Promise<void> {
     await apiFetch(`${API_BASE}/starfield/outposts/${outpostId}/resources/${resourceId}`, {
         method: 'PUT',

@@ -377,6 +377,7 @@ export interface SfOutpostResource {
     fromOutpostId?: string
     fromPlanet?: string
     fromSystem?: string
+    origin?: boolean
     relay?: {
         planet: string
         system: string

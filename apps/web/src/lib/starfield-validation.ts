@@ -37,6 +37,11 @@ function validateResource(
     return { resourceId, status: 'missing', missingIngredients: [resourceId] }
   }
 
+  // Supply origin — chain terminates here, considered satisfied
+  if (fr.origin) {
+    return { resourceId, status: 'satisfied', missingIngredients: [] }
+  }
+
   // Sourced from another outpost — validate it is actually satisfied there
   if (fr.fromOutpostId) {
     const nextVisited = new Set(visited)
