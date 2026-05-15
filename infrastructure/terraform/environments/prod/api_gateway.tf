@@ -558,5 +558,40 @@ module "api_gateway" {
       function_name = module.lambda_starfield_resource_delete.function_name
       route_key     = "DELETE /starfield/resources/{id}"
     }
+    starfield-systems-get = {
+      invoke_arn    = module.lambda_starfield_systems_get.invoke_arn
+      function_name = module.lambda_starfield_systems_get.function_name
+      route_key     = "GET /starfield/systems"
+    }
+    starfield-system-create = {
+      invoke_arn    = module.lambda_starfield_system_create.invoke_arn
+      function_name = module.lambda_starfield_system_create.function_name
+      route_key     = "POST /starfield/systems"
+    }
+    starfield-system-update = {
+      invoke_arn    = module.lambda_starfield_system_update.invoke_arn
+      function_name = module.lambda_starfield_system_update.function_name
+      route_key     = "PUT /starfield/systems/{id}"
+    }
+    starfield-system-delete = {
+      invoke_arn    = module.lambda_starfield_system_delete.invoke_arn
+      function_name = module.lambda_starfield_system_delete.function_name
+      route_key     = "DELETE /starfield/systems/{id}"
+    }
+    starfield-system-planet-create = {
+      invoke_arn    = module.lambda_starfield_system_planet_create.invoke_arn
+      function_name = module.lambda_starfield_system_planet_create.function_name
+      route_key     = "POST /starfield/systems/{id}/planets"
+    }
+    starfield-system-planet-update = {
+      invoke_arn    = module.lambda_starfield_system_planet_update.invoke_arn
+      function_name = module.lambda_starfield_system_planet_update.function_name
+      route_key     = "PUT /starfield/systems/{id}/planets/{planetId}"
+    }
+    starfield-system-planet-delete = {
+      invoke_arn    = module.lambda_starfield_system_planet_delete.invoke_arn
+      function_name = module.lambda_starfield_system_planet_delete.function_name
+      route_key     = "DELETE /starfield/systems/{id}/planets/{planetId}"
+    }
   }
 }

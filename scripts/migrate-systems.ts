@@ -57,24 +57,28 @@ async function main() {
     systemMap.get(system)!.add(planet)
   }
 
-  for (const facility of facilities) {
+  facilities.forEach((facility: any) => {
     addPlanet(facility.system, facility.planet)
-    for (const resource of (facility.resources ?? [])) {
+    const resourcesObj = facility.resources ?? {}
+    const resources: any[] = Array.isArray(resourcesObj)
+      ? resourcesObj
+      : Object.values(resourcesObj)
+    resources.forEach((resource: any) => {
       if (resource.fromSystem && resource.fromPlanet && !resource.fromOutpostId) {
         addPlanet(resource.fromSystem, resource.fromPlanet)
       }
       if (resource.relay?.system && resource.relay?.planet) {
         addPlanet(resource.relay.system, resource.relay.planet)
       }
-    }
-  }
+    })
+  })
 
   console.log(`Found ${systemMap.size} unique systems`)
 
   let created = 0
   let skipped = 0
 
-  for (const [systemName, planetSet] of systemMap.entries()) {
+  for (const [systemName, planetSet] of Array.from(systemMap.entries())) {
     const systemId = systemName.toLowerCase().replace(/[^a-z0-9]+/g, '-')
     const planets = Array.from(planetSet).map(name => ({
       id: randomUUID(),

@@ -181,7 +181,7 @@ export async function fetchStarfieldData() {
         getNetworks(),
         getAllOutposts(),
         getResources(),
-        getSystems(),
+        getSystems().catch(() => []),
     ])
 
     return {
