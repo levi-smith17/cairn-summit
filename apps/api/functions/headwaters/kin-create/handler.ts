@@ -17,7 +17,7 @@ export const handler = async (
         }
 
         const pk = getPk(event)
-        const id = randomUUID()
+        const id = body.isSelf === true ? 'WAYFARER' : randomUUID()
         const now = new Date().toISOString()
 
         const kin: Kin = {
@@ -25,7 +25,10 @@ export const handler = async (
             sk: `KIN#${id}`,
             givenName: body.givenName,
             middleName: body.middleName,
+            nickname: body.nickname,
             surname: body.surname,
+            maidenName: body.maidenName,
+            isSelf: body.isSelf === true ? true : undefined,
             birthDate: body.birthDate,
             deathDate: body.deathDate,
             fatherId: body.fatherId,

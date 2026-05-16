@@ -96,7 +96,7 @@ function buildNavItems(terms: Terms): { group: string; items: NavItem[] }[] {
     {
       group: 'Apps',
       items: [
-        { title: 'Headwaters', url: '/headwaters', icon: TreePine, tooltip: 'Headwaters' },
+        { title: terms.headwaters, url: '/headwaters', icon: TreePine, tooltip: terms.headwaters },
         { title: 'Starfield', url: '/starfield', icon: Rocket, tooltip: 'Starfield' },
       ],
     },

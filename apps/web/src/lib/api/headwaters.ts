@@ -6,7 +6,9 @@ const API_URL = import.meta.env.VITE_API_URL ?? ''
 export interface KinPayload {
   givenName: string
   middleName?: string
+  nickname?: string
   surname: string
+  isSelf?: boolean
   birthDate?: string
   deathDate?: string
   fatherId?: string
@@ -24,7 +26,7 @@ export async function getKin(): Promise<Kin[]> {
   return json.data ?? []
 }
 
-export async function createKin(payload: KinPayload): Promise<void> {
+export async function createKin(payload: KinPayload): Promise<Kin> {
   const headers = await getAuthHeaders()
   const res = await fetch(`${API_URL}/headwaters/kin`, {
     method: 'POST',
@@ -32,6 +34,8 @@ export async function createKin(payload: KinPayload): Promise<void> {
     body: JSON.stringify(payload),
   })
   if (!res.ok) throw new Error('Failed to create kin')
+  const json = await res.json()
+  return json.data
 }
 
 export async function updateKin(id: string, payload: Partial<KinPayload>): Promise<void> {

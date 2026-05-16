@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { CustomSelect } from '@/components/ui/custom-select'
+import { KinPicker } from '@/components/ui/kin-picker'
 import { FormActions } from '@/components/forms/form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -24,11 +25,13 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import type { Kin, Bloodline } from '@cairn/types'
-import { kinFullName } from './kin-node'
+import { useTerminology } from '@/contexts/terminology-context'
+import { kinFullName, getDescendantIds, isEligibleParent } from './kin-node'
 
 const schema = z.object({
   givenName: z.string().min(1, 'Given name is required'),
   middleName: z.string().optional(),
+  nickname: z.string(),
   surname: z.string().min(1, 'Surname is required'),
   birthDate: z.string().optional(),
   deathDate: z.string().optional(),
@@ -64,6 +67,7 @@ interface KinFormProps {
 }
 
 export function KinForm({ kin, isNew = false, allKin, onDone, onRefresh }: KinFormProps) {
+  const { terms } = useTerminology()
   const { saving, saved, error, handleSubmit } = useFormStatus()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [bloodlines, setBloodlines] = useState<Bloodline[]>(kin?.bloodlines ?? [])
@@ -82,6 +86,7 @@ export function KinForm({ kin, isNew = false, allKin, onDone, onRefresh }: KinFo
     defaultValues: {
       givenName: kin?.givenName ?? '',
       middleName: kin?.middleName ?? '',
+      nickname: kin?.nickname ?? '',
       surname: kin?.surname ?? '',
       birthDate: kin?.birthDate ?? '',
       deathDate: kin?.deathDate ?? '',
@@ -93,9 +98,17 @@ export function KinForm({ kin, isNew = false, allKin, onDone, onRefresh }: KinFo
   })
 
   const otherKin = allKin.filter(k => k.id !== kin?.id)
-  const kinOptions = [
+  const descendantIds = kin?.id ? getDescendantIds(kin.id, allKin) : new Set<string>()
+  const eligibleParents = otherKin.filter(k =>
+    !descendantIds.has(k.id) && isEligibleParent(k, { birthDate: kin?.birthDate })
+  )
+  const toOption = (k: Kin & { id: string }) => ({ value: k.id, label: kinFullName(k) })
+  const sortedEligible = eligibleParents.map(toOption).sort((a, b) => a.label.localeCompare(b.label))
+  const bloodlineOptions = [
     { value: '', label: 'None' },
-    ...otherKin.map(k => ({ value: k.id, label: kinFullName(k) })),
+    ...otherKin
+      .map(k => ({ value: k.id, label: kinFullName(k) }))
+      .sort((a, b) => a.label.localeCompare(b.label)),
   ]
 
   const currentBloodline = bloodlines.find(b => b.current)
@@ -154,11 +167,60 @@ export function KinForm({ kin, isNew = false, allKin, onDone, onRefresh }: KinFo
     setBloodlines(prev => prev.filter(b => b.id !== id))
   }
 
+  async function applyReciprocalBloodline(
+    selfId: string,
+    selfName: string,
+    newBloodlines: Bloodline[],
+    prevBloodlines: Bloodline[]
+  ) {
+    const newPartner = newBloodlines.find(b => b.current)
+    const prevPartnerId = prevBloodlines.find(b => b.current)?.kinId
+
+    if (prevPartnerId && prevPartnerId !== newPartner?.kinId) {
+      const prev = allKin.find(k => k.id === prevPartnerId)
+      if (prev) {
+        await updateKin(prevPartnerId, {
+          givenName: prev.givenName, middleName: prev.middleName, nickname: prev.nickname,
+          surname: prev.surname,
+          birthDate: prev.birthDate, deathDate: prev.deathDate,
+          fatherId: prev.fatherId, fatherUnknown: prev.fatherUnknown,
+          motherId: prev.motherId, motherUnknown: prev.motherUnknown,
+          bloodlines: prev.bloodlines.map(b => b.kinId === selfId ? { ...b, current: false } : b),
+        })
+      }
+    }
+
+    if (newPartner) {
+      const partner = allKin.find(k => k.id === newPartner.kinId)
+      if (partner) {
+        const existing = partner.bloodlines.find(b => b.kinId === selfId)
+        const updatedBloodlines = existing
+          ? partner.bloodlines.map(b => b.kinId === selfId
+              ? { ...b, current: true, startDate: newPartner.startDate }
+              : { ...b, current: false }
+            )
+          : [
+              ...partner.bloodlines.map(b => ({ ...b, current: false })),
+              { id: crypto.randomUUID(), kinId: selfId, kinName: selfName, current: true, startDate: newPartner.startDate },
+            ]
+        await updateKin(newPartner.kinId, {
+          givenName: partner.givenName, middleName: partner.middleName, nickname: partner.nickname,
+          surname: partner.surname,
+          birthDate: partner.birthDate, deathDate: partner.deathDate,
+          fatherId: partner.fatherId, fatherUnknown: partner.fatherUnknown,
+          motherId: partner.motherId, motherUnknown: partner.motherUnknown,
+          bloodlines: updatedBloodlines,
+        })
+      }
+    }
+  }
+
   async function onSubmit(values: FormValues) {
     await handleSubmit(async () => {
       const payload = {
         givenName: values.givenName,
         middleName: values.middleName || undefined,
+        nickname: values.nickname || undefined,
         surname: values.surname,
         birthDate: values.birthDate || undefined,
         deathDate: values.deathDate || undefined,
@@ -168,10 +230,18 @@ export function KinForm({ kin, isNew = false, allKin, onDone, onRefresh }: KinFo
         motherUnknown: values.motherUnknown,
         bloodlines,
       }
+
       if (kin?.id && !isNew) {
         await updateKin(kin.id, payload)
+        const selfName = [values.givenName, values.middleName, values.surname].filter(Boolean).join(' ')
+        await applyReciprocalBloodline(kin.id, selfName, bloodlines, kin.bloodlines ?? [])
       } else {
-        await createKin(payload)
+        const created = await createKin({ ...payload, isSelf: isNew && !!kin ? true : undefined })
+        if (created?.sk) {
+          const selfId = created.sk.replace('KIN#', '')
+          const selfName = [values.givenName, values.middleName, values.surname].filter(Boolean).join(' ')
+          await applyReciprocalBloodline(selfId, selfName, bloodlines, [])
+        }
       }
       onRefresh()
       onDone()
@@ -182,7 +252,7 @@ export function KinForm({ kin, isNew = false, allKin, onDone, onRefresh }: KinFo
     if (!kin?.id) return
     try {
       await deleteKin(kin.id)
-      toast.success('Kin removed.')
+      toast.success(`${terms.kin} removed.`)
       onRefresh()
       onDone()
     } catch {
@@ -192,13 +262,21 @@ export function KinForm({ kin, isNew = false, allKin, onDone, onRefresh }: KinFo
 
   const fatherUnknown = form.watch('fatherUnknown')
   const motherUnknown = form.watch('motherUnknown')
+  const watchedFatherId = form.watch('fatherId')
+  const watchedMotherId = form.watch('motherId')
+  const fatherPickerOptions = [{ value: '', label: 'None' }, ...sortedEligible.filter(o => o.value !== watchedMotherId)]
+  const motherPickerOptions = [{ value: '', label: 'None' }, ...sortedEligible.filter(o => o.value !== watchedFatherId)]
+  const isSelf = (isNew && !!kin) || kin?.id === 'WAYFARER'
+  const titleLabel = isSelf ? 'Edit Yourself' : kin && !isNew ? `Edit ${terms.kin}` : `Add ${terms.kin}`
+  const saveLabel = isSelf ? 'Save' : kin && !isNew ? 'Save Changes' : `Add ${terms.kin}`
+  const canDelete = kin && !isNew && kin.id !== 'WAYFARER'
 
   return (
     <>
       <div className="flex flex-col h-full">
         <div className="flex items-center px-4 py-3 border-b border-border shrink-0">
-          <span className="text-sm font-medium flex-1">{isNew && kin ? 'Edit Yourself' : kin && !isNew ? 'Edit Kin' : 'Add Kin'}</span>
-          {kin && !isNew && (
+          <span className="text-sm font-medium flex-1">{titleLabel}</span>
+          {canDelete && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -211,7 +289,7 @@ export function KinForm({ kin, isNew = false, allKin, onDone, onRefresh }: KinFo
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Remove kin</TooltipContent>
+              <TooltipContent>Remove {terms.kin.toLowerCase()}</TooltipContent>
             </Tooltip>
           )}
           <Tooltip>
@@ -253,6 +331,14 @@ export function KinForm({ kin, isNew = false, allKin, onDone, onRefresh }: KinFo
                 </FormItem>
               )} />
 
+              <FormField control={form.control} name="nickname" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nickname <span className="text-muted-foreground text-xs font-normal">(optional)</span></FormLabel>
+                  <Input className="md:h-8" placeholder="Nickname" {...field} />
+                  <FormMessage />
+                </FormItem>
+              )} />
+
               <div className="-mx-4 border-t" />
 
               {/* Dates */}
@@ -282,8 +368,8 @@ export function KinForm({ kin, isNew = false, allKin, onDone, onRefresh }: KinFo
                   <FormItem>
                     <FormLabel>Father</FormLabel>
                     <div className="space-y-1.5">
-                      <CustomSelect
-                        options={kinOptions}
+                      <KinPicker
+                        options={fatherPickerOptions}
                         value={field.value ?? ''}
                         onChange={field.onChange}
                         placeholder="Select father…"
@@ -311,8 +397,8 @@ export function KinForm({ kin, isNew = false, allKin, onDone, onRefresh }: KinFo
                   <FormItem>
                     <FormLabel>Mother</FormLabel>
                     <div className="space-y-1.5">
-                      <CustomSelect
-                        options={kinOptions}
+                      <KinPicker
+                        options={motherPickerOptions}
                         value={field.value ?? ''}
                         onChange={field.onChange}
                         placeholder="Select mother…"
@@ -357,14 +443,27 @@ export function KinForm({ kin, isNew = false, allKin, onDone, onRefresh }: KinFo
                     {/* Current marriage */}
                     <div>
                       <FormLabel className="text-xs">Current Marriage</FormLabel>
-                      <div className="mt-1.5">
-                        <CustomSelect
-                          options={kinOptions}
+                      <div className="mt-1.5 space-y-1.5">
+                        <KinPicker
+                          options={bloodlineOptions}
                           value={currentBloodline?.kinId ?? ''}
                           onChange={handleCurrentSpouseChange}
                           placeholder="None"
                           triggerClassName="w-full"
                         />
+                        {currentBloodline && (
+                          <div>
+                            <FormLabel className="text-xs text-muted-foreground">Since <span className="font-normal">(optional)</span></FormLabel>
+                            <Input
+                              type="date"
+                              className="mt-1 h-8"
+                              value={currentBloodline.startDate ?? ''}
+                              onChange={e => setBloodlines(prev => prev.map(b =>
+                                b.current ? { ...b, startDate: e.target.value || undefined } : b
+                              ))}
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -404,8 +503,8 @@ export function KinForm({ kin, isNew = false, allKin, onDone, onRefresh }: KinFo
                         <div>
                           <FormLabel className="text-xs">Partner</FormLabel>
                           <div className="mt-1">
-                            <CustomSelect
-                              options={kinOptions.filter(o => o.value !== '')}
+                            <KinPicker
+                              options={bloodlineOptions.filter(o => o.value !== '')}
                               value={newBloodline.kinId}
                               onChange={v => setNewBloodline(p => ({ ...p, kinId: v }))}
                               placeholder="Select partner…"
@@ -465,11 +564,10 @@ export function KinForm({ kin, isNew = false, allKin, onDone, onRefresh }: KinFo
                       <Button
                         type="button"
                         variant="outline"
-                        size="sm"
-                        className="h-7 text-xs gap-1.5 w-full justify-start"
+                        className="h-9 md:h-8 text-sm gap-1.5 w-full justify-start"
                         onClick={() => setShowAddBloodline(true)}
                       >
-                        <Plus className="h-3 w-3" />
+                        <Plus className="h-3.5 w-3.5" />
                         Add Bloodline
                       </Button>
                     )}
@@ -482,7 +580,7 @@ export function KinForm({ kin, isNew = false, allKin, onDone, onRefresh }: KinFo
                 saving={saving}
                 saved={saved}
                 error={error}
-                saveLabel={isNew && kin ? 'Save' : kin && !isNew ? 'Save Changes' : 'Add Kin'}
+                saveLabel={saveLabel}
                 formId="kin-form"
                 onCancel={onDone}
               />
@@ -496,7 +594,7 @@ export function KinForm({ kin, isNew = false, allKin, onDone, onRefresh }: KinFo
           <AlertDialogHeader>
             <AlertDialogTitle>Remove kin</AlertDialogTitle>
             <AlertDialogDescription>
-              {kin && !isNew
+              {canDelete
                 ? `Remove "${[kin.givenName, kin.middleName, kin.surname].filter(Boolean).join(' ')}" from the lineage? This cannot be undone.`
                 : 'Remove this kin? This cannot be undone.'}
             </AlertDialogDescription>

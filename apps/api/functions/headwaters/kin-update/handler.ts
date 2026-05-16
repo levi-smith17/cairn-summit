@@ -20,7 +20,6 @@ export const handler = async (
         const pk = getPk(event)
         const now = new Date().toISOString()
 
-        // Required fields always SET
         const setExpressions = [
             'givenName = :givenName',
             'surname = :surname',
@@ -39,8 +38,7 @@ export const handler = async (
             ':updatedAt': now,
         }
 
-        // Optional fields: SET if present, REMOVE if absent
-        const optionalFields = ['middleName', 'birthDate', 'deathDate', 'fatherId', 'motherId'] as const
+        const optionalFields = ['middleName', 'nickname', 'maidenName', 'birthDate', 'deathDate', 'fatherId', 'motherId'] as const
         for (const field of optionalFields) {
             if (body[field] !== undefined) {
                 setExpressions.push(`${field} = :${field}`)
@@ -48,6 +46,11 @@ export const handler = async (
             } else {
                 removeExpressions.push(field)
             }
+        }
+
+        if (body.isSelf === true) {
+            setExpressions.push('isSelf = :isSelf')
+            expressionValues[':isSelf'] = true
         }
 
         let updateExpression = `SET ${setExpressions.join(', ')}`

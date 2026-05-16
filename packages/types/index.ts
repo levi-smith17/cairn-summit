@@ -403,7 +403,10 @@ export interface Kin {
     sk: string
     givenName: string
     middleName?: string
+    nickname?: string
     surname: string
+    maidenName?: string
+    isSelf?: boolean
     birthDate?: string
     deathDate?: string
     fatherId?: string
