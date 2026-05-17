@@ -58,14 +58,14 @@ describe('burn/receipt-url handler', () => {
         expect(result.statusCode).toBe(404)
     })
 
-    it('returns 302 redirect for a valid owned receipt', async () => {
+    it('returns presigned URL for a valid owned receipt', async () => {
         vi.mocked(dynamo.send).mockResolvedValueOnce({
             Items: [{ pk: 'USER#user-123', sk: 'BURN#expense-1' }],
         })
 
         const result = await handler(mockEvent('user-123', 'receipts/user-123/receipt.jpg')) as any
-        expect(result.statusCode).toBe(302)
-        expect(result.headers['Location']).toBe('https://s3.example.com/presigned-get')
+        expect(result.statusCode).toBe(200)
+        expect(JSON.parse(result.body).data.url).toBe('https://s3.example.com/presigned-get')
     })
 
     it('returns 500 when DynamoDB throws', async () => {
