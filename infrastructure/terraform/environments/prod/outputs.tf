@@ -35,6 +35,10 @@ output "github_actions_role_arn" {
   value = module.github_oidc.role_arn
 }
 
+output "media_cloudfront_url" {
+  value = module.s3.media_cloudfront_url
+}
+
 output "web_bucket_name" {
   value = module.cloudfront.bucket_name
 }

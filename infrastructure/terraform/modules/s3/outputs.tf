@@ -7,7 +7,7 @@ output "media_cloudfront_distribution_id" {
 }
 
 output "media_cloudfront_url" {
-  value = "https://${aws_cloudfront_distribution.media.domain_name}"
+  value = aws_cloudfront_distribution.media.domain_name
 }
 
 output "private_media_bucket" {

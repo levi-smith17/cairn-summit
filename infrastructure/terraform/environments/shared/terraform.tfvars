@@ -9,5 +9,7 @@ dev_web_cloudfront_domain   = "d1zhadt1d80odb.cloudfront.net"
 dev_media_cloudfront_domain = "d7zu9t8oo15aj.cloudfront.net"
 
 # Prod — fill in after prod rebuild
+prod_api_gateway_domain      = "u1l1binqpc.execute-api.us-east-2.amazonaws.com/prod"
+prod_api_gateway_zone_id     = "ZOJJZC49E0EPZ"
 prod_web_cloudfront_domain   = "dse7slt4rd81w.cloudfront.net"
-prod_media_cloudfront_domain = null
+prod_media_cloudfront_domain = "d31agp12kzn8wp.cloudfront.net"
