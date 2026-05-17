@@ -145,6 +145,7 @@ resource "aws_iam_policy" "terraform_aws" {
           "iam:UntagRole",
           "iam:UpdateAssumeRolePolicy",
           "lambda:*",
+          "route53:*",
           "s3:*",
         ]
         Resource = "*"
