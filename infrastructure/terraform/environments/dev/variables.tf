@@ -1,11 +1,13 @@
 variable "aws_profile" {
-  description = "AWS profile to use"
+  description = "AWS profile to use (local only, leave null in CI)"
   type        = string
+  default     = null
 }
 
 variable "dns_aws_profile" {
-  description = "AWS profile for the prod account (for DNS validation records)"
+  description = "AWS profile for prod account DNS (local only, leave null in CI)"
   type        = string
+  default     = null
 }
 
 variable "domain" {
