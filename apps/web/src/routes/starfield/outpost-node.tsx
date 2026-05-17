@@ -1,6 +1,6 @@
 import { memo, useMemo } from 'react'
 import { Handle, Position, type NodeProps } from 'reactflow'
-import { Pencil, Plus, House, Factory, Cuboid, Droplet, Wind, Component, type LucideIcon } from 'lucide-react'
+import { Pencil, Plus, House, Factory, Cuboid, Droplet, Wind, Component, MoveLeft, MoveRight, CornerLeftUp, type LucideIcon } from 'lucide-react'
 import type { SfOutpost, SfOutpostResource, SfResource } from '@cairn/types'
 import type { OutpostValidation, ValidationStatus } from '@/lib/starfield-validation'
 
@@ -45,7 +45,21 @@ function getSourceLabel(fr: SfOutpostResource, status: ValidationStatus | undefi
 export const OutpostNode = memo(function OutpostNode({ data }: NodeProps<OutpostNodeData>) {
   const { outpost, outposts, resources, validation, onEdit, onAddResource, onEditResource } = data
   const status: ValidationStatus = validation?.status ?? 'missing'
-  const transferCount = outpost.resources.filter(fr => fr.fromOutpostId).length
+
+  const shippedOutResourceIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const o of outposts) {
+      if (o.id === outpost.id) continue
+      for (const r of (o.resources ?? [])) {
+        if (r.fromOutpostId === outpost.id) ids.add(r.resourceId)
+      }
+    }
+    return ids
+  }, [outposts, outpost.id])
+
+  const transferCount = outpost.resources.filter(fr =>
+    fr.fromOutpostId || fr.fromPlanet || fr.origin || shippedOutResourceIds.has(fr.resourceId)
+  ).length
 
   const resourceTypeMap = useMemo(() => {
     const map = new Map<string, string>()
@@ -72,9 +86,9 @@ export const OutpostNode = memo(function OutpostNode({ data }: NodeProps<Outpost
 
   return (
     <div
-      className={`w-52 rounded-lg border-2 bg-card shadow-sm hover:shadow-md transition-shadow ${STATUS_BORDER[status]}`}
+      className={`w-72 rounded-lg border-2 bg-card shadow-sm hover:shadow-md transition-shadow ${STATUS_BORDER[status]}`}
     >
-      <Handle type="target" position={Position.Bottom} />
+      <Handle id="left" type="source" position={Position.Left} />
 
       <div className="px-3 pt-2.5 pb-1">
         <div className="flex items-center gap-1.5 mb-0.5">
@@ -133,22 +147,30 @@ export const OutpostNode = memo(function OutpostNode({ data }: NodeProps<Outpost
                 <span className="text-[10px] text-muted-foreground shrink-0 font-mono">
                   {getSourceLabel(fr, rvStatus)}
                 </span>
+                {shippedOutResourceIds.has(fr.resourceId) && (
+                  <MoveRight className="h-2.5 w-2.5 shrink-0 text-orange-400/80" />
+                )}
                 <button
-                  className="h-4 w-4 inline-flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-[colors,opacity] shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                  className="h-5 w-5 inline-flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-[colors,opacity] shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100"
                   onClick={e => { e.stopPropagation(); onEditResource(fr.resourceId) }}
                   aria-label="Edit resource"
                 >
-                  <Pencil className="h-2.5 w-2.5" />
+                  <Pencil className="h-3 w-3" />
                 </button>
               </div>
-              {sourcePlanet && (
-                <div className="pl-3 text-[9px] text-muted-foreground leading-none">
-                  ← {sourcePlanet} ({sourceSystem ?? '?'})
+              {fr.relay && (
+                <div className="pl-3 text-[9px] text-muted-foreground leading-none flex items-center gap-0.5">
+                  <MoveLeft className="h-2 w-2 shrink-0 text-sky-400/80" />
+                  {fr.relay.planet} ({fr.relay.system})
                 </div>
               )}
-              {fr.relay && (
-                <div className="pl-3 text-[9px] text-muted-foreground leading-none">
-                  ⟳ {fr.relay.planet} ({fr.relay.system})
+              {sourcePlanet && (
+                <div className="pl-3 text-[9px] text-muted-foreground leading-none flex items-center gap-0.5">
+                  {fr.relay
+                    ? <CornerLeftUp className="h-2 w-2 shrink-0" />
+                    : <MoveLeft className="h-2 w-2 shrink-0" />
+                  }
+                  {sourcePlanet} ({sourceSystem ?? '?'})
                 </div>
               )}
             </div>
@@ -167,7 +189,7 @@ export const OutpostNode = memo(function OutpostNode({ data }: NodeProps<Outpost
         </div>
       )}
 
-      <Handle type="source" position={Position.Top} />
+      <Handle id="right" type="target" position={Position.Right} />
     </div>
   )
 })

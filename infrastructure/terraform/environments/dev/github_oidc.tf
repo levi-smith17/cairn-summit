@@ -1,7 +1,7 @@
 module "github_oidc" {
   source                  = "../../modules/github_oidc"
   environment             = var.environment
-  github_repo             = "levi-smith17/cairn-summit"
+  github_repo             = var.github_repo
   managed_by              = var.managed_by
   owner                   = var.owner
   project_name            = var.project_name

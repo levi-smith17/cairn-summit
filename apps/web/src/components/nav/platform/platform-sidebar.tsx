@@ -15,6 +15,7 @@ import {
   Search,
   Shield,
   Tag,
+  TreePine,
   Wallet,
 } from "lucide-react"
 import { useNavigate, useLocation } from "react-router-dom"
@@ -95,6 +96,7 @@ function buildNavItems(terms: Terms): { group: string; items: NavItem[] }[] {
     {
       group: 'Apps',
       items: [
+        { title: terms.headwaters, url: '/headwaters', icon: TreePine, tooltip: terms.headwaters },
         { title: 'Starfield', url: '/starfield', icon: Rocket, tooltip: 'Starfield' },
       ],
     },

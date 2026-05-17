@@ -1,4 +1,4 @@
-import { Plus, Boxes } from 'lucide-react'
+import { Plus, Boxes, Globe } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { SfNetwork } from '@cairn/types'
 import { NetworkSelector } from './network-selector'
@@ -12,6 +12,7 @@ interface StarfieldControlBarProps {
   onDeleteNetwork: (id: string) => Promise<void>
   onAddOutpost: () => void
   onManageResources: () => void
+  onManageSystems: () => void
 }
 
 export function StarfieldControlBar({
@@ -23,6 +24,7 @@ export function StarfieldControlBar({
   onDeleteNetwork,
   onAddOutpost,
   onManageResources,
+  onManageSystems,
 }: StarfieldControlBarProps) {
   return (
     <div className="rounded-lg border border-border bg-card p-2 shrink-0">
@@ -47,13 +49,22 @@ export function StarfieldControlBar({
             Add Outpost
           </Button>
           <Button
-            variant="outline"
-            size="sm"
-            className="h-8 gap-1.5 text-sm flex-1 md:flex-none justify-start ml-auto"
-            onClick={onManageResources}
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 text-sm flex-1 md:flex-none justify-start ml-auto"
+              onClick={onManageResources}
           >
             <Boxes className="h-3.5 w-3.5" />
             Resources
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 text-sm flex-1 md:flex-none justify-start"
+            onClick={onManageSystems}
+          >
+            <Globe className="h-3.5 w-3.5" />
+            Systems
           </Button>
         </div>
       </div>

@@ -4,7 +4,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { randomUUID } from 'crypto'
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from 'aws-lambda'
 import { getUserId, getPk } from '../../shared/auth'
-import { s3, PRIVATE_MEDIA_BUCKET, PRESIGN_EXPIRES } from '../../shared/s3'
+import { s3, PUBLIC_MEDIA_BUCKET, PRESIGN_EXPIRES } from '../../shared/s3'
 import { dynamo, TABLE_NAME } from '../../shared/db'
 import { toApiGatewayResponse, ok, badRequest, serverError } from '../../shared/response'
 
@@ -57,14 +57,15 @@ export const handler = async (
         const url = await getSignedUrl(
             s3,
             new PutObjectCommand({
-                Bucket: PRIVATE_MEDIA_BUCKET,
+                Bucket: PUBLIC_MEDIA_BUCKET,
                 Key: key,
                 ContentType: contentType,
             }),
             { expiresIn: PRESIGN_EXPIRES },
         )
 
-        return toApiGatewayResponse(ok({ url, key }))
+        const cloudFrontUrl = `${process.env.CLOUDFRONT_PUBLIC_MEDIA_URL}/${key}`
+        return toApiGatewayResponse(ok({ url, key, cloudFrontUrl }))
     } catch (err) {
         console.error(err)
         return toApiGatewayResponse(serverError())

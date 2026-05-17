@@ -7,7 +7,7 @@ vi.mock('../../shared/db', () => ({
 }))
 vi.mock('../../shared/s3', () => ({
     s3: {},
-    PRIVATE_MEDIA_BUCKET: 'cairn-test-private-media',
+    PUBLIC_MEDIA_BUCKET: 'cairn-test-public-media',
     PRESIGN_EXPIRES: 3600,
 }))
 vi.mock('@aws-sdk/s3-request-presigner', () => ({

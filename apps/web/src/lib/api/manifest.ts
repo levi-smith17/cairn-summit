@@ -1,6 +1,11 @@
 import { getAuthHeaders } from '@/lib/api/auth-headers'
 
 const API_BASE = import.meta.env.VITE_API_URL ?? ''
+const CLOUDFRONT_PUBLIC_MEDIA_URL = import.meta.env.VITE_CLOUDFRONT_PUBLIC_MEDIA_URL ?? ''
+
+export function publicMediaUrl(key: string): string {
+  return `${CLOUDFRONT_PUBLIC_MEDIA_URL}/${key}`
+}
 
 export async function getManifestData() {
   const res = await fetch(`${API_BASE}/manifest`, {
@@ -186,6 +191,22 @@ export async function deleteCompanion(id: string) {
   })
 }
 
+export async function uploadCompanionMedia(file: File, companionId: string, order: number): Promise<{ key: string; mediaId: string; type: string }> {
+  const res = await fetch(`${API_BASE}/companions/upload-url`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...await getAuthHeaders() },
+    body: JSON.stringify({ companionId, contentType: file.type, fileSize: file.size, order }),
+  })
+  if (!res.ok) throw new Error('Failed to get upload URL')
+  const { data } = await res.json()
+  await fetch(data.url, {
+    method: 'PUT',
+    headers: { 'Content-Type': file.type },
+    body: file,
+  })
+  return { key: data.key, mediaId: data.mediaId, type: data.type }
+}
+
 export async function deleteCompanionMedia(mediaId: string) {
   await fetch(`${API_BASE}/manifest/companions/media/${mediaId}`, {
     method: 'DELETE',
@@ -198,20 +219,6 @@ export async function updateCompanionMediaCaption(mediaId: string, caption: stri
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
     body: JSON.stringify({ caption }),
-  })
-}
-
-export async function saveManifestSettings(data: {
-  username: string | null
-  defaultTerminology: 'CAIRN' | 'STANDARD'
-  defaultTheme: 'SYSTEM' | 'LIGHT' | 'DARK'
-  listed: boolean
-  customDomain: string | null
-}) {
-  await fetch(`${API_BASE}/manifest/settings`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
-    body: JSON.stringify(data),
   })
 }
 

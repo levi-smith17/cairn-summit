@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { MoreHorizontal, Pencil, Trash2, Receipt } from 'lucide-react'
 import { MarkerBadge } from '@/routes/waypoints/marker-badge'
-import { deleteBurn } from '@/lib/api/supplylines'
+import { deleteBurn, getBurnReceiptUrl } from '@/lib/api/supplylines'
 import { InlineBurnForm } from './inline-burn-form'
 import { useTerminology } from '@/contexts/terminology-context'
 
@@ -80,7 +80,10 @@ export function BurnRow({ burn, tags, onSaved, onDeleted }: Props) {
         </div>
         {burn.receiptUrl && (
           <button
-            onClick={() => window.open(`/api/receipts/${burn.receiptUrl?.split('/').pop()}`, '_blank')}
+            onClick={async () => {
+              const url = await getBurnReceiptUrl(burn.receiptUrl!)
+              window.open(url, '_blank')
+            }}
             className="text-muted-foreground hover:text-foreground shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
           >
             <Receipt className="h-3.5 w-3.5" />

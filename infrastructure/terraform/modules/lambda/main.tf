@@ -9,6 +9,13 @@ data "archive_file" "placeholder" {
   }
 }
 
+locals {
+  parts        = split("-", var.function_name)
+  domain       = local.parts[0]
+  operation    = join("-", slice(local.parts, 1, length(local.parts)))
+  handler_path = "${local.domain}/${local.operation}/handler.handler"
+}
+
 resource "aws_iam_role" "lambda" {
   name = "${var.project_name}-${var.environment}-${var.function_name}"
 
@@ -47,7 +54,7 @@ resource "aws_iam_role_policy_attachment" "feature" {
 resource "aws_lambda_function" "main" {
   filename         = data.archive_file.placeholder.output_path
   function_name    = "${var.project_name}-${var.environment}-${var.function_name}"
-  handler          = var.handler_path != null ? var.handler_path : "${replace(var.function_name, "-", "/")}/handler.handler"
+  handler          = local.handler_path
   memory_size      = var.memory_size
   role             = aws_iam_role.lambda.arn
   runtime          = "nodejs22.x"

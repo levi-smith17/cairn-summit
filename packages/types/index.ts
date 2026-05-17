@@ -336,6 +336,19 @@ export interface CompanionMedia {
 }
 
 // ── Starfield ──────────────────────────────────────────
+export interface SfSystem {
+    pk: 'SF#SYSTEM'
+    sk: string
+    name: string
+    planets: SfPlanet[]
+    createdAt: string
+}
+
+export interface SfPlanet {
+    id: string
+    name: string
+}
+
 export interface SfResource {
     pk: 'SF#RESOURCE'
     sk: string
@@ -382,6 +395,37 @@ export interface SfOutpostResource {
         planet: string
         system: string
     }
+}
+
+// ── Headwaters ─────────────────────────────────────────
+export interface Kin {
+    pk: string
+    sk: string
+    givenName: string
+    middleName?: string
+    nickname?: string
+    surname: string
+    maidenName?: string
+    isSelf?: boolean
+    birthDate?: string
+    deathDate?: string
+    fatherId?: string
+    fatherUnknown: boolean
+    motherId?: string
+    motherUnknown: boolean
+    bloodlines: Bloodline[]
+    createdAt: string
+    updatedAt: string
+}
+
+export interface Bloodline {
+    id: string
+    kinId: string
+    kinName: string
+    startDate?: string
+    endDate?: string
+    endReason?: 'DIVORCE' | 'DEATH' | 'SEPARATION'
+    current: boolean
 }
 
 // ── API response wrapper ───────────────────────────────

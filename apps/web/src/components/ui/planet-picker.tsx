@@ -34,6 +34,12 @@ interface PlanetPickerProps {
   onSelectId?: (planetId: string) => void
   systems: SystemWithPlanets[]
   onSystemsUpdate: (systems: SystemWithPlanets[]) => void
+  onSystemCreate?: (name: string) => void
+  onSystemRename?: (id: string, newName: string) => void
+  onSystemDelete?: (id: string) => void
+  onPlanetCreate?: (systemId: string, name: string) => void
+  onPlanetRename?: (systemId: string, planetId: string, newName: string) => void
+  onPlanetDelete?: (systemId: string, planetId: string) => void
   placeholder?: string
   disabled?: boolean
   readonly?: boolean
@@ -74,18 +80,14 @@ function InlineInput({ value: v, onChange: oc, onSave, onCancel, onRemove, place
       >
         Save
       </Button>
-      <button type="button" onClick={onCancel} className="p-1.5 text-muted-foreground hover:text-foreground shrink-0">
-        <X className="h-4 w-4" />
-      </button>
       {onRemove && (
-        <button
-          type="button"
-          onClick={onRemove}
-          className="p-1.5 text-destructive hover:text-destructive/80 transition-colors shrink-0"
-        >
+        <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive/80 shrink-0" onClick={onRemove}>
           <Trash2 className="h-4 w-4" />
-        </button>
+        </Button>
       )}
+      <Button type="button" variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={onCancel}>
+        <X className="h-4 w-4" />
+      </Button>
     </div>
   )
 }
@@ -99,6 +101,12 @@ export function PlanetPicker({
   onSelectId,
   systems,
   onSystemsUpdate,
+  onSystemCreate,
+  onSystemRename,
+  onSystemDelete,
+  onPlanetCreate,
+  onPlanetRename,
+  onPlanetDelete,
   placeholder = 'Select a planet…',
   disabled = false,
   readonly = false,
@@ -177,10 +185,12 @@ export function PlanetPicker({
       onSystemsUpdate(systems.map(s =>
         s.id === editingSystemId ? { ...s, name, id: name } : s
       ))
+      onSystemRename?.(editingSystemId, name)
       setEditingSystemId(null)
     } else {
       if (!systems.find(s => s.name.toLowerCase() === name.toLowerCase())) {
         onSystemsUpdate([...systems, { id: name, name, planets: [] }])
+        onSystemCreate?.(name)
       }
       setAddingSystem(false)
     }
@@ -211,6 +221,7 @@ export function PlanetPicker({
           ? { ...s, planets: s.planets.map(p => p.id === editingPlanetId ? { id: name, name } : p) }
           : s
       ))
+      onPlanetRename?.(activeSystemId, editingPlanetId, name)
       setEditingPlanetId(null)
     } else {
       onSystemsUpdate(systems.map(s =>
@@ -218,6 +229,7 @@ export function PlanetPicker({
           ? { ...s, planets: [...s.planets, { id: name, name }] }
           : s
       ))
+      onPlanetCreate?.(activeSystemId, name)
       setAddingPlanet(false)
     }
     setPlanetNameInput('')
@@ -247,6 +259,7 @@ export function PlanetPicker({
         onSystemChange?.('')
       }
       onSystemsUpdate(systems.filter(s => s.id !== confirmRemove.id))
+      onSystemDelete?.(confirmRemove.id)
       cancelSystem()
       if (activeSystemId === confirmRemove.id) goBack()
     } else {
@@ -258,6 +271,7 @@ export function PlanetPicker({
         ...s,
         planets: s.planets.filter(p => p.id !== confirmRemove.id),
       })))
+      onPlanetDelete?.(activeSystemId!, confirmRemove.id)
       cancelPlanet()
     }
     setConfirmRemove(null)
@@ -319,13 +333,9 @@ export function PlanetPicker({
           {/* Header: search + optional back button */}
           <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border">
             {view === 'planets' && !isSearching && (
-              <button
-                type="button"
-                onClick={goBack}
-                className="p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground shrink-0"
-              >
+              <Button type="button" variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={goBack}>
                 <ArrowLeft className="h-4 w-4" />
-              </button>
+              </Button>
             )}
             <input
               placeholder="Search planets…"
@@ -397,23 +407,30 @@ export function PlanetPicker({
                       </div>
                     ) : (
                       <>
+                        <div className="flex-1 flex flex-col justify-center py-3 pl-4 pr-2 min-w-0">
+                          <span className="text-sm truncate">{sys.name}</span>
+                          <span className="font-mono text-[10px] text-muted-foreground">{sys.planets.length} {sys.planets.length === 1 ? 'planet' : 'planets'}</span>
+                        </div>
                         {!readonly && (
-                          <button
+                          <Button
                             type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0 mr-1"
                             onClick={e => startEditSystem(sys, e)}
-                            className="p-3.5 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                           >
                             <Pencil className="h-3.5 w-3.5" />
-                          </button>
+                          </Button>
                         )}
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 shrink-0 mr-3"
                           onClick={() => drillIntoSystem(sys.id)}
-                          className={`flex-1 flex items-center gap-3 pr-4 py-3.5 text-sm text-left hover:bg-muted/50 transition-colors${readonly ? ' pl-4' : ''}`}
                         >
-                          <span className="flex-1">{sys.name} ({sys.planets.length})</span>
-                          <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                        </button>
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
                       </>
                     )}
                   </div>
@@ -444,19 +461,10 @@ export function PlanetPicker({
                         </div>
                       ) : (
                         <>
-                          {!readonly && (
-                            <button
-                              type="button"
-                              onClick={e => startEditPlanet(planet, e)}
-                              className="p-3.5 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                            >
-                              <Pencil className="h-3.5 w-3.5" />
-                            </button>
-                          )}
                           <button
                             type="button"
                             onClick={() => selectPlanet(planet.name, activeSystem?.name, planet.id)}
-                            className={`flex-1 flex items-center gap-3 pr-4 py-3.5 text-sm text-left transition-colors${readonly ? ' pl-4' : ''}
+                            className={`flex-1 flex items-center gap-3 pl-4 ${readonly ? 'pr-4' : 'pr-2'} py-3.5 text-sm text-left transition-colors
                               ${isSelected ? 'bg-primary/15' : 'hover:bg-muted/50'}`}
                           >
                             <span className={`h-5 w-5 rounded border-2 flex items-center justify-center shrink-0
@@ -465,6 +473,17 @@ export function PlanetPicker({
                             </span>
                             <span className="flex-1">{planet.name}</span>
                           </button>
+                          {!readonly && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0 mr-3"
+                              onClick={e => startEditPlanet(planet, e)}
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
                         </>
                       )}
                     </div>

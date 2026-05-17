@@ -11,7 +11,7 @@ import { format } from 'date-fns'
 import { formatAge } from '@/lib/format-age'
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel'
 
-const API_BASE = import.meta.env.VITE_API_URL ?? ''
+const CLOUDFRONT_PUBLIC_MEDIA_URL = import.meta.env.VITE_CLOUDFRONT_PUBLIC_MEDIA_URL ?? ''
 
 interface CompanionMedia {
   id: string
@@ -66,8 +66,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   )
 }
 
-function mediaFilename(key: string) {
-  return key.split('/').pop()
+function publicMediaUrl(key: string) {
+  return `${CLOUDFRONT_PUBLIC_MEDIA_URL}/${key}`
 }
 
 function CompanionMediaCarousel({ companion }: { companion: Companion }) {
@@ -83,9 +83,9 @@ function CompanionMediaCarousel({ companion }: { companion: Companion }) {
                 <div className="flex flex-col gap-2">
                   <div className="rounded-lg overflow-hidden bg-transparent flex items-center justify-center h-96">
                     {m.type === 'IMAGE' ? (
-                      <img src={`${API_BASE}/companions/media/${mediaFilename(m.key)}`} alt={m.caption ?? companion.name} className="w-full h-full object-contain" />
+                      <img src={publicMediaUrl(m.key)} alt={m.caption ?? companion.name} className="w-full h-full object-contain" />
                     ) : (
-                      <video src={`${API_BASE}/companions/media/${mediaFilename(m.key)}`} className="w-full h-full object-contain" controls />
+                      <video src={publicMediaUrl(m.key)} className="w-full h-full object-contain" controls />
                     )}
                   </div>
                   {m.caption && <p className="text-xs text-muted-foreground text-center">{m.caption}</p>}

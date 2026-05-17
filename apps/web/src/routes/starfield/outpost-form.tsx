@@ -10,7 +10,7 @@ import { PlanetPicker } from '@/components/ui/planet-picker'
 import { CustomSelect } from '@/components/ui/custom-select'
 import { FormActions } from '@/components/forms/form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
-import { Trash2 } from 'lucide-react'
+import { Trash2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   AlertDialog,
@@ -33,32 +33,35 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>
 
+interface SystemEntry {
+  id: string
+  name: string
+  planets: { id: string; name: string }[]
+}
+
+interface SystemCrudCallbacks {
+  onSystemCreate: (name: string) => void
+  onSystemRename: (id: string, newName: string) => void
+  onSystemDelete: (id: string) => void
+  onPlanetCreate: (systemId: string, name: string) => void
+  onPlanetRename: (systemId: string, planetId: string, newName: string) => void
+  onPlanetDelete: (systemId: string, planetId: string) => void
+}
+
 interface OutpostFormProps {
   outpost?: any
   networkId: string
   outposts: any[]
+  systems: SystemEntry[]
+  onSystemsUpdate: (systems: SystemEntry[]) => void
+  systemCrudCallbacks: SystemCrudCallbacks
   onDone: () => void
   onRefresh: () => void
 }
 
-export function OutpostForm({ outpost, networkId, outposts, onDone, onRefresh }: OutpostFormProps) {
+export function OutpostForm({ outpost, networkId, outposts, systems, onSystemsUpdate, systemCrudCallbacks, onDone, onRefresh }: OutpostFormProps) {
   const { saving, saved, error, handleSubmit } = useFormStatus()
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false)
-
-  const [systems, setSystems] = useState(() => {
-    const systemMap = new Map<string, Set<string>>()
-    for (const o of outposts) {
-      if (o.system) {
-        if (!systemMap.has(o.system)) systemMap.set(o.system, new Set())
-        if (o.planet) systemMap.get(o.system)!.add(o.planet)
-      }
-    }
-    return Array.from(systemMap.entries()).map(([name, planets]) => ({
-      id: name,
-      name,
-      planets: Array.from(planets).map(p => ({ id: p, name: p })),
-    }))
-  })
 
   const otherOutposts = outposts.filter(
     o => (o.id ?? o.sk?.replace(/^SF#FACILITY#/, '')) !== (outpost?.id ?? outpost?.sk?.replace(/^SF#FACILITY#/, ''))
@@ -89,8 +92,10 @@ export function OutpostForm({ outpost, networkId, outposts, onDone, onRefresh }:
       }
       if (outpost?.id) {
         await updateOutpost(outpost.id, payload)
+        toast.success('Outpost updated.')
       } else {
         await createOutpost({ ...payload, networkId })
+        toast.success('Outpost created.')
       }
       onRefresh()
       onDone()
@@ -101,11 +106,11 @@ export function OutpostForm({ outpost, networkId, outposts, onDone, onRefresh }:
     if (!outpost?.id) return
     try {
       await deleteOutpost(outpost.id)
-      toast.success('Outpost deleted.')
+      toast.success('Outpost removed.')
       onRefresh()
       onDone()
     } catch {
-      toast.error('Failed to delete outpost.')
+      toast.error('Failed to remove outpost.')
     }
   }
 
@@ -127,9 +132,17 @@ export function OutpostForm({ outpost, networkId, outposts, onDone, onRefresh }:
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Delete outpost</TooltipContent>
+            <TooltipContent>Remove outpost</TooltipContent>
           </Tooltip>
         )}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={onDone}>
+              <X className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Close</TooltipContent>
+        </Tooltip>
       </div>
       <div className="flex-1 overflow-y-auto p-4">
         <Form {...form}>
@@ -139,12 +152,11 @@ export function OutpostForm({ outpost, networkId, outposts, onDone, onRefresh }:
                 <FormLabel>Planet</FormLabel>
                 <PlanetPicker
                   value={field.value}
-                  onChange={v => {
-                    field.onChange(v)
-                  }}
+                  onChange={v => field.onChange(v)}
                   onSystemChange={v => form.setValue('system', v)}
                   systems={systems}
-                  onSystemsUpdate={setSystems}
+                  onSystemsUpdate={onSystemsUpdate}
+                  {...systemCrudCallbacks}
                 />
                 <FormMessage />
                 {form.formState.errors.system && (
@@ -185,9 +197,9 @@ export function OutpostForm({ outpost, networkId, outposts, onDone, onRefresh }:
     <AlertDialog open={removeDialogOpen} onOpenChange={setRemoveDialogOpen}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete outpost</AlertDialogTitle>
+          <AlertDialogTitle>Remove outpost</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete{outpost ? ` "${outpost.planet} (${outpost.system})"` : ' this outpost'}? This cannot be undone.
+            Are you sure you want to remove{outpost ? ` "${outpost.planet} (${outpost.system})"` : ' this outpost'}? This cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -196,7 +208,7 @@ export function OutpostForm({ outpost, networkId, outposts, onDone, onRefresh }:
             onClick={handleDelete}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            Delete
+            Remove
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

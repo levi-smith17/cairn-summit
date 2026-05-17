@@ -30,6 +30,7 @@ yarn-error.log*
 **/.terraform.lock.hcl
 *.tfplan
 infrastructure/terraform/modules/lambda/placeholder.zip
+*.local.tfvars
 
 # WebStorm
 .idea/

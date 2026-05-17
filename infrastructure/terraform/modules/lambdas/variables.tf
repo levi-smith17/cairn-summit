@@ -1,0 +1,11 @@
+variable "cognito_user_pool_id" {}
+variable "dynamodb_table_name" {}
+variable "environment" {}
+variable "managed_by" {}
+variable "owner" {}
+variable "project_name" {}
+variable "lambda_delete_policy_arn" {}
+variable "lambda_read_policy_arn" {}
+variable "lambda_s3_private_media_policy_arn" {}
+variable "lambda_s3_public_media_policy_arn" {}
+variable "lambda_write_policy_arn" {}
