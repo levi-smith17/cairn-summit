@@ -1,4 +1,3 @@
-aws_profile    = "cairn-prod"
 region         = "us-east-2"
 domain         = "cairn.ing"
 

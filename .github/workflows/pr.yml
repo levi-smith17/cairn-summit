@@ -42,7 +42,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
+      - name: Configure AWS credentials (prod DNS)
+        uses: aws-actions/configure-aws-credentials@v4
+        id: prod-creds
+        with:
+          role-to-assume: ${{ secrets.PROD_AWS_ROLE_ARN }}
+          aws-region: us-east-1
+          output-credentials: true
+
+      - name: Configure AWS credentials (dev)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.DEV_AWS_ROLE_ARN }}
@@ -62,6 +70,9 @@ jobs:
           terraform plan \
             -var-file="../shared.tfvars" \
             -var-file="dev.tfvars" \
+            -var="dns_access_key=${{ steps.prod-creds.outputs.aws-access-key-id }}" \
+            -var="dns_secret_key=${{ steps.prod-creds.outputs.aws-secret-access-key }}" \
+            -var="dns_session_token=${{ steps.prod-creds.outputs.aws-session-token }}" \
             -no-color \
             -out=tfplan
         continue-on-error: true

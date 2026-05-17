@@ -36,6 +36,18 @@ variable "managed_by" {}
 variable "owner" {}
 variable "project_name" {}
 
+variable "prod_api_gateway_domain" {
+  description = "API Gateway regional domain name for prod"
+  type        = string
+  default     = null
+}
+
+variable "prod_api_gateway_zone_id" {
+  description = "API Gateway hosted zone ID for prod"
+  type        = string
+  default     = null
+}
+
 # Prod CloudFront domains
 variable "prod_web_cloudfront_domain" {
   description = "CloudFront domain for prod web app"
