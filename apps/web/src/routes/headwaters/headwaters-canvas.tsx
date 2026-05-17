@@ -15,7 +15,7 @@ import 'reactflow/dist/style.css'
 import dagre from '@dagrejs/dagre'
 import type { Kin } from '@cairn/types'
 import { useTerminology } from '@/contexts/terminology-context'
-import { KinNode, kinFullName, type KinNodeData, type ParentUpdate } from './kin-node'
+import { KinNode, kinDisplayName, type KinNodeData, type ParentUpdate } from './kin-node'
 
 const NODE_WIDTH = 208
 const NODE_HEIGHT = 96
@@ -72,21 +72,29 @@ function buildLayout(
 
   dagre.layout(graph)
 
-  // Post-layout: reorder nodes within each rank by birth year.
-  // Dagre's crossing-minimization ignores insertion order, so we collect
-  // the x-positions Dagre assigned per rank, sort each rank's nodes by
-  // birth year, then redistribute those same x-values in order.
+  // Post-layout: reorder siblings by birth year within each family branch.
+  // Group by shared parents (not just rank) so nodes from different branches
+  // at the same level are never swapped with each other.
   const kinById = new Map(kins.map(k => [k.id, k]))
-  const rankGroups = new Map<number, string[]>()
+  const familyGroups = new Map<string, string[]>()
+
   for (const kin of kins) {
+    const knownParents = [
+      kin.fatherId && kinIds.has(kin.fatherId) ? kin.fatherId : null,
+      kin.motherId && kinIds.has(kin.motherId) ? kin.motherId : null,
+    ].filter(Boolean) as string[]
+
+    if (knownParents.length === 0) continue
+
     const rank = Math.round(graph.node(kin.id).y)
-    const group = rankGroups.get(rank) ?? []
+    const groupKey = `${rank}|${[...knownParents].sort().join('|')}`
+    const group = familyGroups.get(groupKey) ?? []
     group.push(kin.id)
-    rankGroups.set(rank, group)
+    familyGroups.set(groupKey, group)
   }
 
   const xOverrides = new Map<string, number>()
-  for (const ids of rankGroups.values()) {
+  for (const ids of familyGroups.values()) {
     if (ids.length <= 1) continue
     const xs = ids.map(id => graph.node(id).x).sort((a, b) => a - b)
     const sorted = [...ids].sort((a, b) => {
@@ -95,6 +103,36 @@ function buildLayout(
       return aYear - bYear
     })
     sorted.forEach((id, i) => xOverrides.set(id, xs[i]))
+  }
+
+  // For married couples with no shared children in this graph, Dagre has no
+  // constraints between them and may place them far apart or overlapping.
+  // Nudge them to sit side-by-side using the post-sort x positions.
+  const seenCouples = new Set<string>()
+  for (const kin of kins) {
+    const current = kin.bloodlines.find(b => b.current)
+    if (!current || !kinIds.has(current.kinId)) continue
+    const pairKey = [kin.id, current.kinId].sort().join('|')
+    if (seenCouples.has(pairKey)) continue
+    seenCouples.add(pairKey)
+
+    const hasSharedChild = kins.some(k =>
+      (k.fatherId === kin.id || k.motherId === kin.id) &&
+      (k.fatherId === current.kinId || k.motherId === current.kinId)
+    )
+    if (hasSharedChild) continue
+
+    const xA = xOverrides.get(kin.id) ?? graph.node(kin.id).x
+    const xB = xOverrides.get(current.kinId) ?? graph.node(current.kinId).x
+    const midX = (xA + xB) / 2
+    const halfSpan = (NODE_WIDTH + 48) / 2
+
+    const yearA = kinById.get(kin.id)?.birthDate ? parseInt(kinById.get(kin.id)!.birthDate!.slice(0, 4), 10) : Infinity
+    const yearB = kinById.get(current.kinId)?.birthDate ? parseInt(kinById.get(current.kinId)!.birthDate!.slice(0, 4), 10) : Infinity
+    const [leftId, rightId] = yearA <= yearB ? [kin.id, current.kinId] : [current.kinId, kin.id]
+
+    xOverrides.set(leftId, midX - halfSpan)
+    xOverrides.set(rightId, midX + halfSpan)
   }
 
   const nodes: Node<KinNodeData>[] = kins.map(kin => {
@@ -139,9 +177,10 @@ interface HeadwatersCanvasProps {
   searchQuery: string
   onKinClick: (kinId: string) => void
   onQuickParentFix: (kinId: string, update: ParentUpdate) => Promise<void>
+  onPaneClick: () => void
 }
 
-export function HeadwatersCanvas({ kins, selectedKinId, searchQuery, onKinClick, onQuickParentFix }: HeadwatersCanvasProps) {
+export function HeadwatersCanvas({ kins, selectedKinId, searchQuery, onKinClick, onQuickParentFix, onPaneClick }: HeadwatersCanvasProps) {
   const { terms } = useTerminology()
   const { nodes: initialNodes, edges: initialEdges } = useMemo(
     () => buildLayout(kins, onKinClick, onQuickParentFix),
@@ -166,7 +205,7 @@ export function HeadwatersCanvas({ kins, selectedKinId, searchQuery, onKinClick,
       ...n,
       data: {
         ...n.data,
-        isHighlighted: q !== '' && kinFullName(n.data.kin).toLowerCase().includes(q),
+        isHighlighted: q !== '' && kinDisplayName(n.data.kin).toLowerCase().includes(q),
       },
     })))
   }, [searchQuery])
@@ -190,6 +229,7 @@ export function HeadwatersCanvas({ kins, selectedKinId, searchQuery, onKinClick,
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         nodesDraggable={false}
+        onPaneClick={onPaneClick}
         fitView
       >
         <Background variant={BackgroundVariant.Dots} gap={16} size={1} />

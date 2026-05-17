@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { CustomSelect } from '@/components/ui/custom-select'
 import { KinPicker } from '@/components/ui/kin-picker'
+import { PartialDateInput } from '@/components/ui/partial-date-input'
 import { FormActions } from '@/components/forms/form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -26,7 +27,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import type { Kin, Bloodline } from '@cairn/types'
 import { useTerminology } from '@/contexts/terminology-context'
-import { kinFullName, getDescendantIds, isEligibleParent } from './kin-node'
+import { kinFullName, kinDisplayName, getDescendantIds, isEligibleParent } from './kin-node'
 
 const schema = z.object({
   givenName: z.string().min(1, 'Given name is required'),
@@ -102,12 +103,12 @@ export function KinForm({ kin, isNew = false, allKin, onDone, onRefresh }: KinFo
   const eligibleParents = otherKin.filter(k =>
     !descendantIds.has(k.id) && isEligibleParent(k, { birthDate: kin?.birthDate })
   )
-  const toOption = (k: Kin & { id: string }) => ({ value: k.id, label: kinFullName(k) })
+  const toOption = (k: Kin & { id: string }) => ({ value: k.id, label: kinDisplayName(k) })
   const sortedEligible = eligibleParents.map(toOption).sort((a, b) => a.label.localeCompare(b.label))
   const bloodlineOptions = [
     { value: '', label: 'None' },
     ...otherKin
-      .map(k => ({ value: k.id, label: kinFullName(k) }))
+      .map(k => ({ value: k.id, label: kinDisplayName(k) }))
       .sort((a, b) => a.label.localeCompare(b.label)),
   ]
 
@@ -345,7 +346,7 @@ export function KinForm({ kin, isNew = false, allKin, onDone, onRefresh }: KinFo
               <FormField control={form.control} name="birthDate" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Birth Date <span className="text-muted-foreground text-xs font-normal">(optional)</span></FormLabel>
-                  <Input type="date" className="md:h-8" {...field} />
+                  <PartialDateInput value={field.value ?? ''} onChange={field.onChange} />
                   <FormMessage />
                 </FormItem>
               )} />
@@ -353,7 +354,7 @@ export function KinForm({ kin, isNew = false, allKin, onDone, onRefresh }: KinFo
               <FormField control={form.control} name="deathDate" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Death Date <span className="text-muted-foreground text-xs font-normal">(optional)</span></FormLabel>
-                  <Input type="date" className="md:h-8" {...field} />
+                  <PartialDateInput value={field.value ?? ''} onChange={field.onChange} />
                   <FormMessage />
                 </FormItem>
               )} />

@@ -1,6 +1,7 @@
 import { getAuthHeaders } from '@/lib/api/auth-headers'
 
 const API_BASE = import.meta.env.VITE_API_URL
+const CLOUDFRONT_PUBLIC_MEDIA_URL = import.meta.env.VITE_CLOUDFRONT_PUBLIC_MEDIA_URL
 
 export async function getLogs(): Promise<any[]> {
     const res = await fetch(`${API_BASE}/logs`, {
@@ -59,6 +60,22 @@ export async function deleteLog(id: string): Promise<void> {
         headers: await getAuthHeaders()
     })
     if (!res.ok) throw new Error('Failed to delete log')
+}
+
+export async function uploadLogImage(file: File, logId: string): Promise<string> {
+    const res = await fetch(`${API_BASE}/logs/upload-url`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...await getAuthHeaders() },
+        body: JSON.stringify({ contentType: file.type, fileSize: file.size, logId }),
+    })
+    if (!res.ok) throw new Error('Failed to get upload URL')
+    const { data } = await res.json()
+    await fetch(data.url, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type },
+        body: file,
+    })
+    return data.cloudFrontUrl ?? `${CLOUDFRONT_PUBLIC_MEDIA_URL}/${data.key}`
 }
 
 export async function reorderLogs(orderedIds: string[]): Promise<void> {

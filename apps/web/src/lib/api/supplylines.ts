@@ -70,6 +70,26 @@ export async function deleteBurn(id: string): Promise<void> {
   if (!res.ok) throw new Error('Failed to delete burn item')
 }
 
+export async function getBurnReceiptUploadUrl(contentType: string, fileSize: number): Promise<{ url: string; key: string }> {
+  const res = await fetch(`${API_BASE}/burn/receipt-upload-url`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...await getAuthHeaders() },
+    body: JSON.stringify({ contentType, fileSize }),
+  })
+  if (!res.ok) throw new Error('Failed to get receipt upload URL')
+  const json = await res.json()
+  return json.data
+}
+
+export async function getBurnReceiptUrl(key: string): Promise<string> {
+  const res = await fetch(`${API_BASE}/burn/receipt-url?key=${encodeURIComponent(key)}`, {
+    headers: await getAuthHeaders(),
+  })
+  if (!res.ok) throw new Error('Failed to get receipt URL')
+  const json = await res.json()
+  return json.data.url
+}
+
 export async function getCache(): Promise<any[]> {
   const res = await fetch(`${API_BASE}/cache`, {
     headers: await getAuthHeaders(),

@@ -111,6 +111,7 @@ export function HeadwatersClient({ kins, wayfarerSeedId, onRefresh, panel, onSet
               searchQuery={searchQuery}
               onKinClick={id => onSetPanel({ mode: 'kin-form', kinId: id })}
               onQuickParentFix={handleQuickParentFix}
+              onPaneClick={closePanel}
             />
           </div>
 

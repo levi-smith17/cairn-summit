@@ -24,7 +24,7 @@ import {
   AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { cn } from '@/lib/utils'
-import { saveLog, deleteLog, reorderLogs } from '@/lib/api/logs'
+import { saveLog, deleteLog, reorderLogs, uploadLogImage } from '@/lib/api/logs'
 import { RichEditor, type FontSize } from '@/components/ui/rich-editor'
 import { useTerminology } from '@/contexts/terminology-context'
 
@@ -318,16 +318,9 @@ export function Logbook({
   }
 
   const handleImageUpload = useCallback(async (file: File): Promise<string> => {
-    const formData = new FormData()
-    formData.append('file', file)
-    const res = await fetch('/api/logs/upload', { method: 'POST', body: formData })
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}))
-      throw new Error(err.error ?? 'Upload failed')
-    }
-    const data = await res.json()
-    return data.url as string
-  }, [])
+    if (!currentLog) throw new Error('No active log')
+    return uploadLogImage(file, currentLog.id)
+  }, [currentLog])
 
   const handleSaveRef = useRef(handleSave)
   handleSaveRef.current = handleSave

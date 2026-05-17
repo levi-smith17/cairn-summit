@@ -1,11 +1,11 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { MarkerPicker } from '@/components/ui/marker-picker'
-import { saveBurn } from '@/lib/api/supplylines'
+import { saveBurn, getBurnReceiptUploadUrl, getBurnReceiptUrl } from '@/lib/api/supplylines'
 import { useFormStatus } from '@/hooks/use-form-status'
 import { ImagePlus, X } from 'lucide-react'
 
@@ -46,6 +46,7 @@ export function InlineBurnForm({ burn, tags, onSaved, onCancel }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [receiptKey, setReceiptKey] = useState<string | null>(burn?.receiptUrl ?? null)
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null)
+  const [receiptViewUrl, setReceiptViewUrl] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [dragging, setDragging] = useState(false)
 
@@ -62,15 +63,25 @@ export function InlineBurnForm({ burn, tags, onSaved, onCancel }: Props) {
 
   const selectedTagIds = form.watch('tagIds')
 
+  useEffect(() => {
+    if (burn?.receiptUrl && !receiptPreview) {
+      getBurnReceiptUrl(burn.receiptUrl).then(setReceiptViewUrl).catch(() => {})
+    }
+  }, [burn?.receiptUrl])
+
   async function uploadFile(file: File) {
-    setReceiptPreview(URL.createObjectURL(file))
+    const localUrl = URL.createObjectURL(file)
+    setReceiptPreview(localUrl)
+    setReceiptViewUrl(null)
     setUploading(true)
     try {
-      const formData = new FormData()
-      formData.append('file', file)
-      const res = await fetch('/api/receipts/upload', { method: 'POST', body: formData })
-      const data = await res.json()
-      if (data.key) setReceiptKey(data.key)
+      const { url, key } = await getBurnReceiptUploadUrl(file.type, file.size)
+      await fetch(url, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type },
+        body: file,
+      })
+      setReceiptKey(key)
     } finally {
       setUploading(false)
     }
@@ -103,7 +114,7 @@ export function InlineBurnForm({ burn, tags, onSaved, onCancel }: Props) {
     })
   }
 
-  const receiptSrc = receiptPreview ?? (receiptKey ? `/api/receipts/${receiptKey.split('/').pop()}` : null)
+  const receiptSrc = receiptPreview ?? receiptViewUrl
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="bg-muted/30 border-b">
@@ -163,7 +174,7 @@ export function InlineBurnForm({ burn, tags, onSaved, onCancel }: Props) {
             />
             <button
               type="button"
-              onClick={() => { setReceiptKey(null); setReceiptPreview(null) }}
+              onClick={() => { setReceiptKey(null); setReceiptPreview(null); setReceiptViewUrl(null) }}
               className="absolute top-2 right-2 rounded-full bg-background/80 backdrop-blur p-1 text-muted-foreground hover:text-foreground border"
             >
               <X className="h-3.5 w-3.5" />

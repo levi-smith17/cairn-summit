@@ -18,6 +18,8 @@ import {
   deleteCompanion,
   deleteCompanionMedia,
   updateCompanionMediaCaption,
+  uploadCompanionMedia,
+  publicMediaUrl,
 } from '@/lib/api/manifest'
 import {
   Form,
@@ -36,8 +38,6 @@ import { useFormStatus } from '@/hooks/use-form-status'
 import { RichTextEditor } from '@/components/ui/rich-text-editor'
 import { X, ImagePlus } from 'lucide-react'
 import { formatAge } from '@/lib/format-age'
-
-const API_BASE = import.meta.env.VITE_API_URL ?? ''
 
 const companionSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -119,19 +119,8 @@ export function CompanionCard({ companion, onRefresh }: CompanionCardProps) {
     if (!file) return
     setUploading(true)
     try {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('companionId', companion.id)
-      formData.append('order', String(media.length))
-
-      const res = await fetch(`${API_BASE}/companions/upload`, {
-        method: 'POST',
-        body: formData,
-      })
-      const data = await res.json()
-      if (data.key) {
-        onRefresh()
-      }
+      await uploadCompanionMedia(file, companion.id, media.length)
+      onRefresh()
     } catch (err) {
       console.error('Upload failed', err)
     } finally {
@@ -143,8 +132,6 @@ export function CompanionCard({ companion, onRefresh }: CompanionCardProps) {
     await deleteCompanionMedia(mediaId)
     onRefresh()
   }
-
-  const mediaFilename = (key: string) => key.split('/').pop()
 
   return (
     <Card>
@@ -267,13 +254,13 @@ export function CompanionCard({ companion, onRefresh }: CompanionCardProps) {
                 <div className="relative group rounded-lg overflow-hidden aspect-square bg-muted">
                   {m.type === 'IMAGE' ? (
                     <img
-                      src={`${API_BASE}/companions/media/${mediaFilename(m.key)}`}
+                      src={publicMediaUrl(m.key)}
                       alt={m.caption ?? companion.name}
                       className="w-full h-full object-cover"
                     />
                   ) : (
                     <video
-                      src={`${API_BASE}/companions/media/${mediaFilename(m.key)}`}
+                      src={publicMediaUrl(m.key)}
                       className="w-full h-full object-cover"
                       controls
                     />

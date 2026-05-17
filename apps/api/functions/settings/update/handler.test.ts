@@ -58,6 +58,30 @@ describe('settings/update handler', () => {
         expect(result.statusCode).toBe(400)
     })
 
+    it('removes nullable account fields when sent as null', async () => {
+        vi.mocked(dynamo.send).mockResolvedValueOnce({ Attributes: { pk: 'USER#user-123', sk: 'PROFILE' } })
+
+        const result = await handler(mockEvent('account', { username: null, customDomain: null })) as any
+        expect(result.statusCode).toBe(200)
+
+        const call = vi.mocked(dynamo.send).mock.calls[0][0]
+        expect(call.input.UpdateExpression).toContain('REMOVE')
+        expect(call.input.UpdateExpression).not.toContain('SET')
+        expect(call.input.ExpressionAttributeNames['#username']).toBe('username')
+        expect(call.input.ExpressionAttributeNames['#customDomain']).toBe('customDomain')
+    })
+
+    it('handles mix of set and remove in account update', async () => {
+        vi.mocked(dynamo.send).mockResolvedValueOnce({ Attributes: { pk: 'USER#user-123', sk: 'PROFILE', listed: true } })
+
+        const result = await handler(mockEvent('account', { listed: true, customDomain: null })) as any
+        expect(result.statusCode).toBe(200)
+
+        const call = vi.mocked(dynamo.send).mock.calls[0][0]
+        expect(call.input.UpdateExpression).toContain('SET')
+        expect(call.input.UpdateExpression).toContain('REMOVE')
+    })
+
     it('updates appearance section on SETTINGS item', async () => {
         vi.mocked(dynamo.send).mockResolvedValueOnce({
             Attributes: { pk: 'USER#user-123', sk: 'SETTINGS', appearance: { sidebarDefault: 'COLLAPSED', defaultLandingPage: '/logs', dateFormat: 'MDY' } }

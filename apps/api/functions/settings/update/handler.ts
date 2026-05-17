@@ -22,27 +22,35 @@ export const handler = async (
 
         if (section === 'account') {
             const setExprs: string[] = []
+            const removeExprs: string[] = []
             const exprNames: Record<string, string> = {}
             const exprValues: Record<string, unknown> = {}
 
             for (const field of ACCOUNT_FIELDS) {
                 if (field in body) {
-                    const placeholder = `:${field}`
                     const nameKey = `#${field}`
-                    setExprs.push(`${nameKey} = ${placeholder}`)
                     exprNames[nameKey] = field
-                    exprValues[placeholder] = body[field]
+                    if (body[field] !== null && body[field] !== undefined) {
+                        setExprs.push(`${nameKey} = :${field}`)
+                        exprValues[`:${field}`] = body[field]
+                    } else {
+                        removeExprs.push(nameKey)
+                    }
                 }
             }
 
-            if (setExprs.length === 0) return toApiGatewayResponse(badRequest('No valid account fields provided'))
+            if (setExprs.length === 0 && removeExprs.length === 0) return toApiGatewayResponse(badRequest('No valid account fields provided'))
+
+            const parts: string[] = []
+            if (setExprs.length > 0) parts.push(`SET ${setExprs.join(', ')}`)
+            if (removeExprs.length > 0) parts.push(`REMOVE ${removeExprs.join(', ')}`)
 
             const result = await dynamo.send(new UpdateCommand({
                 TableName: TABLE_NAME,
                 Key: { pk, sk: 'PROFILE' },
-                UpdateExpression: `SET ${setExprs.join(', ')}`,
+                UpdateExpression: parts.join(' '),
                 ExpressionAttributeNames: exprNames,
-                ExpressionAttributeValues: exprValues,
+                ...(Object.keys(exprValues).length > 0 ? { ExpressionAttributeValues: exprValues } : {}),
                 ReturnValues: 'ALL_NEW',
             }))
 

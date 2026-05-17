@@ -5,7 +5,7 @@ import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 }
 import { dynamo, TABLE_NAME } from '../../shared/db'
 import { getPk, getUserId } from '../../shared/auth'
 import { s3, PRIVATE_MEDIA_BUCKET, PRESIGN_EXPIRES } from '../../shared/s3'
-import { toApiGatewayResponse, badRequest, forbidden, notFound, serverError } from '../../shared/response'
+import { toApiGatewayResponse, ok, badRequest, forbidden, notFound, serverError } from '../../shared/response'
 
 export const handler = async (
     event: APIGatewayProxyEventV2WithJWTAuthorizer
@@ -36,21 +36,13 @@ export const handler = async (
             return toApiGatewayResponse(notFound('Receipt not found'))
         }
 
-        const presignedUrl = await getSignedUrl(
+        const url = await getSignedUrl(
             s3,
             new GetObjectCommand({ Bucket: PRIVATE_MEDIA_BUCKET, Key: key }),
             { expiresIn: PRESIGN_EXPIRES },
         )
 
-        return {
-            statusCode: 302,
-            headers: {
-                'Location': presignedUrl,
-                'Cache-Control': 'private, max-age=3600',
-                'Access-Control-Allow-Origin': process.env.WEB_URL ?? '*',
-            },
-            body: '',
-        }
+        return toApiGatewayResponse(ok({ url }))
     } catch (err) {
         console.error(err)
         return toApiGatewayResponse(serverError())

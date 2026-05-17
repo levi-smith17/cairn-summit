@@ -11,7 +11,8 @@ import { dynamo } from '../../shared/db'
 
 const mockEvent = (
     sub: string,
-    id: string | undefined
+    id: string | undefined,
+    body: Record<string, unknown>
 ): APIGatewayProxyEventV2WithJWTAuthorizer => ({
     requestContext: {
         authorizer: {
@@ -27,82 +28,83 @@ const mockEvent = (
         domainName: '',
         domainPrefix: '',
         http: {
-            method: 'DELETE',
-            path: `/stones/${id}`,
+            method: 'PUT',
+            path: `/guides/stones/${id}/placement`,
             protocol: 'HTTP/1.1',
             sourceIp: '',
             userAgent: '',
         },
         requestId: '',
-        routeKey: 'DELETE /stones/{id}',
+        routeKey: 'PUT /guides/stones/{id}/placement',
         stage: 'dev',
         time: '',
         timeEpoch: 0,
     },
     version: '2.0',
-    routeKey: 'DELETE /stones/{id}',
-    rawPath: `/stones/${id}`,
+    routeKey: 'PUT /guides/stones/{id}/placement',
+    rawPath: `/guides/stones/${id}/placement`,
     rawQueryString: '',
     headers: {},
     pathParameters: id ? { id } : undefined,
+    body: JSON.stringify(body),
     isBase64Encoded: false,
 })
 
-describe('stones/delete handler', () => {
+describe('stones/placement-update handler', () => {
     beforeEach(() => {
         vi.clearAllMocks()
     })
 
-    it('deletes a stone and returns 204', async () => {
+    it('updates the stone placement and returns 204', async () => {
         vi.mocked(dynamo.send)
             .mockResolvedValueOnce({ Items: [{ pk: 'USER#user-123', sk: 'STONE#guide-1#abc' }] })
             .mockResolvedValueOnce({})
 
-        const result = await handler(mockEvent('user-123', 'abc')) as any
+        const result = await handler(
+            mockEvent('user-123', 'abc', { placement: 'PLACED' })
+        ) as any
 
         expect(result.statusCode).toBe(204)
     })
 
-    it('calls DynamoDB with the stone key', async () => {
-        vi.mocked(dynamo.send)
-            .mockResolvedValueOnce({ Items: [{ pk: 'USER#user-456', sk: 'STONE#guide-2#xyz' }] })
-            .mockResolvedValueOnce({})
-
-        await handler(mockEvent('user-456', 'xyz'))
-
-        expect(dynamo.send).toHaveBeenCalledWith(
-            expect.objectContaining({
-                input: expect.objectContaining({
-                    Key: {
-                        pk: 'USER#user-456',
-                        sk: 'STONE#guide-2#xyz',
-                    },
-                }),
-            })
-        )
-    })
-
-    it('returns 400 when id is missing', async () => {
-        const result = await handler(mockEvent('user-123', undefined)) as any
+    it('returns 400 when placement is invalid', async () => {
+        const result = await handler(
+            mockEvent('user-123', 'abc', { placement: 'INVALID' })
+        ) as any
 
         expect(result.statusCode).toBe(400)
-        expect(JSON.parse(result.body).error).toBe('Missing stone id')
+        expect(JSON.parse(result.body).error).toBe('placement must be one of: UNPLACED, PLACED, SET, SEATED')
         expect(dynamo.send).not.toHaveBeenCalled()
     })
 
     it('returns 404 when stone is not found', async () => {
         vi.mocked(dynamo.send).mockResolvedValueOnce({ Items: [] })
 
-        const result = await handler(mockEvent('user-123', 'abc')) as any
+        const result = await handler(
+            mockEvent('user-123', 'abc', { placement: 'SET' })
+        ) as any
 
         expect(result.statusCode).toBe(404)
         expect(JSON.parse(result.body).error).toBe('Stone not found')
     })
 
-    it('returns 500 when DynamoDB throws', async () => {
-        vi.mocked(dynamo.send).mockRejectedValueOnce(new Error('DynamoDB error'))
+    it('returns 400 when id is missing', async () => {
+        const result = await handler(
+            mockEvent('user-123', undefined, { placement: 'SET' })
+        ) as any
 
-        const result = await handler(mockEvent('user-123', 'abc')) as any
+        expect(result.statusCode).toBe(400)
+        expect(JSON.parse(result.body).error).toBe('Missing stone id')
+        expect(dynamo.send).not.toHaveBeenCalled()
+    })
+
+    it('returns 500 when DynamoDB throws', async () => {
+        vi.mocked(dynamo.send).mockResolvedValueOnce({ Items: [{ pk: 'USER#user-123', sk: 'STONE#guide-1#abc' }] })
+            .mockRejectedValueOnce(new Error('DynamoDB error'))
+
+        const result = await handler(
+            mockEvent('user-123', 'abc', { placement: 'SEATED' })
+        ) as any
 
         expect(result.statusCode).toBe(500)
         expect(JSON.parse(result.body).error).toBe('Internal server error')

@@ -32,6 +32,11 @@ export function kinFullName(kin: Pick<Kin, 'givenName' | 'middleName' | 'surname
   return [kin.givenName, kin.middleName, kin.surname].filter(Boolean).join(' ')
 }
 
+export function kinDisplayName(kin: Pick<Kin, 'givenName' | 'middleName' | 'surname' | 'nickname'>): string {
+  const full = kinFullName(kin)
+  return kin.nickname ? `${full} (${kin.nickname})` : full
+}
+
 const MIN_PARENT_AGE_GAP = 13
 
 export function isEligibleParent(candidate: { birthDate?: string }, child: { birthDate?: string }): boolean {
@@ -81,7 +86,7 @@ function QuickParentFix({ kin, allKin, onSave }: QuickParentFixProps) {
   const eligibleParents = allKin.filter(k =>
     k.id !== kin.id && !descendantIds.has(k.id) && isEligibleParent(k, kin)
   )
-  const toOption = (k: Kin & { id: string }) => ({ value: k.id, label: kinFullName(k) })
+  const toOption = (k: Kin & { id: string }) => ({ value: k.id, label: kinDisplayName(k) })
   const sortedEligible = eligibleParents.map(toOption).sort((a, b) => a.label.localeCompare(b.label))
   const fatherOptions = [{ value: '', label: 'None' }, ...sortedEligible.filter(o => o.value !== motherId)]
   const motherOptions = [{ value: '', label: 'None' }, ...sortedEligible.filter(o => o.value !== fatherId)]
@@ -212,7 +217,7 @@ export const KinNode = memo(function KinNode({ data }: NodeProps<KinNodeData>) {
       <div className="px-3 py-2.5">
         <div className="flex items-center gap-1.5 min-w-0">
           <User className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-          <p className="text-sm font-medium leading-tight truncate">{kinFullName(kin)}</p>
+          <p className="text-sm font-medium leading-tight truncate">{kinDisplayName(kin)}</p>
         </div>
         {dateLabel && (
           <p className="text-xs text-muted-foreground mt-0.5 pl-5">{dateLabel}</p>

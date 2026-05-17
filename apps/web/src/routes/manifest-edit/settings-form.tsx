@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { saveManifestSettings, deleteAccount } from '@/lib/api/manifest'
+import { deleteAccount } from '@/lib/api/manifest'
+import { saveAccountSettings } from '@/lib/api/settings'
 import { settingsSchema, type SettingsFormValues } from '@/lib/schemas/manifest'
 import {
   Form,
@@ -75,7 +76,7 @@ export function SettingsForm({ defaultValues, isAdmin }: SettingsFormProps) {
   })
 
   async function onSubmit(values: SettingsFormValues) {
-    await handleSubmit(() => saveManifestSettings({
+    await handleSubmit(() => saveAccountSettings({
       username: values.username || null,
       defaultTerminology: values.defaultTerminology,
       defaultTheme: values.defaultTheme,

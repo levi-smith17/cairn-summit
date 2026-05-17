@@ -1,3 +1,11 @@
+output "api_gateway_domain" {
+  value = aws_apigatewayv2_domain_name.main.domain_name_configuration[0].target_domain_name
+}
+
+output "api_gateway_zone_id" {
+  value = aws_apigatewayv2_domain_name.main.domain_name_configuration[0].hosted_zone_id
+}
+
 output "api_url" {
   value = module.api_gateway.api_url
 }
@@ -33,22 +41,6 @@ output "dynamodb_table_arn" {
 
 output "github_actions_role_arn" {
   value = module.github_oidc.role_arn
-}
-
-output "lambda_markers_get_arn" {
-  value = module.lambda_markers_get.function_arn
-}
-
-output "lambda_markers_create_arn" {
-  value = module.lambda_markers_create.function_arn
-}
-
-output "lambda_markers_update_arn" {
-  value = module.lambda_markers_update.function_arn
-}
-
-output "lambda_markers_delete_arn" {
-  value = module.lambda_markers_delete.function_arn
 }
 
 output "web_bucket_name" {
