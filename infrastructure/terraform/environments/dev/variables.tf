@@ -4,10 +4,24 @@ variable "aws_profile" {
   default     = null
 }
 
+variable "dns_access_key" {
+  default = null
+}
+
 variable "dns_aws_profile" {
   description = "AWS profile for prod account DNS (local only, leave null in CI)"
   type        = string
   default     = null
+}
+
+variable "dns_secret_key" {
+  default = null
+  sensitive = true
+}
+
+variable "dns_session_token" {
+  default = null
+  sensitive = true
 }
 
 variable "domain" {

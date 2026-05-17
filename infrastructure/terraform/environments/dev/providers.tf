@@ -13,7 +13,10 @@ provider "aws" {
 # Cross-account provider for writing DNS validation records
 # to the hosted zone in the prod account
 provider "aws" {
-  alias   = "dns"
-  region  = "us-east-1"
-  profile = var.dns_aws_profile
+  alias      = "dns"
+  region     = "us-east-1"
+  profile    = var.dns_aws_profile
+  access_key = var.dns_access_key
+  secret_key = var.dns_secret_key
+  token      = var.dns_session_token
 }

@@ -112,6 +112,7 @@ resource "aws_iam_policy" "terraform_aws" {
       {
         Effect = "Allow"
         Action = [
+          "acm:*",
           "apigateway:*",
           "cloudfront:*",
           "cognito-idp:*",
