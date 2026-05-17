@@ -9,5 +9,5 @@ dev_web_cloudfront_domain   = "d1zhadt1d80odb.cloudfront.net"
 dev_media_cloudfront_domain = "d7zu9t8oo15aj.cloudfront.net"
 
 # Prod — fill in after prod rebuild
-prod_web_cloudfront_domain   = null
+prod_web_cloudfront_domain   = "dse7slt4rd81w.cloudfront.net"
 prod_media_cloudfront_domain = null
