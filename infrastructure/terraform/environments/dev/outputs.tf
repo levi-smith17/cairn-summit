@@ -43,6 +43,14 @@ output "github_actions_role_arn" {
   value = module.github_oidc.role_arn
 }
 
+output "ses_configuration_set_name" {
+  value = module.ses.configuration_set_name
+}
+
+output "ses_dkim_tokens" {
+  value = module.ses.dkim_tokens
+}
+
 output "web_bucket_name" {
   value = module.cloudfront.bucket_name
 }

@@ -6,6 +6,9 @@ resource "aws_dynamodb_table" "main" {
   read_capacity  = var.billing_mode == "PROVISIONED" ? var.read_capacity : null
   write_capacity = var.billing_mode == "PROVISIONED" ? var.write_capacity : null
 
+  stream_enabled   = true
+  stream_view_type = "NEW_AND_OLD_IMAGES"
+
   attribute {
     name = "pk"
     type = "S"
@@ -33,6 +36,11 @@ resource "aws_dynamodb_table" "main" {
     range_key       = "gsi1sk"
     read_capacity   = var.billing_mode == "PROVISIONED" ? var.read_capacity : null
     write_capacity  = var.billing_mode == "PROVISIONED" ? var.write_capacity : null
+  }
+
+  ttl {
+    attribute_name = "ttl"
+    enabled        = true
   }
 
   point_in_time_recovery {

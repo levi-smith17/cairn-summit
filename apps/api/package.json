@@ -12,6 +12,7 @@
     "@aws-sdk/client-cognito-identity-provider": "^3.1045.0",
     "@aws-sdk/client-dynamodb": "latest",
     "@aws-sdk/client-s3": "latest",
+    "@aws-sdk/client-sesv2": "^3.1049.0",
     "@aws-sdk/client-ssm": "^3.1045.0",
     "@aws-sdk/lib-dynamodb": "latest",
     "@aws-sdk/s3-request-presigner": "latest"

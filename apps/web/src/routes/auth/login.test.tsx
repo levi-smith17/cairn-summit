@@ -7,6 +7,8 @@ import LoginPage from './login'
 vi.mock('@/hooks/use-auth', () => ({
     useAuth: vi.fn(),
     signIn: vi.fn(),
+    completeNewPassword: vi.fn(),
+    getAuthError: vi.fn((err: unknown) => (err instanceof Error ? err.message : 'Something went wrong.')),
 }))
 
 vi.mock('@/components/cairn-lockup', () => ({
@@ -61,19 +63,12 @@ describe('LoginPage', () => {
     })
 
     it('submits the form with email and password', async () => {
-        mockSignIn.mockResolvedValueOnce({
-            id: 'user-123',
-            email: 'test@cairn.local',
-        })
+        mockSignIn.mockResolvedValueOnce({ type: 'success', user: { id: 'user-123', email: 'test@cairn.local' } })
 
         renderLoginPage()
 
-        fireEvent.change(screen.getByLabelText('Email'), {
-            target: { value: 'test@cairn.local' },
-        })
-        fireEvent.change(screen.getByLabelText('Password'), {
-            target: { value: 'password123' },
-        })
+        fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'test@cairn.local' } })
+        fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'password123' } })
         fireEvent.click(screen.getByRole('button', { name: 'Sign in' }))
 
         await waitFor(() => {
@@ -82,16 +77,12 @@ describe('LoginPage', () => {
     })
 
     it('shows signing in state while submitting', async () => {
-        mockSignIn.mockImplementation(() => new Promise(() => {})) // never resolves
+        mockSignIn.mockImplementation(() => new Promise(() => {}))
 
         renderLoginPage()
 
-        fireEvent.change(screen.getByLabelText('Email'), {
-            target: { value: 'test@cairn.local' },
-        })
-        fireEvent.change(screen.getByLabelText('Password'), {
-            target: { value: 'password123' },
-        })
+        fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'test@cairn.local' } })
+        fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'password123' } })
         fireEvent.click(screen.getByRole('button', { name: 'Sign in' }))
 
         await waitFor(() => {
@@ -104,12 +95,8 @@ describe('LoginPage', () => {
 
         renderLoginPage()
 
-        fireEvent.change(screen.getByLabelText('Email'), {
-            target: { value: 'test@cairn.local' },
-        })
-        fireEvent.change(screen.getByLabelText('Password'), {
-            target: { value: 'wrongpassword' },
-        })
+        fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'test@cairn.local' } })
+        fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'wrongpassword' } })
         fireEvent.click(screen.getByRole('button', { name: 'Sign in' }))
 
         await waitFor(() => {
@@ -117,38 +104,29 @@ describe('LoginPage', () => {
         })
     })
 
-    it('shows friendly message for NEW_PASSWORD_REQUIRED error', async () => {
-        mockSignIn.mockRejectedValueOnce(new Error('NEW_PASSWORD_REQUIRED'))
+    it('shows new password form on NEW_PASSWORD_REQUIRED challenge', async () => {
+        const fakeCognitoUser = {} as any
+        mockSignIn.mockResolvedValueOnce({ type: 'newPasswordRequired', cognitoUser: fakeCognitoUser })
 
         renderLoginPage()
 
-        fireEvent.change(screen.getByLabelText('Email'), {
-            target: { value: 'test@cairn.local' },
-        })
-        fireEvent.change(screen.getByLabelText('Password'), {
-            target: { value: 'password123' },
-        })
+        fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'test@cairn.local' } })
+        fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'TempPass123!' } })
         fireEvent.click(screen.getByRole('button', { name: 'Sign in' }))
 
         await waitFor(() => {
-            expect(screen.getByText('You must set a new password. Please contact support.')).toBeInTheDocument()
+            expect(screen.getByLabelText('New password')).toBeInTheDocument()
+            expect(screen.getByLabelText('Confirm new password')).toBeInTheDocument()
         })
     })
 
     it('redirects to home after successful login', async () => {
-        mockSignIn.mockResolvedValueOnce({
-            id: 'user-123',
-            email: 'test@cairn.local',
-        })
+        mockSignIn.mockResolvedValueOnce({ type: 'success', user: { id: 'user-123', email: 'test@cairn.local' } })
 
         renderLoginPage()
 
-        fireEvent.change(screen.getByLabelText('Email'), {
-            target: { value: 'test@cairn.local' },
-        })
-        fireEvent.change(screen.getByLabelText('Password'), {
-            target: { value: 'password123' },
-        })
+        fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'test@cairn.local' } })
+        fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'password123' } })
         fireEvent.click(screen.getByRole('button', { name: 'Sign in' }))
 
         await waitFor(() => {

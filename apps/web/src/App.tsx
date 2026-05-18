@@ -16,6 +16,9 @@ function ConditionalPlatformLayout() {
 import Home from '@/routes/home'
 import Invite from '@/routes/invite'
 import Login from '@/routes/auth/login'
+import Signup from '@/routes/auth/signup'
+import VerifyEmail from '@/routes/auth/verify-email'
+import ForgotPassword from '@/routes/auth/forgot-password'
 import Privacy from '@/routes/privacy'
 import PrivacyContact from './routes/privacy-contact/page'
 import Terms from '@/routes/terms'
@@ -61,6 +64,9 @@ export default function App() {
 
                         {/* Public routes */}
                         <Route path="/login" element={<Login />} />
+                        <Route path="/signup" element={<Signup />} />
+                        <Route path="/verify-email" element={<VerifyEmail />} />
+                        <Route path="/forgot-password" element={<ForgotPassword />} />
                         <Route path="/privacy" element={<Privacy />} />
                         <Route path="/privacy-contact" element={<PrivacyContact />} />
                         <Route path="/terms" element={<Terms />} />
