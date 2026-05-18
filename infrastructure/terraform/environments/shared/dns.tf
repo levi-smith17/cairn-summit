@@ -80,6 +80,19 @@ resource "aws_route53_record" "dev_media" {
 
 # ── Prod records (conditional on CloudFront domains being set) ─────────────────
 
+resource "aws_route53_record" "prod_api" {
+  count   = var.prod_api_gateway_domain != null ? 1 : 0
+  zone_id = aws_route53_zone.main.zone_id
+  name    = "api.${var.domain}"
+  type    = "A"
+
+  alias {
+    name                   = var.prod_api_gateway_domain
+    zone_id                = var.prod_api_gateway_zone_id
+    evaluate_target_health = false
+  }
+}
+
 resource "aws_route53_record" "prod_web" {
   count   = var.prod_web_cloudfront_domain != null ? 1 : 0
   zone_id = aws_route53_zone.main.zone_id
