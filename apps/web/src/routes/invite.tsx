@@ -54,10 +54,10 @@ export default function Invite() {
             </div>
 
             <Link
-              to="/login"
+              to={`/signup?email=${encodeURIComponent(data.email)}`}
               className="w-full text-center rounded-md border border-gray-300 px-8 py-2 text-sm tracking-widest text-gray-600 hover:bg-gray-50 transition-colors"
             >
-              continue to sign in
+              Create your account
             </Link>
           </>
         ) : null}

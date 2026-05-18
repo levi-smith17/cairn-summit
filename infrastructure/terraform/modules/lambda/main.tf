@@ -1,7 +1,7 @@
 # Placeholder zip so Terraform can create the function before code is deployed
 data "archive_file" "placeholder" {
   type        = "zip"
-  output_path = "${path.module}/placeholder.zip"
+  output_path = "${path.module}/placeholders/${var.function_name}.zip"
 
   source {
     content  = "exports.handler = async () => ({ statusCode: 200, body: 'placeholder' })"

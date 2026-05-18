@@ -40,6 +40,42 @@ resource "aws_route53_record" "dkim" {
   records = ["sig1.dkim.cairn.ing.at.icloudmailadmin.com."]
 }
 
+# ── SES records ───────────────────────────────────────────────────────────────
+
+resource "aws_route53_record" "ses_mail_from_mx" {
+  zone_id = aws_route53_zone.main.zone_id
+  name    = "mail.${var.domain}"
+  type    = "MX"
+  ttl     = 300
+  records = ["10 feedback-smtp.us-east-2.amazonses.com"]
+}
+
+resource "aws_route53_record" "ses_mail_from_spf" {
+  zone_id = aws_route53_zone.main.zone_id
+  name    = "mail.${var.domain}"
+  type    = "TXT"
+  ttl     = 300
+  records = ["v=spf1 include:amazonses.com ~all"]
+}
+
+resource "aws_route53_record" "ses_dkim_dev" {
+  count   = length(var.dev_ses_dkim_tokens)
+  zone_id = aws_route53_zone.main.zone_id
+  name    = "${var.dev_ses_dkim_tokens[count.index]}._domainkey.${var.domain}"
+  type    = "CNAME"
+  ttl     = 300
+  records = ["${var.dev_ses_dkim_tokens[count.index]}.dkim.amazonses.com"]
+}
+
+resource "aws_route53_record" "ses_dkim_prod" {
+  count   = length(var.prod_ses_dkim_tokens)
+  zone_id = aws_route53_zone.main.zone_id
+  name    = "${var.prod_ses_dkim_tokens[count.index]}._domainkey.${var.domain}"
+  type    = "CNAME"
+  ttl     = 300
+  records = ["${var.prod_ses_dkim_tokens[count.index]}.dkim.amazonses.com"]
+}
+
 # ── Dev records ────────────────────────────────────────────────────────────────
 
 resource "aws_route53_record" "dev_api" {

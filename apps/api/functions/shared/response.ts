@@ -48,6 +48,13 @@ export function notFound(message = 'Not found'): ApiResponse<never> {
     }
 }
 
+export function tooManyRequests(message = 'Too many requests'): ApiResponse<never> {
+    return {
+        statusCode: 429,
+        error: message
+    }
+}
+
 export function conflict(message = 'Conflict'): ApiResponse<never> {
     return {
         statusCode: 409,

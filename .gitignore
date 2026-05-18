@@ -29,7 +29,9 @@ yarn-error.log*
 **/.terraform/
 **/.terraform.lock.hcl
 *.tfplan
-infrastructure/terraform/modules/lambda/placeholder.zip
+infrastructure/terraform/modules/lambda/placeholders/
+infrastructure/terraform/environments/dev/placeholders/
+infrastructure/terraform/environments/prod/placeholders/
 *.local.tfvars
 
 # WebStorm

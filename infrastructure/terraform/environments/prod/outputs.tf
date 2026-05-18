@@ -47,6 +47,14 @@ output "media_cloudfront_url" {
   value = module.s3.media_cloudfront_url
 }
 
+output "ses_configuration_set_name" {
+  value = module.ses.configuration_set_name
+}
+
+output "ses_dkim_tokens" {
+  value = module.ses.dkim_tokens
+}
+
 output "web_bucket_name" {
   value = module.cloudfront.bucket_name
 }

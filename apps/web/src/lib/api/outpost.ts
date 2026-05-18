@@ -22,5 +22,6 @@ export async function getOutpostData(): Promise<OutpostData> {
   const headers = await getAuthHeaders()
   const res = await fetch(`${API_BASE}/outpost`, { headers })
   if (!res.ok) throw new Error('Failed to fetch outpost data')
-  return res.json()
+  const json = await res.json()
+  return json.data
 }

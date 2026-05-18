@@ -9,6 +9,7 @@ locals {
     local.lambdas_logs,
     local.lambdas_manifest,
     local.lambdas_markers,
+    local.lambdas_outpost,
     local.lambdas_profile,
     local.lambdas_settings,
     local.lambdas_signals,

@@ -15,12 +15,12 @@ variable "dns_aws_profile" {
 }
 
 variable "dns_secret_key" {
-  default = null
+  default   = null
   sensitive = true
 }
 
 variable "dns_session_token" {
-  default = null
+  default   = null
   sensitive = true
 }
 
@@ -28,9 +28,21 @@ variable "domain" {
   description = "Apex domain name"
 }
 
+variable "dynamodb_table_arn" {
+  type = string
+}
+
+variable "dynamodb_table_name" {
+  type = string
+}
+
 variable "environment" {
   type    = string
   default = "dev"
+}
+
+variable "github_repo" {
+  type = string
 }
 
 variable "hosted_zone_id" {
@@ -53,6 +65,14 @@ variable "project_name" {
   default = "cairn"
 }
 
-variable "github_repo" {
-  type = string
+variable "ses_configuration_set_name" {
+  description = "SES configuration set name — set after SES is applied"
+  type        = string
+  default     = ""
+}
+
+variable "ses_from_email" {
+  description = "SES sender address for outbound emails"
+  type        = string
+  default     = ""
 }

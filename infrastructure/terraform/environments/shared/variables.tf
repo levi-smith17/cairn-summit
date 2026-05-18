@@ -4,6 +4,12 @@ variable "aws_profile" {
   default     = null
 }
 
+variable "dev_ses_dkim_tokens" {
+  description = "SES Easy DKIM tokens for the dev account domain identity"
+  type        = list(string)
+  default     = []
+}
+
 variable "dev_api_gateway_domain" {
   description = "API Gateway regional domain name for dev"
   type        = string
@@ -36,6 +42,12 @@ variable "github_repo" {}
 variable "managed_by" {}
 variable "owner" {}
 variable "project_name" {}
+
+variable "prod_ses_dkim_tokens" {
+  description = "SES Easy DKIM tokens for the prod account domain identity"
+  type        = list(string)
+  default     = []
+}
 
 variable "prod_api_gateway_domain" {
   description = "API Gateway regional domain name for prod"
