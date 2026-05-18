@@ -1,6 +1,7 @@
 variable "aws_profile" {
   description = "AWS profile to use"
   type        = string
+  default     = null
 }
 
 variable "dev_api_gateway_domain" {
