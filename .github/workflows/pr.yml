@@ -66,13 +66,14 @@ jobs:
       - name: Terraform Plan
         id: plan
         working-directory: infrastructure/terraform/environments/dev
+        env:
+          TF_VAR_dns_access_key: ${{ steps.prod-creds.outputs.aws-access-key-id }}
+          TF_VAR_dns_secret_key: ${{ steps.prod-creds.outputs.aws-secret-access-key }}
+          TF_VAR_dns_session_token: ${{ steps.prod-creds.outputs.aws-session-token }}
         run: |
           terraform plan \
             -var-file="../shared.tfvars" \
             -var-file="dev.tfvars" \
-            -var="dns_access_key=${{ steps.prod-creds.outputs.aws-access-key-id }}" \
-            -var="dns_secret_key=${{ steps.prod-creds.outputs.aws-secret-access-key }}" \
-            -var="dns_session_token=${{ steps.prod-creds.outputs.aws-session-token }}" \
             -no-color \
             -out=tfplan
         continue-on-error: true
