@@ -2,7 +2,6 @@ import { Outlet } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { PlatformSidebar } from './platform-sidebar'
-import { SignalNotifier } from '@/components/signal-notifier'
 import { CommandPalette } from '@/components/search/command-palette'
 import { useAuth } from '@/hooks/use-auth'
 import { getProfile } from '@/lib/api/profile'
@@ -32,7 +31,6 @@ export default function PlatformLayout() {
                 }}
             />
             <SidebarInset className="min-w-0 h-svh overflow-hidden">
-                <SignalNotifier />
                 <CommandPalette openInNewTab={true} />
                 <div className="flex flex-col h-full min-w-0 overflow-y-auto">
                     <Outlet />
