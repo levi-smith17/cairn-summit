@@ -7,8 +7,7 @@ module "api_gateway" {
   owner                = var.owner
   project_name         = var.project_name
   allowed_origins      = [
-    "http://localhost:3000",
-    "http://localhost:5173",
+    "https://cairn.ing",
     module.cloudfront.cloudfront_url,
   ]
   lambda_functions = module.lambdas.lambda_functions

@@ -13,6 +13,16 @@
  *   AWS_REGION             e.g. us-east-1
  *   AWS_PROFILE            e.g. cairn-dev
  *
+ * Optional env vars:
+ *   USER_MAP               Inline JSON mapping old Supabase email → Cognito sub.
+ *                          Use this when the Cognito email differs from Supabase,
+ *                          or to manually pin a user to a specific sub.
+ *                          Example: USER_MAP='{"old@example.com":"us-east-1:abc-123"}'
+ *
+ *   USER_MAP_FILE          Path to a JSON file with the same mapping format.
+ *                          Takes precedence over USER_MAP.
+ *                          Example file content: { "old@example.com": "cognito-sub-here" }
+ *
  * Run from repo root:
  *   DATABASE_URL="postgresql://..." \
  *   DYNAMODB_TABLE=cairn-dev \
@@ -28,6 +38,7 @@
 
 import { createRequire } from 'module'
 import { join } from 'path'
+import { readFileSync } from 'fs'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { DynamoDBDocumentClient, BatchWriteCommand } from '@aws-sdk/lib-dynamodb'
 import {
@@ -38,7 +49,7 @@ import {
 // ---------------------------------------------------------------------------
 // Load Prisma from the adjacent cairn project (already installed there)
 // ---------------------------------------------------------------------------
-const cairnDir = join(__dirname, '../../cairn')
+const cairnDir = join(process.cwd(), '../cairn')
 const cairnRequire = createRequire(join(cairnDir, 'package.json'))
 const { PrismaClient } = cairnRequire('@prisma/client')
 
@@ -66,6 +77,30 @@ const prisma = new PrismaClient({
 })
 
 // ---------------------------------------------------------------------------
+// User map (optional): old Supabase email → Cognito sub
+// ---------------------------------------------------------------------------
+function loadUserMap(): Record<string, string> {
+    if (process.env.USER_MAP_FILE) {
+        const raw = readFileSync(process.env.USER_MAP_FILE, 'utf-8')
+        return JSON.parse(raw)
+    }
+    if (process.env.USER_MAP) {
+        return JSON.parse(process.env.USER_MAP)
+    }
+    return {}
+}
+
+const USER_MAP = loadUserMap()
+
+if (Object.keys(USER_MAP).length > 0) {
+    console.log(`User map loaded: ${Object.keys(USER_MAP).length} override(s)`)
+    for (const [email, sub] of Object.entries(USER_MAP)) {
+        console.log(`  ${email} → ${sub}`)
+    }
+    console.log()
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -76,15 +111,28 @@ function isoOrNull(d: Date | null | undefined): string | null {
 async function batchWrite(items: Record<string, unknown>[]) {
     for (let i = 0; i < items.length; i += 25) {
         const chunk = items.slice(i, i + 25)
-        await dynamo.send(new BatchWriteCommand({
-            RequestItems: {
-                [TABLE_NAME]: chunk.map(Item => ({ PutRequest: { Item } })),
-            },
-        }))
+        let pending = chunk.map(Item => ({ PutRequest: { Item } }))
+        let attempt = 0
+
+        while (pending.length > 0) {
+            if (attempt > 0) {
+                // Exponential backoff: 200ms, 400ms, 800ms, …  capped at 5s
+                await new Promise(r => setTimeout(r, Math.min(200 * 2 ** (attempt - 1), 5000)))
+            }
+            const res = await dynamo.send(new BatchWriteCommand({
+                RequestItems: { [TABLE_NAME]: pending },
+            }))
+            // DynamoDB may return unprocessed items when throughput is exceeded
+            pending = (res.UnprocessedItems?.[TABLE_NAME] ?? []) as typeof pending
+            attempt++
+            if (attempt > 10) throw new Error('batchWrite: too many retries — still have unprocessed items')
+        }
     }
 }
 
 async function getCognitoSub(email: string): Promise<string | null> {
+    if (USER_MAP[email]) return USER_MAP[email]
+
     const res = await cognito.send(new ListUsersCommand({
         UserPoolId: USER_POOL_ID!,
         Filter: `email = "${email}"`,
