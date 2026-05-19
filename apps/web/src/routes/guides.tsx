@@ -2,9 +2,12 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/use-auth'
 import { GuidesClient } from './guides/guides-client'
 import { getGuides, getTrails, getMarkers } from '@/lib/api/guides'
+import { PageSkeleton } from '@/components/ui/page-skeleton'
+import { useTerminology } from '@/contexts/terminology-context'
 
 export default function Guides() {
     const { user } = useAuth()
+    const { terms } = useTerminology()
     const { data: guidesData = [], isLoading } = useQuery({
         queryKey: ['guides', user?.id],
         queryFn: getGuides,
@@ -55,11 +58,7 @@ export default function Guides() {
         }
     })
 
-    if (isLoading) return (
-        <div className="flex items-center justify-center h-full">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-        </div>
-    )
+    if (isLoading) return <PageSkeleton title={terms.guides} hasFilterBar />
 
     return (
         <GuidesClient

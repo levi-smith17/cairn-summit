@@ -9,7 +9,6 @@ import {
   LayoutDashboard,
   LayoutList,
   LayersIcon,
-  Mail,
   NotebookPen,
   Rocket,
   Search,
@@ -73,7 +72,6 @@ function buildNavItems(terms: Terms): { group: string; items: NavItem[] }[] {
         { title: terms.outpost, url: '/', icon: LayoutList, tooltip: terms.outpost },
         { title: terms.basecamp, url: '/basecamp', icon: LayoutDashboard, tooltip: terms.basecamp },
         { title: terms.itinerary, url: '/itinerary', icon: CalendarDays, tooltip: terms.itinerary },
-        { title: terms.signals, url: '/signals', icon: Mail, tooltip: terms.signals },
       ],
     },
     {
@@ -112,7 +110,6 @@ interface PlatformSidebarProps extends React.ComponentProps<typeof Sidebar> {
     isAdmin: boolean
   }
   badges?: {
-    signals: number
     itinerary: number
   }
   terms?: Terms
@@ -128,7 +125,6 @@ export function PlatformSidebar({ wayfarer, badges, terms, ...props }: PlatformS
   const navItems = buildNavItems(uiTerms)
 
   function getBadge(url: string): number {
-    if (url === '/signals')   return badges?.signals   ?? 0
     if (url === '/itinerary') return badges?.itinerary ?? 0
     return 0
   }

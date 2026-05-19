@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CalendarDays, ChevronRight, Lock } from 'lucide-react'
 import { useTerminology } from '@/contexts/terminology-context'
-import { fetchExternalCalendarEvents } from '@/lib/api/basecamp'
 
 interface CairnStop {
   id: string
@@ -83,18 +82,7 @@ function formatStopTime(date: Date, allDay: boolean) {
 
 export function ItinerarySnapshotPanel({ stops }: ItinerarySnapshotPanelProps) {
   const { terms } = useTerminology()
-  const [externalEvents, setExternalEvents] = useState<ExternalEvent[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetchExternalCalendarEvents()
-      .then(events => setExternalEvents(events.map((e: any) => ({
-        ...e,
-        startDate: new Date(e.startDate),
-        endDate: e.endDate ? new Date(e.endDate) : null,
-      }))))
-      .finally(() => setLoading(false))
-  }, [])
+  const [externalEvents] = useState<ExternalEvent[]>([])
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -121,9 +109,6 @@ export function ItinerarySnapshotPanel({ stops }: ItinerarySnapshotPanelProps) {
       <div className="flex items-center gap-2 px-4 py-3 border-b">
         <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
         <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{terms.itinerary}</span>
-        {loading && (
-          <span className="text-[10px] text-muted-foreground/60 animate-pulse">syncing…</span>
-        )}
         <Link
           to="/itinerary"
           className="ml-auto flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors px-1.5 py-0.5 rounded hover:bg-muted"

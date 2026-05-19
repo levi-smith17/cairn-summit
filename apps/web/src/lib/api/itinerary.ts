@@ -18,11 +18,15 @@ export type ExternalCalendarEvent = {
 }
 
 export async function getItineraryData(): Promise<{ stops: any[]; calendars: any[] }> {
-  const res = await fetch(`${API_BASE}/itinerary`, {
-    headers: await getAuthHeaders(),
-  })
-  if (!res.ok) throw new Error('Failed to fetch itinerary data')
-  return res.json()
+  try {
+    const res = await fetch(`${API_BASE}/itinerary`, {
+      headers: await getAuthHeaders(),
+    })
+    if (!res.ok) return { stops: [], calendars: [] }
+    return res.json()
+  } catch {
+    return { stops: [], calendars: [] }
+  }
 }
 
 export async function fetchExternalCalendarEvents(): Promise<ExternalCalendarEvent[]> {

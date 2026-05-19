@@ -3,9 +3,12 @@ import { useAuth } from '@/hooks/use-auth'
 import { TrailsClient } from './trails/trails-client'
 import { getTrails } from '@/lib/api/trails'
 import { extractId } from '@/lib/utils'
+import { PageSkeleton } from '@/components/ui/page-skeleton'
+import { useTerminology } from '@/contexts/terminology-context'
 
 export default function Trails() {
     const { user } = useAuth()
+    const { terms } = useTerminology()
     const { data, isLoading } = useQuery({
         queryKey: ['trails', user?.id],
         queryFn: getTrails,
@@ -18,11 +21,7 @@ export default function Trails() {
         createdAt: t.createdAt,
     }))
 
-    if (isLoading) return (
-        <div className="flex items-center justify-center h-full">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-        </div>
-    )
+    if (isLoading) return <PageSkeleton title={terms.trails} />
 
     return <TrailsClient trails={trails} />
 }

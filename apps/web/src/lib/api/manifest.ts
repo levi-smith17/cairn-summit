@@ -11,7 +11,8 @@ export async function getManifestData() {
   const res = await fetch(`${API_BASE}/manifest`, {
     headers: await getAuthHeaders(),
   })
-  return res.json()
+  const json = await res.json()
+  return json.data ?? json
 }
 
 export async function saveOrigins(data: {

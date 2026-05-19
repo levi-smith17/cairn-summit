@@ -1,5 +1,5 @@
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Bell, Bookmark, CalendarDays, Mail, Monitor, NotebookPen, Shield, User } from 'lucide-react'
+import { ArrowLeft, Bell, Bookmark, CalendarDays, Monitor, NotebookPen, Shield, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PlatformHeader } from '@/components/nav/platform/platform-header'
 import { useTerminology } from '@/contexts/terminology-context'
@@ -8,11 +8,10 @@ import { AppearanceForm } from './appearance-form'
 import { NotificationsForm } from './notifications-form'
 import { PrivacyForm } from './privacy-form'
 import { ItinerarySettingsForm, type CalendarEntry, type SubscriptionEntry } from './itinerary-settings-form'
-import { SignalsForm } from './signals-form'
 import { WaypointsSettingsForm } from './waypoints-settings-form'
 import { LogSettingsForm } from './log-settings-form'
 
-type Section = 'account' | 'appearance' | 'notifications' | 'privacy' | 'itinerary' | 'signals' | 'waypoints' | 'logs'
+type Section = 'account' | 'appearance' | 'notifications' | 'privacy' | 'itinerary' | 'waypoints' | 'logs'
 
 interface SettingsClientProps {
   initialSection: string
@@ -29,13 +28,6 @@ interface SettingsClientProps {
   }
   calendars: CalendarEntry[]
   subscriptions: SubscriptionEntry[]
-  signalSettings: {
-    messagesPerPage: number
-    autoMarkRead: boolean
-    autoRefreshInterval: number
-    compactView: boolean
-    showSnippets: boolean
-  }
   logSettings: {
     logsPerPage: number
     defaultSort: 'NEWEST' | 'OLDEST'
@@ -68,7 +60,7 @@ interface SettingsClientProps {
   onRefresh: () => void
 }
 
-const VALID_SECTIONS: Section[] = ['account', 'appearance', 'notifications', 'privacy', 'itinerary', 'signals', 'waypoints', 'logs']
+const VALID_SECTIONS: Section[] = ['account', 'appearance', 'notifications', 'privacy', 'itinerary', 'waypoints', 'logs']
 
 function isValidSection(s: string | null): s is Section {
   return VALID_SECTIONS.includes(s as Section)
@@ -79,7 +71,6 @@ export function SettingsClient({
   account,
   calendars,
   subscriptions,
-  signalSettings,
   logSettings,
   appearanceSettings,
   notificationSettings,
@@ -98,7 +89,6 @@ export function SettingsClient({
     { value: 'notifications', label: 'Notifications', icon: Bell, group: 'Profile' },
     { value: 'privacy', label: 'Privacy', icon: Shield, group: 'Profile' },
     { value: 'itinerary', label: terms.itinerary, icon: CalendarDays, group: 'Platform' },
-    { value: 'signals', label: terms.signals, icon: Mail, group: 'Platform' },
     { value: 'logs', label: terms.logs, icon: NotebookPen, group: 'Platform' },
     { value: 'waypoints', label: terms.waypoints, icon: Bookmark, group: 'Platform' },
   ]
@@ -129,7 +119,6 @@ export function SettingsClient({
       case 'notifications': return <NotificationsForm defaultValues={notificationSettings} />
       case 'privacy': return <PrivacyForm defaultValues={{ ...privacySettings, listed: account.listed }} />
       case 'itinerary': return <ItinerarySettingsForm preferences={itinerarySettings} calendars={calendars} subscriptions={subscriptions} onRefresh={onRefresh} />
-      case 'signals': return <SignalsForm defaultValues={signalSettings} />
       case 'logs': return <LogSettingsForm defaultValues={logSettings} />
       case 'waypoints': return <WaypointsSettingsForm defaultValues={waypointSettings} />
     }
@@ -137,7 +126,6 @@ export function SettingsClient({
 
   const sectionPageLinks: Partial<Record<Section, { href: string; label: string; icon: React.ElementType }>> = {
     itinerary: { href: '/itinerary', label: terms.itinerary, icon: CalendarDays },
-    signals: { href: '/signals', label: terms.signals, icon: Mail },
     logs:    { href: '/logs',    label: terms.logs,    icon: NotebookPen },
     waypoints: { href: '/waypoints', label: terms.waypoints, icon: Bookmark },
   }

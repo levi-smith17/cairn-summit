@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom'
-import { BookOpen, LayoutDashboard, LogOut, Mail } from 'lucide-react'
+import { BookOpen, LayoutDashboard, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -56,10 +56,6 @@ export function PublicWayfarerMenu({ wayfarer, terms }: PublicWayfarerMenuProps)
                         <DropdownMenuItem onClick={() => navigate('/basecamp')}>
                             <LayoutDashboard className="h-4 w-4" />
                             {terms?.basecamp ?? 'Basecamp'}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate('/signals')}>
-                            <Mail className="h-4 w-4" />
-                            {terms?.signals ?? 'Signals'}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => navigate('/manifest')}>
                             <BookOpen className="h-4 w-4" />

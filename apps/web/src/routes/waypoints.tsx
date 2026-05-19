@@ -4,9 +4,12 @@ import { WaypointsClient } from './waypoints/waypoints-client'
 import { getWaypoints } from '@/lib/api/waypoints'
 import { getTrails } from '@/lib/api/trails'
 import { getMarkers } from '@/lib/api/markers'
+import { PageSkeleton } from '@/components/ui/page-skeleton'
+import { useTerminology } from '@/contexts/terminology-context'
 
 export default function Waypoints() {
     const { user } = useAuth()
+    const { terms } = useTerminology()
 
     const { data: waypointsData, isLoading: loadingW } = useQuery({
         queryKey: ['waypoints', user?.id],
@@ -56,11 +59,7 @@ export default function Waypoints() {
         id: m.sk?.split('#').pop() ?? m.id,
     }))
 
-    if (loadingW) return (
-        <div className="flex items-center justify-center h-full">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-        </div>
-    )
+    if (loadingW) return <PageSkeleton title={terms.waypoints} hasFilterBar />
 
     return (
         <WaypointsClient

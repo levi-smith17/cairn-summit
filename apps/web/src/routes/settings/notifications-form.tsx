@@ -86,7 +86,7 @@ export function NotificationsForm({ defaultValues }: NotificationsFormProps) {
 
         <SettingRow
           label="Email digest"
-          description="Receive a summary of unread signals to your inbox"
+          description="Receive a digest of your activity to your inbox"
           control={
             <CustomSelect
               options={[{ value: 'NEVER', label: 'Never' }, { value: 'DAILY', label: 'Daily' }, { value: 'WEEKLY', label: 'Weekly' }]}

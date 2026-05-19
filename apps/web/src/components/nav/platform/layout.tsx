@@ -26,7 +26,6 @@ export default function PlatformLayout() {
                     isAdmin: profile?.isAdmin ?? false,
                 }}
                 badges={{
-                    signals: profile?.signals ?? 0,
                     itinerary: profile?.itinerary ?? 0,
                 }}
             />

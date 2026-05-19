@@ -8,7 +8,6 @@ export interface ProfileData {
   email: string | null
   image: string | null
   isAdmin: boolean
-  signals: number
   itinerary: number
 }
 

@@ -31,7 +31,6 @@ function SettingRow({ label, description, control }: { label: string; descriptio
 const LANDING_PAGES = [
   { value: '/basecamp',   label: 'Basecamp' },
   { value: '/itinerary',  label: 'Itinerary' },
-  { value: '/signals',    label: 'Signals' },
   { value: '/waypoints',  label: 'Waypoints' },
   { value: '/logs',       label: 'Logs' },
   { value: '/provisions', label: 'Provisions' },
