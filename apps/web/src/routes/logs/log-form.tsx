@@ -134,6 +134,7 @@ export function LogForm({ log, folders, waypoints, tags, defaultTrailId, onBack,
     try {
       const trail = await createTrail({ name })
       setLocalTrails(prev => [...prev, trail])
+      queryClient.invalidateQueries({ queryKey: ['trails'] })
       form.setValue('folderId', trail.id)
       form.setValue('waypointId', '')
       setCreatingTrail(false)
@@ -151,6 +152,7 @@ export function LogForm({ log, folders, waypoints, tags, defaultTrailId, onBack,
       const marker = await createMarker({ name, color: newMarkerColor })
       const id = extractId(marker.sk)
       setLocalMarkers(prev => [...prev, { ...marker, id }])
+      queryClient.invalidateQueries({ queryKey: ['markers'] })
       const current = form.getValues('tagIds')
       form.setValue('tagIds', [...current, id])
       setCreatingMarker(false)

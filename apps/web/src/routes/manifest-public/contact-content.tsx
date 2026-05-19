@@ -29,7 +29,7 @@ export function ContactContent({ username, wayfarerName }: ContactContentProps) 
     setError(null)
 
     try {
-      const res = await fetch(`${API_BASE}/signals/contact/${username}`, {
+      const res = await fetch(`${API_BASE}/public/manifest/${username}/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

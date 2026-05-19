@@ -14,10 +14,10 @@ export const handler = async (
         const username = event.pathParameters?.username
         if (!username) return toApiGatewayResponse(badRequest('Missing username'))
 
-        const body = JSON.parse(event.body ?? '{}')
-        const { senderName, senderEmail, message } = body
+        const parsed = JSON.parse(event.body ?? '{}')
+        const { senderName, senderEmail, body: message } = parsed
         if (!senderName || !senderEmail || !message) {
-            return toApiGatewayResponse(badRequest('senderName, senderEmail, and message are required'))
+            return toApiGatewayResponse(badRequest('senderName, senderEmail, and body are required'))
         }
 
         // Rate limit: one contact per sender email per hour
@@ -27,7 +27,7 @@ export const handler = async (
         }))
         if (rateLimit.Item) return toApiGatewayResponse(tooManyRequests('Please wait before sending another message'))
 
-        // Find wayfarer by username
+        // Scan is acceptable — low-frequency public endpoint, small table
         const scan = await dynamo.send(new ScanCommand({
             TableName: TABLE_NAME,
             FilterExpression: 'sk = :sk AND username = :username',
