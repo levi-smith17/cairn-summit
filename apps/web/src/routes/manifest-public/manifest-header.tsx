@@ -3,6 +3,7 @@ import { ChevronLeft } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { PublicHeader } from '@/components/nav/public/public-header'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { TerminologyToggle } from '@/components/nav/header-toggles'
 import { getTerms, type TerminologyStyle } from '@/lib/terminology'
@@ -15,6 +16,15 @@ interface ManifestHeaderProps {
   showAvatar: boolean
   backTo?: string
   backLabel?: string
+}
+
+export function ManifestHeaderSkeleton() {
+  return (
+    <div className="sticky top-0 z-10 flex items-center justify-between py-2 px-4 bg-header border-b print:hidden">
+      <Skeleton className="h-7 w-28 rounded-md" />
+      <PublicHeader wayfarer={null} />
+    </div>
+  )
 }
 
 export function ManifestHeader({ wayfarer, currentWayfarer, terminology, onTerminologyToggle = () => {}, showAvatar, backTo, backLabel }: ManifestHeaderProps) {
