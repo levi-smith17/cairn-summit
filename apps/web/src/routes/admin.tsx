@@ -15,7 +15,16 @@ export default function Admin() {
     retry: false,
   })
 
-  if (isError) return <Navigate to="/basecamp" replace />
+  if (isError) return (
+    <AdminClient
+      wayfarers={[]}
+      summary={{ total: 0, newThisMonth: 0, admins: 0, unlisted: 0 }}
+      currentUserId={user?.id ?? ''}
+      invitations={[]}
+      activities={[]}
+      onRefresh={onRefresh}
+    />
+  )
 
   function onRefresh() {
     queryClient.invalidateQueries({ queryKey: ['admin'] })

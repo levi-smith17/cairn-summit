@@ -15,7 +15,7 @@ export default function PublicManifest() {
     retry: false,
   })
 
-  if (isError) return <Navigate to="/" replace />
+  if (isError) return <Navigate to="/not-found" replace />
   if (!data) return null
 
   const currentWayfarer = user

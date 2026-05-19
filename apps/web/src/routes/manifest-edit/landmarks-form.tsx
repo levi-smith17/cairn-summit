@@ -41,8 +41,8 @@ interface Landmark {
   description: string | null
   url: string | null
   githubUrl: string | null
-  startDate: Date | null
-  endDate: Date | null
+  startDate: string | Date | null
+  endDate: string | Date | null
   current: boolean
 }
 
@@ -83,8 +83,8 @@ export function LandmarksForm({ landmarks, adding, setAdding, saving, saved, err
       description: entry.description ?? '',
       url: entry.url ?? '',
       githubUrl: entry.githubUrl ?? '',
-      startDate: entry.startDate?.toISOString().split('T')[0] ?? '',
-      endDate: entry.endDate?.toISOString().split('T')[0] ?? '',
+      startDate: entry.startDate ? new Date(entry.startDate).toISOString().slice(0, 10) : '',
+      endDate: entry.endDate ? new Date(entry.endDate).toISOString().slice(0, 10) : '',
       current: entry.current,
     })
     setAdding(false)
@@ -261,8 +261,8 @@ export function LandmarksForm({ landmarks, adding, setAdding, saving, saved, err
                     </div>
                     {(entry.startDate || entry.endDate) && (
                       <p className="text-sm text-muted-foreground">
-                        {entry.startDate ? format(new Date(entry.startDate.toISOString().slice(0, 10) + 'T12:00:00'), 'MMM yyyy') : ''} —{' '}
-                        {entry.current ? 'Present' : entry.endDate ? format(new Date(entry.endDate.toISOString().slice(0, 10) + 'T12:00:00'), 'MMM yyyy') : ''}
+                        {entry.startDate ? format(new Date(new Date(entry.startDate).toISOString().slice(0, 10) + 'T12:00:00'), 'MMM yyyy') : ''} —{' '}
+                        {entry.current ? 'Present' : entry.endDate ? format(new Date(new Date(entry.endDate).toISOString().slice(0, 10) + 'T12:00:00'), 'MMM yyyy') : ''}
                       </p>
                     )}
                     {entry.description && <RichTextContent html={entry.description} className="text-muted-foreground" />}

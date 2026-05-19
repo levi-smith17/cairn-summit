@@ -4,6 +4,7 @@ import { ManifestSummary } from './manifest-edit/manifest-summary'
 import { ManifestSections } from './manifest-edit/manifest-sections'
 import { WayfarerOverview } from './manifest-edit/wayfarer-overview'
 import { PlatformHeader } from '@/components/nav/platform/platform-header'
+import { ManifestSkeleton } from '@/components/ui/page-skeleton'
 import { getManifestData } from '@/lib/api/manifest'
 import { useTerminology } from '@/contexts/terminology-context'
 
@@ -12,11 +13,13 @@ export default function Manifest() {
   const queryClient = useQueryClient()
   const { terms } = useTerminology()
 
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['manifest'],
     queryFn: getManifestData,
     enabled: !!user,
   })
+
+  if (isLoading) return <ManifestSkeleton title={`My ${terms.manifest}`} />
 
   function onRefresh() {
     queryClient.invalidateQueries({ queryKey: ['manifest'] })

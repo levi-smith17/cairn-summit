@@ -39,8 +39,8 @@ interface Training {
   institution: string
   degree: string | null
   field: string | null
-  startDate: Date
-  endDate: Date | null
+  startDate: string | Date
+  endDate: string | Date | null
   current: boolean
   description: string | null
 }
@@ -81,8 +81,8 @@ export function TrainingForm({ training, adding, setAdding, saving, saved, error
       institution: entry.institution,
       degree: entry.degree ?? '',
       field: entry.field ?? '',
-      startDate: entry.startDate.toISOString().split('T')[0],
-      endDate: entry.endDate?.toISOString().split('T')[0] ?? '',
+      startDate: new Date(entry.startDate).toISOString().slice(0, 10),
+      endDate: entry.endDate ? new Date(entry.endDate).toISOString().slice(0, 10) : '',
       current: entry.current,
       description: entry.description ?? '',
     })
@@ -253,8 +253,8 @@ export function TrainingForm({ training, adding, setAdding, saving, saved, error
                     {entry.degree && <p className="text-sm text-muted-foreground">{entry.degree}</p>}
                     {entry.field && <p className="text-sm text-muted-foreground">{entry.field}</p>}
                     <span className="text-sm text-muted-foreground">
-                      {format(new Date(entry.startDate.toISOString().slice(0, 10) + 'T12:00:00'), 'MMM yyyy')} —{' '}
-                      {entry.current ? 'Present' : entry.endDate ? format(new Date(entry.endDate.toISOString().slice(0, 10) + 'T12:00:00'), 'MMM yyyy') : ''}
+                      {format(new Date(new Date(entry.startDate).toISOString().slice(0, 10) + 'T12:00:00'), 'MMM yyyy')} —{' '}
+                      {entry.current ? 'Present' : entry.endDate ? format(new Date(new Date(entry.endDate).toISOString().slice(0, 10) + 'T12:00:00'), 'MMM yyyy') : ''}
                     </span>
                     {entry.description && <RichTextContent html={entry.description} className="text-muted-foreground" />}
                   </div>

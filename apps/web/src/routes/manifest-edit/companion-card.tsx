@@ -63,7 +63,7 @@ interface Companion {
   name: string
   species: string
   breed?: string | null
-  birthday?: Date | null
+  birthday?: string | Date | null
   bio?: string | null
   passed?: boolean
   media: CompanionMedia[]

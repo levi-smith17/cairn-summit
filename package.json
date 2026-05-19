@@ -12,10 +12,13 @@
     "test": "turbo test"
   },
   "devDependencies": {
-    "turbo": "latest",
     "@eslint/js": "latest",
-    "typescript-eslint": "latest",
     "eslint": "latest",
-    "typescript": "latest"
+    "turbo": "latest",
+    "typescript": "latest",
+    "typescript-eslint": "latest"
+  },
+  "dependencies": {
+    "@aws-sdk/credential-providers": "^3.1049.0"
   }
 }

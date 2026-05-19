@@ -36,7 +36,7 @@ interface Summit {
   id: string
   title: string
   issuer: string | null
-  date: Date | null
+  date: string | Date | null
   description: string | null
   url: string | null
 }
@@ -72,7 +72,7 @@ export function SummitsForm({ summits, adding, setAdding, saving, saved, error, 
       id: entry.id,
       title: entry.title,
       issuer: entry.issuer ?? '',
-      date: entry.date?.toISOString().split('T')[0] ?? '',
+      date: entry.date ? new Date(entry.date).toISOString().slice(0, 10) : '',
       description: entry.description ?? '',
       url: entry.url ?? '',
     })
@@ -212,7 +212,7 @@ export function SummitsForm({ summits, adding, setAdding, saving, saved, error, 
                       )}
                     </div>
                     {entry.issuer && <p className="text-sm text-muted-foreground">{entry.issuer}</p>}
-                    {entry.date && <p className="text-sm text-muted-foreground">{format(new Date(entry.date.toISOString().slice(0, 10) + 'T12:00:00'), 'MMM yyyy')}</p>}
+                    {entry.date && <p className="text-sm text-muted-foreground">{format(new Date(new Date(entry.date).toISOString().slice(0, 10) + 'T12:00:00'), 'MMM yyyy')}</p>}
                     {entry.description && <RichTextContent html={entry.description} className="text-muted-foreground" />}
                   </div>
                   <EntryActions
