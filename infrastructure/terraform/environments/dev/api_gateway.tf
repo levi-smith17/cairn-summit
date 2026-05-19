@@ -13,7 +13,7 @@ module "api_gateway" {
     module.cloudfront.cloudfront_url,
   ]
   # Exclude public routes — those are wired explicitly below without JWT auth
-  lambda_functions = { for k, v in module.lambdas.lambda_functions : k => v if k != "outpost-get" }
+  lambda_functions = { for k, v in module.lambdas.lambda_functions : k => v if !contains(["outpost-get", "manifest-public-get", "manifest-public-journey", "manifest-public-contact-get"], k) }
 }
 
 # Public routes — authorization_type = "NONE", defined outside the module
@@ -46,25 +46,94 @@ resource "aws_lambda_permission" "outpost_get" {
   statement_id  = "AllowAPIGateway-outpost-get"
 }
 
-resource "aws_apigatewayv2_integration" "signals_contact" {
+resource "aws_apigatewayv2_integration" "manifest_public_get" {
   api_id                 = module.api_gateway.api_id
   integration_method     = "POST"
   integration_type       = "AWS_PROXY"
-  integration_uri        = aws_lambda_function.signals_contact.invoke_arn
+  integration_uri        = module.lambdas.lambdas["manifest-public-get"].invoke_arn
   payload_format_version = "2.0"
 }
 
-resource "aws_apigatewayv2_route" "signals_contact" {
+resource "aws_apigatewayv2_route" "manifest_public_get" {
   api_id             = module.api_gateway.api_id
   authorization_type = "NONE"
-  route_key          = "POST /signals/contact/{username}"
-  target             = "integrations/${aws_apigatewayv2_integration.signals_contact.id}"
+  route_key          = "GET /public/manifest/{username}"
+  target             = "integrations/${aws_apigatewayv2_integration.manifest_public_get.id}"
 }
 
-resource "aws_lambda_permission" "signals_contact" {
+resource "aws_lambda_permission" "manifest_public_get" {
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.signals_contact.function_name
+  function_name = module.lambdas.lambdas["manifest-public-get"].function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${local.api_execution_arn}/*/*"
-  statement_id  = "AllowAPIGateway-signals-contact"
+  statement_id  = "AllowAPIGateway-manifest-public-get"
+}
+
+resource "aws_apigatewayv2_integration" "manifest_public_journey" {
+  api_id                 = module.api_gateway.api_id
+  integration_method     = "POST"
+  integration_type       = "AWS_PROXY"
+  integration_uri        = module.lambdas.lambdas["manifest-public-journey"].invoke_arn
+  payload_format_version = "2.0"
+}
+
+resource "aws_apigatewayv2_route" "manifest_public_journey" {
+  api_id             = module.api_gateway.api_id
+  authorization_type = "NONE"
+  route_key          = "GET /public/manifest/{username}/journey"
+  target             = "integrations/${aws_apigatewayv2_integration.manifest_public_journey.id}"
+}
+
+resource "aws_lambda_permission" "manifest_public_journey" {
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambdas.lambdas["manifest-public-journey"].function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${local.api_execution_arn}/*/*"
+  statement_id  = "AllowAPIGateway-manifest-public-journey"
+}
+
+resource "aws_apigatewayv2_integration" "manifest_public_contact_get" {
+  api_id                 = module.api_gateway.api_id
+  integration_method     = "POST"
+  integration_type       = "AWS_PROXY"
+  integration_uri        = module.lambdas.lambdas["manifest-public-contact-get"].invoke_arn
+  payload_format_version = "2.0"
+}
+
+resource "aws_apigatewayv2_route" "manifest_public_contact_get" {
+  api_id             = module.api_gateway.api_id
+  authorization_type = "NONE"
+  route_key          = "GET /public/manifest/{username}/contact"
+  target             = "integrations/${aws_apigatewayv2_integration.manifest_public_contact_get.id}"
+}
+
+resource "aws_lambda_permission" "manifest_public_contact_get" {
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambdas.lambdas["manifest-public-contact-get"].function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${local.api_execution_arn}/*/*"
+  statement_id  = "AllowAPIGateway-manifest-public-contact-get"
+}
+
+resource "aws_apigatewayv2_integration" "manifest_public_contact" {
+  api_id                 = module.api_gateway.api_id
+  integration_method     = "POST"
+  integration_type       = "AWS_PROXY"
+  integration_uri        = aws_lambda_function.manifest_public_contact.invoke_arn
+  payload_format_version = "2.0"
+}
+
+resource "aws_apigatewayv2_route" "manifest_public_contact" {
+  api_id             = module.api_gateway.api_id
+  authorization_type = "NONE"
+  route_key          = "POST /public/manifest/{username}/contact"
+  target             = "integrations/${aws_apigatewayv2_integration.manifest_public_contact.id}"
+}
+
+resource "aws_lambda_permission" "manifest_public_contact" {
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.manifest_public_contact.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${local.api_execution_arn}/*/*"
+  statement_id  = "AllowAPIGateway-manifest-public-contact"
 }
