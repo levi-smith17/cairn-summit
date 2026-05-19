@@ -253,6 +253,27 @@ resource "aws_cloudfront_distribution" "media" {
     }
   }
 
+  # ── companions/* — companion media (public bucket, cacheable) ────────────────
+  ordered_cache_behavior {
+    path_pattern               = "companions/*"
+    allowed_methods            = ["GET", "HEAD"]
+    cached_methods             = ["GET", "HEAD"]
+    compress                   = true
+    default_ttl                = 86400
+    max_ttl                    = 31536000
+    min_ttl                    = 0
+    target_origin_id           = "s3-${aws_s3_bucket.public_media.bucket}"
+    viewer_protocol_policy     = "redirect-to-https"
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.public_media.id
+
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+    }
+  }
+
   # ── /public/* — public media, cacheable ────────────────────────────────────
   ordered_cache_behavior {
     path_pattern               = "/public/*"
