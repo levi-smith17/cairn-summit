@@ -79,16 +79,6 @@ export async function updateListedSetting(listed: boolean): Promise<any> {
   return res.json()
 }
 
-export async function updateSignalSettings(data: Record<string, any>): Promise<any> {
-  const res = await fetch(`${API_BASE}/settings/signals`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', ...await getAuthHeaders() },
-    body: JSON.stringify(data),
-  })
-  if (!res.ok) throw new Error('Failed to update signal settings')
-  return res.json()
-}
-
 export async function updateLogSettings(data: Record<string, any>): Promise<any> {
   const res = await fetch(`${API_BASE}/settings/logs`, {
     method: 'PUT',

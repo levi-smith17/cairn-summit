@@ -109,11 +109,14 @@ export const columns: ColumnDef<OutpostWayfarer>[] = [
         Member Since <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
-    cell: ({ row }) => (
-      <span className="text-sm text-muted-foreground">
-        {format(new Date(row.original.memberSince), 'MMM yyyy')}
-      </span>
-    ),
+    cell: ({ row }) => {
+      const d = new Date(row.original.memberSince)
+      return (
+        <span className="text-sm text-muted-foreground">
+          {isNaN(d.getTime()) ? '—' : format(d, 'MMM yyyy')}
+        </span>
+      )
+    },
   },
 ]
 

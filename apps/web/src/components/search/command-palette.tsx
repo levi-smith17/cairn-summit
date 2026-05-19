@@ -2,14 +2,14 @@ import { useEffect, useRef, useState, useCallback, useTransition } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Search, X, AlignLeft, Bookmark, NotebookPen, Wallet, CalendarDays,
-  Folder, Tag, Zap, Clock,
+  Folder, Tag, Clock,
 } from 'lucide-react'
 import { useTerminology } from '@/contexts/terminology-context'
 import type { Terms } from '@/lib/terminology'
 
 const API_BASE = import.meta.env.VITE_API_URL
 
-export type SearchResultType = 'waypoint' | 'log' | 'provision' | 'stop' | 'trail' | 'marker' | 'signal'
+export type SearchResultType = 'waypoint' | 'log' | 'provision' | 'stop' | 'trail' | 'marker'
 
 export interface SearchResult {
   id: string
@@ -47,7 +47,6 @@ function buildTypeMeta(terms: Terms): Record<SearchResultType, {
     stop:      { label: terms.stops.slice(0, -1),      Icon: CalendarDays, bg: 'bg-orange-500/15', text: 'text-orange-600 dark:text-orange-400' },
     trail:     { label: terms.trails.slice(0, -1),     Icon: Folder,       bg: 'bg-slate-500/15',  text: 'text-slate-600 dark:text-slate-400' },
     marker:    { label: terms.markers.slice(0, -1),    Icon: Tag,          bg: 'bg-slate-500/15',  text: 'text-slate-600 dark:text-slate-400' },
-    signal:    { label: terms.signals.slice(0, -1),    Icon: Zap,          bg: 'bg-yellow-500/15', text: 'text-yellow-600 dark:text-yellow-400' },
   }
 }
 
@@ -313,7 +312,7 @@ export function CommandPalette({ openInNewTab }: CommandPaletteProps) {
               <Search className="h-8 w-8 text-muted-foreground/30 mb-3" />
               <p className="text-sm text-muted-foreground">Type to {terms.explore.toLowerCase()} across all your content.</p>
               <p className="text-xs text-muted-foreground mt-1 opacity-60">
-                {terms.waypoints}, {terms.logs.toLowerCase()}, {terms.stops.toLowerCase()}, {terms.provisions.toLowerCase()}, {terms.signals.toLowerCase()}, and more.
+                {terms.waypoints}, {terms.logs.toLowerCase()}, {terms.stops.toLowerCase()}, {terms.provisions.toLowerCase()}, and more.
               </p>
             </div>
           )}

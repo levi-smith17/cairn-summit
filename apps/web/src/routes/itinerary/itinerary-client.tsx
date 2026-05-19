@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -9,10 +9,7 @@ import { luviNavLabel, type CalendarMode } from '@/lib/luvi'
 import { MonthView } from './month-view'
 import { WeekView } from './week-view'
 import { DayView } from './day-view'
-import {
-  fetchExternalCalendarEvents,
-  type ExternalCalendarEvent,
-} from '@/lib/api/itinerary'
+import { type ExternalCalendarEvent } from '@/lib/api/itinerary'
 
 type CalendarView = 'month' | 'week' | 'day'
 
@@ -92,14 +89,8 @@ export function ItineraryClient({ stops, calendars }: ItineraryClientProps) {
     return now
   })
   const [calendarMode, setCalendarMode] = useState<CalendarMode>('gregorian')
-  const [icloudEvents, setIcloudEvents] = useState<ICloudEventDisplay[]>([])
-  const [eventsLoading, setEventsLoading] = useState(true)
-
-  useEffect(() => {
-    fetchExternalCalendarEvents()
-      .then(events => setIcloudEvents(events))
-      .finally(() => setEventsLoading(false))
-  }, [])
+  const [icloudEvents] = useState<ICloudEventDisplay[]>([])
+  const [eventsLoading] = useState(false)
 
   function goToday() {
     const now = new Date()

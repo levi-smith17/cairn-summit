@@ -5,9 +5,12 @@ import { getLogs } from '@/lib/api/logs'
 import { getTrails } from '@/lib/api/trails'
 import { getMarkers } from '@/lib/api/markers'
 import { getWaypoints } from '@/lib/api/waypoints'
+import { PageSkeleton } from '@/components/ui/page-skeleton'
+import { useTerminology } from '@/contexts/terminology-context'
 
 export default function Logs() {
     const { user } = useAuth()
+    const { terms } = useTerminology()
 
     const { data: logsData, isLoading } = useQuery({
         queryKey: ['logs', user?.id],
@@ -68,11 +71,7 @@ export default function Logs() {
         id: w.sk?.split('#').pop() ?? w.id,
     }))
 
-    if (isLoading) return (
-        <div className="flex items-center justify-center h-full">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-        </div>
-    )
+    if (isLoading) return <PageSkeleton title={terms.logs} hasFilterBar />
 
     return (
         <LogsClient

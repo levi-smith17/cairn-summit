@@ -17,6 +17,7 @@ import { InlineSupplylineForm } from './inline-supplyline-form'
 import { CacheRow, type BudgetUtilization } from './cache-row'
 import { InlineCacheForm } from './inline-cache-form'
 import { carryOverCache } from '@/lib/api/supplylines'
+import { getAuthHeaders } from '@/lib/api/auth-headers'
 
 const API_BASE = import.meta.env.VITE_API_URL
 
@@ -84,7 +85,9 @@ export function ProvisionsClient({ markers }: Props) {
     const fetchSummary = async () => {
       setSummaryLoading(true)
       try {
-        const res = await fetch(`${API_BASE}/supplylines/summary?month=${month}&year=${year}`)
+        const res = await fetch(`${API_BASE}/supplylines/summary?month=${month}&year=${year}`, {
+          headers: await getAuthHeaders(),
+        })
         const json = await res.json()
         const data = json.data
         setSummary(data.summary)
@@ -110,7 +113,9 @@ export function ProvisionsClient({ markers }: Props) {
       if (debouncedSearch) params.set('search', debouncedSearch)
       if (markerFilter !== 'all') params.set('markerId', markerFilter)
       try {
-        const res = await fetch(`${API_BASE}/burn?${params}`)
+        const res = await fetch(`${API_BASE}/burn?${params}`, {
+          headers: await getAuthHeaders(),
+        })
         const json = await res.json()
         setBurnItems(json.data?.burn ?? [])
         setBurnTotal(json.data?.total ?? 0)
@@ -132,7 +137,9 @@ export function ProvisionsClient({ markers }: Props) {
       if (markerFilter !== 'all') params.set('markerId', markerFilter)
       if (activeFilter !== 'all') params.set('active', activeFilter)
       try {
-        const res = await fetch(`${API_BASE}/supplylines?${params}`)
+        const res = await fetch(`${API_BASE}/supplylines?${params}`, {
+          headers: await getAuthHeaders(),
+        })
         const json = await res.json()
         setSupplylines(json.data ?? [])
       } catch (err) {

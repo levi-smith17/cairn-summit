@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom'
 import { User, BookOpen, CreditCard, Mail, ChevronRight, MapPin, Globe, Link2, GitBranch } from 'lucide-react'
-import { formatDistanceToNow } from 'date-fns'
 import { useTerminology } from '@/contexts/terminology-context'
 import { ItinerarySnapshotPanel } from './itinerary-snapshot-panel'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface SnapshotPanelsProps {
   wayfarer: {
@@ -35,30 +35,50 @@ interface SnapshotPanelsProps {
     activeCount: number
     upcomingRenewals: number
   }
-  signalsSummary: {
-    unreadCount: number
-    latestMessages: { id: string; senderName: string; body: string; createdAt: Date | string; read: boolean }[]
-    emailAccounts: { id: string; label: string; emailAddress: string; unreadCount: number }[]
-  }
   itinerarySummary: {
     stops: { id: string; title: string; startDate: Date | string; endDate: Date | string | null; allDay: boolean; color: string }[]
   }
+  isLoading?: boolean
 }
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n)
+
+function PanelSkeleton() {
+  return (
+    <div className="rounded-lg border bg-card p-4 space-y-3">
+      <Skeleton className="h-3 w-24" />
+      <div className="space-y-2">
+        <Skeleton className="h-3 w-full" />
+        <Skeleton className="h-3 w-4/5" />
+        <Skeleton className="h-3 w-3/5" />
+      </div>
+    </div>
+  )
+}
 
 export function SnapshotPanels({
   wayfarer,
   manifestCounts,
   manifestHighlights,
   provisionsSummary,
-  signalsSummary,
   itinerarySummary,
+  isLoading = false,
 }: SnapshotPanelsProps) {
   const { terms, terminology } = useTerminology()
 
   const wayfarerLabel = terminology === 'CAIRN' ? 'Wayfarer' : 'Profile'
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-3">
+        <PanelSkeleton />
+        <PanelSkeleton />
+        <PanelSkeleton />
+        <PanelSkeleton />
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-3">
@@ -265,55 +285,6 @@ export function SnapshotPanels({
 
       {/* Itinerary */}
       <ItinerarySnapshotPanel stops={itinerarySummary.stops} />
-
-      {/* Signals */}
-      <div className="rounded-lg border bg-card overflow-hidden">
-        <div className="flex items-center gap-2 px-4 py-3 border-b">
-          <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{terms.signals}</span>
-          {signalsSummary.unreadCount > 0 && (
-            <span className="bg-primary text-primary-foreground text-[10px] font-medium px-1.5 py-0.5 rounded-full leading-none">
-              {signalsSummary.unreadCount} unread
-            </span>
-          )}
-          <div className="ml-auto flex items-center gap-1">
-            <Link
-              to="/signals"
-              className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors px-1.5 py-0.5 rounded hover:bg-muted"
-            >
-              View all
-              <ChevronRight className="h-3 w-3" />
-            </Link>
-          </div>
-        </div>
-
-        {signalsSummary.latestMessages.length === 0 ? (
-          <p className="text-xs text-muted-foreground px-4 py-3">No {terms.signals.toLowerCase()} yet.</p>
-        ) : (
-          <div className="divide-y">
-            {signalsSummary.latestMessages.map(msg => (
-              <Link
-                key={msg.id}
-                to={`/signals?id=${msg.id}`}
-                className="flex flex-col gap-0.5 px-4 py-2.5 hover:bg-muted/50 transition-colors"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    {!msg.read && <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />}
-                    <span className={`text-xs truncate ${!msg.read ? 'font-semibold' : 'font-medium'}`}>
-                      {msg.senderName}
-                    </span>
-                  </div>
-                  <span className="text-[10px] text-muted-foreground shrink-0">
-                    {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: false })}
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground line-clamp-1 pl-3">{msg.body}</p>
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   )
 }

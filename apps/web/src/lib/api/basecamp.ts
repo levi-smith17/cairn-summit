@@ -35,7 +35,6 @@ export async function getBasecamp(params: BasecampParams = {}) {
     tags: Tag[]
     allFolders: { id: string; name: string }[]
     filteredCountMap: Record<string, number>
-    sidebarData: SidebarData
   }
 }
 
@@ -149,17 +148,6 @@ interface SidebarData {
     cacheTotalSpent: number
     activeCount: number
     upcomingRenewals: number
-  }
-  signalsSummary: {
-    unreadCount: number
-    latestMessages: {
-      id: string
-      senderName: string
-      body: string
-      createdAt: string
-      read: boolean
-    }[]
-    emailAccounts: { id: string; label: string; emailAddress: string; unreadCount: number }[]
   }
   itinerarySummary: {
     stops: {

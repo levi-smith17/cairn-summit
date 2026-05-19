@@ -40,7 +40,6 @@ import Markers from '@/routes/markers'
 import NotFound from '@/routes/not-found'
 import Provisions from '@/routes/provisions'
 import Settings from '@/routes/settings'
-import Signals from '@/routes/signals'
 import Headwaters from '@/routes/headwaters'
 import Starfield from '@/routes/starfield'
 import Trails from '@/routes/trails'
@@ -90,7 +89,6 @@ export default function App() {
                                 <Route path="/markers" element={<Markers />} />
                                 <Route path="/provisions" element={<Provisions />} />
                                 <Route path="/itinerary" element={<Itinerary />} />
-                                <Route path="/signals" element={<Signals />} />
                                 <Route path="/manifest" element={<ManifestEdit />} />
                                 <Route path="/headwaters" element={<Headwaters />} />
                                 <Route path="/starfield" element={<Starfield />} />

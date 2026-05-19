@@ -18,13 +18,6 @@ const DEFAULTS = {
   },
   calendars: [] as any[],
   subscriptions: [] as any[],
-  signalSettings: {
-    messagesPerPage: 25,
-    autoMarkRead: true,
-    autoRefreshInterval: 0,
-    compactView: false,
-    showSnippets: true,
-  },
   logSettings: {
     logsPerPage: 25,
     defaultSort: 'NEWEST' as const,
@@ -77,7 +70,6 @@ export default function Settings() {
       account={settings?.account ?? DEFAULTS.account}
       calendars={settings?.calendars ?? DEFAULTS.calendars}
       subscriptions={settings?.subscriptions ?? DEFAULTS.subscriptions}
-      signalSettings={settings?.signalSettings ?? DEFAULTS.signalSettings}
       logSettings={settings?.logSettings ?? DEFAULTS.logSettings}
       appearanceSettings={settings?.appearanceSettings ?? DEFAULTS.appearanceSettings}
       notificationSettings={settings?.notificationSettings ?? DEFAULTS.notificationSettings}

@@ -4,9 +4,12 @@ import { useAuth } from '@/hooks/use-auth'
 import { MarkersClient } from './markers/markers-client'
 import { getMarkers } from '@/lib/api/markers'
 import { extractId } from '@/lib/utils'
+import { PageSkeleton } from '@/components/ui/page-skeleton'
+import { useTerminology } from '@/contexts/terminology-context'
 
 export default function Markers() {
     const { user } = useAuth()
+    const { terms } = useTerminology()
 
     const { data, isLoading } = useQuery<Marker[]>({
         queryKey: ['markers', user?.id],
@@ -22,11 +25,7 @@ export default function Markers() {
         _count: { waypoints: 0 },
     }))
 
-    if (isLoading) return (
-        <div className="flex items-center justify-center h-full">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-        </div>
-    )
+    if (isLoading) return <PageSkeleton title={terms.markers} hasFilterBar />
 
     return <MarkersClient markers={markers} />
 }

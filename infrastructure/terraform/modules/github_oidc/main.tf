@@ -132,11 +132,13 @@ resource "aws_iam_policy" "terraform_aws" {
           "iam:GetPolicy",
           "iam:GetPolicyVersion",
           "iam:GetRole",
+          "iam:GetRolePolicy",
           "iam:ListAttachedRolePolicies",
           "iam:ListInstanceProfilesForRole",
           "iam:ListPolicyVersions",
           "iam:ListRolePolicies",
           "iam:PassRole",
+          "iam:PutRolePolicy",
           "iam:TagOpenIDConnectProvider",
           "iam:TagPolicy",
           "iam:TagRole",
@@ -147,6 +149,7 @@ resource "aws_iam_policy" "terraform_aws" {
           "lambda:*",
           "route53:*",
           "s3:*",
+          "ses:*",
         ]
         Resource = "*"
       }
