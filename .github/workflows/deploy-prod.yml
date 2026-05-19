@@ -237,7 +237,7 @@ jobs:
     uses: ./.github/workflows/deploy-lambda.yml
     with:
       environment: prod
-      functions: manifest/companions-create manifest/companions-delete manifest/companions-media-delete manifest/companions-media-upload manifest/companions-update manifest/expeditions-create manifest/expeditions-delete manifest/expeditions-update manifest/gear-create manifest/gear-delete manifest/gear-update manifest/get manifest/landmarks-create manifest/landmarks-delete manifest/landmarks-update manifest/origins-update manifest/pathfinding-create manifest/pathfinding-delete manifest/pathfinding-update manifest/summits-create manifest/summits-delete manifest/summits-update manifest/training-create manifest/training-delete manifest/training-update
+      functions: manifest/companions-create manifest/companions-delete manifest/companions-media-delete manifest/companions-media-upload manifest/companions-update manifest/expeditions-create manifest/expeditions-delete manifest/expeditions-update manifest/gear-create manifest/gear-delete manifest/gear-update manifest/get manifest/landmarks-create manifest/landmarks-delete manifest/landmarks-update manifest/origins-update manifest/pathfinding-create manifest/pathfinding-delete manifest/pathfinding-update manifest/public-contact manifest/public-contact-get manifest/public-get manifest/public-journey manifest/summits-create manifest/summits-delete manifest/summits-update manifest/training-create manifest/training-delete manifest/training-update
     secrets:
       aws_role_arn: ${{ secrets.PROD_AWS_ROLE_ARN }}
       aws_region: ${{ secrets.AWS_REGION }}
@@ -282,17 +282,6 @@ jobs:
     with:
       environment: prod
       functions: settings/delete-account settings/get settings/update
-    secrets:
-      aws_role_arn: ${{ secrets.PROD_AWS_ROLE_ARN }}
-      aws_region: ${{ secrets.AWS_REGION }}
-
-  deploy-lambda-signals:
-    name: Deploy Lambda — Signals
-    needs: [build-lambda, terraform-apply]
-    uses: ./.github/workflows/deploy-lambda.yml
-    with:
-      environment: prod
-      functions: signals/contact
     secrets:
       aws_role_arn: ${{ secrets.PROD_AWS_ROLE_ARN }}
       aws_region: ${{ secrets.AWS_REGION }}
