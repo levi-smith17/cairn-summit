@@ -1,17 +1,17 @@
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Bell, Bookmark, CalendarDays, Monitor, NotebookPen, Shield, User } from 'lucide-react'
+import { ArrowLeft, Bookmark, CalendarDays, Monitor, NotebookPen, Shield, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PlatformHeader } from '@/components/nav/platform/platform-header'
+import { SettingsContentSkeleton } from '@/components/ui/page-skeleton'
 import { useTerminology } from '@/contexts/terminology-context'
 import { AccountForm } from './account-form'
 import { AppearanceForm } from './appearance-form'
-import { NotificationsForm } from './notifications-form'
 import { PrivacyForm } from './privacy-form'
 import { ItinerarySettingsForm, type CalendarEntry, type SubscriptionEntry } from './itinerary-settings-form'
 import { WaypointsSettingsForm } from './waypoints-settings-form'
 import { LogSettingsForm } from './log-settings-form'
 
-type Section = 'account' | 'appearance' | 'notifications' | 'privacy' | 'itinerary' | 'waypoints' | 'logs'
+type Section = 'account' | 'appearance' | 'privacy' | 'itinerary' | 'waypoints' | 'logs'
 
 interface SettingsClientProps {
   initialSection: string
@@ -37,11 +37,6 @@ interface SettingsClientProps {
     defaultLandingPage: string
     dateFormat: 'MDY' | 'DMY' | 'YMD'
   }
-  notificationSettings: {
-    browserNotifications: boolean
-    notificationSound: boolean
-    emailDigest: 'NEVER' | 'DAILY' | 'WEEKLY'
-  }
   privacySettings: {
     manifestVisibility: 'PUBLIC' | 'UNLISTED' | 'PRIVATE'
     contactFormEnabled: boolean
@@ -57,10 +52,11 @@ interface SettingsClientProps {
     openInNewTab: boolean
     waypointsPerPage: number
   }
+  isLoading?: boolean
   onRefresh: () => void
 }
 
-const VALID_SECTIONS: Section[] = ['account', 'appearance', 'notifications', 'privacy', 'itinerary', 'waypoints', 'logs']
+const VALID_SECTIONS: Section[] = ['account', 'appearance', 'privacy', 'itinerary', 'waypoints', 'logs']
 
 function isValidSection(s: string | null): s is Section {
   return VALID_SECTIONS.includes(s as Section)
@@ -73,10 +69,10 @@ export function SettingsClient({
   subscriptions,
   logSettings,
   appearanceSettings,
-  notificationSettings,
   privacySettings,
   itinerarySettings,
   waypointSettings,
+  isLoading,
   onRefresh,
 }: SettingsClientProps) {
   const navigate = useNavigate()
@@ -86,7 +82,6 @@ export function SettingsClient({
   const sections: { value: Section; label: string; icon: React.ElementType; group: string }[] = [
     { value: 'account', label: 'Account', icon: User, group: 'Profile' },
     { value: 'appearance', label: 'Appearance', icon: Monitor, group: 'Profile' },
-    { value: 'notifications', label: 'Notifications', icon: Bell, group: 'Profile' },
     { value: 'privacy', label: 'Privacy', icon: Shield, group: 'Profile' },
     { value: 'itinerary', label: terms.itinerary, icon: CalendarDays, group: 'Platform' },
     { value: 'logs', label: terms.logs, icon: NotebookPen, group: 'Platform' },
@@ -116,7 +111,6 @@ export function SettingsClient({
     switch (active) {
       case 'account': return <AccountForm defaultValues={account} isAdmin={account.isAdmin} />
       case 'appearance': return <AppearanceForm defaultValues={{ ...appearanceSettings, timeFormat: account.timeFormat }} />
-      case 'notifications': return <NotificationsForm defaultValues={notificationSettings} />
       case 'privacy': return <PrivacyForm defaultValues={{ ...privacySettings, listed: account.listed }} />
       case 'itinerary': return <ItinerarySettingsForm preferences={itinerarySettings} calendars={calendars} subscriptions={subscriptions} onRefresh={onRefresh} />
       case 'logs': return <LogSettingsForm defaultValues={logSettings} />
@@ -198,7 +192,7 @@ export function SettingsClient({
             })()}
           </div>
           <div className="flex-1 overflow-y-auto p-6">
-            {renderContent()}
+            {isLoading ? <SettingsContentSkeleton /> : renderContent()}
           </div>
         </div>
       </div>

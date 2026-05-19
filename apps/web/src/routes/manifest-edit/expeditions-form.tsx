@@ -39,8 +39,8 @@ interface Expedition {
   title: string
   company: string
   location: string | null
-  startDate: Date
-  endDate: Date | null
+  startDate: string | Date
+  endDate: string | Date | null
   current: boolean
   description: string | null
 }
@@ -81,8 +81,8 @@ export function ExpeditionsForm({ expeditions, adding, setAdding, saving, saved,
       title: expedition.title,
       company: expedition.company,
       location: expedition.location ?? '',
-      startDate: expedition.startDate.toISOString().split('T')[0],
-      endDate: expedition.endDate?.toISOString().split('T')[0] ?? '',
+      startDate: new Date(expedition.startDate).toISOString().slice(0, 10),
+      endDate: expedition.endDate ? new Date(expedition.endDate).toISOString().slice(0, 10) : '',
       current: expedition.current,
       description: expedition.description ?? '',
     })
@@ -253,8 +253,8 @@ export function ExpeditionsForm({ expeditions, adding, setAdding, saving, saved,
                     <p className="text-sm text-muted-foreground">{entry.company}</p>
                     {entry.location && <p className="text-sm text-muted-foreground">{entry.location}</p>}
                     <span className="text-sm text-muted-foreground">
-                      {format(new Date(entry.startDate.toISOString().slice(0, 10) + 'T12:00:00'), 'MMM yyyy')} —{' '}
-                      {entry.current ? 'Present' : entry.endDate ? format(new Date(entry.endDate.toISOString().slice(0, 10) + 'T12:00:00'), 'MMM yyyy') : ''}
+                      {format(new Date(new Date(entry.startDate).toISOString().slice(0, 10) + 'T12:00:00'), 'MMM yyyy')} —{' '}
+                      {entry.current ? 'Present' : entry.endDate ? format(new Date(new Date(entry.endDate).toISOString().slice(0, 10) + 'T12:00:00'), 'MMM yyyy') : ''}
                     </span>
                     {entry.description && <RichTextContent html={entry.description} className="text-muted-foreground" />}
                   </div>

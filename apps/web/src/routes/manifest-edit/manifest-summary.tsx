@@ -10,7 +10,7 @@ interface Expedition {
   title: string
   company: string
   current: boolean
-  endDate: Date | null
+  endDate: string | Date | null
 }
 
 interface Training {

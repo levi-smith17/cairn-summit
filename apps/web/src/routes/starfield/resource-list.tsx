@@ -110,7 +110,7 @@ export function ResourceList({ resources, selectedResourceId, onSelect, onNew, o
                       {ingredients.length > 0 && ` — ${ingredients.map((i: any) => i.abbreviation).join(' · ')}`}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" onClick={e => e.stopPropagation()}>
+                  <div className="flex items-center gap-1 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity shrink-0" onClick={e => e.stopPropagation()}>
                     <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEdit(resource)}>
                       <Pencil className="h-3 w-3" />
                     </Button>

@@ -42,8 +42,8 @@ interface Expedition {
   title: string
   company: string
   location: string | null
-  startDate: Date
-  endDate: Date | null
+  startDate: string | Date
+  endDate: string | Date | null
   current: boolean
   description: string | null
 }
@@ -53,8 +53,8 @@ interface Training {
   institution: string
   degree: string | null
   field: string | null
-  startDate: Date
-  endDate: Date | null
+  startDate: string | Date
+  endDate: string | Date | null
   current: boolean
   description: string | null
 }
@@ -72,8 +72,8 @@ interface Landmark {
   description: string | null
   url: string | null
   githubUrl: string | null
-  startDate: Date | null
-  endDate: Date | null
+  startDate: string | Date | null
+  endDate: string | Date | null
   current: boolean
 }
 
@@ -81,7 +81,7 @@ interface Summit {
   id: string
   title: string
   issuer: string | null
-  date: Date | null
+  date: string | Date | null
   description: string | null
   url: string | null
 }
@@ -91,8 +91,8 @@ interface Pathfinding {
   organization: string
   role: string | null
   location: string | null
-  startDate: Date
-  endDate: Date | null
+  startDate: string | Date
+  endDate: string | Date | null
   current: boolean
   description: string | null
 }
@@ -110,7 +110,7 @@ interface Companion {
   name: string
   species: string
   breed?: string | null
-  birthday?: Date | null
+  birthday?: string | Date | null
   bio?: string | null
   passed?: boolean
   media: CompanionMedia[]

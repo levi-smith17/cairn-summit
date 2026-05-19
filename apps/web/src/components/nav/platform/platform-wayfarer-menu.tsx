@@ -95,7 +95,10 @@ export function PlatformWayfarerMenu({ wayfarer, terms }: PlatformWayfarerMenuPr
                   <BookOpen className="h-4 w-4" />
                   Edit
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => go('/manifest/' + wayfarer.username)}>
+                <DropdownMenuItem
+                  onClick={() => wayfarer.username && window.open('/manifest/' + wayfarer.username, '_blank')}
+                  disabled={!wayfarer.username}
+                >
                   <BookUser className="h-4 w-4" />
                   View Public
                 </DropdownMenuItem>

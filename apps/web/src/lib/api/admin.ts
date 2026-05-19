@@ -43,7 +43,8 @@ export interface AdminData {
 export async function getAdminData(): Promise<AdminData> {
   const res = await fetch(`${API_BASE}/admin`, { headers: await getAuthHeaders() })
   if (!res.ok) throw new Error('Failed to fetch admin data')
-  return res.json()
+  const body = await res.json()
+  return body.data
 }
 
 export async function saveWayfarer(data: {
@@ -67,7 +68,7 @@ export async function saveWayfarer(data: {
     return { ok: false, error: body.message ?? 'Failed to save' }
   }
   const body = await res.json()
-  return { ok: true, id: body.id }
+  return { ok: true, id: body.data?.id }
 }
 
 export async function deleteWayfarer(id: string): Promise<{ ok: boolean; error?: string }> {

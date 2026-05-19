@@ -59,7 +59,7 @@ export function AccountForm({ defaultValues, isAdmin }: AccountFormProps) {
 
   const form = useForm<AccountFormValues>({
     resolver: zodResolver(accountSchema),
-    defaultValues: {
+    values: {
       name: defaultValues.name ?? '',
       image: defaultValues.image ?? '',
       username: defaultValues.username ?? '',

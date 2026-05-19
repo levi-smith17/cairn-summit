@@ -39,8 +39,8 @@ interface Pathfinding {
   organization: string
   role: string | null
   location: string | null
-  startDate: Date
-  endDate: Date | null
+  startDate: string | Date
+  endDate: string | Date | null
   current: boolean
   description: string | null
 }
@@ -81,8 +81,8 @@ export function PathfindingForm({ pathfinding, adding, setAdding, saving, saved,
       organization: entry.organization,
       role: entry.role ?? '',
       location: entry.location ?? '',
-      startDate: entry.startDate.toISOString().split('T')[0],
-      endDate: entry.endDate?.toISOString().split('T')[0] ?? '',
+      startDate: new Date(entry.startDate).toISOString().slice(0, 10),
+      endDate: entry.endDate ? new Date(entry.endDate).toISOString().slice(0, 10) : '',
       current: entry.current,
       description: entry.description ?? '',
     })
@@ -249,8 +249,8 @@ export function PathfindingForm({ pathfinding, adding, setAdding, saving, saved,
                     {entry.role && <p className="text-sm text-muted-foreground">{entry.role}</p>}
                     {entry.location && <p className="text-sm text-muted-foreground">{entry.location}</p>}
                     <p className="text-sm text-muted-foreground">
-                      {format(new Date(entry.startDate.toISOString().slice(0, 10) + 'T12:00:00'), 'MMM yyyy')} —{' '}
-                      {entry.current ? 'Present' : entry.endDate ? format(new Date(entry.endDate.toISOString().slice(0, 10) + 'T12:00:00'), 'MMM yyyy') : ''}
+                      {format(new Date(new Date(entry.startDate).toISOString().slice(0, 10) + 'T12:00:00'), 'MMM yyyy')} —{' '}
+                      {entry.current ? 'Present' : entry.endDate ? format(new Date(new Date(entry.endDate).toISOString().slice(0, 10) + 'T12:00:00'), 'MMM yyyy') : ''}
                     </p>
                     {entry.description && <RichTextContent html={entry.description} className="text-muted-foreground" />}
                   </div>

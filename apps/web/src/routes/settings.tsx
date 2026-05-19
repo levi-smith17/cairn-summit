@@ -54,7 +54,7 @@ export default function Settings() {
   const queryClient = useQueryClient()
   const [searchParams] = useSearchParams()
 
-  const { data: settings } = useQuery({
+  const { data: settings, isLoading } = useQuery({
     queryKey: ['settings'],
     queryFn: getSettings,
     enabled: !!user,
@@ -67,12 +67,12 @@ export default function Settings() {
   return (
     <SettingsClient
       initialSection={searchParams.get('section') ?? 'account'}
+      isLoading={isLoading}
       account={settings?.account ?? DEFAULTS.account}
       calendars={settings?.calendars ?? DEFAULTS.calendars}
       subscriptions={settings?.subscriptions ?? DEFAULTS.subscriptions}
       logSettings={settings?.logSettings ?? DEFAULTS.logSettings}
       appearanceSettings={settings?.appearanceSettings ?? DEFAULTS.appearanceSettings}
-      notificationSettings={settings?.notificationSettings ?? DEFAULTS.notificationSettings}
       privacySettings={settings?.privacySettings ?? DEFAULTS.privacySettings}
       itinerarySettings={settings?.itinerarySettings ?? DEFAULTS.itinerarySettings}
       waypointSettings={settings?.waypointSettings ?? DEFAULTS.waypointSettings}

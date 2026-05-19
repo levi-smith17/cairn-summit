@@ -112,6 +112,17 @@ jobs:
             -var-file="dev.tfvars" \
             -auto-approve
 
+  deploy-lambda-admin:
+    name: Deploy Lambda — Admin
+    needs: [build-lambda, terraform-apply]
+    uses: ./.github/workflows/deploy-lambda.yml
+    with:
+      environment: dev
+      functions: admin/get admin/wayfarer-create admin/wayfarer-update admin/wayfarer-delete admin/wayfarers-bulk-update admin/wayfarers-bulk-delete admin/invitation-create admin/invitation-delete
+    secrets:
+      aws_role_arn: ${{ secrets.DEV_AWS_ROLE_ARN }}
+      aws_region: ${{ secrets.AWS_REGION }}
+
   deploy-lambda-basecamp:
     name: Deploy Lambda — Basecamp
     needs: [build-lambda, terraform-apply]

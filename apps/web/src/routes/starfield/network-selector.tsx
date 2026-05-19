@@ -165,7 +165,7 @@ export function NetworkSelector({
                 </span>
                 <span className="text-sm flex-1 truncate">{network.name}</span>
                 <div
-                  className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="flex items-center gap-0.5 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity"
                   onClick={e => e.stopPropagation()}
                 >
                   <Button variant="ghost" size="icon" className="h-5 w-5"

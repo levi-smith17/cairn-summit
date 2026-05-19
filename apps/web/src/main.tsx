@@ -8,7 +8,8 @@ import './globals.css'
 if (import.meta.env.DEV || import.meta.env.VITE_APP_ENV === 'dev') {
     const link = document.querySelector("link[rel~='icon']");
     if (link) (link as HTMLLinkElement).href = '/favicon-dev.svg';
-    document.title = `(dev) ${document.title}`;
+    const prefix = window.location.hostname === 'localhost' ? '(dev:3000)' : '(dev)'
+    document.title = `${prefix} ${document.title}`;
 }
 
 const queryClient = new QueryClient({

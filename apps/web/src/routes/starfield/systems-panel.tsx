@@ -232,7 +232,7 @@ export function SystemsPanel({
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0 mr-3"
+                      className="h-7 w-7 [@media(hover:hover)]:md:opacity-0 [@media(hover:hover)]:md:group-hover:opacity-100 transition-opacity shrink-0 mr-3"
                       onClick={() => { setEditingPlanetId(planet.id); setPlanetInput(planet.name); setAddingPlanet(false) }}
                     >
                       <Pencil className="h-3.5 w-3.5" />
@@ -328,7 +328,7 @@ export function SystemsPanel({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0 mr-1"
+                    className="h-7 w-7 [@media(hover:hover)]:md:opacity-0 [@media(hover:hover)]:md:group-hover:opacity-100 transition-opacity shrink-0 mr-1"
                     onClick={() => { setEditingSystemId(sys.id); setSystemInput(sys.name); setAddingSystem(false) }}
                   >
                     <Pencil className="h-3.5 w-3.5" />
