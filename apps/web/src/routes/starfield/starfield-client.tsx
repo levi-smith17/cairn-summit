@@ -9,6 +9,7 @@ import {
   createSystem, updateSystem, deleteSystem,
   addPlanet, updatePlanet, deletePlanet,
 } from '@/lib/api/starfield'
+import { starfieldSlug } from '@/lib/starfield-slug'
 import { StarfieldControlBar } from './starfield-control-bar'
 import { StarfieldCanvas } from './starfield-canvas'
 import { ResourcesPanel } from './resources-panel'
@@ -27,6 +28,17 @@ interface SystemEntry {
   id: string
   name: string
   planets: { id: string; name: string }[]
+}
+
+function mapSystemFromApi(s: { sk?: string; id?: string; name?: string; planets?: { id?: string; name?: string }[] }): SystemEntry {
+  return {
+    id: s.sk?.replace(/^SYSTEM#/, '') ?? s.id ?? '',
+    name: (s.name ?? '').trim() || 'Unnamed system',
+    planets: (s.planets ?? []).map(p => ({
+      id: p.id ?? starfieldSlug((p.name ?? '').trim() || 'planet'),
+      name: (p.name ?? '').trim() || 'Unnamed planet',
+    })),
+  }
 }
 
 interface StarfieldClientProps {
@@ -52,19 +64,11 @@ export function StarfieldClient({
 
   // Global systems state — initialized from API data, updated optimistically
   const [localSystems, setLocalSystems] = useState<SystemEntry[]>(() =>
-    (systemsProp ?? []).map((s: any) => ({
-      id: s.sk?.replace(/^SYSTEM#/, '') ?? s.id,
-      name: s.name,
-      planets: s.planets ?? [],
-    }))
+    (systemsProp ?? []).map(mapSystemFromApi)
   )
 
   useEffect(() => {
-    setLocalSystems((systemsProp ?? []).map((s: any) => ({
-      id: s.sk?.replace(/^SYSTEM#/, '') ?? s.id,
-      name: s.name,
-      planets: s.planets ?? [],
-    })))
+    setLocalSystems((systemsProp ?? []).map(mapSystemFromApi))
   }, [systemsProp])
 
   const networkOutposts = useMemo(
@@ -123,8 +127,11 @@ export function StarfieldClient({
   // ── System CRUD (optimistic local update + background API) ───────────────────
 
   const handleSystemCreate = useCallback((name: string) => {
-    const id = name.toLowerCase().replace(/\s+/g, '-')
-    setLocalSystems(prev => [...prev, { id, name, planets: [] }])
+    const id = starfieldSlug(name)
+    setLocalSystems(prev => {
+      if (prev.some(s => s.id === id || s.name.toLowerCase() === name.toLowerCase())) return prev
+      return [...prev, { id, name, planets: [] }]
+    })
     toast.success('System created.')
     createSystem(name).catch(() => toast.error('Failed to save system.'))
   }, [])
@@ -142,10 +149,12 @@ export function StarfieldClient({
   }, [])
 
   const handlePlanetCreate = useCallback((systemId: string, name: string) => {
-    const id = name.toLowerCase().replace(/\s+/g, '-')
-    setLocalSystems(prev => prev.map(s =>
-      s.id === systemId ? { ...s, planets: [...s.planets, { id, name }] } : s
-    ))
+    const id = starfieldSlug(name)
+    setLocalSystems(prev => prev.map(s => {
+      if (s.id !== systemId) return s
+      if (s.planets.some(p => p.id === id || p.name.toLowerCase() === name.toLowerCase())) return s
+      return { ...s, planets: [...s.planets, { id, name }] }
+    }))
     toast.success('Planet added.')
     addPlanet(systemId, name).catch(() => toast.error('Failed to save planet.'))
   }, [])
@@ -153,7 +162,7 @@ export function StarfieldClient({
   const handlePlanetRename = useCallback((systemId: string, planetId: string, newName: string) => {
     setLocalSystems(prev => prev.map(s =>
       s.id === systemId
-        ? { ...s, planets: s.planets.map(p => p.id === planetId ? { id: newName.toLowerCase().replace(/\s+/g, '-'), name: newName } : p) }
+        ? { ...s, planets: s.planets.map(p => p.id === planetId ? { id: starfieldSlug(newName), name: newName } : p) }
         : s
     ))
     toast.success('Planet renamed.')
@@ -166,11 +175,6 @@ export function StarfieldClient({
     ))
     toast.success('Planet removed.')
     deletePlanet(systemId, planetId).catch(() => toast.error('Failed to remove planet.'))
-  }, [])
-
-  // Called by PlanetPicker's onSystemsUpdate (local picker state sync)
-  const handleSystemsUpdate = useCallback((pickerSystems: { id: string; name: string; planets: { id: string; name: string }[] }[]) => {
-    setLocalSystems(pickerSystems)
   }, [])
 
   const systemCrudCallbacks = useMemo(() => ({
@@ -251,7 +255,6 @@ export function StarfieldClient({
                   networkId={selectedNetworkId ?? ''}
                   outposts={networkOutposts}
                   systems={localSystems}
-                  onSystemsUpdate={handleSystemsUpdate}
                   systemCrudCallbacks={systemCrudCallbacks}
                   onDone={closePanel}
                   onRefresh={onRefresh}
@@ -267,7 +270,6 @@ export function StarfieldClient({
                     resources={resources}
                     outposts={networkOutposts}
                     systems={localSystems}
-                    onSystemsUpdate={handleSystemsUpdate}
                     systemCrudCallbacks={systemCrudCallbacks}
                     onDone={closePanel}
                     onRefresh={onRefresh}

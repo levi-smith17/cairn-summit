@@ -8,6 +8,7 @@ import { CustomSelect } from '@/components/ui/custom-select'
 import { ResourcePicker } from '@/components/ui/resource-picker'
 import { FormActions } from '@/components/forms/form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
+import { SF_CONTROL } from './constants'
 import { Cuboid, Droplet, Wind, Component } from 'lucide-react'
 
 const RESOURCE_TYPE_OPTIONS = [
@@ -85,14 +86,14 @@ export function ResourceForm({ resource, resources, onDone, onRefresh }: Resourc
           <FormField control={form.control} name="name" render={({ field }) => (
             <FormItem>
               <FormLabel>Name</FormLabel>
-              <Input placeholder="Aluminum" className="md:h-8" {...field} />
+              <Input placeholder="Aluminum" className={SF_CONTROL} {...field} />
               <FormMessage />
             </FormItem>
           )} />
           <FormField control={form.control} name="abbreviation" render={({ field }) => (
             <FormItem>
               <FormLabel>Abbreviation</FormLabel>
-              <Input placeholder="Al" className="md:h-8" {...field} />
+              <Input placeholder="Al" className={SF_CONTROL} {...field} />
               <FormMessage />
             </FormItem>
           )} />
@@ -119,7 +120,7 @@ export function ResourceForm({ resource, resources, onDone, onRefresh }: Resourc
             )} />
           )}
           <div className="-mx-4 border-t" />
-          <FormActions saving={saving} saved={saved} error={error} saveLabel={resource ? 'Save Changes' : 'Add Resource'} formId="resource-form" onCancel={onDone} />
+          <FormActions saving={saving} saved={saved} error={error} saveLabel={resource ? 'Save Changes' : 'Add Resource'} formId="resource-form" onCancel={onDone} buttonClassName={SF_CONTROL} />
         </form>
       </Form>
     </div>

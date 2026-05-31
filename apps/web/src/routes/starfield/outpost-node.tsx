@@ -3,6 +3,15 @@ import { Handle, Position, type NodeProps } from 'reactflow'
 import { Pencil, Plus, House, Factory, Cuboid, Droplet, Wind, Component, MoveLeft, MoveRight, CornerLeftUp, type LucideIcon } from 'lucide-react'
 import type { SfOutpost, SfOutpostResource, SfResource } from '@cairn/types'
 import type { OutpostValidation, ValidationStatus } from '@/lib/starfield-validation'
+import {
+  countTransferStations,
+  getShippedOutResourceIds,
+  getSupplyLines,
+  normalizeOutpostResource,
+  resolveSourceOutpostId,
+  type OutpostWithId,
+} from '@/lib/starfield-utils'
+import { SF_ICON_CONTROL } from './constants'
 
 export interface OutpostNodeData {
   outpost: SfOutpost & { id: string }
@@ -36,7 +45,8 @@ const RESOURCE_TYPE_ICON: Record<string, LucideIcon> = {
 function getSourceLabel(fr: SfOutpostResource, status: ValidationStatus | undefined): string {
   if (fr.onsite) return '[onsite]'
   if (fr.origin) return '[origin]'
-  if (fr.fromOutpostId || fr.fromPlanet) return '[←]'
+  const supplies = getSupplyLines(fr)
+  if (supplies.some(s => s.fromOutpostId || s.fromPlanet)) return '[←]'
   if (!status || status === 'missing') return '[!]'
   if (status === 'partial') return '[~]'
   return '[✓]'
@@ -45,21 +55,18 @@ function getSourceLabel(fr: SfOutpostResource, status: ValidationStatus | undefi
 export const OutpostNode = memo(function OutpostNode({ data }: NodeProps<OutpostNodeData>) {
   const { outpost, outposts, resources, validation, onEdit, onAddResource, onEditResource } = data
   const status: ValidationStatus = validation?.status ?? 'missing'
+  const outpostsWithId = outposts as OutpostWithId[]
+  const outpostWithId = outpost as OutpostWithId
 
-  const shippedOutResourceIds = useMemo(() => {
-    const ids = new Set<string>()
-    for (const o of outposts) {
-      if (o.id === outpost.id) continue
-      for (const r of (o.resources ?? [])) {
-        if (r.fromOutpostId === outpost.id) ids.add(r.resourceId)
-      }
-    }
-    return ids
-  }, [outposts, outpost.id])
+  const shippedOutResourceIds = useMemo(
+    () => getShippedOutResourceIds(outpost.id, outpostsWithId),
+    [outpostsWithId, outpost.id]
+  )
 
-  const transferCount = outpost.resources.filter(fr =>
-    fr.fromOutpostId || fr.fromPlanet || fr.origin || shippedOutResourceIds.has(fr.resourceId)
-  ).length
+  const transferCount = useMemo(
+    () => countTransferStations(outpostWithId, outpostsWithId),
+    [outpostWithId, outpostsWithId]
+  )
 
   const resourceTypeMap = useMemo(() => {
     const map = new Map<string, string>()
@@ -69,14 +76,8 @@ export const OutpostNode = memo(function OutpostNode({ data }: NodeProps<Outpost
     return map
   }, [resources])
 
-  const outpostMap = useMemo(() => {
-    const map = new Map<string, SfOutpost & { id: string }>()
-    for (const o of outposts) map.set(o.id, o)
-    return map
-  }, [outposts])
-
   const sortedResources = useMemo(() => {
-    return [...outpost.resources].sort((a, b) => {
+    return [...outpost.resources].map(normalizeOutpostResource).sort((a, b) => {
       const typeA = resourceTypeMap.get(a.resourceId) ?? ''
       const typeB = resourceTypeMap.get(b.resourceId) ?? ''
       if (typeA !== typeB) return typeA.localeCompare(typeB)
@@ -105,14 +106,14 @@ export const OutpostNode = memo(function OutpostNode({ data }: NodeProps<Outpost
           </span>
           <div className="flex-1" />
           <button
-            className="h-5 w-5 inline-flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors shrink-0"
+            className={`${SF_ICON_CONTROL} inline-flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors shrink-0`}
             onClick={e => { e.stopPropagation(); onAddResource() }}
             aria-label="Add resource"
           >
             <Plus className="h-3 w-3" />
           </button>
           <button
-            className="h-5 w-5 inline-flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors shrink-0"
+            className={`${SF_ICON_CONTROL} inline-flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors shrink-0`}
             onClick={e => { e.stopPropagation(); onEdit() }}
             aria-label="Edit outpost"
           >
@@ -129,11 +130,11 @@ export const OutpostNode = memo(function OutpostNode({ data }: NodeProps<Outpost
         {sortedResources.map(fr => {
           const rv = validation?.resources.get(fr.resourceId)
           const rvStatus = rv?.status
-          const sourceOutpost = fr.fromOutpostId ? outpostMap.get(fr.fromOutpostId) : undefined
-          const sourcePlanet = sourceOutpost?.planet ?? fr.fromPlanet
-          const sourceSystem = sourceOutpost?.system ?? fr.fromSystem
           const resourceType = resourceTypeMap.get(fr.resourceId) ?? ''
-          const ResourceIcon = RESOURCE_TYPE_ICON[resourceType.toLowerCase()] ?? Cuboid
+          const ResourceIcon = RESOURCE_TYPE_ICON[(resourceType ?? '').toLowerCase()] ?? Cuboid
+          const supplies = fr.onsite ? [] : getSupplyLines(fr)
+          const showExportArrow = shippedOutResourceIds.has(fr.resourceId)
+
           return (
             <div key={fr.resourceId} className="flex flex-col gap-0.5">
               <div className="group flex items-center gap-1.5">
@@ -147,32 +148,43 @@ export const OutpostNode = memo(function OutpostNode({ data }: NodeProps<Outpost
                 <span className="text-[10px] text-muted-foreground shrink-0 font-mono">
                   {getSourceLabel(fr, rvStatus)}
                 </span>
-                {shippedOutResourceIds.has(fr.resourceId) && (
+                {showExportArrow && (
                   <MoveRight className="h-2.5 w-2.5 shrink-0 text-orange-400/80" />
                 )}
                 <button
-                  className="h-5 w-5 inline-flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-[colors,opacity] shrink-0 [@media(hover:hover)]:md:opacity-0 [@media(hover:hover)]:md:group-hover:opacity-100"
+                  className={`${SF_ICON_CONTROL} inline-flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-[colors,opacity] shrink-0 [@media(hover:hover)]:md:opacity-0 [@media(hover:hover)]:md:group-hover:opacity-100`}
                   onClick={e => { e.stopPropagation(); onEditResource(fr.resourceId) }}
                   aria-label="Edit resource"
                 >
                   <Pencil className="h-3 w-3" />
                 </button>
               </div>
-              {fr.relay && (
-                <div className="pl-3 text-[9px] text-muted-foreground leading-none flex items-center gap-0.5">
-                  <MoveLeft className="h-2 w-2 shrink-0 text-sky-400/80" />
-                  {fr.relay.planet} ({fr.relay.system})
-                </div>
-              )}
-              {sourcePlanet && (
-                <div className="pl-3 text-[9px] text-muted-foreground leading-none flex items-center gap-0.5">
-                  {fr.relay
-                    ? <CornerLeftUp className="h-2 w-2 shrink-0" />
-                    : <MoveLeft className="h-2 w-2 shrink-0" />
-                  }
-                  {sourcePlanet} ({sourceSystem ?? '?'})
-                </div>
-              )}
+              {supplies.map((supply, idx) => {
+                const sourceId = resolveSourceOutpostId(supply, outpostsWithId)
+                const sourceOutpost = sourceId ? outpostsWithId.find(o => o.id === sourceId) : undefined
+                const sourcePlanet = sourceOutpost?.planet ?? supply.fromPlanet
+                const sourceSystem = sourceOutpost?.system ?? supply.fromSystem
+                if (!sourcePlanet && !supply.relay) return null
+                return (
+                  <div key={idx} className="flex flex-col gap-0.5">
+                    {supply.relay && (
+                      <div className="pl-3 text-[9px] text-muted-foreground leading-none flex items-center gap-0.5">
+                        <MoveLeft className="h-2 w-2 shrink-0 text-sky-400/80" />
+                        {supply.relay.planet} ({supply.relay.system})
+                      </div>
+                    )}
+                    {sourcePlanet && (
+                      <div className="pl-3 text-[9px] text-muted-foreground leading-none flex items-center gap-0.5">
+                        {supply.relay
+                          ? <CornerLeftUp className="h-2 w-2 shrink-0" />
+                          : <MoveLeft className="h-2 w-2 shrink-0" />
+                        }
+                        {sourcePlanet} ({sourceSystem ?? '?'})
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           )
         })}

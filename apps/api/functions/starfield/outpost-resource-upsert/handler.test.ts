@@ -54,6 +54,7 @@ describe('starfield/outpost-resource-upsert handler', () => {
             name: 'Iron',
             abbreviation: 'Fe',
             onsite: false,
+            supplies: [],
         })
     })
 

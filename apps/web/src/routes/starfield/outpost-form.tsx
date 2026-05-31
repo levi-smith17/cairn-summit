@@ -23,6 +23,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { SF_CONTROL, SF_ICON_CONTROL } from './constants'
 
 const schema = z.object({
   system: z.string().min(1, 'System is required'),
@@ -53,13 +54,12 @@ interface OutpostFormProps {
   networkId: string
   outposts: any[]
   systems: SystemEntry[]
-  onSystemsUpdate: (systems: SystemEntry[]) => void
   systemCrudCallbacks: SystemCrudCallbacks
   onDone: () => void
   onRefresh: () => void
 }
 
-export function OutpostForm({ outpost, networkId, outposts, systems, onSystemsUpdate, systemCrudCallbacks, onDone, onRefresh }: OutpostFormProps) {
+export function OutpostForm({ outpost, networkId, outposts, systems, systemCrudCallbacks, onDone, onRefresh }: OutpostFormProps) {
   const { saving, saved, error, handleSubmit } = useFormStatus()
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false)
 
@@ -126,7 +126,7 @@ export function OutpostForm({ outpost, networkId, outposts, systems, onSystemsUp
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 text-destructive hover:text-destructive/80"
+                className={`${SF_ICON_CONTROL} text-destructive hover:text-destructive/80`}
                 onClick={() => setRemoveDialogOpen(true)}
               >
                 <Trash2 className="h-3.5 w-3.5" />
@@ -137,7 +137,7 @@ export function OutpostForm({ outpost, networkId, outposts, systems, onSystemsUp
         )}
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={onDone}>
+            <Button type="button" variant="ghost" size="icon" className={SF_ICON_CONTROL} onClick={onDone}>
               <X className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
@@ -155,7 +155,7 @@ export function OutpostForm({ outpost, networkId, outposts, systems, onSystemsUp
                   onChange={v => field.onChange(v)}
                   onSystemChange={v => form.setValue('system', v)}
                   systems={systems}
-                  onSystemsUpdate={onSystemsUpdate}
+                  allowManageSystems={false}
                   {...systemCrudCallbacks}
                 />
                 <FormMessage />
@@ -183,12 +183,12 @@ export function OutpostForm({ outpost, networkId, outposts, systems, onSystemsUp
             <FormField control={form.control} name="transferStationLimit" render={({ field }) => (
               <FormItem>
                 <FormLabel>Transfer Station Limit</FormLabel>
-                <Input type="number" min={0} max={99} className="md:h-8" {...field} />
+                <Input type="number" min={0} max={99} className={SF_CONTROL} {...field} />
                 <FormMessage />
               </FormItem>
             )} />
             <div className="-mx-4 border-t" />
-            <FormActions saving={saving} saved={saved} error={error} saveLabel={outpost ? 'Save Changes' : 'Add Outpost'} formId="outpost-form" onCancel={onDone} />
+            <FormActions saving={saving} saved={saved} error={error} saveLabel={outpost ? 'Save Changes' : 'Add Outpost'} formId="outpost-form" onCancel={onDone} buttonClassName={SF_CONTROL} />
           </form>
         </Form>
       </div>
