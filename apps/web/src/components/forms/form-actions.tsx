@@ -41,6 +41,7 @@ interface FormActionsProps {
   formId?: string
   hideAlert?: boolean
   onCancel?: () => void
+  buttonClassName?: string
 }
 
 export function FormActions({
@@ -51,6 +52,7 @@ export function FormActions({
   formId,
   hideAlert = false,
   onCancel,
+  buttonClassName,
 }: FormActionsProps) {
   return (
     <div className="flex flex-col md:flex-row flex-col-reverse justify-end items-center gap-4 w-full md:w-auto">
@@ -71,7 +73,7 @@ export function FormActions({
         </Alert>
       )}
       {onCancel && (
-        <Button type="button" variant="ghost" onClick={onCancel} className="w-full md:w-auto">
+        <Button type="button" variant="ghost" onClick={onCancel} className={`w-full md:w-auto ${buttonClassName ?? ''}`}>
           Cancel
         </Button>
       )}
@@ -79,7 +81,7 @@ export function FormActions({
         type="submit"
         form={formId}
         disabled={saving}
-        className="w-full md:w-auto"
+        className={`w-full md:w-auto ${buttonClassName ?? ''}`}
       >
         {saving ? (
           <Loader2 className="h-4 w-4 animate-spin" />

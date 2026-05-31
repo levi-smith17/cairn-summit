@@ -1,4 +1,10 @@
-import type { SfOutpost, SfOutpostResource, SfResource } from '@cairn/types'
+import type { SfOutpost, SfOutpostResource, SfOutpostSupply, SfResource } from '@cairn/types'
+import {
+  type OutpostWithId,
+  getSupplyLines,
+  normalizeOutpostResource,
+  resolveSourceOutpostId,
+} from './starfield-utils'
 
 export type ValidationStatus = 'satisfied' | 'partial' | 'missing'
 
@@ -14,12 +20,18 @@ export interface OutpostValidation {
   resources: Map<string, ResourceValidation>
 }
 
+function worstStatus(a: ValidationStatus, b: ValidationStatus): ValidationStatus {
+  const order: ValidationStatus[] = ['satisfied', 'partial', 'missing']
+  return order[Math.max(order.indexOf(a), order.indexOf(b))] ?? 'missing'
+}
+
 // visited: "outpostId:resourceId" pairs to prevent cross-outpost cycles
-function validateResource(
+function validateResourceAtOutpost(
   resourceId: string,
   outpostId: string,
   outpostResourceMaps: Map<string, Map<string, SfOutpostResource>>,
   resourceDefMap: Map<string, SfResource>,
+  outposts: OutpostWithId[],
   visited: Set<string>
 ): ResourceValidation {
   const visitKey = `${outpostId}:${resourceId}`
@@ -37,56 +49,86 @@ function validateResource(
     return { resourceId, status: 'missing', missingIngredients: [resourceId] }
   }
 
-  // Supply origin — chain terminates here, considered satisfied
+  const def = resourceDefMap.get(resourceId)
+  const isMined = def ? (def.mined === true || def.tier === 0) : false
+  const nextVisited = new Set(visited)
+  nextVisited.add(visitKey)
+
+  if (fr.onsite) {
+    if (isMined || !def?.ingredients?.length) {
+      return { resourceId, status: 'satisfied', missingIngredients: [] }
+    }
+    const missingIngredients: string[] = []
+    for (const ingredientId of def.ingredients) {
+      const child = validateResourceAtOutpost(
+        ingredientId,
+        outpostId,
+        outpostResourceMaps,
+        resourceDefMap,
+        outposts,
+        nextVisited
+      )
+      if (child.status === 'missing' || child.status === 'partial') {
+        missingIngredients.push(...child.missingIngredients)
+      }
+    }
+    let status: ValidationStatus
+    if (missingIngredients.length === 0) status = 'satisfied'
+    else if (missingIngredients.length < def.ingredients.length) status = 'partial'
+    else status = 'missing'
+    return { resourceId, status, missingIngredients }
+  }
+
   if (fr.origin) {
     return { resourceId, status: 'satisfied', missingIngredients: [] }
   }
 
-  // Sourced from another outpost — validate it is actually satisfied there
-  if (fr.fromOutpostId) {
-    const nextVisited = new Set(visited)
-    nextVisited.add(visitKey)
-    return validateResource(resourceId, fr.fromOutpostId, outpostResourceMaps, resourceDefMap, nextVisited)
-  }
-
-  const def = resourceDefMap.get(resourceId)
-  const isMined = def ? (def.mined === true || def.tier === 0) : false
-
-  // Mined or no ingredients: satisfied only if produced onsite
-  if (isMined || !def?.ingredients?.length) {
-    return {
-      resourceId,
-      status: fr.onsite ? 'satisfied' : 'missing',
-      missingIngredients: fr.onsite ? [] : [resourceId],
-    }
-  }
-
-  // Manufactured with ingredients: must be marked onsite; ingredients checked within same outpost
-  if (!fr.onsite) {
+  const supplies = getSupplyLines(fr)
+  if (supplies.length === 0) {
     return { resourceId, status: 'missing', missingIngredients: [resourceId] }
   }
 
-  const nextVisited = new Set(visited)
-  nextVisited.add(visitKey)
+  let aggregate: ValidationStatus = 'missing'
+  const allMissing: string[] = []
 
-  const missingIngredients: string[] = []
-  for (const ingredientId of def.ingredients) {
-    const child = validateResource(ingredientId, outpostId, outpostResourceMaps, resourceDefMap, nextVisited)
-    if (child.status === 'missing' || child.status === 'partial') {
-      missingIngredients.push(...child.missingIngredients)
+  for (const supply of supplies) {
+    const lineStatus = validateIncomingSupplyLine(
+      resourceId,
+      supply,
+      outpostResourceMaps,
+      resourceDefMap,
+      outposts,
+      nextVisited
+    )
+    aggregate = worstStatus(aggregate, lineStatus.status)
+    if (lineStatus.status !== 'satisfied') {
+      allMissing.push(...lineStatus.missingIngredients)
     }
   }
 
-  let status: ValidationStatus
-  if (missingIngredients.length === 0) {
-    status = 'satisfied'
-  } else if (missingIngredients.length < def.ingredients.length) {
-    status = 'partial'
-  } else {
-    status = 'missing'
-  }
+  return { resourceId, status: aggregate, missingIngredients: allMissing }
+}
 
-  return { resourceId, status, missingIngredients }
+function validateIncomingSupplyLine(
+  resourceId: string,
+  supply: SfOutpostSupply,
+  outpostResourceMaps: Map<string, Map<string, SfOutpostResource>>,
+  resourceDefMap: Map<string, SfResource>,
+  outposts: OutpostWithId[],
+  visited: Set<string>
+): ResourceValidation {
+  const sourceOutpostId = resolveSourceOutpostId(supply, outposts)
+  if (!sourceOutpostId) {
+    return { resourceId, status: 'missing', missingIngredients: [resourceId] }
+  }
+  return validateResourceAtOutpost(
+    resourceId,
+    sourceOutpostId,
+    outpostResourceMaps,
+    resourceDefMap,
+    outposts,
+    visited
+  )
 }
 
 export function validateNetwork(
@@ -99,27 +141,29 @@ export function validateNetwork(
     resourceDefMap.set(id, r)
   }
 
-  // Build a flat map: outpostId → Map<resourceId, outpostResource>
+  const outpostsWithId = outposts as OutpostWithId[]
+
   const outpostResourceMaps = new Map<string, Map<string, SfOutpostResource>>()
-  for (const outpost of outposts) {
+  for (const outpost of outpostsWithId) {
     const map = new Map<string, SfOutpostResource>()
     for (const fr of outpost.resources) {
-      map.set(fr.resourceId, fr)
+      map.set(fr.resourceId, normalizeOutpostResource(fr))
     }
     outpostResourceMaps.set(outpost.id, map)
   }
 
   const result = new Map<string, OutpostValidation>()
 
-  for (const outpost of outposts) {
+  for (const outpost of outpostsWithId) {
     const resourceValidations = new Map<string, ResourceValidation>()
 
     for (const fr of outpost.resources) {
-      const rv = validateResource(
+      const rv = validateResourceAtOutpost(
         fr.resourceId,
         outpost.id,
         outpostResourceMaps,
         resourceDefMap,
+        outpostsWithId,
         new Set()
       )
       resourceValidations.set(fr.resourceId, rv)

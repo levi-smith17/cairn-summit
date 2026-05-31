@@ -59,7 +59,7 @@ function InlineInput({ value, onChange, onSave, onCancel, onRemove, placeholder 
         className="h-8 text-sm flex-1"
         autoFocus
       />
-      <Button type="button" size="sm" className="h-8 px-3 shrink-0" onClick={onSave} disabled={!value.trim()}>
+      <Button type="button" size="sm" className="h-9 md:h-8 px-3 shrink-0" onClick={onSave} disabled={!(value ?? '').trim()}>
         Save
       </Button>
       {onRemove && (
@@ -103,8 +103,8 @@ export function SystemsPanel({
   } | null>(null)
 
   const activeSystem = systems.find(s => s.id === activeSystemId) ?? null
-  const sortedSystems = [...systems].sort((a, b) => a.name.localeCompare(b.name))
-  const sortedPlanets = [...(activeSystem?.planets ?? [])].sort((a, b) => a.name.localeCompare(b.name))
+  const sortedSystems = [...systems].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))
+  const sortedPlanets = [...(activeSystem?.planets ?? [])].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))
 
   function drillInto(id: string) {
     setActiveSystemId(id)
@@ -180,7 +180,7 @@ export function SystemsPanel({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7"
+                    className="h-9 w-9"
                     onClick={() => { setAddingPlanet(true); setEditingPlanetId(null); setPlanetInput('') }}
                   >
                     <Plus className="h-4 w-4" />
@@ -282,7 +282,7 @@ export function SystemsPanel({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7"
+                  className="h-8 w-8"
                   onClick={() => { setAddingSystem(true); setEditingSystemId(null); setSystemInput('') }}
                 >
                   <Plus className="h-4 w-4" />
@@ -337,10 +337,10 @@ export function SystemsPanel({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 shrink-0 mr-3"
+                    className="h-9 w-9 shrink-0 mr-3"
                     onClick={() => drillInto(sys.id)}
                   >
-                    <ChevronRight className="h-4 w-4" />
+                    <ChevronRight className="h-10 w-10" />
                   </Button>
                 </>
               )}

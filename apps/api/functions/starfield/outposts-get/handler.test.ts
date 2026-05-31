@@ -40,25 +40,25 @@ describe('starfield/outposts-get handler', () => {
         expect(data[1].resources).toHaveLength(0)
     })
 
-    it('normalizes legacy fromFacilityId to fromOutpostId', async () => {
+    it('migrates legacy fromFacilityId into supplies', async () => {
         const items = [
-            { pk: 'USER#user-1', sk: 'SF#FACILITY#a', resources: { r1: { resourceId: 'r1', fromFacilityId: 'old-id' } } },
+            { pk: 'USER#user-1', sk: 'SF#FACILITY#a', resources: { r1: { resourceId: 'r1', name: 'Iron', abbreviation: 'Fe', onsite: false, fromFacilityId: 'old-id' } } },
         ]
         vi.mocked(dynamo.send).mockResolvedValueOnce({ Items: items })
 
         const result = await handler(mockEvent('user-1')) as any
         const resource = JSON.parse(result.body).data[0].resources[0]
-        expect(resource.fromOutpostId).toBe('old-id')
+        expect(resource.supplies[0].fromOutpostId).toBe('old-id')
     })
 
-    it('prefers fromOutpostId over fromFacilityId when both present', async () => {
+    it('prefers fromOutpostId over fromFacilityId in supplies migration', async () => {
         const items = [
-            { pk: 'USER#user-1', sk: 'SF#FACILITY#a', resources: { r1: { resourceId: 'r1', fromOutpostId: 'new-id', fromFacilityId: 'old-id' } } },
+            { pk: 'USER#user-1', sk: 'SF#FACILITY#a', resources: { r1: { resourceId: 'r1', name: 'Iron', abbreviation: 'Fe', onsite: false, fromOutpostId: 'new-id', fromFacilityId: 'old-id' } } },
         ]
         vi.mocked(dynamo.send).mockResolvedValueOnce({ Items: items })
 
         const result = await handler(mockEvent('user-1')) as any
-        expect(JSON.parse(result.body).data[0].resources[0].fromOutpostId).toBe('new-id')
+        expect(JSON.parse(result.body).data[0].resources[0].supplies[0].fromOutpostId).toBe('new-id')
     })
 
     it('returns empty array when user has no outposts', async () => {

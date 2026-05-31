@@ -21,11 +21,28 @@ export const handler = async (
 
         const items = (result.Items ?? []).map(item => ({
             ...item,
-            resources: Object.values(item.resources ?? {}).map((r: any) => ({
-                ...r,
-                // Normalize legacy field name from before the facility→outpost rename
-                fromOutpostId: r.fromOutpostId ?? r.fromFacilityId ?? null,
-            })),
+            resources: Object.values(item.resources ?? {}).map((r: any) => {
+                const fromOutpostId = r.fromOutpostId ?? r.fromFacilityId ?? null
+                let supplies = r.supplies
+                if (!supplies?.length && (r.fromPlanet || fromOutpostId)) {
+                    supplies = [{
+                        fromOutpostId,
+                        fromPlanet: r.fromPlanet ?? null,
+                        fromSystem: r.fromSystem ?? null,
+                        relay: r.relay ?? null,
+                    }]
+                } else if (!supplies?.length) {
+                    supplies = []
+                }
+                return {
+                    resourceId: r.resourceId,
+                    name: r.name,
+                    abbreviation: r.abbreviation,
+                    onsite: r.onsite,
+                    origin: r.origin ?? false,
+                    supplies,
+                }
+            }),
         }))
 
         return toApiGatewayResponse(ok(items))

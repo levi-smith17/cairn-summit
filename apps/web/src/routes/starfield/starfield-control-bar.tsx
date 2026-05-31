@@ -2,6 +2,7 @@ import { Plus, Boxes, Globe } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { SfNetwork } from '@cairn/types'
 import { NetworkSelector } from './network-selector'
+import { SF_CONTROL } from './constants'
 
 interface StarfieldControlBarProps {
   networks: SfNetwork[]
@@ -41,7 +42,7 @@ export function StarfieldControlBar({
           <Button
             variant="outline"
             size="sm"
-            className="h-8 gap-1.5 text-sm flex-1 md:flex-none justify-start"
+            className={`${SF_CONTROL} gap-1.5 text-sm flex-1 md:flex-none justify-start`}
             onClick={onAddOutpost}
             disabled={!selectedNetworkId}
           >
@@ -51,7 +52,7 @@ export function StarfieldControlBar({
           <Button
               variant="outline"
               size="sm"
-              className="h-8 gap-1.5 text-sm flex-1 md:flex-none justify-start ml-auto"
+              className={`${SF_CONTROL} gap-1.5 text-sm flex-1 md:flex-none justify-start ml-auto`}
               onClick={onManageResources}
           >
             <Boxes className="h-3.5 w-3.5" />
@@ -60,7 +61,7 @@ export function StarfieldControlBar({
           <Button
             variant="outline"
             size="sm"
-            className="h-8 gap-1.5 text-sm flex-1 md:flex-none justify-start"
+            className={`${SF_CONTROL} gap-1.5 text-sm flex-1 md:flex-none justify-start`}
             onClick={onManageSystems}
           >
             <Globe className="h-3.5 w-3.5" />

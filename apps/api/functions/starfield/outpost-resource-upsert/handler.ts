@@ -38,6 +38,8 @@ export const handler = async (
 
         const pk = getPk(event)
 
+        const supplies = Array.isArray(body.supplies) ? body.supplies : []
+
         // Step 2: Upsert the resource entry on the outpost
         await dynamo.send(new UpdateCommand({
             TableName: TABLE_NAME,
@@ -53,11 +55,8 @@ export const handler = async (
                     name: resourceItem.name,
                     abbreviation: resourceItem.abbreviation,
                     onsite: body.onsite,
-                    fromOutpostId: body.fromOutpostId ?? null,
-                    fromPlanet: body.fromPlanet ?? null,
-                    fromSystem: body.fromSystem ?? null,
                     origin: body.origin ?? false,
-                    relay: body.relay ?? null,
+                    supplies: body.onsite ? [] : supplies,
                 },
             },
         }))

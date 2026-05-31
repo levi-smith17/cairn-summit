@@ -33,7 +33,7 @@ interface PlanetPickerProps {
   onSystemChange?: (systemName: string) => void
   onSelectId?: (planetId: string) => void
   systems: SystemWithPlanets[]
-  onSystemsUpdate: (systems: SystemWithPlanets[]) => void
+  onSystemsUpdate?: (systems: SystemWithPlanets[]) => void
   onSystemCreate?: (name: string) => void
   onSystemRename?: (id: string, newName: string) => void
   onSystemDelete?: (id: string) => void
@@ -43,6 +43,12 @@ interface PlanetPickerProps {
   placeholder?: string
   disabled?: boolean
   readonly?: boolean
+  /** When false, only search/select — no add/edit/delete systems or planets */
+  allowManageSystems?: boolean
+}
+
+function safeName(name: string | undefined): string {
+  return (name ?? '').trim()
 }
 
 // ── InlineInput ───────────────────────────────────────────────────────────────
@@ -76,7 +82,7 @@ function InlineInput({ value: v, onChange: oc, onSave, onCancel, onRemove, place
         size="sm"
         className="h-9 px-3 shrink-0"
         onClick={onSave}
-        disabled={!v.trim()}
+        disabled={!(v ?? '').trim()}
       >
         Save
       </Button>
@@ -110,7 +116,9 @@ export function PlanetPicker({
   placeholder = 'Select a planet…',
   disabled = false,
   readonly = false,
+  allowManageSystems = true,
 }: PlanetPickerProps) {
+  const canManage = allowManageSystems && !readonly
   const [open, setOpen] = useState(false)
   const [view, setView] = useState<'systems' | 'planets'>('systems')
   const [activeSystemId, setActiveSystemId] = useState<string | null>(null)
@@ -134,7 +142,9 @@ export function PlanetPicker({
   } | null>(null)
 
   // Derived display label
-  const allPlanets = systems.flatMap(s => s.planets.map(p => ({ ...p, systemName: s.name, systemId: s.id })))
+  const allPlanets = systems.flatMap(s =>
+    s.planets.map(p => ({ ...p, systemName: safeName(s.name), systemId: s.id }))
+  )
   const selectedPlanet = allPlanets.find(p => p.name === value)
   const displayLabel = selectedPlanet ? `${selectedPlanet.name} (${selectedPlanet.systemName})` : value || null
 
@@ -182,16 +192,11 @@ export function PlanetPicker({
     const name = systemNameInput.trim()
     if (!name) return
     if (editingSystemId) {
-      onSystemsUpdate(systems.map(s =>
-        s.id === editingSystemId ? { ...s, name, id: name } : s
-      ))
       onSystemRename?.(editingSystemId, name)
       setEditingSystemId(null)
     } else {
-      if (!systems.find(s => s.name.toLowerCase() === name.toLowerCase())) {
-        onSystemsUpdate([...systems, { id: name, name, planets: [] }])
-        onSystemCreate?.(name)
-      }
+      const exists = systems.some(s => safeName(s.name).toLowerCase() === name.toLowerCase())
+      if (!exists) onSystemCreate?.(name)
       setAddingSystem(false)
     }
     setSystemNameInput('')
@@ -200,7 +205,7 @@ export function PlanetPicker({
   function startEditSystem(sys: SystemWithPlanets, e: React.MouseEvent) {
     e.stopPropagation()
     setEditingSystemId(sys.id)
-    setSystemNameInput(sys.name)
+    setSystemNameInput(safeName(sys.name))
     setAddingSystem(false)
   }
 
@@ -215,21 +220,15 @@ export function PlanetPicker({
   function savePlanetInline() {
     const name = planetNameInput.trim()
     if (!name || !activeSystemId) return
+    const active = systems.find(s => s.id === activeSystemId)
     if (editingPlanetId) {
-      onSystemsUpdate(systems.map(s =>
-        s.id === activeSystemId
-          ? { ...s, planets: s.planets.map(p => p.id === editingPlanetId ? { id: name, name } : p) }
-          : s
-      ))
       onPlanetRename?.(activeSystemId, editingPlanetId, name)
       setEditingPlanetId(null)
     } else {
-      onSystemsUpdate(systems.map(s =>
-        s.id === activeSystemId
-          ? { ...s, planets: [...s.planets, { id: name, name }] }
-          : s
-      ))
-      onPlanetCreate?.(activeSystemId, name)
+      const exists = active?.planets.some(
+        p => safeName(p.name).toLowerCase() === name.toLowerCase()
+      )
+      if (!exists) onPlanetCreate?.(activeSystemId, name)
       setAddingPlanet(false)
     }
     setPlanetNameInput('')
@@ -238,7 +237,7 @@ export function PlanetPicker({
   function startEditPlanet(planet: Planet, e: React.MouseEvent) {
     e.stopPropagation()
     setEditingPlanetId(planet.id)
-    setPlanetNameInput(planet.name)
+    setPlanetNameInput(safeName(planet.name))
     setAddingPlanet(false)
   }
 
@@ -258,19 +257,14 @@ export function PlanetPicker({
         onChange('')
         onSystemChange?.('')
       }
-      onSystemsUpdate(systems.filter(s => s.id !== confirmRemove.id))
       onSystemDelete?.(confirmRemove.id)
       cancelSystem()
       if (activeSystemId === confirmRemove.id) goBack()
     } else {
-      if (value === confirmRemove.id) {
+      if (value === confirmRemove.name) {
         onChange('')
         onSystemChange?.('')
       }
-      onSystemsUpdate(systems.map(s => ({
-        ...s,
-        planets: s.planets.filter(p => p.id !== confirmRemove.id),
-      })))
       onPlanetDelete?.(activeSystemId!, confirmRemove.id)
       cancelPlanet()
     }
@@ -283,18 +277,21 @@ export function PlanetPicker({
   const q = search.toLowerCase()
 
   const filteredSystems = systems
-    .filter(s => !search || s.name.toLowerCase().includes(q))
-    .sort((a, b) => a.name.localeCompare(b.name))
+    .filter(s => !search || safeName(s.name).toLowerCase().includes(q))
+    .sort((a, b) => safeName(a.name).localeCompare(safeName(b.name)))
 
   const filteredPlanets = (activeSystem?.planets ?? [])
-    .filter(p => !search || p.name.toLowerCase().includes(q))
-    .sort((a, b) => a.name.localeCompare(b.name))
+    .filter(p => !search || safeName(p.name).toLowerCase().includes(q))
+    .sort((a, b) => safeName(a.name).localeCompare(safeName(b.name)))
 
   const searchResults = isSearching
     ? systems
-        .flatMap(s => s.planets.map(p => ({ ...p, systemName: s.name, systemId: s.id })))
-        .filter(p => p.name.toLowerCase().includes(q) || p.systemName.toLowerCase().includes(q))
-        .sort((a, b) => a.name.localeCompare(b.name))
+        .flatMap(s => s.planets.map(p => ({ ...p, systemName: safeName(s.name), systemId: s.id })))
+        .filter(p =>
+          safeName(p.name).toLowerCase().includes(q) ||
+          safeName(p.systemName).toLowerCase().includes(q)
+        )
+        .sort((a, b) => safeName(a.name).localeCompare(safeName(b.name)))
     : []
 
   function selectPlanet(planetName: string, systemName?: string, planetId?: string) {
@@ -411,7 +408,7 @@ export function PlanetPicker({
                           <span className="text-sm truncate">{sys.name}</span>
                           <span className="font-mono text-[10px] text-muted-foreground">{sys.planets.length} {sys.planets.length === 1 ? 'planet' : 'planets'}</span>
                         </div>
-                        {!readonly && (
+                        {canManage && (
                           <Button
                             type="button"
                             variant="ghost"
@@ -473,7 +470,7 @@ export function PlanetPicker({
                             </span>
                             <span className="flex-1">{planet.name}</span>
                           </button>
-                          {!readonly && (
+                          {canManage && (
                             <Button
                               type="button"
                               variant="ghost"
@@ -494,7 +491,7 @@ export function PlanetPicker({
           </div>
 
           {/* Fixed footer — Add button (hidden while searching or readonly) */}
-          {!isSearching && !readonly && (
+          {!isSearching && canManage && (
             <div className="border-t border-border shrink-0">
               {view === 'systems' && (
                 addingSystem ? (

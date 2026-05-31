@@ -1,16 +1,16 @@
-import { useState, useMemo } from 'react'
-import { useForm } from 'react-hook-form'
+import { useState, useMemo, useEffect } from 'react'
+import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { upsertOutpostResource, removeOutpostResource } from '@/lib/api/starfield'
 import { Form, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
-import { Checkbox } from '@/components/ui/checkbox'
+import { Switch } from '@/components/ui/switch'
 import { ResourcePicker } from '@/components/ui/resource-picker'
 import { PlanetPicker } from '@/components/ui/planet-picker'
 import { FormActions } from '@/components/forms/form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
 import { Button } from '@/components/ui/button'
-import { Trash2, X, CheckCircle2, XCircle } from 'lucide-react'
+import { Trash2, X, CheckCircle2, XCircle, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   AlertDialog,
@@ -23,16 +23,37 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import {
+  getSupplyLines,
+  normalizeOutpostResource,
+  resolveSourceOutpostId,
+  type OutpostWithId,
+} from '@/lib/starfield-utils'
+import { SF_CONTROL, SF_ICON_CONTROL } from './constants'
+
+const supplySchema = z.object({
+  fromPlanet: z.string().optional(),
+  fromSystem: z.string().optional(),
+  relayPlanet: z.string().optional(),
+  relaySystem: z.string().optional(),
+})
 
 const schema = z.object({
   resourceId: z.string().min(1, 'Resource is required'),
   onsite: z.boolean(),
   origin: z.boolean(),
-  fromOutpostId: z.string().optional(),
-  fromPlanet: z.string().optional(),
-  fromSystem: z.string().optional(),
-  relayPlanet: z.string().optional(),
-  relaySystem: z.string().optional(),
+  supplies: z.array(supplySchema),
+}).superRefine((data, ctx) => {
+  if (!data.onsite) {
+    if (data.supplies.length < 1) {
+      ctx.addIssue({ code: 'custom', message: 'At least one supply source is required', path: ['supplies'] })
+    }
+    data.supplies.forEach((s, i) => {
+      if (!s.fromPlanet?.trim()) {
+        ctx.addIssue({ code: 'custom', message: 'Supplied from is required', path: ['supplies', i, 'fromPlanet'] })
+      }
+    })
+  }
 })
 
 type FormValues = z.infer<typeof schema>
@@ -58,10 +79,22 @@ interface OutpostResourceFormProps {
   resources: any[]
   outposts: any[]
   systems: SystemEntry[]
-  onSystemsUpdate: (systems: SystemEntry[]) => void
   systemCrudCallbacks: SystemCrudCallbacks
   onDone: () => void
   onRefresh: () => void
+}
+
+function suppliesFromEntry(entry: ReturnType<typeof normalizeOutpostResource> | null) {
+  const lines = entry ? getSupplyLines(entry) : []
+  if (lines.length === 0) {
+    return [{ fromPlanet: '', fromSystem: '', relayPlanet: '', relaySystem: '' }]
+  }
+  return lines.map(s => ({
+    fromPlanet: s.fromPlanet ?? '',
+    fromSystem: s.fromSystem ?? '',
+    relayPlanet: s.relay?.planet ?? '',
+    relaySystem: s.relay?.system ?? '',
+  }))
 }
 
 export function OutpostResourceForm({
@@ -70,7 +103,6 @@ export function OutpostResourceForm({
   resources,
   outposts,
   systems,
-  onSystemsUpdate,
   systemCrudCallbacks,
   onDone,
   onRefresh,
@@ -79,15 +111,12 @@ export function OutpostResourceForm({
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false)
   const isEditing = !!resourceId
 
-  // Find the current outpost's existing resource entry for pre-population
-  const currentOutpost = outposts.find((o: any) => o.id === outpostId)
-  const existingEntry = isEditing
-    ? currentOutpost?.resources?.find((r: any) => r.resourceId === resourceId)
+  const outpostsWithId = outposts as OutpostWithId[]
+  const currentOutpost = outpostsWithId.find(o => o.id === outpostId)
+  const rawEntry = isEditing
+    ? currentOutpost?.resources?.find(r => r.resourceId === resourceId)
     : null
-
-  const existingFromOutpost = existingEntry?.fromOutpostId
-    ? outposts.find((o: any) => o.id === existingEntry.fromOutpostId)
-    : null
+  const existingEntry = rawEntry ? normalizeOutpostResource(rawEntry) : null
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -95,20 +124,29 @@ export function OutpostResourceForm({
       resourceId: resourceId ?? '',
       onsite: existingEntry?.onsite ?? false,
       origin: existingEntry?.origin ?? false,
-      fromOutpostId: existingEntry?.fromOutpostId ?? '',
-      fromPlanet: existingFromOutpost?.planet ?? existingEntry?.fromPlanet ?? '',
-      fromSystem: existingFromOutpost?.system ?? existingEntry?.fromSystem ?? '',
-      relayPlanet: existingEntry?.relay?.planet ?? '',
-      relaySystem: existingEntry?.relay?.system ?? '',
+      supplies: suppliesFromEntry(existingEntry),
     },
   })
 
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: 'supplies',
+  })
+
+  useEffect(() => {
+    if (existingEntry) {
+      form.reset({
+        resourceId: resourceId ?? '',
+        onsite: existingEntry.onsite,
+        origin: existingEntry.origin ?? false,
+        supplies: suppliesFromEntry(existingEntry),
+      })
+    }
+  }, [existingEntry, resourceId, form])
+
   const watchResourceId = form.watch('resourceId')
-  const watchFromPlanet = form.watch('fromPlanet')
-  const watchFromSystem = form.watch('fromSystem')
   const watchOnsite = form.watch('onsite')
-  const watchOrigin = form.watch('origin')
-  const watchRelayPlanet = form.watch('relayPlanet')
+  const watchSupplies = form.watch('supplies')
 
   const ingredientList = useMemo(() => {
     const activeId = watchResourceId || resourceId
@@ -116,35 +154,55 @@ export function OutpostResourceForm({
     const def = resources.find((r: any) => (r.id ?? r.sk?.replace(/^RESOURCE#/, '')) === activeId)
     if (!def?.ingredients?.length) return []
 
-    const resourceDefMap = new Map<string, any>()
-    for (const r of resources) {
-      resourceDefMap.set(r.id ?? r.sk?.replace(/^RESOURCE#/, ''), r)
+    const counts = new Map<string, number>()
+    for (const fr of (currentOutpost?.resources ?? []).map(normalizeOutpostResource)) {
+      if (fr.resourceId === activeId) continue
+      if (fr.onsite || fr.origin) {
+        counts.set(fr.resourceId, (counts.get(fr.resourceId) ?? 0) + 1)
+        continue
+      }
+      const validLines = getSupplyLines(fr).filter(
+        s => resolveSourceOutpostId(s, outpostsWithId) != null
+      )
+      if (validLines.length > 0) {
+        counts.set(fr.resourceId, (counts.get(fr.resourceId) ?? 0) + validLines.length)
+      }
     }
 
-    const outpostResourceSet = new Set<string>()
-    for (const fr of (currentOutpost?.resources ?? [])) {
-      if (fr.onsite || fr.fromOutpostId || fr.fromPlanet || fr.origin) {
-        outpostResourceSet.add(fr.resourceId)
+    if (!isEditing && watchOnsite) {
+      counts.set(activeId, (counts.get(activeId) ?? 0) + 1)
+    } else if (!watchOnsite) {
+      const draftValid = (watchSupplies ?? []).filter(s => {
+        if (!s.fromPlanet?.trim()) return false
+        return resolveSourceOutpostId(
+          { fromPlanet: s.fromPlanet, fromSystem: s.fromSystem ?? null },
+          outpostsWithId
+        ) != null
+      }).length
+      if (draftValid > 0) {
+        counts.set(activeId, (counts.get(activeId) ?? 0) + draftValid)
       }
     }
 
     return def.ingredients
       .map((ingredientId: string) => {
-        const ingredientDef = resourceDefMap.get(ingredientId)
+        const ingredientDef = resources.find(
+          (r: any) => (r.id ?? r.sk?.replace(/^RESOURCE#/, '')) === ingredientId
+        )
+        const have = counts.get(ingredientId) ?? 0
         return {
           id: ingredientId,
           name: ingredientDef?.name ?? ingredientId,
           abbreviation: ingredientDef?.abbreviation ?? '?',
-          satisfied: outpostResourceSet.has(ingredientId),
+          satisfied: have > 0,
+          count: have,
         }
       })
-      .sort((a: any, b: any) => a.name.localeCompare(b.name))
-  }, [watchResourceId, resourceId, resources, currentOutpost])
-
-  // Both pickers use the global systems list from the client
+      .sort((a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name))
+  }, [watchResourceId, resourceId, resources, currentOutpost, watchOnsite, watchSupplies, isEditing, outpostsWithId])
 
   const pickerOptions = useMemo(() => {
-    const assigned = new Set(currentOutpost?.resources?.map((r: any) => r.resourceId) ?? [])
+    const assigned = new Set(currentOutpost?.resources?.map(r => r.resourceId) ?? [])
     return resources
       .filter((r: any) => !assigned.has(r.id ?? r.sk?.replace(/^RESOURCE#/, '')))
       .map((r: any) => ({
@@ -156,29 +214,44 @@ export function OutpostResourceForm({
       }))
   }, [resources, currentOutpost])
 
+  const planetPickerProps = {
+    systems,
+    allowManageSystems: false as const,
+    ...systemCrudCallbacks,
+  }
+
   async function onSubmit(values: FormValues) {
     await handleSubmit(async () => {
-      // Resolve planet name back to outpost ID
-      let resolvedFromOutpostId: string | null = null
-      if (values.fromPlanet) {
-        const fromOutpost = outposts.find(
-          (o: any) => o.planet === values.fromPlanet && o.system === values.fromSystem
-        )
-        resolvedFromOutpostId = fromOutpost?.id ?? null
-      }
+      const supplies = values.onsite
+        ? []
+        : values.supplies.map(s => {
+            const fromOutpost = outpostsWithId.find(
+              o => o.planet === s.fromPlanet && o.system === s.fromSystem
+            )
+            const relay =
+              s.relayPlanet || s.relaySystem
+                ? { planet: s.relayPlanet ?? '', system: s.relaySystem ?? '' }
+                : null
+            return {
+              fromOutpostId: fromOutpost?.id ?? null,
+              fromPlanet: s.fromPlanet || null,
+              fromSystem: s.fromSystem || null,
+              relay,
+            }
+          })
 
-      const relay =
-        values.relayPlanet || values.relaySystem
-          ? { planet: values.relayPlanet ?? '', system: values.relaySystem ?? '' }
-          : null
+      if (!values.onsite) {
+        const unresolved = supplies.filter(s => s.fromPlanet && !s.fromOutpostId)
+        if (unresolved.length > 0) {
+          toast.error('Could not match Supplied from to an outpost in this network. Check planet and system names.')
+          return
+        }
+      }
 
       await upsertOutpostResource(outpostId, values.resourceId, {
         onsite: values.onsite,
         origin: values.origin,
-        fromOutpostId: resolvedFromOutpostId,
-        fromPlanet: values.fromPlanet || null,
-        fromSystem: values.fromSystem || null,
-        relay,
+        supplies,
       })
       toast.success(isEditing ? 'Resource updated.' : 'Resource added.')
       onRefresh()
@@ -220,7 +293,7 @@ export function OutpostResourceForm({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 text-destructive hover:text-destructive/80"
+                className={`${SF_ICON_CONTROL} text-destructive hover:text-destructive/80`}
                 onClick={() => setRemoveDialogOpen(true)}
               >
                 <Trash2 className="h-3.5 w-3.5" />
@@ -231,7 +304,7 @@ export function OutpostResourceForm({
         )}
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={onDone}>
+            <Button type="button" variant="ghost" size="icon" className={SF_ICON_CONTROL} onClick={onDone}>
               <X className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
@@ -246,7 +319,7 @@ export function OutpostResourceForm({
               <FormItem>
                 <FormLabel>Resource</FormLabel>
                 {isEditing ? (
-                  <div className="text-sm px-3 py-1.5 bg-muted/30 rounded-md border border-border text-muted-foreground">
+                  <div className={`text-sm px-3 py-1.5 bg-muted/30 rounded-md border border-border text-muted-foreground ${SF_CONTROL} flex items-center`}>
                     {selectedResource?.name ?? resourceId}
                   </div>
                 ) : (
@@ -264,36 +337,50 @@ export function OutpostResourceForm({
             {ingredientList.length > 0 && (
               <div className="space-y-1.5 rounded-md border border-border/60 p-3">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Ingredients</p>
-                {ingredientList.map((ing: any) => (
+                {ingredientList.map((ing: { id: string; abbreviation: string; name: string; satisfied: boolean; count: number }) => (
                   <div key={ing.id} className="flex items-center gap-2">
                     {ing.satisfied
                       ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-green-500" />
                       : <XCircle className="h-3.5 w-3.5 shrink-0 text-red-500" />
                     }
                     <span className="font-mono text-[10px] text-muted-foreground shrink-0">{ing.abbreviation}</span>
-                    <span className="text-xs">{ing.name}</span>
+                    <span className="text-xs flex-1">{ing.name}</span>
+                    {ing.count > 1 && (
+                      <span className="text-[10px] text-muted-foreground">×{ing.count}</span>
+                    )}
                   </div>
                 ))}
-                {watchFromPlanet && !watchOnsite && (
-                    <p className="text-xs text-muted-foreground pt-1">
-                      Transferred in from {watchFromPlanet}{watchFromSystem ? ` (${watchFromSystem})` : ''} — manufactured at source outpost.
-                    </p>
-                )}
               </div>
             )}
 
             <FormField control={form.control} name="onsite" render={({ field }) => (
-              <FormItem className="flex items-center gap-2 space-y-0">
-                <Checkbox checked={field.value} onCheckedChange={field.onChange} id="onsite" />
-                <FormLabel htmlFor="onsite" className="font-normal cursor-pointer">Produced onsite</FormLabel>
+              <FormItem className="flex items-start gap-2 space-y-0">
+                <Switch
+                  id="onsite"
+                  checked={field.value}
+                  onCheckedChange={v => {
+                    field.onChange(v)
+                    if (v) form.setValue('origin', false)
+                  }}
+                  className="mt-0.5"
+                />
+                <div className="flex-1">
+                  <FormLabel htmlFor="onsite" className="font-normal cursor-pointer">Produced onsite</FormLabel>
+                  <p className="text-xs text-muted-foreground">Resource is manufactured or mined at this outpost.</p>
+                </div>
               </FormItem>
             )} />
 
             {!watchOnsite && (
               <FormField control={form.control} name="origin" render={({ field }) => (
                 <FormItem className="flex items-start gap-2 space-y-0">
-                  <Checkbox checked={field.value} onCheckedChange={field.onChange} id="origin" className="mt-0.5" />
-                  <div>
+                  <Switch
+                    id="origin"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    className="mt-0.5"
+                  />
+                  <div className="flex-1">
                     <FormLabel htmlFor="origin" className="font-normal cursor-pointer">Supply origin</FormLabel>
                     <p className="text-xs text-muted-foreground">Marks this as the end of the supply chain. Validation stops here.</p>
                   </div>
@@ -301,56 +388,101 @@ export function OutpostResourceForm({
               )} />
             )}
 
-            {!watchOnsite && (
-              <FormField control={form.control} name="fromPlanet" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Supplied from</FormLabel>
-                  <PlanetPicker
-                    value={field.value ?? ''}
-                    onChange={v => {
-                      field.onChange(v)
-                      if (!v) {
-                        form.setValue('fromSystem', '')
-                        form.setValue('fromOutpostId', '')
-                      }
-                    }}
-                    onSystemChange={v => form.setValue('fromSystem', v)}
-                    onSelectId={id => form.setValue('fromOutpostId', id)}
-                    systems={systems}
-                    onSystemsUpdate={onSystemsUpdate}
-                    placeholder="Select outpost…"
-                    {...systemCrudCallbacks}
-                  />
-                  <FormMessage />
-                </FormItem>
-              )} />
-            )}
-
-            {watchFromPlanet && !watchOnsite && (
-              <div className="space-y-3 rounded-md border border-border/60 p-3">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Relay (optional)</p>
-                <FormField control={form.control} name="relayPlanet" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Relay Location</FormLabel>
-                    <PlanetPicker
-                      value={field.value ?? ''}
-                      onChange={v => {
-                        field.onChange(v)
-                        if (!v) form.setValue('relaySystem', '')
-                      }}
-                      onSystemChange={v => form.setValue('relaySystem', v)}
-                      systems={systems}
-                      onSystemsUpdate={onSystemsUpdate}
-                      {...systemCrudCallbacks}
-                      placeholder="Select relay planet…"
+            {!watchOnsite && !form.watch('origin') && (
+              <div className="space-y-4">
+                {fields.map((field, index) => (
+                  <div key={field.id} className="space-y-3 rounded-md border border-border/60 p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                        Supply source {fields.length > 1 ? index + 1 : ''}
+                      </p>
+                      {fields.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className={`${SF_ICON_CONTROL} text-destructive hover:text-destructive/80`}
+                          onClick={() => remove(index)}
+                          aria-label="Remove supply source"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
+                    <FormField
+                      control={form.control}
+                      name={`supplies.${index}.fromPlanet`}
+                      render={({ field: planetField }) => (
+                        <FormItem>
+                          <FormLabel>Supplied from</FormLabel>
+                          <PlanetPicker
+                            value={planetField.value ?? ''}
+                            onChange={v => {
+                              planetField.onChange(v)
+                              if (!v) form.setValue(`supplies.${index}.fromSystem`, '')
+                            }}
+                            onSystemChange={v => form.setValue(`supplies.${index}.fromSystem`, v)}
+                            placeholder="Select outpost…"
+                            {...planetPickerProps}
+                          />
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </FormItem>
-                )} />
+                    {(watchSupplies?.[index]?.fromPlanet) && (
+                      <div className="space-y-2">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Relay (optional)</p>
+                        <FormField
+                          control={form.control}
+                          name={`supplies.${index}.relayPlanet`}
+                          render={({ field: relayField }) => (
+                            <FormItem>
+                              <FormLabel>Relay location</FormLabel>
+                              <PlanetPicker
+                                value={relayField.value ?? ''}
+                                onChange={v => {
+                                  relayField.onChange(v)
+                                  if (!v) form.setValue(`supplies.${index}.relaySystem`, '')
+                                }}
+                                onSystemChange={v => form.setValue(`supplies.${index}.relaySystem`, v)}
+                                placeholder="Select relay planet…"
+                                {...planetPickerProps}
+                              />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
 
             <div className="-mx-4 border-t" />
-            <FormActions saving={saving} saved={saved} error={error} saveLabel={isEditing ? 'Save Changes' : 'Add Resource'} formId="outpost-resource-form" onCancel={onDone} />
+            <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3">
+              {!watchOnsite && !form.watch('origin') && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={`${SF_CONTROL} w-full sm:w-auto gap-1.5`}
+                  onClick={() => append({ fromPlanet: '', fromSystem: '', relayPlanet: '', relaySystem: '' })}
+                >
+                  <Plus className="h-4 w-4" />
+                  Add supply source
+                </Button>
+              )}
+              <div className={!watchOnsite && !form.watch('origin') ? 'sm:ml-auto' : 'w-full'}>
+                <FormActions
+                  saving={saving}
+                  saved={saved}
+                  error={error}
+                  saveLabel={isEditing ? 'Save Changes' : 'Add Resource'}
+                  formId="outpost-resource-form"
+                  onCancel={onDone}
+                  buttonClassName={SF_CONTROL}
+                />
+              </div>
+            </div>
           </form>
         </Form>
       </div>
@@ -364,10 +496,10 @@ export function OutpostResourceForm({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel className={SF_CONTROL}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleRemove}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className={`${SF_CONTROL} bg-destructive text-destructive-foreground hover:bg-destructive/90`}
             >
               Remove
             </AlertDialogAction>

@@ -382,19 +382,34 @@ export interface SfOutpost {
     transferStationLimit: number
 }
 
+export interface SfOutpostSupply {
+    fromOutpostId?: string | null
+    fromPlanet?: string | null
+    fromSystem?: string | null
+    relay?: {
+        planet: string
+        system: string
+    } | null
+}
+
 export interface SfOutpostResource {
     resourceId: string
     name: string
     abbreviation: string
     onsite: boolean
-    fromOutpostId?: string
-    fromPlanet?: string
-    fromSystem?: string
     origin?: boolean
+    supplies?: SfOutpostSupply[]
+    /** @deprecated Migrated to supplies[] on read */
+    fromOutpostId?: string | null
+    /** @deprecated Migrated to supplies[] on read */
+    fromPlanet?: string | null
+    /** @deprecated Migrated to supplies[] on read */
+    fromSystem?: string | null
+    /** @deprecated Migrated to supplies[] on read */
     relay?: {
         planet: string
         system: string
-    }
+    } | null
 }
 
 // ── Headwaters ─────────────────────────────────────────

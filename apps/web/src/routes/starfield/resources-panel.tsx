@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge'
 import { Pencil, Trash2 } from 'lucide-react'
 import { ResourceList } from './resource-list'
 import { ResourceForm } from './resource-form'
+import { SF_CONTROL, SF_ICON_CONTROL } from './constants'
 import { deleteResource } from '@/lib/api/starfield'
 
 interface ResourcesPanelProps {
@@ -47,8 +48,8 @@ export function ResourcesPanel({ resources, onClose, onRefresh }: ResourcesPanel
 
   const filteredResources = useMemo(() => search.trim()
     ? sortedResources.filter(r =>
-        r.name.toLowerCase().includes(search.toLowerCase()) ||
-        r.abbreviation.toLowerCase().includes(search.toLowerCase()) ||
+        (r.name ?? '').toLowerCase().includes(search.toLowerCase()) ||
+        (r.abbreviation ?? '').toLowerCase().includes(search.toLowerCase()) ||
         (r.type ?? '').toLowerCase().includes(search.toLowerCase())
       )
     : sortedResources, [sortedResources, search])
@@ -75,16 +76,38 @@ export function ResourcesPanel({ resources, onClose, onRefresh }: ResourcesPanel
       <div className="flex flex-col h-full">
         <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSubMode({ mode: 'list' })}>
+            <Button variant="ghost" size="icon" className={SF_ICON_CONTROL} onClick={() => setSubMode({ mode: 'list' })}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <span className="text-sm font-medium">
               {subMode.resource?.id ? 'Edit Resource' : 'Add Resource'}
             </span>
           </div>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
-            <X className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            {subMode.resource?.id && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`${SF_ICON_CONTROL} text-destructive hover:text-destructive/80`}
+                    onClick={() => setDeleteTarget({ id: subMode.resource.id, name: subMode.resource.name })}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Delete resource</TooltipContent>
+              </Tooltip>
+            )}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className={SF_ICON_CONTROL} onClick={onClose}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Close</TooltipContent>
+            </Tooltip>
+          </div>
         </div>
         <ResourceForm
           key={subMode.resource?.id ?? 'new'}
@@ -107,7 +130,7 @@ export function ResourcesPanel({ resources, onClose, onRefresh }: ResourcesPanel
       <div className="flex flex-col h-full">
         <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSubMode({ mode: 'list' })}>
+            <Button variant="ghost" size="icon" className={SF_ICON_CONTROL} onClick={() => setSubMode({ mode: 'list' })}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>
@@ -119,13 +142,13 @@ export function ResourcesPanel({ resources, onClose, onRefresh }: ResourcesPanel
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSubMode({ mode: 'form', resource })}>
+            <Button variant="ghost" size="icon" className={SF_ICON_CONTROL} onClick={() => setSubMode({ mode: 'form', resource })}>
               <Pencil className="h-3.5 w-3.5" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteTarget({ id: resource.id, name: resource.name })}>
+            <Button variant="ghost" size="icon" className={SF_ICON_CONTROL} onClick={() => setDeleteTarget({ id: resource.id, name: resource.name })}>
               <Trash2 className="h-3.5 w-3.5 text-destructive" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
+            <Button variant="ghost" size="icon" className={SF_ICON_CONTROL} onClick={onClose}>
               <X className="h-4 w-4" />
             </Button>
           </div>
@@ -192,7 +215,7 @@ export function ResourcesPanel({ resources, onClose, onRefresh }: ResourcesPanel
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7"
+                className={SF_ICON_CONTROL}
                 onClick={() => setSubMode({ mode: 'form', resource: null })}
               >
                 <Plus className="h-4 w-4" />
@@ -202,7 +225,7 @@ export function ResourcesPanel({ resources, onClose, onRefresh }: ResourcesPanel
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
+              <Button variant="ghost" size="icon" className={SF_ICON_CONTROL} onClick={onClose}>
                 <X className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
@@ -218,7 +241,7 @@ export function ResourcesPanel({ resources, onClose, onRefresh }: ResourcesPanel
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search resources…"
-            className="pl-8 pr-8 h-8 text-sm"
+            className={`pl-8 pr-8 ${SF_CONTROL} text-sm`}
           />
           {search && (
             <Button
@@ -243,7 +266,6 @@ export function ResourcesPanel({ resources, onClose, onRefresh }: ResourcesPanel
           }}
           onNew={() => setSubMode({ mode: 'form', resource: null })}
           onEdit={resource => setSubMode({ mode: 'form', resource })}
-          onDelete={(id, name) => setDeleteTarget({ id, name })}
           totalCount={filteredResources.length}
           currentPage={page}
           pageSize={PAGE_SIZE}

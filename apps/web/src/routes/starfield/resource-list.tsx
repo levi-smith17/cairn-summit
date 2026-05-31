@@ -1,6 +1,6 @@
 import { useSearchParams } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { ChevronLeft, ChevronRight, Pencil, Plus, Trash2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Pencil, Plus } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 interface ResourceListProps {
@@ -9,7 +9,6 @@ interface ResourceListProps {
   onSelect: (id: string) => void
   onNew: () => void
   onEdit: (resource: any) => void
-  onDelete: (id: string, name: string) => void
   totalCount: number
   currentPage: number
   pageSize: number
@@ -20,7 +19,7 @@ interface ResourceListProps {
   allResources?: any[]
 }
 
-export function ResourceList({ resources, selectedResourceId, onSelect, onNew, onEdit, onDelete, totalCount, currentPage, pageSize, isSearching, hideHeader, onPageChange, onNewWithType, allResources }: ResourceListProps) {
+export function ResourceList({ resources, selectedResourceId, onSelect, onNew, onEdit, totalCount, currentPage, pageSize, isSearching, hideHeader, onPageChange, onNewWithType, allResources }: ResourceListProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
 
@@ -113,9 +112,6 @@ export function ResourceList({ resources, selectedResourceId, onSelect, onNew, o
                   <div className="flex items-center gap-1 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity shrink-0" onClick={e => e.stopPropagation()}>
                     <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEdit(resource)}>
                       <Pencil className="h-3 w-3" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onDelete(resource.id ?? resource.sk, resource.name)}>
-                      <Trash2 className="h-3 w-3 text-destructive" />
                     </Button>
                   </div>
                 </div>
