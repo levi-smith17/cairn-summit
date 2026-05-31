@@ -24,6 +24,32 @@ export function getSupplyLines(fr: SfOutpostResource): SfOutpostSupply[] {
   return normalized.supplies ?? []
 }
 
+/** Fill fromPlanet/fromSystem from fromOutpostId when only the id was persisted. */
+export function enrichSupplyLine(
+  supply: SfOutpostSupply,
+  outposts: OutpostWithId[]
+): SfOutpostSupply {
+  if (supply.fromPlanet && supply.fromSystem) return supply
+  if (supply.fromOutpostId) {
+    const src = outposts.find(o => o.id === supply.fromOutpostId)
+    if (src) {
+      return {
+        ...supply,
+        fromPlanet: supply.fromPlanet ?? src.planet,
+        fromSystem: supply.fromSystem ?? src.system,
+      }
+    }
+  }
+  return supply
+}
+
+export function getEnrichedSupplyLines(
+  fr: SfOutpostResource,
+  outposts: OutpostWithId[]
+): SfOutpostSupply[] {
+  return getSupplyLines(fr).map(s => enrichSupplyLine(s, outposts))
+}
+
 export function resolveSourceOutpostId(
   supply: SfOutpostSupply,
   outposts: OutpostWithId[]

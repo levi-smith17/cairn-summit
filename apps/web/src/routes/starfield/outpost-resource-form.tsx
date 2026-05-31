@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
+  getEnrichedSupplyLines,
   getSupplyLines,
   normalizeOutpostResource,
   resolveSourceOutpostId,
@@ -84,8 +85,11 @@ interface OutpostResourceFormProps {
   onRefresh: () => void
 }
 
-function suppliesFromEntry(entry: ReturnType<typeof normalizeOutpostResource> | null) {
-  const lines = entry ? getSupplyLines(entry) : []
+function suppliesFromEntry(
+  entry: ReturnType<typeof normalizeOutpostResource> | null,
+  outposts: OutpostWithId[]
+) {
+  const lines = entry ? getEnrichedSupplyLines(entry, outposts) : []
   if (lines.length === 0) {
     return [{ fromPlanet: '', fromSystem: '', relayPlanet: '', relaySystem: '' }]
   }
@@ -117,6 +121,7 @@ export function OutpostResourceForm({
     ? currentOutpost?.resources?.find(r => r.resourceId === resourceId)
     : null
   const existingEntry = rawEntry ? normalizeOutpostResource(rawEntry) : null
+  const initialSupplies = suppliesFromEntry(existingEntry, outpostsWithId)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -124,7 +129,7 @@ export function OutpostResourceForm({
       resourceId: resourceId ?? '',
       onsite: existingEntry?.onsite ?? false,
       origin: existingEntry?.origin ?? false,
-      supplies: suppliesFromEntry(existingEntry),
+      supplies: initialSupplies,
     },
   })
 
@@ -133,16 +138,26 @@ export function OutpostResourceForm({
     name: 'supplies',
   })
 
+  const formSeed = useMemo(() => {
+    if (!isEditing || !rawEntry) return ''
+    const entry = normalizeOutpostResource(rawEntry)
+    return JSON.stringify({
+      onsite: entry.onsite,
+      origin: entry.origin ?? false,
+      supplies: suppliesFromEntry(entry, outpostsWithId),
+    })
+  }, [isEditing, rawEntry, outpostsWithId])
+
+  const lastFormSeed = useRef('')
   useEffect(() => {
-    if (existingEntry) {
-      form.reset({
-        resourceId: resourceId ?? '',
-        onsite: existingEntry.onsite,
-        origin: existingEntry.origin ?? false,
-        supplies: suppliesFromEntry(existingEntry),
-      })
-    }
-  }, [existingEntry, resourceId, form])
+    if (!formSeed || formSeed === lastFormSeed.current) return
+    lastFormSeed.current = formSeed
+    const parsed = JSON.parse(formSeed) as Pick<FormValues, 'onsite' | 'origin' | 'supplies'>
+    form.reset({
+      resourceId: resourceId ?? '',
+      ...parsed,
+    })
+  }, [formSeed, resourceId, form])
 
   const watchResourceId = form.watch('resourceId')
   const watchOnsite = form.watch('onsite')
@@ -161,7 +176,7 @@ export function OutpostResourceForm({
         counts.set(fr.resourceId, (counts.get(fr.resourceId) ?? 0) + 1)
         continue
       }
-      const validLines = getSupplyLines(fr).filter(
+      const validLines = getEnrichedSupplyLines(fr, outpostsWithId).filter(
         s => resolveSourceOutpostId(s, outpostsWithId) != null
       )
       if (validLines.length > 0) {
@@ -459,19 +474,19 @@ export function OutpostResourceForm({
             )}
 
             <div className="-mx-4 border-t" />
-            <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex flex-col gap-3 min-w-0 sm:flex-row sm:items-center sm:justify-between">
               {!watchOnsite && !form.watch('origin') && (
                 <Button
                   type="button"
                   variant="outline"
-                  className={`${SF_CONTROL} w-full sm:w-auto gap-1.5`}
+                  className={`${SF_CONTROL} w-fit shrink-0 gap-1 px-2.5`}
                   onClick={() => append({ fromPlanet: '', fromSystem: '', relayPlanet: '', relaySystem: '' })}
                 >
                   <Plus className="h-4 w-4" />
-                  Add supply source
+                  Source
                 </Button>
               )}
-              <div className={!watchOnsite && !form.watch('origin') ? 'sm:ml-auto' : 'w-full'}>
+              <div className={`min-w-0 ${!watchOnsite && !form.watch('origin') ? 'sm:ml-auto' : 'w-full'}`}>
                 <FormActions
                   saving={saving}
                   saved={saved}

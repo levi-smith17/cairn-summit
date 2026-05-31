@@ -1,6 +1,7 @@
 import type { SfOutpost, SfOutpostResource, SfOutpostSupply, SfResource } from '@cairn/types'
 import {
   type OutpostWithId,
+  enrichSupplyLine,
   getSupplyLines,
   normalizeOutpostResource,
   resolveSourceOutpostId,
@@ -91,7 +92,8 @@ function validateResourceAtOutpost(
   let aggregate: ValidationStatus = 'missing'
   const allMissing: string[] = []
 
-  for (const supply of supplies) {
+  for (const rawSupply of supplies) {
+    const supply = enrichSupplyLine(rawSupply, outposts)
     const lineStatus = validateIncomingSupplyLine(
       resourceId,
       supply,
