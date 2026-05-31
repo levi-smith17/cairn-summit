@@ -1,8 +1,7 @@
 import type { SfOutpost, SfOutpostResource, SfOutpostSupply, SfResource } from '@cairn/types'
 import {
   type OutpostWithId,
-  enrichSupplyLine,
-  getSupplyLines,
+  getIncomingSupplyLines,
   normalizeOutpostResource,
   resolveSourceOutpostId,
 } from './starfield-utils'
@@ -84,16 +83,15 @@ function validateResourceAtOutpost(
     return { resourceId, status: 'satisfied', missingIngredients: [] }
   }
 
-  const supplies = getSupplyLines(fr)
+  const supplies = getIncomingSupplyLines(fr, outposts)
   if (supplies.length === 0) {
     return { resourceId, status: 'missing', missingIngredients: [resourceId] }
   }
 
-  let aggregate: ValidationStatus = 'missing'
+  let aggregate: ValidationStatus = 'satisfied'
   const allMissing: string[] = []
 
-  for (const rawSupply of supplies) {
-    const supply = enrichSupplyLine(rawSupply, outposts)
+  for (const supply of supplies) {
     const lineStatus = validateIncomingSupplyLine(
       resourceId,
       supply,

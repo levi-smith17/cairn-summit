@@ -50,17 +50,43 @@ export function getEnrichedSupplyLines(
   return getSupplyLines(fr).map(s => enrichSupplyLine(s, outposts))
 }
 
+function norm(s: string | null | undefined): string {
+  return (s ?? '').trim()
+}
+
+export function getIncomingSupplyLines(
+  fr: SfOutpostResource,
+  outposts: OutpostWithId[]
+): SfOutpostSupply[] {
+  return getSupplyLines(fr)
+    .map(s => enrichSupplyLine(s, outposts))
+    .filter(isIncomingSupplyLine)
+}
+
 export function resolveSourceOutpostId(
   supply: SfOutpostSupply,
   outposts: OutpostWithId[]
 ): string | null {
-  if (supply.fromOutpostId) return supply.fromOutpostId
-  if (supply.fromPlanet && supply.fromSystem) {
+  const s = enrichSupplyLine(supply, outposts)
+  const planet = norm(s.fromPlanet)
+  const system = norm(s.fromSystem)
+
+  if (planet && system) {
     const match = outposts.find(
-      o => o.planet === supply.fromPlanet && o.system === supply.fromSystem
+      o => norm(o.planet) === planet && norm(o.system) === system
     )
-    return match?.id ?? null
+    if (match) return match.id
   }
+
+  if (s.fromOutpostId && outposts.some(o => o.id === s.fromOutpostId)) {
+    return s.fromOutpostId
+  }
+
+  if (planet) {
+    const matches = outposts.filter(o => norm(o.planet) === planet)
+    if (matches.length === 1) return matches[0].id
+  }
+
   return null
 }
 
@@ -74,18 +100,18 @@ export function countTransferStations(
 ): number {
   let inboundCount = 0
   for (const fr of outpost.resources ?? []) {
-    if (fr.onsite || fr.origin) continue
-    const lines = getSupplyLines(fr).filter(isIncomingSupplyLine)
-    inboundCount += lines.length
+    if (fr.onsite) continue
+    const incomingLines = getIncomingSupplyLines(fr, outposts)
+    if (fr.origin && incomingLines.length === 0) continue
+    inboundCount += incomingLines.length
   }
 
   let outboundCount = 0
   for (const o of outposts) {
     if (o.id === outpost.id) continue
     for (const fr of o.resources ?? []) {
-      if (fr.onsite || fr.origin) continue
-      for (const s of getSupplyLines(fr)) {
-        if (!isIncomingSupplyLine(s)) continue
+      if (fr.onsite) continue
+      for (const s of getIncomingSupplyLines(fr, outposts)) {
         if (resolveSourceOutpostId(s, outposts) === outpost.id) outboundCount++
       }
     }
@@ -103,8 +129,8 @@ export function getShippedOutResourceIds(
   for (const o of outposts) {
     if (o.id === outpostId) continue
     for (const fr of o.resources ?? []) {
-      if (fr.onsite || fr.origin) continue
-      for (const s of getSupplyLines(fr)) {
+      if (fr.onsite) continue
+      for (const s of getIncomingSupplyLines(fr, outposts)) {
         if (resolveSourceOutpostId(s, outposts) === outpostId) {
           ids.add(fr.resourceId)
         }
