@@ -34,6 +34,12 @@ export const handler = async (
                 } else if (!supplies?.length) {
                     supplies = []
                 }
+                supplies = supplies.map((s: any) => ({
+                    fromOutpostId: s.fromOutpostId ?? null,
+                    fromPlanet: s.fromPlanet ?? null,
+                    fromSystem: s.fromSystem ?? null,
+                    relay: s.relay ?? null,
+                }))
                 return {
                     resourceId: r.resourceId,
                     name: r.name,

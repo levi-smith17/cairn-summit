@@ -6,9 +6,9 @@ import type { OutpostValidation, ValidationStatus } from '@/lib/starfield-valida
 import {
   countTransferStations,
   getShippedOutResourceIds,
+  getEnrichedSupplyLines,
   getSupplyLines,
   normalizeOutpostResource,
-  resolveSourceOutpostId,
   type OutpostWithId,
 } from '@/lib/starfield-utils'
 import { SF_ICON_CONTROL } from './constants'
@@ -132,59 +132,62 @@ export const OutpostNode = memo(function OutpostNode({ data }: NodeProps<Outpost
           const rvStatus = rv?.status
           const resourceType = resourceTypeMap.get(fr.resourceId) ?? ''
           const ResourceIcon = RESOURCE_TYPE_ICON[(resourceType ?? '').toLowerCase()] ?? Cuboid
-          const supplies = fr.onsite ? [] : getSupplyLines(fr)
+          const supplies = fr.onsite ? [] : getEnrichedSupplyLines(fr, outpostsWithId)
           const showExportArrow = shippedOutResourceIds.has(fr.resourceId)
 
           return (
-            <div key={fr.resourceId} className="flex flex-col gap-0.5">
-              <div className="group flex items-center gap-1.5">
-                <ResourceIcon
-                  className={`h-3 w-3 shrink-0 ${rvStatus ? STATUS_ICON_COLOR[rvStatus] : 'text-muted-foreground/40'}`}
-                />
-                <span className="font-mono text-[10px] text-muted-foreground shrink-0">
-                  {fr.abbreviation}
-                </span>
-                <span className="text-xs truncate flex-1">{fr.name}</span>
-                <span className="text-[10px] text-muted-foreground shrink-0 font-mono">
-                  {getSourceLabel(fr, rvStatus)}
-                </span>
-                {showExportArrow && (
-                  <MoveRight className="h-2.5 w-2.5 shrink-0 text-orange-400/80" />
-                )}
-                <button
-                  className={`${SF_ICON_CONTROL} inline-flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-[colors,opacity] shrink-0 [@media(hover:hover)]:md:opacity-0 [@media(hover:hover)]:md:group-hover:opacity-100`}
-                  onClick={e => { e.stopPropagation(); onEditResource(fr.resourceId) }}
-                  aria-label="Edit resource"
-                >
-                  <Pencil className="h-3 w-3" />
-                </button>
+            <div
+              key={fr.resourceId}
+              className="group flex gap-1 items-start"
+            >
+              <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <ResourceIcon
+                    className={`h-3 w-3 shrink-0 ${rvStatus ? STATUS_ICON_COLOR[rvStatus] : 'text-muted-foreground/40'}`}
+                  />
+                  <span className="font-mono text-[10px] text-muted-foreground shrink-0">
+                    {fr.abbreviation}
+                  </span>
+                  <span className="text-xs truncate flex-1 min-w-0">{fr.name}</span>
+                  <span className="text-[10px] text-muted-foreground shrink-0 font-mono">
+                    {getSourceLabel(fr, rvStatus)}
+                  </span>
+                  {showExportArrow && (
+                    <MoveRight className="h-2.5 w-2.5 shrink-0 text-orange-400/80" />
+                  )}
+                </div>
+                {supplies.map((supply, idx) => {
+                  const sourcePlanet = supply.fromPlanet
+                  const sourceSystem = supply.fromSystem
+                  if (!sourcePlanet && !supply.relay) return null
+                  return (
+                    <div key={idx} className="flex flex-col gap-0.5">
+                      {supply.relay && (
+                        <div className="pl-3 text-[9px] text-muted-foreground leading-none flex items-center gap-0.5">
+                          <MoveLeft className="h-2 w-2 shrink-0 text-sky-400/80" />
+                          {supply.relay.planet} ({supply.relay.system})
+                        </div>
+                      )}
+                      {sourcePlanet && (
+                        <div className="pl-3 text-[9px] text-muted-foreground leading-none flex items-center gap-0.5">
+                          {supply.relay
+                            ? <CornerLeftUp className="h-2 w-2 shrink-0" />
+                            : <MoveLeft className="h-2 w-2 shrink-0" />
+                          }
+                          {sourcePlanet} ({sourceSystem ?? '?'})
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
-              {supplies.map((supply, idx) => {
-                const sourceId = resolveSourceOutpostId(supply, outpostsWithId)
-                const sourceOutpost = sourceId ? outpostsWithId.find(o => o.id === sourceId) : undefined
-                const sourcePlanet = sourceOutpost?.planet ?? supply.fromPlanet
-                const sourceSystem = sourceOutpost?.system ?? supply.fromSystem
-                if (!sourcePlanet && !supply.relay) return null
-                return (
-                  <div key={idx} className="flex flex-col gap-0.5">
-                    {supply.relay && (
-                      <div className="pl-3 text-[9px] text-muted-foreground leading-none flex items-center gap-0.5">
-                        <MoveLeft className="h-2 w-2 shrink-0 text-sky-400/80" />
-                        {supply.relay.planet} ({supply.relay.system})
-                      </div>
-                    )}
-                    {sourcePlanet && (
-                      <div className="pl-3 text-[9px] text-muted-foreground leading-none flex items-center gap-0.5">
-                        {supply.relay
-                          ? <CornerLeftUp className="h-2 w-2 shrink-0" />
-                          : <MoveLeft className="h-2 w-2 shrink-0" />
-                        }
-                        {sourcePlanet} ({sourceSystem ?? '?'})
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
+              <button
+                className={`${SF_ICON_CONTROL} inline-flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-[colors,opacity] shrink-0 self-start [@media(hover:hover)]:md:opacity-0 [@media(hover:hover)]:md:group-hover:opacity-100`}
+                onClick={e => { e.stopPropagation(); onEditResource(fr.resourceId) }}
+                aria-label="Edit resource"
+              >
+                <Pencil className="h-3 w-3" />
+              </button>
             </div>
           )
         })}
