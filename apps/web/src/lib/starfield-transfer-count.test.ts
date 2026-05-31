@@ -92,8 +92,59 @@ describe('countTransferStations', () => {
     expect(countTransferStations(a, [a, b, c])).toBe(2)
   })
 
-  it('does not count origin entries', () => {
+  it('does not count origin-only entries', () => {
     const a = outpost('a', [res('polymer', { origin: true, supplies: [] })])
     expect(countTransferStations(a, [a])).toBe(0)
+  })
+
+  it('counts inbound when origin is set but Supplied from is present', () => {
+    const a = outpost('a', [res('polymer', { onsite: true })], 'Alpha', 'Sol')
+    const b = outpost('b', [
+      res('polymer', {
+        origin: true,
+        supplies: [{ fromPlanet: 'Alpha', fromSystem: 'Sol', fromOutpostId: 'a' }],
+      }),
+    ], 'Beta', 'Sol')
+    expect(countTransferStations(b, [a, b])).toBe(1)
+    expect(countTransferStations(a, [a, b])).toBe(1)
+  })
+
+  it('resolves outbound with stale fromOutpostId when planet+system match', () => {
+    const a = outpost('a', [res('iron', { onsite: true })], 'Khayyam III-b', 'Khayyam')
+    const b = outpost('b', [
+      res('iron', {
+        supplies: [{
+          fromPlanet: 'Khayyam III-b',
+          fromSystem: 'Khayyam',
+          fromOutpostId: 'stale-id',
+        }],
+      }),
+    ], 'Khayyam II-a', 'Khayyam')
+    expect(countTransferStations(a, [a, b])).toBe(1)
+    expect(countTransferStations(b, [a, b])).toBe(1)
+  })
+
+  it('does not count relay-only rows without Supplied from', () => {
+    const a = outpost('a', [
+      res('polymer', {
+        supplies: [{ relay: { planet: 'Relay', system: 'Sol' } }],
+      }),
+    ])
+    expect(countTransferStations(a, [a])).toBe(0)
+  })
+
+  it('counts one inbound for relay metadata plus valid Supplied from', () => {
+    const src = outpost('a', [res('polymer', { onsite: true })], 'Alpha', 'Sol')
+    const dst = outpost('b', [
+      res('polymer', {
+        supplies: [{
+          fromPlanet: 'Alpha',
+          fromSystem: 'Sol',
+          fromOutpostId: 'a',
+          relay: { planet: 'Relay', system: 'Sol' },
+        }],
+      }),
+    ], 'Beta', 'Sol')
+    expect(countTransferStations(dst, [src, dst])).toBe(1)
   })
 })
