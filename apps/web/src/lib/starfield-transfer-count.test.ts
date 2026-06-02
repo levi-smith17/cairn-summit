@@ -133,7 +133,34 @@ describe('countTransferStations', () => {
     expect(countTransferStations(a, [a])).toBe(0)
   })
 
-  it('counts one inbound for relay metadata plus valid Supplied from', () => {
+  it('attributes outbound to relay outpost when relay is on the network', () => {
+    const src = outpost('heinlein-v', [res('silver', { onsite: true })], 'Heinlein V', 'Heinlein')
+    const relay = outpost('heinlein-ii-a', [], 'Heinlein II-a', 'Heinlein')
+    const consumer = outpost('khayyam-vi-e', [
+      res('silver', {
+        supplies: [
+          {
+            fromPlanet: 'Heinlein V',
+            fromSystem: 'Heinlein',
+            fromOutpostId: 'heinlein-v',
+            relay: { planet: 'Heinlein II-a', system: 'Heinlein' },
+          },
+          {
+            fromPlanet: 'Heinlein V',
+            fromSystem: 'Heinlein',
+            fromOutpostId: 'heinlein-v',
+            relay: { planet: 'Heinlein II-a', system: 'Heinlein' },
+          },
+        ],
+      }),
+    ], 'Khayyam VI-e', 'Khayyam')
+    const network = [src, relay, consumer]
+    expect(countTransferStations(consumer, network)).toBe(2)
+    expect(countTransferStations(relay, network)).toBe(2)
+    expect(countTransferStations(src, network)).toBe(0)
+  })
+
+  it('falls back to source outbound when relay does not match an outpost', () => {
     const src = outpost('a', [res('polymer', { onsite: true })], 'Alpha', 'Sol')
     const dst = outpost('b', [
       res('polymer', {
@@ -145,6 +172,8 @@ describe('countTransferStations', () => {
         }],
       }),
     ], 'Beta', 'Sol')
-    expect(countTransferStations(dst, [src, dst])).toBe(1)
+    const network = [src, dst]
+    expect(countTransferStations(dst, network)).toBe(1)
+    expect(countTransferStations(src, network)).toBe(1)
   })
 })

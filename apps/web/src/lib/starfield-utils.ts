@@ -90,6 +90,41 @@ export function resolveSourceOutpostId(
   return null
 }
 
+/** Resolve the on-diagram relay hop for transfer outbound / export arrows. */
+export function resolveRelayOutpostId(
+  supply: SfOutpostSupply,
+  outposts: OutpostWithId[]
+): string | null {
+  const relay = supply.relay
+  if (!relay) return null
+  const planet = norm(relay.planet)
+  const system = norm(relay.system)
+
+  if (planet && system) {
+    const match = outposts.find(
+      o => norm(o.planet) === planet && norm(o.system) === system
+    )
+    if (match) return match.id
+  }
+
+  if (planet) {
+    const matches = outposts.filter(o => norm(o.planet) === planet)
+    if (matches.length === 1) return matches[0].id
+  }
+
+  return null
+}
+
+/** Outpost that consumes a transfer station for export (relay hop when set, else source). */
+export function resolveTransferOutpostId(
+  supply: SfOutpostSupply,
+  outposts: OutpostWithId[]
+): string | null {
+  const relayId = resolveRelayOutpostId(supply, outposts)
+  if (relayId) return relayId
+  return resolveSourceOutpostId(supply, outposts)
+}
+
 export function isIncomingSupplyLine(supply: SfOutpostSupply): boolean {
   return !!(supply.fromOutpostId || supply.fromPlanet)
 }
@@ -112,7 +147,7 @@ export function countTransferStations(
     for (const fr of o.resources ?? []) {
       if (fr.onsite) continue
       for (const s of getIncomingSupplyLines(fr, outposts)) {
-        if (resolveSourceOutpostId(s, outposts) === outpost.id) outboundCount++
+        if (resolveTransferOutpostId(s, outposts) === outpost.id) outboundCount++
       }
     }
   }
@@ -131,7 +166,7 @@ export function getShippedOutResourceIds(
     for (const fr of o.resources ?? []) {
       if (fr.onsite) continue
       for (const s of getIncomingSupplyLines(fr, outposts)) {
-        if (resolveSourceOutpostId(s, outposts) === outpostId) {
+        if (resolveTransferOutpostId(s, outposts) === outpostId) {
           ids.add(fr.resourceId)
         }
       }

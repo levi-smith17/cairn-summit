@@ -45,16 +45,23 @@ const schema = z.object({
   origin: z.boolean(),
   supplies: z.array(supplySchema),
 }).superRefine((data, ctx) => {
-  if (!data.onsite) {
-    if (data.supplies.length < 1) {
-      ctx.addIssue({ code: 'custom', message: 'At least one supply source is required', path: ['supplies'] })
-    }
-    data.supplies.forEach((s, i) => {
+  if (data.onsite) return
+  if (!data.origin && data.supplies.length < 1) {
+    ctx.addIssue({ code: 'custom', message: 'At least one supply source is required', path: ['supplies'] })
+  }
+  const requireFromPlanet = !data.origin
+  data.supplies.forEach((s, i) => {
+    const hasLine =
+      !!s.fromPlanet?.trim() ||
+      !!s.fromSystem?.trim() ||
+      !!s.relayPlanet?.trim() ||
+      !!s.relaySystem?.trim()
+    if (requireFromPlanet || hasLine) {
       if (!s.fromPlanet?.trim()) {
         ctx.addIssue({ code: 'custom', message: 'Supplied from is required', path: ['supplies', i, 'fromPlanet'] })
       }
-    })
-  }
+    }
+  })
 })
 
 type FormValues = z.infer<typeof schema>
@@ -397,13 +404,15 @@ export function OutpostResourceForm({
                   />
                   <div className="flex-1">
                     <FormLabel htmlFor="origin" className="font-normal cursor-pointer">Supply origin</FormLabel>
-                    <p className="text-xs text-muted-foreground">Marks this as the end of the supply chain. Validation stops here.</p>
+                    <p className="text-xs text-muted-foreground">
+                      Validation treats this resource as satisfied without tracing upstream. Supplied from and relay still apply for transfer counts and display.
+                    </p>
                   </div>
                 </FormItem>
               )} />
             )}
 
-            {!watchOnsite && !form.watch('origin') && (
+            {!watchOnsite && (
               <div className="space-y-4">
                 {fields.map((field, index) => (
                   <div key={field.id} className="space-y-3 rounded-md border border-border/60 p-3">
@@ -475,7 +484,7 @@ export function OutpostResourceForm({
 
             <div className="-mx-4 border-t" />
             <div className="flex flex-col gap-3 min-w-0 sm:flex-row sm:items-center sm:justify-between">
-              {!watchOnsite && !form.watch('origin') && (
+              {!watchOnsite && (
                 <Button
                   type="button"
                   variant="outline"
@@ -486,7 +495,7 @@ export function OutpostResourceForm({
                   Source
                 </Button>
               )}
-              <div className={`min-w-0 ${!watchOnsite && !form.watch('origin') ? 'sm:ml-auto' : 'w-full'}`}>
+              <div className={`min-w-0 ${!watchOnsite ? 'sm:ml-auto' : 'w-full'}`}>
                 <FormActions
                   saving={saving}
                   saved={saved}
