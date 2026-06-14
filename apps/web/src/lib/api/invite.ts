@@ -11,5 +11,15 @@ export interface InviteData {
 export async function getInvite(token: string): Promise<InviteData> {
   const res = await fetch(`${API_BASE}/public/invite/${token}`)
   if (!res.ok) throw new Error('Invite not found')
-  return res.json()
+  const json = await res.json()
+  return json.data ?? json
+}
+
+export async function acceptInvite(token: string, email: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/public/invite/${token}/accept`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  })
+  if (!res.ok) throw new Error('Failed to accept invitation')
 }

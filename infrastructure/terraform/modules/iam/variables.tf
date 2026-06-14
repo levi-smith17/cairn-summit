@@ -1,3 +1,8 @@
+variable "cognito_user_pool_arn" {
+  type    = string
+  default = ""
+}
+
 variable "dynamodb_table_arn" {
   type = string
 }

@@ -80,3 +80,12 @@ export async function toggleWaypointReadLater(id: string, readLater: boolean) {
     if (!res.ok) throw new Error('Failed to update waypoint read-later status')
     return res.json()
 }
+
+export async function fetchWaypointMeta(url: string): Promise<{ title: string | null; favicon: string | null }> {
+    const res = await fetch(`${API_BASE}/waypoints/fetch-meta?url=${encodeURIComponent(url)}`, {
+        headers: await getAuthHeaders(),
+    })
+    if (!res.ok) throw new Error('Failed to fetch page metadata')
+    const json = await res.json()
+    return json.data ?? { title: null, favicon: null }
+}

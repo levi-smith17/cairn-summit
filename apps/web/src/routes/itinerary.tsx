@@ -1,27 +1,32 @@
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/use-auth'
 import { ItineraryClient } from './itinerary/itinerary-client'
-import { getItineraryData } from '@/lib/api/itinerary'
-
-const DEFAULTS = {
-  stops: [],
-  calendars: [],
-}
+import { fetchItineraryEvents, getItineraryCalendars } from '@/lib/api/itinerary'
 
 export default function Itinerary() {
   const { user } = useAuth()
 
-  const { data } = useQuery({
-    queryKey: ['itinerary'],
-    queryFn: getItineraryData,
+  const { data: calendars = [] } = useQuery({
+    queryKey: ['itinerary-calendars'],
+    queryFn: getItineraryCalendars,
     enabled: !!user,
     retry: false,
   })
 
+  const { data: events = [], isLoading: eventsLoading } = useQuery({
+    queryKey: ['itinerary-events'],
+    queryFn: () => fetchItineraryEvents(),
+    enabled: !!user,
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  })
+
   return (
     <ItineraryClient
-      stops={data?.stops ?? DEFAULTS.stops}
-      calendars={data?.calendars ?? DEFAULTS.calendars}
+      stops={[]}
+      calendars={calendars}
+      events={events}
+      eventsLoading={eventsLoading}
     />
   )
 }

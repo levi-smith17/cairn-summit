@@ -1,6 +1,6 @@
 import { formatDistanceToNow } from 'date-fns'
 import {
-  UserPlus, UserMinus, UserCog, Mail, MailX, Eye, EyeOff, Users, Trash2,
+  UserPlus, UserMinus, UserCog, Mail, MailX, Users, Trash2,
 } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import type { ActivityEntry } from '@/lib/api/admin'
@@ -15,8 +15,6 @@ const ACTION_META: Record<string, { label: string; Icon: React.ElementType; colo
   'wayfarer.bulk_deleted': { label: 'Bulk deleted wayfarers', Icon: Trash2,    color: 'text-destructive' },
   'invitation.sent':       { label: 'Sent invitation',        Icon: Mail,      color: 'text-primary' },
   'invitation.revoked':    { label: 'Revoked invitation',     Icon: MailX,     color: 'text-amber-500' },
-  'impersonation.started': { label: 'Started impersonation',  Icon: Eye,       color: 'text-amber-500' },
-  'impersonation.stopped': { label: 'Stopped impersonation',  Icon: EyeOff,    color: 'text-muted-foreground' },
 }
 
 function ActivityRow({ entry }: { entry: ActivityEntry }) {

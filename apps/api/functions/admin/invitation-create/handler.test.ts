@@ -52,6 +52,7 @@ describe('admin/invitation-create handler', () => {
         vi.mocked(dynamo.send)
             .mockResolvedValueOnce({ Item: adminProfile })
             .mockResolvedValueOnce({}) // PutCommand invitation
+            .mockResolvedValueOnce({}) // PutCommand invite lookup
             .mockResolvedValueOnce({}) // PutCommand activity
 
         const result = await handler(mockEvent('admin-123', { email: 'invite@cairn.local', note: 'Welcome!' })) as any
@@ -63,6 +64,7 @@ describe('admin/invitation-create handler', () => {
     it('still returns 201 when activity log fails', async () => {
         vi.mocked(dynamo.send)
             .mockResolvedValueOnce({ Item: adminProfile })
+            .mockResolvedValueOnce({})
             .mockResolvedValueOnce({})
             .mockRejectedValueOnce(new Error('log failed'))
 

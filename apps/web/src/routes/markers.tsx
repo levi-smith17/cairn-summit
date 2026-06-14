@@ -17,12 +17,12 @@ export default function Markers() {
         enabled: !!user
     })
 
-    const markers = (data ?? []).map(m => ({
+    const markers = (data ?? []).map((m: Marker & { waypointCount?: number }) => ({
         id: extractId(m.sk),
         name: m.name,
         color: m.color,
         icon: m.icon ?? null,
-        _count: { waypoints: 0 },
+        _count: { waypoints: m.waypointCount ?? 0 },
     }))
 
     if (isLoading) return <PageSkeleton title={terms.markers} hasFilterBar />

@@ -51,7 +51,9 @@ describe('markers/get handler', () => {
     })
 
     it('returns empty array when user has no markers', async () => {
-        vi.mocked(dynamo.send).mockImplementationOnce(() => Promise.resolve({ Items: [] }))
+        vi.mocked(dynamo.send)
+            .mockResolvedValueOnce({ Items: [] })
+            .mockResolvedValueOnce({ Items: [] })
 
         const result = await handler(mockEvent('user-123')) as any
         expect(result.statusCode).toBe(200)
@@ -68,19 +70,28 @@ describe('markers/get handler', () => {
                 createdAt: '2026-01-01T00:00:00.000Z',
             },
         ]
-        vi.mocked(dynamo.send).mockImplementationOnce(() => Promise.resolve({ Items: markers }))
+        vi.mocked(dynamo.send)
+            .mockResolvedValueOnce({ Items: markers })
+            .mockResolvedValueOnce({ Items: [
+                { sk: 'WAYPOINT#w1', markers: [{ markerId: 'abc' }] },
+            ]})
 
         const result = await handler(mockEvent('user-123')) as any
         expect(result.statusCode).toBe(200)
-        expect(JSON.parse(result.body).data).toEqual(markers)
+        const data = JSON.parse(result.body).data
+        expect(data[0].waypointCount).toBe(1)
     })
 
     it('queries with correct pk and sk prefix', async () => {
-        vi.mocked(dynamo.send).mockImplementationOnce(() => Promise.resolve({ Items: [] }))
+        vi.mocked(dynamo.send)
+            .mockResolvedValueOnce({ Items: [] })
+            .mockResolvedValueOnce({ Items: [] })
 
         await handler(mockEvent('user-456'))
 
-        expect(dynamo.send).toHaveBeenCalledWith(
+        expect(dynamo.send).toHaveBeenCalledTimes(2)
+        expect(dynamo.send).toHaveBeenNthCalledWith(
+            1,
             expect.objectContaining({
                 input: expect.objectContaining({
                     ExpressionAttributeValues: {
@@ -93,7 +104,7 @@ describe('markers/get handler', () => {
     })
 
     it('returns 500 when DynamoDB throws', async () => {
-        vi.mocked(dynamo.send).mockImplementationOnce(() => Promise.reject(new Error('DynamoDB error')))
+        vi.mocked(dynamo.send).mockRejectedValueOnce(new Error('DynamoDB error'))
 
         const result = await handler(mockEvent('user-123')) as any
         expect(result.statusCode).toBe(500)

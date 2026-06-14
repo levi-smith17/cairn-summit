@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button'
 import { MarkerPicker } from '@/components/ui/marker-picker'
 import { FormActions } from '@/components/forms/form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
-import { createWaypoint, updateWaypoint, deleteWaypoint } from '@/lib/api/waypoints'
+import { createWaypoint, updateWaypoint, deleteWaypoint, fetchWaypointMeta } from '@/lib/api/waypoints'
 import { createTrail } from '@/lib/api/trails'
 import { createMarker } from '@/lib/api/markers'
 import { toast } from 'sonner'
@@ -67,7 +67,6 @@ export function WaypointForm({ waypoint, folders, tags, defaultTrailId, onBack, 
   const queryClient = useQueryClient()
   const { terms } = useTerminology()
   const { saving, saved, error, handleSubmit } = useFormStatus()
-  const API_BASE = import.meta.env.VITE_API_URL
   const [fetching, setFetching] = useState(false)
   const [favicon, setFavicon] = useState<string | null>(waypoint?.favicon ?? null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -109,8 +108,7 @@ export function WaypointForm({ waypoint, folders, tags, defaultTrailId, onBack, 
     if (!url) return
     try {
       setFetching(true)
-      const res = await fetch(`${API_BASE}/waypoints/fetch-meta?url=${encodeURIComponent(url)}`)
-      const data = await res.json()
+      const data = await fetchWaypointMeta(url)
       if (data.title) form.setValue('title', data.title)
       if (data.favicon) setFavicon(data.favicon)
     } catch {

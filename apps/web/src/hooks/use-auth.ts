@@ -2,36 +2,16 @@ import {
     AuthenticationDetails,
     CognitoUser,
     CognitoUserAttribute,
-    CognitoUserPool,
     CognitoUserSession,
 } from 'amazon-cognito-identity-js'
-import { useEffect, useState } from 'react'
+import { type AuthUser, pool, sessionToUser } from '@/lib/cognito'
 
-export interface AuthUser {
-    id: string
-    email: string
-    name?: string
-    image?: string
-}
+export type { AuthUser } from '@/lib/cognito'
+export { useAuth } from '@/contexts/auth-context'
 
 export type SignInResult =
     | { type: 'success'; user: AuthUser }
     | { type: 'newPasswordRequired'; cognitoUser: CognitoUser }
-
-export const pool = new CognitoUserPool({
-    ClientId: import.meta.env.VITE_COGNITO_CLIENT_ID,
-    UserPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID,
-})
-
-function sessionToUser(session: CognitoUserSession, cognitoUser: CognitoUser): AuthUser {
-    const payload = session.getIdToken().decodePayload()
-    return {
-        id: payload.sub,
-        email: payload.email,
-        name: payload.name ?? undefined,
-        image: payload.picture ?? undefined,
-    }
-}
 
 export function getAuthError(err: unknown): string {
     if (err && typeof err === 'object' && 'code' in err) {
@@ -62,35 +42,6 @@ export function getAuthError(err: unknown): string {
         return err.message || 'Something went wrong. Please try again.'
     }
     return 'Something went wrong. Please try again.'
-}
-
-export function useAuth() {
-    const [user, setUser] = useState<AuthUser | null>(null)
-    const [loading, setLoading] = useState(true)
-
-    useEffect(() => {
-        const cognitoUser = pool.getCurrentUser()
-        if (!cognitoUser) {
-            setLoading(false)
-            return
-        }
-        cognitoUser.getSession((err: Error | null, session: CognitoUserSession | null) => {
-            if (err || !session?.isValid()) {
-                setLoading(false)
-                return
-            }
-            setUser(sessionToUser(session, cognitoUser))
-            setLoading(false)
-        })
-    }, [])
-
-    function signOut() {
-        const cognitoUser = pool.getCurrentUser()
-        cognitoUser?.signOut()
-        setUser(null)
-    }
-
-    return { user, loading, signOut }
 }
 
 export function signIn(email: string, password: string): Promise<SignInResult> {

@@ -11,7 +11,6 @@ const handler = async (event) => {
         if (!id)
             return (0, response_1.toApiGatewayResponse)((0, response_1.badRequest)('Missing signal id'));
         const pk = (0, auth_1.getPk)(event);
-        // Query the signal + all its replies (all share the SIGNAL#<id> prefix)
         const result = await db_1.dynamo.send(new lib_dynamodb_1.QueryCommand({
             TableName: db_1.TABLE_NAME,
             KeyConditionExpression: 'pk = :pk AND begins_with(sk, :prefix)',
@@ -23,17 +22,9 @@ const handler = async (event) => {
         const items = result.Items ?? [];
         if (items.length === 0)
             return (0, response_1.toApiGatewayResponse)((0, response_1.noContent)());
-        // BatchWrite supports 25 items per call
-        const chunks = [];
-        for (let i = 0; i < items.length; i += 25) {
-            chunks.push(items.slice(i, i + 25));
-        }
-        await Promise.all(chunks.map(chunk => db_1.dynamo.send(new lib_dynamodb_1.BatchWriteCommand({
-            RequestItems: {
-                [db_1.TABLE_NAME]: chunk.map(item => ({
-                    DeleteRequest: { Key: { pk, sk: item.sk } },
-                })),
-            },
+        await Promise.all(items.map(item => db_1.dynamo.send(new lib_dynamodb_1.DeleteCommand({
+            TableName: db_1.TABLE_NAME,
+            Key: { pk, sk: item.sk },
         }))));
         return (0, response_1.toApiGatewayResponse)((0, response_1.noContent)());
     }

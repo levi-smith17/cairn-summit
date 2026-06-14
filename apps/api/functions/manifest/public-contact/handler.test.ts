@@ -6,13 +6,13 @@ vi.mock('../../shared/db', () => ({
     TABLE_NAME: 'cairn-test',
 }))
 
-vi.mock('@aws-sdk/client-sesv2', () => ({
-    SESv2Client: class { send = vi.fn().mockResolvedValue({}) },
-    SendEmailCommand: vi.fn(),
+vi.mock('../../shared/signals', () => ({
+    createContactSignal: vi.fn(),
 }))
 
 import { handler } from './handler'
 import { dynamo } from '../../shared/db'
+import { createContactSignal } from '../../shared/signals'
 
 const mockEvent = (username: string | undefined, body: object): APIGatewayProxyEventV2 => ({
     requestContext: {
@@ -31,12 +31,6 @@ const mockEvent = (username: string | undefined, body: object): APIGatewayProxyE
 })
 
 const validBody = { senderName: 'Alice', senderEmail: 'alice@example.com', body: 'Hello there!' }
-const mockProfile = { pk: 'USER#user-123', sk: 'PROFILE', username: 'levi', email: 'levi@example.com' }
-
-// DynamoDB call order for happy path:
-// 1. GetItem — rate limit check (returns {} = no existing record)
-// 2. ScanCommand — profile lookup
-// 3. PutItem — write rate-limit record
 
 describe('manifest/public-contact handler', () => {
     beforeEach(() => vi.clearAllMocks())
@@ -63,31 +57,41 @@ describe('manifest/public-contact handler', () => {
     })
 
     it('returns 404 when user is not found', async () => {
-        vi.mocked(dynamo.send)
-            .mockResolvedValueOnce({})               // GetItem — no rate limit
-            .mockResolvedValueOnce({ Items: [] })    // Scan — no profile
+        vi.mocked(dynamo.send).mockResolvedValueOnce({})
+        vi.mocked(createContactSignal).mockResolvedValueOnce(null)
 
         const result = await handler(mockEvent('unknown', validBody)) as any
         expect(result.statusCode).toBe(404)
         expect(JSON.parse(result.body).error).toBe('User not found')
     })
 
-    it('returns 201 with success on valid contact', async () => {
+    it('returns 201 with signal id and thread url', async () => {
         vi.mocked(dynamo.send)
-            .mockResolvedValueOnce({})                            // GetItem — no rate limit
-            .mockResolvedValueOnce({ Items: [mockProfile] })     // Scan — found profile
-            .mockResolvedValue({})                                // PutItem
+            .mockResolvedValueOnce({})
+            .mockResolvedValueOnce({})
+        vi.mocked(createContactSignal).mockResolvedValueOnce({
+            id: 'sig-1',
+            token: 'tok',
+            threadUrl: 'https://dev.cairn.ing/thread/tok',
+        })
 
         const result = await handler(mockEvent('levi', validBody)) as any
         expect(result.statusCode).toBe(201)
-        expect(JSON.parse(result.body).data).toEqual({ success: true })
+        expect(JSON.parse(result.body).data).toEqual({
+            id: 'sig-1',
+            threadUrl: 'https://dev.cairn.ing/thread/tok',
+        })
     })
 
     it('writes a rate-limit record keyed by sender email', async () => {
         vi.mocked(dynamo.send)
             .mockResolvedValueOnce({})
-            .mockResolvedValueOnce({ Items: [mockProfile] })
-            .mockResolvedValue({})
+            .mockResolvedValueOnce({})
+        vi.mocked(createContactSignal).mockResolvedValueOnce({
+            id: 'sig-1',
+            token: 'tok',
+            threadUrl: 'https://dev.cairn.ing/thread/tok',
+        })
 
         await handler(mockEvent('levi', validBody))
 

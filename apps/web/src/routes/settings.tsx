@@ -27,11 +27,6 @@ const DEFAULTS = {
     defaultLandingPage: '/basecamp',
     dateFormat: 'MDY' as const,
   },
-  notificationSettings: {
-    browserNotifications: false,
-    notificationSound: true,
-    emailDigest: 'NEVER' as const,
-  },
   privacySettings: {
     manifestVisibility: 'PUBLIC' as const,
     contactFormEnabled: true,

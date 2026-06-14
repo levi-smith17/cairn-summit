@@ -2,32 +2,41 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/use-auth'
 import { getAdminData } from '@/lib/api/admin'
+import { getProfile } from '@/lib/api/profile'
 import { AdminClient } from './admin/admin-client'
+import { PageSkeleton } from '@/components/ui/page-skeleton'
 
 export default function Admin() {
-  const { user } = useAuth()
+  const { user, loading } = useAuth()
   const queryClient = useQueryClient()
 
-  const { data, isError } = useQuery({
+  const { data: profile, isLoading: profileLoading } = useQuery({
+    queryKey: ['profile'],
+    queryFn: getProfile,
+    enabled: !!user,
+  })
+
+  const { data, isError, isLoading } = useQuery({
     queryKey: ['admin'],
     queryFn: getAdminData,
-    enabled: !!user,
+    enabled: !!user && !!profile?.isAdmin,
     retry: false,
   })
 
-  if (isError) return (
-    <AdminClient
-      wayfarers={[]}
-      summary={{ total: 0, newThisMonth: 0, admins: 0, unlisted: 0 }}
-      currentUserId={user?.id ?? ''}
-      invitations={[]}
-      activities={[]}
-      onRefresh={onRefresh}
-    />
-  )
-
   function onRefresh() {
     queryClient.invalidateQueries({ queryKey: ['admin'] })
+  }
+
+  if (loading || profileLoading) {
+    return <PageSkeleton title="Admin" />
+  }
+
+  if (!user || !profile?.isAdmin || isError) {
+    return <Navigate to="/" replace />
+  }
+
+  if (isLoading) {
+    return <PageSkeleton title="Admin" />
   }
 
   const wayfarers = data?.wayfarers ?? []
@@ -45,7 +54,7 @@ export default function Admin() {
     <AdminClient
       wayfarers={wayfarers}
       summary={summary}
-      currentUserId={user?.id ?? ''}
+      currentUserId={user.id}
       invitations={data?.invitations ?? []}
       activities={data?.activities ?? []}
       onRefresh={onRefresh}

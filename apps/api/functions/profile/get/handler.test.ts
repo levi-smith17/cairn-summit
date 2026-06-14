@@ -41,19 +41,19 @@ describe('profile/get handler', () => {
         vi.mocked(dynamo.send)
             .mockResolvedValueOnce({ Item: undefined }) // GetItem
             .mockResolvedValueOnce({ Count: 0 })        // signal count
-            .mockResolvedValueOnce({ Count: 0 })        // stop count
+            .mockResolvedValueOnce({ Count: 0 })        // calendar count
 
         const result = await handler(mockEvent()) as any
         expect(result.statusCode).toBe(404)
     })
 
-    it('returns profile with signal and stop counts', async () => {
+    it('returns profile with unread signal and calendar counts', async () => {
         vi.mocked(dynamo.send)
             .mockResolvedValueOnce({ Item: mockProfile })
             .mockResolvedValueOnce({ Items: [
-                    { sk: 'SIGNAL#s1' },
-                    { sk: 'SIGNAL#s2' },
-                    { sk: 'SIGNAL#s3' },
+                    { sk: 'SIGNAL#s1', read: false },
+                    { sk: 'SIGNAL#s2', read: true },
+                    { sk: 'SIGNAL#s3', read: false },
                 ]})
             .mockResolvedValueOnce({ Count: 7 })
 
@@ -62,7 +62,7 @@ describe('profile/get handler', () => {
         const data = JSON.parse(result.body).data
         expect(data.username).toBe('levi')
         expect(data.email).toBe('levi@example.com')
-        expect(data.signals).toBe(3)
+        expect(data.signals).toBe(2)
         expect(data.itinerary).toBe(7)
         expect(data.isAdmin).toBe(false)
     })

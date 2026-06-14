@@ -44,21 +44,25 @@ describe('admin/invitation-delete handler', () => {
     it('deletes the invitation and returns 204', async () => {
         vi.mocked(dynamo.send)
             .mockResolvedValueOnce({ Item: adminProfile })
-            .mockResolvedValueOnce({}) // DeleteCommand
+            .mockResolvedValueOnce({ Item: { token: 'tok-1' } })
+            .mockResolvedValueOnce({})
+            .mockResolvedValueOnce({})
 
         const result = await handler(mockEvent('admin-123', 'inv-1')) as any
         expect(result.statusCode).toBe(204)
-        expect(dynamo.send).toHaveBeenCalledTimes(2)
+        expect(dynamo.send).toHaveBeenCalledTimes(4)
     })
 
     it('deletes using correct pk and sk', async () => {
         vi.mocked(dynamo.send)
             .mockResolvedValueOnce({ Item: adminProfile })
+            .mockResolvedValueOnce({ Item: { token: 'tok-abc' } })
+            .mockResolvedValueOnce({})
             .mockResolvedValueOnce({})
 
         await handler(mockEvent('admin-123', 'inv-abc'))
 
-        expect(dynamo.send).toHaveBeenLastCalledWith(
+        expect(dynamo.send).toHaveBeenCalledWith(
             expect.objectContaining({
                 input: expect.objectContaining({
                     Key: { pk: 'ADMIN', sk: 'INVITATION#inv-abc' },

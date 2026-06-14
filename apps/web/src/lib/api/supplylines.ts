@@ -135,3 +135,57 @@ export async function getSupplylinesSummary(month: number, year: number): Promis
   const json = await res.json()
   return json.data
 }
+
+export interface BurnQueryParams {
+  month: number
+  year: number
+  page?: number
+  search?: string
+  markerId?: string
+}
+
+export async function getBurnPage(params: BurnQueryParams): Promise<{
+  burn: any[]
+  total: number
+  pageSize: number
+}> {
+  const qs = new URLSearchParams({
+    month: String(params.month),
+    year: String(params.year),
+    page: String(params.page ?? 1),
+  })
+  if (params.search) qs.set('search', params.search)
+  if (params.markerId) qs.set('markerId', params.markerId)
+
+  const res = await fetch(`${API_BASE}/burn?${qs}`, {
+    headers: await getAuthHeaders(),
+  })
+  if (!res.ok) throw new Error('Failed to fetch burn')
+  const json = await res.json()
+  return {
+    burn: json.data?.burn ?? [],
+    total: json.data?.total ?? 0,
+    pageSize: json.data?.pageSize ?? 20,
+  }
+}
+
+export interface SupplylineQueryParams {
+  search?: string
+  markerId?: string
+  active?: string
+}
+
+export async function getSupplylinesFiltered(params: SupplylineQueryParams = {}): Promise<any[]> {
+  const qs = new URLSearchParams()
+  if (params.search) qs.set('search', params.search)
+  if (params.markerId) qs.set('markerId', params.markerId)
+  if (params.active) qs.set('active', params.active)
+
+  const query = qs.toString()
+  const res = await fetch(`${API_BASE}/supplylines${query ? `?${query}` : ''}`, {
+    headers: await getAuthHeaders(),
+  })
+  if (!res.ok) throw new Error('Failed to fetch supplylines')
+  const json = await res.json()
+  return json.data ?? []
+}

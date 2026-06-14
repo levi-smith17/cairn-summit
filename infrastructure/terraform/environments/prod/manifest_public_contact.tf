@@ -78,6 +78,7 @@ resource "aws_lambda_function" "manifest_public_contact" {
       NODE_ENV              = var.environment
       SES_CONFIGURATION_SET = var.ses_configuration_set_name
       SES_FROM_EMAIL        = var.ses_from_email
+      WEB_URL               = "https://${var.domain}"
     }
   }
 

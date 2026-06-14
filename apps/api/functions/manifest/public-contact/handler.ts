@@ -1,10 +1,9 @@
-import { GetCommand, PutCommand, ScanCommand } from '@aws-sdk/lib-dynamodb'
-import { SESv2Client, SendEmailCommand } from '@aws-sdk/client-sesv2'
+import { GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb'
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda'
 import { dynamo, TABLE_NAME } from '../../shared/db'
+import { createContactSignal } from '../../shared/signals'
 import { toApiGatewayResponse, created, badRequest, notFound, tooManyRequests, serverError } from '../../shared/response'
 
-const ses = new SESv2Client({})
 const RATE_LIMIT_TTL_SECONDS = 3600
 
 export const handler = async (
@@ -20,48 +19,31 @@ export const handler = async (
             return toApiGatewayResponse(badRequest('senderName, senderEmail, and body are required'))
         }
 
-        // Rate limit: one contact per sender email per hour
         const rateLimit = await dynamo.send(new GetCommand({
             TableName: TABLE_NAME,
             Key: { pk: `RATELIMIT#${senderEmail}`, sk: 'CHECK' },
         }))
         if (rateLimit.Item) return toApiGatewayResponse(tooManyRequests('Please wait before sending another message'))
 
-        // Scan is acceptable — low-frequency public endpoint, small table
-        const scan = await dynamo.send(new ScanCommand({
-            TableName: TABLE_NAME,
-            FilterExpression: 'sk = :sk AND username = :username',
-            ExpressionAttributeValues: { ':sk': 'PROFILE', ':username': username },
-        }))
-
-        const profile = scan.Items?.[0]
-        if (!profile) return toApiGatewayResponse(notFound('User not found'))
-
-        // Write rate-limit record before sending to prevent double-sends on retry
         const ttl = Math.floor(Date.now() / 1000) + RATE_LIMIT_TTL_SECONDS
         await dynamo.send(new PutCommand({
             TableName: TABLE_NAME,
             Item: { pk: `RATELIMIT#${senderEmail}`, sk: 'CHECK', ttl },
         }))
 
-        await ses.send(new SendEmailCommand({
-            FromEmailAddress: process.env.SES_FROM_EMAIL,
-            Destination: { ToAddresses: [profile.email as string] },
-            ConfigurationSetName: process.env.SES_CONFIGURATION_SET,
-            Content: {
-                Simple: {
-                    Subject: { Data: 'New message on Cairn', Charset: 'UTF-8' },
-                    Body: {
-                        Text: {
-                            Data: `You have a new message from ${senderName} (${senderEmail}):\n\n${message}`,
-                            Charset: 'UTF-8',
-                        },
-                    },
-                },
-            },
-        }))
+        const result = await createContactSignal({
+            username,
+            senderName,
+            senderEmail,
+            body: message,
+        })
 
-        return toApiGatewayResponse(created({ success: true }))
+        if (!result) return toApiGatewayResponse(notFound('User not found'))
+
+        return toApiGatewayResponse(created({
+            id: result.id,
+            threadUrl: result.threadUrl,
+        }))
     } catch (err) {
         console.error(err)
         return toApiGatewayResponse(serverError())

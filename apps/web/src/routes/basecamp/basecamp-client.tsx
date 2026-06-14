@@ -47,6 +47,16 @@ interface SnapshotData {
   itinerarySummary: {
     stops: { id: string; title: string; startDate: Date | string; endDate: Date | string | null; allDay: boolean; color: string }[]
   }
+  signalsSummary: {
+    unreadCount: number
+    latestMessages: {
+      id: string
+      senderName: string
+      body: string
+      createdAt: string
+      read: boolean
+    }[]
+  }
 }
 
 interface BasecampClientProps {

@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { AuthLayout } from '@/routes/auth/auth-layout'
 
 export default function LoginPage() {
-    const { user, loading } = useAuth()
+    const { user, loading, setUser } = useAuth()
     const navigate = useNavigate()
     const [searchParams] = useSearchParams()
 
@@ -38,13 +38,15 @@ export default function LoginPage() {
                     setPending(false)
                     return
                 }
-                await completeNewPassword(challenge, newPassword)
+                const authUser = await completeNewPassword(challenge, newPassword)
+                setUser(authUser)
                 navigate('/')
             } else {
                 const result = await signIn(email, password)
                 if (result.type === 'newPasswordRequired') {
                     setChallenge(result.cognitoUser)
                 } else {
+                    setUser(result.user)
                     navigate('/')
                 }
             }

@@ -25,7 +25,8 @@ export interface ThreadData {
 export async function getThread(token: string): Promise<ThreadData> {
   const res = await fetch(`${API_BASE}/public/thread/${token}`)
   if (!res.ok) throw new Error('Thread not found')
-  return res.json()
+  const json = await res.json()
+  return json.data ?? json
 }
 
 export async function sendThreadReply(

@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { CalendarDays, ChevronRight, Lock } from 'lucide-react'
 import { useTerminology } from '@/contexts/terminology-context'
+import { fetchExternalCalendarEvents } from '@/lib/api/basecamp'
 
 interface CairnStop {
   id: string
@@ -15,8 +16,8 @@ interface CairnStop {
 interface ExternalEvent {
   uid: string
   title: string
-  startDate: Date
-  endDate: Date | null
+  startDate: string
+  endDate: string | null
   allDay: boolean
   color: string
   readonly: boolean
@@ -62,7 +63,7 @@ function eventsForDay(cairnStops: CairnStop[], externalEvents: ExternalEvent[], 
     .map(e => ({
       key: e.uid,
       title: e.title,
-      startDate: e.startDate,
+      startDate: new Date(e.startDate),
       allDay: e.allDay,
       color: e.color,
       readonly: e.readonly,
@@ -80,9 +81,30 @@ function formatStopTime(date: Date, allDay: boolean) {
   return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
 }
 
+function upcomingWindow() {
+  const from = new Date()
+  from.setHours(0, 0, 0, 0)
+  const to = new Date(from)
+  to.setDate(to.getDate() + 4)
+  to.setHours(23, 59, 59, 999)
+  return { from, to }
+}
+
 export function ItinerarySnapshotPanel({ stops }: ItinerarySnapshotPanelProps) {
   const { terms } = useTerminology()
-  const [externalEvents] = useState<ExternalEvent[]>([])
+  const { from, to } = upcomingWindow()
+
+  const { data: externalEvents = [] } = useQuery({
+    queryKey: ['itinerary-events', 'basecamp-snapshot', from.toISOString()],
+    queryFn: async () => {
+      const events = await fetchExternalCalendarEvents()
+      return events.filter(e => {
+        const start = new Date(e.startDate)
+        return start >= from && start <= to
+      })
+    },
+    staleTime: 5 * 60 * 1000,
+  })
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -120,7 +142,7 @@ export function ItinerarySnapshotPanel({ stops }: ItinerarySnapshotPanelProps) {
 
       {!hasAny ? (
         <p className="text-xs text-muted-foreground px-4 py-3">
-          No {terms.stops.toLowerCase()} in the next 4 days.
+          No events in the next 4 days.
         </p>
       ) : (
         <div className="divide-y overflow-y-auto h-64">

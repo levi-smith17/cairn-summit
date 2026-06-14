@@ -13,7 +13,6 @@ const handler = async (event) => {
         const body = JSON.parse(event.body ?? '{}');
         if (!body.body)
             return (0, response_1.toApiGatewayResponse)((0, response_1.badRequest)('body is required'));
-        // Resolve token
         const tokenItem = await db_1.dynamo.send(new lib_dynamodb_1.GetCommand({
             TableName: db_1.TABLE_NAME,
             Key: { pk: 'TOKEN', sk: token },

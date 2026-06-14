@@ -11,6 +11,7 @@ export default function SignupPage() {
     const [searchParams] = useSearchParams()
 
     const prefillEmail = searchParams.get('email') ?? ''
+    const inviteToken = searchParams.get('invite') ?? ''
 
     const [email, setEmail] = useState(prefillEmail)
     const [password, setPassword] = useState('')
@@ -30,7 +31,8 @@ export default function SignupPage() {
         setPending(true)
         try {
             await signUp(email, password)
-            navigate(`/verify-email?email=${encodeURIComponent(email)}`)
+            const inviteQs = inviteToken ? `&invite=${encodeURIComponent(inviteToken)}` : ''
+            navigate(`/verify-email?email=${encodeURIComponent(email)}${inviteQs}`)
         } catch (err: unknown) {
             setError(getAuthError(err))
         } finally {

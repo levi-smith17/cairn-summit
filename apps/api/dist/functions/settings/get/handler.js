@@ -38,9 +38,10 @@ const DEFAULT_SETTINGS = {
         messagesPerPage: 25,
         autoMarkRead: true,
         autoRefreshInterval: 15,
-        defaultView: 'SIGNALS',
         compactView: false,
         showSnippets: true,
+        browserNotifications: false,
+        notificationSound: true,
     },
 };
 const handler = async (event) => {

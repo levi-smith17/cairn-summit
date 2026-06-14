@@ -129,7 +129,7 @@ jobs:
     uses: ./.github/workflows/deploy-lambda.yml
     with:
       environment: dev
-      functions: basecamp/get basecamp/sidebar basecamp/trail-waypoints
+      functions: basecamp/get basecamp/sidebar basecamp/trail-waypoints search/get
     secrets:
       aws_role_arn: ${{ secrets.DEV_AWS_ROLE_ARN }}
       aws_region: ${{ secrets.AWS_REGION }}
@@ -162,7 +162,7 @@ jobs:
     uses: ./.github/workflows/deploy-lambda.yml
     with:
       environment: dev
-      functions: guides/get guides/create guides/update guides/delete guides/stones-get guides/stones-create guides/stones-update guides/stones-delete guides/stones-import guides/stones-placement-update guides/placements-reset
+      functions: guides/get guides/get-one guides/create guides/update guides/delete guides/stones-get guides/stones-create guides/stones-update guides/stones-delete guides/stones-import guides/stones-placement-update guides/placements-reset
     secrets:
       aws_role_arn: ${{ secrets.DEV_AWS_ROLE_ARN }}
       aws_region: ${{ secrets.AWS_REGION }}
@@ -178,13 +178,24 @@ jobs:
       aws_role_arn: ${{ secrets.DEV_AWS_ROLE_ARN }}
       aws_region: ${{ secrets.AWS_REGION }}
 
+  deploy-lambda-invite:
+    name: Deploy Lambda — Invite
+    needs: [build-lambda, terraform-apply]
+    uses: ./.github/workflows/deploy-lambda.yml
+    with:
+      environment: dev
+      functions: invite/public-get invite/public-accept
+    secrets:
+      aws_role_arn: ${{ secrets.DEV_AWS_ROLE_ARN }}
+      aws_region: ${{ secrets.AWS_REGION }}
+
   deploy-lambda-itinerary:
     name: Deploy Lambda — Itinerary
     needs: [build-lambda, terraform-apply]
     uses: ./.github/workflows/deploy-lambda.yml
     with:
       environment: dev
-      functions: itinerary/calendars-create itinerary/calendars-delete itinerary/calendars-update itinerary/subscriptions-create itinerary/subscriptions-delete itinerary/subscriptions-update
+      functions: itinerary/events-get itinerary/calendars-create itinerary/calendars-delete itinerary/calendars-update itinerary/subscriptions-create itinerary/subscriptions-delete itinerary/subscriptions-update
     secrets:
       aws_role_arn: ${{ secrets.DEV_AWS_ROLE_ARN }}
       aws_region: ${{ secrets.AWS_REGION }}
@@ -206,7 +217,7 @@ jobs:
     uses: ./.github/workflows/deploy-lambda.yml
     with:
       environment: dev
-      functions: manifest/companions-create manifest/companions-delete manifest/companions-media-delete manifest/companions-media-upload manifest/companions-update manifest/expeditions-create manifest/expeditions-delete manifest/expeditions-update manifest/gear-create manifest/gear-delete manifest/gear-update manifest/get manifest/landmarks-create manifest/landmarks-delete manifest/landmarks-update manifest/origins-update manifest/pathfinding-create manifest/pathfinding-delete manifest/pathfinding-update manifest/public-contact manifest/public-contact-get manifest/public-get manifest/public-journey manifest/summits-create manifest/summits-delete manifest/summits-update manifest/training-create manifest/training-delete manifest/training-update
+      functions: manifest/companions-create manifest/companions-delete manifest/companions-media-delete manifest/companions-media-upload manifest/companions-update manifest/domain-lookup manifest/expeditions-create manifest/expeditions-delete manifest/expeditions-update manifest/gear-create manifest/gear-delete manifest/gear-update manifest/get manifest/landmarks-create manifest/landmarks-delete manifest/landmarks-update manifest/origins-update manifest/pathfinding-create manifest/pathfinding-delete manifest/pathfinding-update manifest/public-contact manifest/public-contact-get manifest/public-get manifest/public-journey manifest/summits-create manifest/summits-delete manifest/summits-update manifest/training-create manifest/training-delete manifest/training-update
     secrets:
       aws_role_arn: ${{ secrets.DEV_AWS_ROLE_ARN }}
       aws_region: ${{ secrets.AWS_REGION }}
@@ -250,7 +261,18 @@ jobs:
     uses: ./.github/workflows/deploy-lambda.yml
     with:
       environment: dev
-      functions: settings/delete-account settings/get settings/update
+      functions: settings/delete-account settings/get settings/update privacy/contact
+    secrets:
+      aws_role_arn: ${{ secrets.DEV_AWS_ROLE_ARN }}
+      aws_region: ${{ secrets.AWS_REGION }}
+
+  deploy-lambda-signals:
+    name: Deploy Lambda — Signals
+    needs: [build-lambda, terraform-apply]
+    uses: ./.github/workflows/deploy-lambda.yml
+    with:
+      environment: dev
+      functions: signals/get signals/reply signals/delete signals/mark-read signals/public-thread-get signals/public-thread-reply
     secrets:
       aws_role_arn: ${{ secrets.DEV_AWS_ROLE_ARN }}
       aws_region: ${{ secrets.AWS_REGION }}
@@ -329,6 +351,7 @@ jobs:
           VITE_COGNITO_USER_POOL_ID: ${{ secrets.DEV_COGNITO_USER_POOL_ID }}
           VITE_COGNITO_CLIENT_ID: ${{ secrets.DEV_COGNITO_CLIENT_ID }}
           VITE_AWS_REGION: ${{ secrets.AWS_REGION }}
+          VITE_CLOUDFRONT_PUBLIC_MEDIA_URL: ${{ secrets.DEV_CLOUDFRONT_PUBLIC_MEDIA_URL }}
           VITE_APP_ENV: dev
         run: npm run build
 

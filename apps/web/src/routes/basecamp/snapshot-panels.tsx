@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { User, BookOpen, CreditCard, Mail, ChevronRight, MapPin, Globe, Link2, GitBranch } from 'lucide-react'
 import { useTerminology } from '@/contexts/terminology-context'
 import { ItinerarySnapshotPanel } from './itinerary-snapshot-panel'
+import { SignalsSnapshotPanel } from './signals-snapshot-panel'
 import { Skeleton } from '@/components/ui/skeleton'
 
 interface SnapshotPanelsProps {
@@ -38,6 +39,16 @@ interface SnapshotPanelsProps {
   itinerarySummary: {
     stops: { id: string; title: string; startDate: Date | string; endDate: Date | string | null; allDay: boolean; color: string }[]
   }
+  signalsSummary: {
+    unreadCount: number
+    latestMessages: {
+      id: string
+      senderName: string
+      body: string
+      createdAt: string
+      read: boolean
+    }[]
+  }
   isLoading?: boolean
 }
 
@@ -63,6 +74,7 @@ export function SnapshotPanels({
   manifestHighlights,
   provisionsSummary,
   itinerarySummary,
+  signalsSummary,
   isLoading = false,
 }: SnapshotPanelsProps) {
   const { terms, terminology } = useTerminology()
@@ -285,6 +297,12 @@ export function SnapshotPanels({
 
       {/* Itinerary */}
       <ItinerarySnapshotPanel stops={itinerarySummary.stops} />
+
+      {/* Signals */}
+      <SignalsSnapshotPanel
+        unreadCount={signalsSummary.unreadCount}
+        latestMessages={signalsSummary.latestMessages}
+      />
     </div>
   )
 }

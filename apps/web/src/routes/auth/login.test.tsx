@@ -20,6 +20,17 @@ import { useAuth, signIn } from '@/hooks/use-auth'
 const mockUseAuth = vi.mocked(useAuth)
 const mockSignIn = vi.mocked(signIn)
 
+function mockAuthState(overrides: Partial<ReturnType<typeof useAuth>>) {
+    return {
+        user: null,
+        loading: false,
+        signOut: vi.fn(),
+        setUser: vi.fn(),
+        refreshSession: vi.fn(),
+        ...overrides,
+    }
+}
+
 function renderLoginPage() {
     return render(
         <TooltipProvider>
@@ -36,7 +47,7 @@ function renderLoginPage() {
 describe('LoginPage', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        mockUseAuth.mockReturnValue({ user: null, loading: false, signOut: vi.fn() })
+        mockUseAuth.mockReturnValue(mockAuthState({}))
     })
 
     it('renders the login form', () => {
@@ -47,17 +58,15 @@ describe('LoginPage', () => {
     })
 
     it('renders nothing while loading', () => {
-        mockUseAuth.mockReturnValue({ user: null, loading: true, signOut: vi.fn() })
+        mockUseAuth.mockReturnValue(mockAuthState({ loading: true }))
         const { container } = renderLoginPage()
         expect(container).toBeEmptyDOMElement()
     })
 
     it('redirects to home when already authenticated', () => {
-        mockUseAuth.mockReturnValue({
+        mockUseAuth.mockReturnValue(mockAuthState({
             user: { id: 'user-123', email: 'test@cairn.local' },
-            loading: false,
-            signOut: vi.fn(),
-        })
+        }))
         renderLoginPage()
         expect(screen.getByText('Home Page')).toBeInTheDocument()
     })

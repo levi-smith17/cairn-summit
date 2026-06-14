@@ -1,4 +1,4 @@
-import { pool } from '@/hooks/use-auth'
+import { pool } from '@/lib/cognito'
 import type { CognitoUserSession } from 'amazon-cognito-identity-js'
 
 export async function getAuthHeaders(): Promise<Record<string, string>> {

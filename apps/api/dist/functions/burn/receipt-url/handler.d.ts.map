@@ -1,1 +1,1 @@
-{"version":3,"file":"handler.d.ts","sourceRoot":"","sources":["../../../../functions/burn/receipt-url/handler.ts"],"names":[],"mappings":"AAGA,OAAO,KAAK,EAAE,uCAAuC,EAAE,uBAAuB,EAAE,MAAM,YAAY,CAAA;AAMlG,eAAO,MAAM,OAAO,GAChB,OAAO,uCAAuC,KAC/C,OAAO,CAAC,uBAAuB,CA8CjC,CAAA"}
+{"version":3,"file":"handler.d.ts","sourceRoot":"","sources":["../../../../functions/burn/receipt-url/handler.ts"],"names":[],"mappings":"AAGA,OAAO,KAAK,EAAE,uCAAuC,EAAE,uBAAuB,EAAE,MAAM,YAAY,CAAA;AAMlG,eAAO,MAAM,OAAO,GAChB,OAAO,uCAAuC,KAC/C,OAAO,CAAC,uBAAuB,CAsCjC,CAAA"}

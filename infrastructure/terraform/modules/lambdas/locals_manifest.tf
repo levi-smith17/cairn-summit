@@ -60,6 +60,10 @@ locals {
       policy_arn = var.lambda_read_policy_arn
       route_key  = "GET /public/manifest/{username}/journey"
     }
+    "manifest-domain-lookup" = {
+      policy_arn = var.lambda_read_policy_arn
+      route_key  = "GET /domain-lookup"
+    }
     "manifest-landmarks-create" = {
       policy_arn = var.lambda_write_policy_arn
       route_key  = "POST /landmarks"
