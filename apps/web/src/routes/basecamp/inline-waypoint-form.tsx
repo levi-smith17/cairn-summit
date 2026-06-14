@@ -7,11 +7,9 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { CustomSelect } from '@/components/ui/custom-select'
 import { MarkerPicker } from '@/components/ui/marker-picker'
-import { saveWaypoint } from '@/lib/api/waypoints'
+import { saveWaypoint, fetchWaypointMeta } from '@/lib/api/waypoints'
 import { useFormStatus } from '@/hooks/use-form-status'
 import { useTerminology } from '@/contexts/terminology-context'
-
-const API_BASE = import.meta.env.VITE_API_URL
 
 const schema = z.object({
   url: z.string().url('Must be a valid URL'),
@@ -65,8 +63,7 @@ export function InlineWaypointForm({
     if (!url) return
     setFetching(true)
     try {
-      const res = await fetch(`${API_BASE}/waypoints/fetch-meta?url=${encodeURIComponent(url)}`)
-      const data = await res.json()
+      const data = await fetchWaypointMeta(url)
       if (data.title) form.setValue('title', data.title)
       if (data.favicon) setFavicon(data.favicon)
     } catch {

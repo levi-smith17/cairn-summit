@@ -12,6 +12,17 @@ import { useAuth } from '@/hooks/use-auth'
 
 const mockUseAuth = vi.mocked(useAuth)
 
+function mockAuthState(overrides: Partial<ReturnType<typeof useAuth>>) {
+    return {
+        user: null,
+        loading: false,
+        signOut: vi.fn(),
+        setUser: vi.fn(),
+        refreshSession: vi.fn(),
+        ...overrides,
+    }
+}
+
 // Helper to render ProtectedRoute within a router with a protected page and login page
 function renderWithRouter() {
     return render(
@@ -27,33 +38,32 @@ function renderWithRouter() {
 }
 
 describe('ProtectedRoute', () => {
-    it('renders nothing while loading', () => {
-        mockUseAuth.mockReturnValue({ user: null, loading: true, signOut: vi.fn() })
+    it('renders a loading skeleton while loading', () => {
+        mockUseAuth.mockReturnValue(mockAuthState({ loading: true }))
 
-        const { container } = renderWithRouter()
-        expect(container).toBeEmptyDOMElement()
+        renderWithRouter()
+        expect(screen.queryByText('Protected Content')).not.toBeInTheDocument()
+        expect(document.querySelector('[data-slot="skeleton"]')).toBeInTheDocument()
     })
 
     it('redirects to login when user is not authenticated', () => {
-        mockUseAuth.mockReturnValue({ user: null, loading: false, signOut: vi.fn() })
+        mockUseAuth.mockReturnValue(mockAuthState({}))
 
         renderWithRouter()
         expect(screen.getByText('Login Page')).toBeInTheDocument()
     })
 
     it('renders protected content when user is authenticated', () => {
-        mockUseAuth.mockReturnValue({
+        mockUseAuth.mockReturnValue(mockAuthState({
             user: { id: 'user-123', email: 'test@cairn.local', name: 'Test User' },
-            loading: false,
-            signOut: vi.fn(),
-        })
+        }))
 
         renderWithRouter()
         expect(screen.getByText('Protected Content')).toBeInTheDocument()
     })
 
     it('does not render protected content when unauthenticated', () => {
-        mockUseAuth.mockReturnValue({ user: null, loading: false, signOut: vi.fn() })
+        mockUseAuth.mockReturnValue(mockAuthState({}))
 
         renderWithRouter()
         expect(screen.queryByText('Protected Content')).not.toBeInTheDocument()

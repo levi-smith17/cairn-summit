@@ -9,7 +9,6 @@ const handler = async (event) => {
         const token = event.pathParameters?.token;
         if (!token)
             return (0, response_1.toApiGatewayResponse)((0, response_1.badRequest)('Missing token'));
-        // Resolve token → userPk + signalId
         const tokenItem = await db_1.dynamo.send(new lib_dynamodb_1.GetCommand({
             TableName: db_1.TABLE_NAME,
             Key: { pk: 'TOKEN', sk: token },
@@ -17,7 +16,6 @@ const handler = async (event) => {
         if (!tokenItem.Item)
             return (0, response_1.toApiGatewayResponse)((0, response_1.notFound)('Thread not found'));
         const { userPk, signalId, tokenExpiresAt } = tokenItem.Item;
-        // Fetch signal + all its replies in one query
         const result = await db_1.dynamo.send(new lib_dynamodb_1.QueryCommand({
             TableName: db_1.TABLE_NAME,
             KeyConditionExpression: 'pk = :pk AND begins_with(sk, :prefix)',
@@ -40,24 +38,22 @@ const handler = async (event) => {
             createdAt: r.createdAt,
         }))
             .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-        // Fetch wayfarer profile for display name
         const profileResult = await db_1.dynamo.send(new lib_dynamodb_1.GetCommand({
             TableName: db_1.TABLE_NAME,
             Key: { pk: userPk, sk: 'PROFILE' },
         }));
         const profile = profileResult.Item;
-        const wayfarer = {
-            username: profile?.username ?? null,
-            name: profile?.username ?? null,
-            image: null,
-        };
         return (0, response_1.toApiGatewayResponse)((0, response_1.ok)({
             id: signalId,
             senderName: signal.senderName,
             body: signal.body,
             createdAt: signal.createdAt,
             tokenExpiresAt,
-            wayfarer,
+            wayfarer: {
+                username: profile?.username ?? null,
+                name: profile?.name ?? profile?.username ?? null,
+                image: profile?.image ?? null,
+            },
             replies,
         }));
     }

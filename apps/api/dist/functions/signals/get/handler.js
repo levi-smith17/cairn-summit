@@ -17,18 +17,8 @@ const handler = async (event) => {
             },
         }));
         const items = result.Items ?? [];
-        // Separate signals from replies — replies have #REPLY# in their sk
-        const signalItems = [];
-        const replyItems = [];
-        for (const item of items) {
-            if (item.sk.includes('#REPLY#')) {
-                replyItems.push(item);
-            }
-            else {
-                signalItems.push(item);
-            }
-        }
-        // Build nested response, strip token from signal output
+        const signalItems = items.filter(item => !item.sk.includes('#REPLY#'));
+        const replyItems = items.filter(item => item.sk.includes('#REPLY#'));
         const signals = signalItems
             .map(signal => {
             const signalId = signal.sk.split('#')[1];

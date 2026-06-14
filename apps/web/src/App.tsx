@@ -42,6 +42,7 @@ import Provisions from '@/routes/provisions'
 import Settings from '@/routes/settings'
 import Headwaters from '@/routes/headwaters'
 import Starfield from '@/routes/starfield'
+import Signals from '@/routes/signals'
 import Trails from '@/routes/trails'
 import Waypoints from '@/routes/waypoints'
 
@@ -81,6 +82,7 @@ export default function App() {
                                 <Route path="/admin" element={<Admin />} />
                                 <Route path="/basecamp" element={<Basecamp />} />
                                 <Route path="/waypoints" element={<Waypoints />} />
+                                <Route path="/signals" element={<Signals />} />
                                 <Route path="/logs" element={<Logs />} />
                                 <Route path="/guides" element={<Guides />} />
                                 <Route path="/guides/:guideId/pass" element={<GuidePass />} />

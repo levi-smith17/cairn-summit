@@ -49,16 +49,6 @@ export async function updateTimeFormat(timeFormat: string): Promise<any> {
   return res.json()
 }
 
-export async function updateNotificationSettings(data: Record<string, any>): Promise<any> {
-  const res = await fetch(`${API_BASE}/settings/notifications`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', ...await getAuthHeaders() },
-    body: JSON.stringify(data),
-  })
-  if (!res.ok) throw new Error('Failed to update notification settings')
-  return res.json()
-}
-
 export async function updatePrivacySettings(data: Record<string, any>): Promise<any> {
   const res = await fetch(`${API_BASE}/settings/privacy`, {
     method: 'PUT',

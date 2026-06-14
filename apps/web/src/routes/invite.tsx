@@ -54,7 +54,7 @@ export default function Invite() {
             </div>
 
             <Link
-              to={`/signup?email=${encodeURIComponent(data.email)}`}
+              to={`/signup?email=${encodeURIComponent(data.email)}&invite=${encodeURIComponent(token!)}`}
               className="w-full text-center rounded-md border border-gray-300 px-8 py-2 text-sm tracking-widest text-gray-600 hover:bg-gray-50 transition-colors"
             >
               Create your account

@@ -84,6 +84,11 @@ export function GuidesClient({ guides, trails, markers, totalCount, currentPage,
     return result
   }, [guides, search, trailId, markerIds])
 
+  const pagedGuides = useMemo(() => {
+    const start = (currentPage - 1) * pageSize
+    return filteredGuides.slice(start, start + pageSize)
+  }, [filteredGuides, currentPage, pageSize])
+
   const [mode, setMode] = useState<Mode>('view')
   const [editingGuide, setEditingGuide] = useState<GuideWithStones | null>(null)
   const [editingStone, setEditingStone] = useState<StoneWithMarkers | null>(null)
@@ -205,7 +210,7 @@ export function GuidesClient({ guides, trails, markers, totalCount, currentPage,
         <div className="flex flex-1 gap-4 overflow-hidden min-h-0">
           <div className={`${showRight ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-1/3 rounded-lg border border-border bg-card overflow-hidden`}>
             <GuideList
-              guides={filteredGuides}
+              guides={pagedGuides}
               selectedGuideId={selectedGuideId}
               selectedForTraverse={traverseIds}
               onSelect={selectGuide}
@@ -215,7 +220,7 @@ export function GuidesClient({ guides, trails, markers, totalCount, currentPage,
               onLaunch={handleLaunchPass}
               onLaunchTraverse={handleLaunchTraverse}
               onDelete={(id, name) => setDeleteTarget({ type: 'guide', id, name })}
-              totalCount={totalCount}
+              totalCount={filteredGuides.length}
               currentPage={currentPage}
               pageSize={pageSize}
             />

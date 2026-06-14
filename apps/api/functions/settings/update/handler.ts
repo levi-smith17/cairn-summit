@@ -4,7 +4,7 @@ import { dynamo, TABLE_NAME } from '../../shared/db'
 import { getPk } from '../../shared/auth'
 import { toApiGatewayResponse, ok, badRequest, serverError } from '../../shared/response'
 
-const SETTINGS_SECTIONS = ['appearance', 'notifications', 'privacy', 'itinerary', 'waypoints', 'logs', 'signals'] as const
+const SETTINGS_SECTIONS = ['appearance', 'privacy', 'itinerary', 'waypoints', 'logs', 'signals'] as const
 type SettingsSection = typeof SETTINGS_SECTIONS[number]
 
 const ACCOUNT_FIELDS = ['name', 'image', 'username', 'timeFormat', 'listed', 'defaultTerminology', 'defaultTheme', 'headline', 'summary', 'location', 'linkedin', 'github', 'customDomain'] as const

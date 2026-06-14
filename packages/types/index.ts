@@ -2,16 +2,21 @@
 export interface Wayfarer {
     pk: string
     sk: 'PROFILE'
-    username: string
+    name?: string | null
     email: string
+    image?: string | null
+    username: string
     customDomain?: string
+    isAdmin?: boolean
     defaultTerminology: 'CAIRN' | 'STANDARD'
     defaultTheme: 'LIGHT' | 'DARK' | 'SYSTEM'
     timeFormat: 'TWELVE' | 'TWENTYFOUR'
     listed: boolean
     headline?: string
     summary?: string
+    bio?: string | null
     location?: string
+    website?: string | null
     linkedin?: string
     github?: string
     createdAt: string
@@ -22,7 +27,8 @@ export interface Settings {
     pk: string
     sk: 'SETTINGS'
     appearance: AppearanceSettings
-    notifications: NotificationSettings
+    /** @deprecated Legacy Prisma field — browser prefs now live in signals */
+    notifications?: NotificationSettings | null
     privacy: PrivacySettings
     itinerary: ItinerarySettings
     waypoints: WaypointSettings
@@ -36,9 +42,11 @@ export interface AppearanceSettings {
     dateFormat: 'MDY' | 'DMY' | 'YMD'
 }
 
+/** @deprecated Notification prefs merged into SignalSettings */
 export interface NotificationSettings {
-    browserNotifications: boolean
-    emailDigest: 'NEVER' | 'DAILY' | 'WEEKLY'
+    browserNotifications?: boolean
+    notificationSound?: boolean
+    emailDigest?: 'NEVER' | 'DAILY' | 'WEEKLY'
 }
 
 export interface PrivacySettings {
@@ -68,9 +76,10 @@ export interface SignalSettings {
     messagesPerPage: number
     autoMarkRead: boolean
     autoRefreshInterval: number
-    defaultView: 'SIGNALS' | 'EMAIL'
     compactView: boolean
     showSnippets: boolean
+    browserNotifications: boolean
+    notificationSound: boolean
 }
 
 // ── Marker (denormalized, embedded in items) ───────────
@@ -128,6 +137,7 @@ export interface Marker {
     color: string
     icon?: string
     createdAt: string
+    waypointCount?: number
 }
 
 // ── Guide ──────────────────────────────────────────────
@@ -189,6 +199,7 @@ export interface Stop {
     exceptionDates?: string[]
     modifications?: Record<string, Partial<Stop>>
     icloudEventUid?: string
+    icloudEventUrl?: string
     icloudCalendarId?: string
     markers: EmbeddedMarker[]
     createdAt: string

@@ -36,6 +36,8 @@ export type ICloudEventDisplay = ExternalCalendarEvent
 interface ItineraryClientProps {
   stops: StopWithMarkers[]
   calendars: CalendarOption[]
+  events: ICloudEventDisplay[]
+  eventsLoading: boolean
 }
 
 function addDays(date: Date, n: number): Date {
@@ -79,7 +81,7 @@ const MODE_OPTIONS: { value: CalendarMode; label: string; short: string; tip: st
   { value: 'luvi-full', label: 'Full Luvi', short: 'L*', tip: 'Full Luvi calendar (14 months × 26 days)' },
 ]
 
-export function ItineraryClient({ stops, calendars }: ItineraryClientProps) {
+export function ItineraryClient({ stops, calendars, events, eventsLoading }: ItineraryClientProps) {
   const { terms } = useTerminology()
   const navigate = useNavigate()
   const [view, setView] = useState<CalendarView>('month')
@@ -89,8 +91,7 @@ export function ItineraryClient({ stops, calendars }: ItineraryClientProps) {
     return now
   })
   const [calendarMode, setCalendarMode] = useState<CalendarMode>('gregorian')
-  const [icloudEvents] = useState<ICloudEventDisplay[]>([])
-  const [eventsLoading] = useState(false)
+  const icloudEvents = events
 
   function goToday() {
     const now = new Date()

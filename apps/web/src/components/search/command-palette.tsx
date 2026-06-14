@@ -5,6 +5,7 @@ import {
   Folder, Tag, Clock,
 } from 'lucide-react'
 import { useTerminology } from '@/contexts/terminology-context'
+import { getAuthHeaders } from '@/lib/api/auth-headers'
 import type { Terms } from '@/lib/terminology'
 
 const API_BASE = import.meta.env.VITE_API_URL
@@ -24,9 +25,12 @@ export interface SearchResult {
 
 async function globalSearch(query: string, deep: boolean): Promise<SearchResult[]> {
   try {
-    const res = await fetch(`${API_BASE}/search?q=${encodeURIComponent(query)}&deep=${deep}`)
+    const res = await fetch(`${API_BASE}/search?q=${encodeURIComponent(query)}&deep=${deep}`, {
+      headers: await getAuthHeaders(),
+    })
     if (!res.ok) return []
-    return await res.json()
+    const json = await res.json()
+    return json.data ?? []
   } catch {
     return []
   }

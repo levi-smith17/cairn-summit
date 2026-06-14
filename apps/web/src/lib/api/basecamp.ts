@@ -58,12 +58,13 @@ interface RawExternalEvent {
 }
 
 export async function fetchExternalCalendarEvents(): Promise<RawExternalEvent[]> {
-  const res = await fetch(`${API_BASE}/itinerary/external`, {
+  const res = await fetch(`${API_BASE}/itinerary/events`, {
     headers: await getAuthHeaders(),
   })
   if (!res.ok) return []
   const json = await res.json()
-  return json.data as RawExternalEvent[]
+  const events = (json.data?.events ?? []) as RawExternalEvent[]
+  return events
 }
 
 // ─── Types (inline until @cairn/types is updated) ─────────────────────────────
@@ -157,6 +158,16 @@ interface SidebarData {
       endDate: string | null
       allDay: boolean
       color: string
+    }[]
+  }
+  signalsSummary: {
+    unreadCount: number
+    latestMessages: {
+      id: string
+      senderName: string
+      body: string
+      createdAt: string
+      read: boolean
     }[]
   }
 }

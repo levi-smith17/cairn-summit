@@ -34,6 +34,8 @@
  * The script is idempotent — re-running will overwrite existing items.
  * ICloud calendars are skipped (contain encrypted passwords, re-add manually).
  * Starfield data is skipped (different schema; use migrate-systems.ts for that).
+ * Manual itinerary stops (STOP#) are migrated for reference but the app is read-only
+ * external-calendar only — re-connect CalDAV/ICS subscriptions in Settings after migrate.
  */
 
 import { createRequire } from 'module'
@@ -228,11 +230,7 @@ async function migrateUser(wayfarer: any): Promise<void> {
             defaultLandingPage: as.defaultLandingPage,
             dateFormat: as.dateFormat,
         } : null,
-        notifications: ns ? {
-            browserNotifications: ns.browserNotifications,
-            notificationSound: ns.notificationSound,
-            emailDigest: ns.emailDigest,
-        } : null,
+        notifications: null,
         privacy: ps ? {
             manifestVisibility: ps.manifestVisibility,
             contactFormEnabled: ps.contactFormEnabled,
@@ -252,13 +250,14 @@ async function migrateUser(wayfarer: any): Promise<void> {
             logsPerPage: ls.logsPerPage,
             defaultSort: ls.defaultSort,
         } : null,
-        signals: ss ? {
-            messagesPerPage: ss.messagesPerPage,
-            autoMarkRead: ss.autoMarkRead,
-            autoRefreshInterval: ss.autoRefreshInterval,
-            defaultView: ss.defaultView,
-            compactView: ss.compactView,
-            showSnippets: ss.showSnippets,
+        signals: (ss || ns) ? {
+            messagesPerPage: ss?.messagesPerPage ?? 25,
+            autoMarkRead: ss?.autoMarkRead ?? true,
+            autoRefreshInterval: ss?.autoRefreshInterval ?? 15,
+            compactView: ss?.compactView ?? false,
+            showSnippets: ss?.showSnippets ?? true,
+            browserNotifications: ns?.browserNotifications ?? ss?.browserNotifications ?? false,
+            notificationSound: ns?.notificationSound ?? ss?.notificationSound ?? true,
         } : null,
     })
 
@@ -363,7 +362,7 @@ async function migrateUser(wayfarer: any): Promise<void> {
     for (const provision of wayfarer.provisions) {
         items.push({
             pk,
-            sk: `PROVISION#${provision.id}`,
+            sk: `SUPPLYLINE#${provision.id}`,
             name: provision.name,
             amount: provision.amount,
             billingCycle: provision.billingCycle,
@@ -382,7 +381,7 @@ async function migrateUser(wayfarer: any): Promise<void> {
     for (const expense of wayfarer.expenses) {
         items.push({
             pk,
-            sk: `EXPENSE#${expense.id}`,
+            sk: `BURN#${expense.id}`,
             name: expense.name,
             amount: expense.amount,
             date: expense.date.toISOString(),
@@ -397,10 +396,12 @@ async function migrateUser(wayfarer: any): Promise<void> {
     // Budgets
     // -------------------------------------------------------------------------
     for (const budget of wayfarer.budget) {
+        const marker = markerMap.get(budget.markerId)
         items.push({
             pk,
-            sk: `BUDGET#${budget.markerId}#${budget.month}#${budget.year}`,
+            sk: `CACHE#${budget.markerId}#${budget.month}#${budget.year}`,
             markerId: budget.markerId,
+            markerName: marker?.name ?? '',
             limit: budget.limit,
             month: budget.month,
             year: budget.year,
@@ -597,7 +598,7 @@ async function migrateUser(wayfarer: any): Promise<void> {
     for (const sub of wayfarer.calendarSubscriptions) {
         items.push({
             pk,
-            sk: `CAL_SUB#${sub.id}`,
+            sk: `ITINERARY_SUB#${sub.id}`,
             name: sub.name,
             url: sub.url,
             color: sub.color,

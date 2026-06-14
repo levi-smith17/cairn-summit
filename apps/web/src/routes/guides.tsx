@@ -1,3 +1,4 @@
+import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/use-auth'
 import { GuidesClient } from './guides/guides-client'
@@ -8,6 +9,9 @@ import { useTerminology } from '@/contexts/terminology-context'
 export default function Guides() {
     const { user } = useAuth()
     const { terms } = useTerminology()
+    const [searchParams] = useSearchParams()
+    const currentPage = Math.max(1, Number(searchParams.get('page') ?? 1))
+    const pageSize = 25
     const { data: guidesData = [], isLoading } = useQuery({
         queryKey: ['guides', user?.id],
         queryFn: getGuides,
@@ -66,8 +70,8 @@ export default function Guides() {
             trails={trails}
             markers={markers}
             totalCount={guides.length}
-            currentPage={1}
-            pageSize={25}
+            currentPage={currentPage}
+            pageSize={pageSize}
         />
     )
 }

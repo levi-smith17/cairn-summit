@@ -12,6 +12,10 @@ locals {
       policy_arn = var.lambda_read_policy_arn
       route_key  = "GET /guides"
     }
+    "guides-get-one" = {
+      policy_arn = var.lambda_read_policy_arn
+      route_key  = "GET /guides/{id}"
+    }
     "guides-placements-reset" = {
       policy_arn = var.lambda_write_policy_arn
       route_key  = "POST /guides/{guideId}/placements/reset"

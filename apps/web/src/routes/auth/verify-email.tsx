@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { confirmSignUp, getAuthError, resendConfirmationCode } from '@/hooks/use-auth'
+import { acceptInvite } from '@/lib/api/invite'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,6 +12,7 @@ export default function VerifyEmailPage() {
     const [searchParams] = useSearchParams()
 
     const email = searchParams.get('email') ?? ''
+    const inviteToken = searchParams.get('invite') ?? ''
 
     const [code, setCode] = useState('')
     const [error, setError] = useState<string | null>(null)
@@ -38,6 +40,13 @@ export default function VerifyEmailPage() {
         setError(null)
         try {
             await confirmSignUp(email, code)
+            if (inviteToken) {
+                try {
+                    await acceptInvite(inviteToken, email)
+                } catch {
+                    // Signup succeeded even if invite acceptance fails
+                }
+            }
             navigate('/login?verified=true')
         } catch (err: unknown) {
             setError(getAuthError(err))

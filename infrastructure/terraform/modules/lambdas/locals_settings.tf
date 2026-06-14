@@ -1,7 +1,7 @@
 locals {
   lambdas_settings = {
     "settings-delete-account" = {
-      policy_arn = var.lambda_read_policy_arn
+      policy_arn = var.lambda_account_delete_policy_arn
       route_key  = "DELETE /account"
     }
     "settings-get" = {

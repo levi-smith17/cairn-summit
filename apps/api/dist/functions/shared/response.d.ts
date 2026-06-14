@@ -6,6 +6,7 @@ export declare function badRequest(message?: string): ApiResponse<never>;
 export declare function unauthorized(message?: string): ApiResponse<never>;
 export declare function forbidden(message?: string): ApiResponse<never>;
 export declare function notFound(message?: string): ApiResponse<never>;
+export declare function tooManyRequests(message?: string): ApiResponse<never>;
 export declare function conflict(message?: string): ApiResponse<never>;
 export declare function serverError(message?: string): ApiResponse<never>;
 export declare function toApiGatewayResponse<T>(response: ApiResponse<T>): {

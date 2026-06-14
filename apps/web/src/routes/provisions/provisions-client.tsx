@@ -16,10 +16,7 @@ import { SupplylineRow, type Supplyline } from './supplyline-row'
 import { InlineSupplylineForm } from './inline-supplyline-form'
 import { CacheRow, type BudgetUtilization } from './cache-row'
 import { InlineCacheForm } from './inline-cache-form'
-import { carryOverCache } from '@/lib/api/supplylines'
-import { getAuthHeaders } from '@/lib/api/auth-headers'
-
-const API_BASE = import.meta.env.VITE_API_URL
+import { carryOverCache, getBurnPage, getSupplylinesFiltered, getSupplylinesSummary } from '@/lib/api/supplylines'
 
 interface Summary {
   monthlySupplylineCost: number
@@ -85,11 +82,7 @@ export function ProvisionsClient({ markers }: Props) {
     const fetchSummary = async () => {
       setSummaryLoading(true)
       try {
-        const res = await fetch(`${API_BASE}/supplylines/summary?month=${month}&year=${year}`, {
-          headers: await getAuthHeaders(),
-        })
-        const json = await res.json()
-        const data = json.data
+        const data = await getSupplylinesSummary(month, year)
         setSummary(data.summary)
         setUpcomingRenewals(data.upcomingRenewals)
         setCacheUtilization(data.cacheUtilization)
@@ -109,17 +102,17 @@ export function ProvisionsClient({ markers }: Props) {
   useEffect(() => {
     const fetchBurn = async () => {
       setBurnLoading(true)
-      const params = new URLSearchParams({ month: String(month), year: String(year), page: String(burnPage) })
-      if (debouncedSearch) params.set('search', debouncedSearch)
-      if (markerFilter !== 'all') params.set('markerId', markerFilter)
       try {
-        const res = await fetch(`${API_BASE}/burn?${params}`, {
-          headers: await getAuthHeaders(),
+        const data = await getBurnPage({
+          month,
+          year,
+          page: burnPage,
+          search: debouncedSearch || undefined,
+          markerId: markerFilter !== 'all' ? markerFilter : undefined,
         })
-        const json = await res.json()
-        setBurnItems(json.data?.burn ?? [])
-        setBurnTotal(json.data?.total ?? 0)
-        setBurnPageSize(json.data?.pageSize ?? 20)
+        setBurnItems(data.burn)
+        setBurnTotal(data.total)
+        setBurnPageSize(data.pageSize)
       } catch (err) {
         console.error('Failed to load burn', err)
       } finally {
@@ -132,16 +125,13 @@ export function ProvisionsClient({ markers }: Props) {
   useEffect(() => {
     const fetchProvisions = async () => {
       setProvisionLoading(true)
-      const params = new URLSearchParams()
-      if (debouncedSearch) params.set('search', debouncedSearch)
-      if (markerFilter !== 'all') params.set('markerId', markerFilter)
-      if (activeFilter !== 'all') params.set('active', activeFilter)
       try {
-        const res = await fetch(`${API_BASE}/supplylines?${params}`, {
-          headers: await getAuthHeaders(),
+        const data = await getSupplylinesFiltered({
+          search: debouncedSearch || undefined,
+          markerId: markerFilter !== 'all' ? markerFilter : undefined,
+          active: activeFilter !== 'all' ? activeFilter : undefined,
         })
-        const json = await res.json()
-        setSupplylines(json.data ?? [])
+        setSupplylines(data)
       } catch (err) {
         console.error('Failed to load provisions', err)
       } finally {

@@ -15,6 +15,7 @@ interface ContactContentProps {
 
 export function ContactContent({ username, wayfarerName }: ContactContentProps) {
   const [success, setSuccess] = useState(false)
+  const [threadUrl, setThreadUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
 
@@ -42,7 +43,10 @@ export function ContactContent({ username, wayfarerName }: ContactContentProps) 
         const json = await res.json().catch(() => ({}))
         setError(json.error ?? 'Something went wrong. Please try again.')
       } else {
+        const json = await res.json()
+        const threadUrl = json.data?.threadUrl as string | undefined
         setSuccess(true)
+        if (threadUrl) setThreadUrl(threadUrl)
       }
     } catch {
       setError('Something went wrong. Please try again.')
@@ -60,6 +64,13 @@ export function ContactContent({ username, wayfarerName }: ContactContentProps) 
           <p className="text-sm text-muted-foreground mt-1">
             {wayfarerName ?? 'They'} will be in touch soon.
           </p>
+          {threadUrl && (
+            <p className="text-sm text-muted-foreground mt-3">
+              <a href={threadUrl} className="underline underline-offset-4 hover:text-foreground">
+                View your conversation thread
+              </a>
+            </p>
+          )}
         </div>
       </div>
     )

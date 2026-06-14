@@ -33,6 +33,9 @@ infrastructure/terraform/modules/lambda/placeholders/
 infrastructure/terraform/environments/dev/placeholders/
 infrastructure/terraform/environments/prod/placeholders/
 *.local.tfvars
+*.local.auto.tfvars
+*.tfstate
+*.tfstate.*
 
 # WebStorm
 .idea/

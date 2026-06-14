@@ -8,7 +8,7 @@ const response_1 = require("../../shared/response");
 const handler = async (event) => {
     try {
         const pk = (0, auth_1.getPk)(event);
-        const [profileResult, signalResult, stopCountResult] = await Promise.all([
+        const [profileResult, signalResult, calendarsResult] = await Promise.all([
             db_1.dynamo.send(new lib_dynamodb_1.GetCommand({
                 TableName: db_1.TABLE_NAME,
                 Key: { pk, sk: 'PROFILE' },
@@ -26,7 +26,7 @@ const handler = async (event) => {
                 KeyConditionExpression: 'pk = :pk AND begins_with(sk, :prefix)',
                 ExpressionAttributeValues: {
                     ':pk': pk,
-                    ':prefix': 'STOP#',
+                    ':prefix': 'ITINERARY#',
                 },
                 Select: 'COUNT',
             })),
@@ -34,15 +34,16 @@ const handler = async (event) => {
         if (!profileResult.Item)
             return (0, response_1.toApiGatewayResponse)((0, response_1.notFound)('Profile not found'));
         const profile = profileResult.Item;
-        const signals = (signalResult.Items ?? []).filter((s) => !s.sk.includes('#REPLY#'));
+        const signals = (signalResult.Items ?? []).filter(s => !String(s.sk ?? '').includes('#REPLY#'));
+        const unreadSignals = signals.filter(s => !s.read).length;
         return (0, response_1.toApiGatewayResponse)((0, response_1.ok)({
             username: profile.username ?? null,
             name: profile.name ?? null,
             email: profile.email ?? null,
             image: profile.image ?? null,
             isAdmin: profile.isAdmin ?? false,
-            signals: signals.length,
-            itinerary: stopCountResult.Count ?? 0,
+            signals: unreadSignals,
+            itinerary: calendarsResult.Count ?? 0,
         }));
     }
     catch (err) {

@@ -42,6 +42,38 @@ variable "timeout" {
   default = 10
 }
 
+variable "cloudfront_public_media_url" {
+  description = "CloudFront base URL for public media (e.g. https://media.cairn.ing)"
+  type        = string
+  default     = ""
+}
+
+variable "media_cdn_url" {
+  description = "Media CDN base URL for constructing public asset URLs"
+  type        = string
+  default     = ""
+}
+
+variable "s3_private_media_bucket" {
+  type    = string
+  default = ""
+}
+
+variable "s3_public_media_bucket" {
+  type    = string
+  default = ""
+}
+
+variable "ses_configuration_set_name" {
+  type    = string
+  default = ""
+}
+
+variable "ses_from_email" {
+  type    = string
+  default = ""
+}
+
 variable "web_url" {
   description = "Web CloudFront URL for CORS allowed origin"
   type        = string

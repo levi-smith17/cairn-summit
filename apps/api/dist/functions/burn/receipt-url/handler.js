@@ -30,16 +30,8 @@ const handler = async (event) => {
         if (!result.Items?.length) {
             return (0, response_1.toApiGatewayResponse)((0, response_1.notFound)('Receipt not found'));
         }
-        const presignedUrl = await (0, s3_request_presigner_1.getSignedUrl)(s3_1.s3, new client_s3_1.GetObjectCommand({ Bucket: s3_1.PRIVATE_MEDIA_BUCKET, Key: key }), { expiresIn: s3_1.PRESIGN_EXPIRES });
-        return {
-            statusCode: 302,
-            headers: {
-                'Location': presignedUrl,
-                'Cache-Control': 'private, max-age=3600',
-                'Access-Control-Allow-Origin': process.env.WEB_URL ?? '*',
-            },
-            body: '',
-        };
+        const url = await (0, s3_request_presigner_1.getSignedUrl)(s3_1.s3, new client_s3_1.GetObjectCommand({ Bucket: s3_1.PRIVATE_MEDIA_BUCKET, Key: key }), { expiresIn: s3_1.PRESIGN_EXPIRES });
+        return (0, response_1.toApiGatewayResponse)((0, response_1.ok)({ url }));
     }
     catch (err) {
         console.error(err);

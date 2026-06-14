@@ -63,10 +63,16 @@ resource "aws_lambda_function" "main" {
 
   environment {
     variables = {
-      COGNITO_USER_POOL_ID = var.cognito_user_pool_id
-      DYNAMODB_TABLE       = var.dynamodb_table_name
-      NODE_ENV             = var.environment
-      WEB_URL              = var.web_url
+      CLOUDFRONT_PUBLIC_MEDIA_URL = var.cloudfront_public_media_url
+      COGNITO_USER_POOL_ID        = var.cognito_user_pool_id
+      DYNAMODB_TABLE              = var.dynamodb_table_name
+      MEDIA_CDN_URL               = var.media_cdn_url
+      NODE_ENV                    = var.environment
+      S3_PRIVATE_MEDIA_BUCKET     = var.s3_private_media_bucket
+      S3_PUBLIC_MEDIA_BUCKET      = var.s3_public_media_bucket
+      SES_CONFIGURATION_SET       = var.ses_configuration_set_name
+      SES_FROM_EMAIL              = var.ses_from_email
+      WEB_URL                     = var.web_url
     }
   }
 

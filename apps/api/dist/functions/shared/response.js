@@ -7,6 +7,7 @@ exports.badRequest = badRequest;
 exports.unauthorized = unauthorized;
 exports.forbidden = forbidden;
 exports.notFound = notFound;
+exports.tooManyRequests = tooManyRequests;
 exports.conflict = conflict;
 exports.serverError = serverError;
 exports.toApiGatewayResponse = toApiGatewayResponse;
@@ -48,6 +49,12 @@ function forbidden(message = 'Forbidden') {
 function notFound(message = 'Not found') {
     return {
         statusCode: 404,
+        error: message
+    };
+}
+function tooManyRequests(message = 'Too many requests') {
+    return {
+        statusCode: 429,
         error: message
     };
 }

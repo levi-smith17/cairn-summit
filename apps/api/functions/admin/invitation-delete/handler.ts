@@ -2,6 +2,7 @@ import { DeleteCommand, GetCommand } from '@aws-sdk/lib-dynamodb'
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from 'aws-lambda'
 import { dynamo, TABLE_NAME } from '../../shared/db'
 import { getPk, getPathId } from '../../shared/auth'
+import { deleteInviteLookup } from '../../shared/invites'
 import { toApiGatewayResponse, noContent, badRequest, forbidden, serverError } from '../../shared/response'
 
 export const handler = async (
@@ -18,10 +19,19 @@ export const handler = async (
         }))
         if (!profileRes.Item?.isAdmin) return toApiGatewayResponse(forbidden('Admin access required'))
 
+        const invitationRes = await dynamo.send(new GetCommand({
+            TableName: TABLE_NAME,
+            Key: { pk: 'ADMIN', sk: `INVITATION#${targetId}` },
+        }))
+
         await dynamo.send(new DeleteCommand({
             TableName: TABLE_NAME,
             Key: { pk: 'ADMIN', sk: `INVITATION#${targetId}` },
         }))
+
+        if (invitationRes.Item?.token) {
+            await deleteInviteLookup(invitationRes.Item.token as string)
+        }
 
         return toApiGatewayResponse(noContent())
     } catch (err) {

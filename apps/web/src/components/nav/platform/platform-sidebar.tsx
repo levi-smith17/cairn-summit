@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   LayoutList,
   LayersIcon,
+  MessageSquare,
   NotebookPen,
   Rocket,
   Search,
@@ -78,6 +79,7 @@ function buildNavItems(terms: Terms): { group: string; items: NavItem[] }[] {
       group: 'Platform',
       items: [
         { title: terms.waypoints, url: '/waypoints', icon: Bookmark, tooltip: terms.waypoints },
+        { title: terms.signals, url: '/signals', icon: MessageSquare, tooltip: terms.signals },
         { title: terms.logs, url: '/logs', icon: NotebookPen, tooltip: terms.logs },
         { title: terms.provisions, url: '/provisions', icon: Wallet, tooltip: terms.provisions },
         { title: terms.guides, url: '/guides', icon: LayersIcon, tooltip: terms.guides },
@@ -111,6 +113,7 @@ interface PlatformSidebarProps extends React.ComponentProps<typeof Sidebar> {
   }
   badges?: {
     itinerary: number
+    signals: number
   }
   terms?: Terms
 }
@@ -126,6 +129,7 @@ export function PlatformSidebar({ wayfarer, badges, terms, ...props }: PlatformS
 
   function getBadge(url: string): number {
     if (url === '/itinerary') return badges?.itinerary ?? 0
+    if (url === '/signals') return badges?.signals ?? 0
     return 0
   }
 

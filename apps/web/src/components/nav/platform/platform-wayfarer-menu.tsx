@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '@/hooks/use-auth'
 import {
   BookOpen,
   BookUser,
@@ -42,6 +43,7 @@ interface PlatformWayfarerMenuProps {
 export function PlatformWayfarerMenu({ wayfarer, terms }: PlatformWayfarerMenuProps) {
   const { isMobile, setOpenMobile } = useSidebar()
   const navigate = useNavigate()
+  const { signOut } = useAuth()
 
   function go(url: string) {
     if (isMobile) setOpenMobile(false)
@@ -111,7 +113,7 @@ export function PlatformWayfarerMenu({ wayfarer, terms }: PlatformWayfarerMenuPr
                 </DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => go('/login')}>
+              <DropdownMenuItem onClick={() => { signOut(); go('/login') }}>
                 <LogOut className="h-4 w-4" />
                 Log out
               </DropdownMenuItem>

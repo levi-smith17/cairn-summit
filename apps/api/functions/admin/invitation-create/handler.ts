@@ -1,8 +1,9 @@
-import { GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb'
+import { GetCommand, PutCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb'
 import { randomUUID } from 'crypto'
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from 'aws-lambda'
 import { dynamo, TABLE_NAME } from '../../shared/db'
 import { getPk } from '../../shared/auth'
+import { writeInviteLookup } from '../../shared/invites'
 import { toApiGatewayResponse, created, badRequest, forbidden, serverError } from '../../shared/response'
 
 export const handler = async (
@@ -41,6 +42,8 @@ export const handler = async (
                 createdAt: now,
             },
         }))
+
+        await writeInviteLookup(token, id)
 
         try {
             await dynamo.send(new PutCommand({

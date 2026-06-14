@@ -10,6 +10,7 @@ const SIDEBAR_DEFAULTS = {
   manifestHighlights: { totalYearsExperience: 0, mostRecentExpedition: null, mostRecentTraining: null, topGear: [] },
   provisionsSummary: { monthlyTotal: 0, monthlyBurn: 0, cacheTotalLimit: 0, cacheTotalSpent: 0, activeCount: 0, upcomingRenewals: 0 },
   itinerarySummary: { stops: [] },
+  signalsSummary: { unreadCount: 0, latestMessages: [] },
 }
 
 export default function Basecamp() {

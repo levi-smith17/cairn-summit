@@ -18,11 +18,35 @@ const handler = async (event) => {
         }));
         const items = (result.Items ?? []).map(item => ({
             ...item,
-            resources: Object.values(item.resources ?? {}).map((r) => ({
-                ...r,
-                // Normalize legacy field name from before the facility→outpost rename
-                fromOutpostId: r.fromOutpostId ?? r.fromFacilityId ?? null,
-            })),
+            resources: Object.values(item.resources ?? {}).map((r) => {
+                const fromOutpostId = r.fromOutpostId ?? r.fromFacilityId ?? null;
+                let supplies = r.supplies;
+                if (!supplies?.length && (r.fromPlanet || fromOutpostId)) {
+                    supplies = [{
+                            fromOutpostId,
+                            fromPlanet: r.fromPlanet ?? null,
+                            fromSystem: r.fromSystem ?? null,
+                            relay: r.relay ?? null,
+                        }];
+                }
+                else if (!supplies?.length) {
+                    supplies = [];
+                }
+                supplies = supplies.map((s) => ({
+                    fromOutpostId: s.fromOutpostId ?? null,
+                    fromPlanet: s.fromPlanet ?? null,
+                    fromSystem: s.fromSystem ?? null,
+                    relay: s.relay ?? null,
+                }));
+                return {
+                    resourceId: r.resourceId,
+                    name: r.name,
+                    abbreviation: r.abbreviation,
+                    onsite: r.onsite,
+                    origin: r.origin ?? false,
+                    supplies,
+                };
+            }),
         }));
         return (0, response_1.toApiGatewayResponse)((0, response_1.ok)(items));
     }

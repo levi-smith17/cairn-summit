@@ -52,11 +52,12 @@ const handler = async (event) => {
             },
         }));
         const url = await (0, s3_request_presigner_1.getSignedUrl)(s3_1.s3, new client_s3_1.PutObjectCommand({
-            Bucket: s3_1.PRIVATE_MEDIA_BUCKET,
+            Bucket: s3_1.PUBLIC_MEDIA_BUCKET,
             Key: key,
             ContentType: contentType,
         }), { expiresIn: s3_1.PRESIGN_EXPIRES });
-        return (0, response_1.toApiGatewayResponse)((0, response_1.ok)({ url, key }));
+        const cloudFrontUrl = `${process.env.CLOUDFRONT_PUBLIC_MEDIA_URL}/${key}`;
+        return (0, response_1.toApiGatewayResponse)((0, response_1.ok)({ url, key, cloudFrontUrl }));
     }
     catch (err) {
         console.error(err);

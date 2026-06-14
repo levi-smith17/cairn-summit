@@ -10,7 +10,7 @@ export const handler = async (
     try {
         const pk = getPk(event)
 
-        const [profileResult, signalResult, stopCountResult] = await Promise.all([
+        const [profileResult, signalResult, calendarsResult] = await Promise.all([
             dynamo.send(new GetCommand({
                 TableName: TABLE_NAME,
                 Key: { pk, sk: 'PROFILE' },
@@ -28,7 +28,7 @@ export const handler = async (
                 KeyConditionExpression: 'pk = :pk AND begins_with(sk, :prefix)',
                 ExpressionAttributeValues: {
                     ':pk': pk,
-                    ':prefix': 'STOP#',
+                    ':prefix': 'ITINERARY#',
                 },
                 Select: 'COUNT',
             })),
@@ -39,8 +39,9 @@ export const handler = async (
         const profile = profileResult.Item
 
         const signals = (signalResult.Items ?? []).filter(
-            (s: any) => !s.sk.includes('#REPLY#')
+            s => !String(s.sk ?? '').includes('#REPLY#')
         )
+        const unreadSignals = signals.filter(s => !s.read).length
 
         return toApiGatewayResponse(ok({
             username: profile.username ?? null,
@@ -48,8 +49,8 @@ export const handler = async (
             email: profile.email ?? null,
             image: profile.image ?? null,
             isAdmin: profile.isAdmin ?? false,
-            signals: signals.length,
-            itinerary: stopCountResult.Count ?? 0,
+            signals: unreadSignals,
+            itinerary: calendarsResult.Count ?? 0,
         }))
     } catch (err) {
         console.error(err)
