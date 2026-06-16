@@ -33,7 +33,7 @@ export const handler = async (
             },
         }))
 
-        const cache = findCacheById(result.Items ?? [], id)
+        const cache = findCacheById((result.Items ?? []) as (Cache & { id?: string })[], id)
 
         if (!cache) {
             return toApiGatewayResponse(notFound('Cache not found'))

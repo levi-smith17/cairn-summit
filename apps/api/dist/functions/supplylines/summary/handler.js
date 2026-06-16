@@ -77,11 +77,18 @@ const handler = async (event) => {
             const spent = monthBurn
                 .filter(b => b.markers.some(m => m.id === markerId))
                 .reduce((sum, b) => sum + b.amount, 0);
+            const utilization = c.limit > 0 ? (spent / c.limit) * 100 : 0;
             return {
-                id: c.id,
+                id: c.id ?? c.sk.replace(/^CACHE#/, ''),
                 markerId,
+                marker: {
+                    id: markerId,
+                    name: c.markerName || 'Uncategorized',
+                    color: '#6b7280',
+                },
                 limit: c.limit,
                 spent,
+                utilization,
             };
         });
         return (0, response_1.toApiGatewayResponse)((0, response_1.ok)({

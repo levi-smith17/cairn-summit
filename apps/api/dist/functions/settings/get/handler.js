@@ -11,10 +11,6 @@ const DEFAULT_SETTINGS = {
         defaultLandingPage: '/waypoints',
         dateFormat: 'MDY',
     },
-    notifications: {
-        browserNotifications: false,
-        emailDigest: 'NEVER',
-    },
     privacy: {
         manifestVisibility: 'PRIVATE',
         contactFormEnabled: false,
@@ -63,6 +59,16 @@ const handler = async (event) => {
         ]);
         const profile = profileResult.Item ?? {};
         const settings = settingsResult.Item ?? {};
+        const signals = {
+            ...DEFAULT_SETTINGS.signals,
+            ...(settings.signals ?? {}),
+            browserNotifications: settings.signals?.browserNotifications
+                ?? settings.notifications?.browserNotifications
+                ?? DEFAULT_SETTINGS.signals.browserNotifications,
+            notificationSound: settings.signals?.notificationSound
+                ?? settings.notifications?.notificationSound
+                ?? DEFAULT_SETTINGS.signals.notificationSound,
+        };
         const calendars = (calendarsResult.Items ?? []).map(({ ssmPasswordPath: _omit, ...rest }) => ({
             ...rest,
             id: rest.sk.replace('ITINERARY#', ''),
@@ -88,12 +94,11 @@ const handler = async (event) => {
                 customDomain: profile.customDomain ?? null,
             },
             appearance: { ...DEFAULT_SETTINGS.appearance, ...(settings.appearance ?? {}) },
-            notifications: { ...DEFAULT_SETTINGS.notifications, ...(settings.notifications ?? {}) },
             privacy: { ...DEFAULT_SETTINGS.privacy, ...(settings.privacy ?? {}) },
             itinerary: { ...DEFAULT_SETTINGS.itinerary, ...(settings.itinerary ?? {}) },
             waypoints: { ...DEFAULT_SETTINGS.waypoints, ...(settings.waypoints ?? {}) },
             logs: { ...DEFAULT_SETTINGS.logs, ...(settings.logs ?? {}) },
-            signals: { ...DEFAULT_SETTINGS.signals, ...(settings.signals ?? {}) },
+            signals,
             calendars,
             calendarSubscriptions,
         }));
