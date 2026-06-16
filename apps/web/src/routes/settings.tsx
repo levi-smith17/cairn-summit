@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/hooks/use-auth'
 import { SettingsClient } from './settings/settings-client'
+import { SettingsSkeleton } from '@/components/ui/page-skeleton'
 import { getSettings } from '@/lib/api/settings'
 
 const DEFAULTS = {
@@ -49,7 +50,7 @@ export default function Settings() {
   const queryClient = useQueryClient()
   const [searchParams] = useSearchParams()
 
-  const { data: settings, isLoading } = useQuery({
+  const settingsQuery = useQuery({
     queryKey: ['settings'],
     queryFn: getSettings,
     enabled: !!user,
@@ -59,10 +60,15 @@ export default function Settings() {
     queryClient.invalidateQueries({ queryKey: ['settings'] })
   }
 
+  if (settingsQuery.isPending && settingsQuery.data === undefined) {
+    return <SettingsSkeleton />
+  }
+
+  const settings = settingsQuery.data
+
   return (
     <SettingsClient
       initialSection={searchParams.get('section') ?? 'account'}
-      isLoading={isLoading}
       account={settings?.account ?? DEFAULTS.account}
       calendars={settings?.calendars ?? DEFAULTS.calendars}
       subscriptions={settings?.subscriptions ?? DEFAULTS.subscriptions}

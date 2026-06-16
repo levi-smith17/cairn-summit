@@ -1,5 +1,6 @@
 import { Skeleton } from '@/components/ui/skeleton'
 import { PlatformHeader } from '@/components/nav/platform/platform-header'
+import { cn } from '@/lib/utils'
 
 interface PageSkeletonProps {
   title?: string
@@ -199,6 +200,201 @@ export function ProvisionsSkeleton({ title }: { title?: string }) {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
+export function StatCardsSkeleton({ count = 4 }: { count?: number }) {
+  return (
+    <>
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="rounded-lg border border-border bg-card p-4 space-y-2">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-7 w-20" />
+          <Skeleton className="h-3 w-16" />
+        </div>
+      ))}
+    </>
+  )
+}
+
+export function ListSectionSkeleton({
+  rows = 4,
+  compact = false,
+  className,
+}: {
+  rows?: number
+  compact?: boolean
+  className?: string
+}) {
+  return (
+    <div className={cn('flex flex-col divide-y', className)}>
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className={cn('space-y-1.5', compact ? 'px-3 py-3' : 'px-4 py-3')}>
+          <Skeleton className="h-3.5 w-48" />
+          <Skeleton className="h-3 w-32" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+export function SettingsSkeleton() {
+  return (
+    <>
+      <PlatformHeader title="Settings" />
+      <div className="flex flex-1 min-h-0 gap-4 p-4 overflow-hidden w-full">
+        <div className="hidden md:flex flex-col w-52 shrink-0 rounded-lg border border-border bg-card overflow-hidden">
+          <div className="px-4 py-3 border-b border-border shrink-0">
+            <Skeleton className="h-4 w-16" />
+          </div>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="px-4 py-2.5 border-b border-border/30">
+              <Skeleton className="h-4 w-24" />
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-col flex-1 rounded-lg border border-border bg-card overflow-hidden">
+          <div className="px-4 min-h-[48px] border-b border-border shrink-0 flex items-center">
+            <Skeleton className="h-4 w-20" />
+          </div>
+          <div className="flex-1 overflow-y-auto p-6">
+            <SettingsContentSkeleton />
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
+export function ItinerarySkeleton({ title }: { title?: string }) {
+  return (
+    <>
+      {title && <PlatformHeader title={title} />}
+      <div className="flex flex-1 p-4 overflow-hidden min-h-0">
+        <div className="flex flex-col flex-1 rounded-lg border border-border bg-card overflow-hidden min-w-0">
+          <div className="flex items-center gap-2 px-3 py-2 border-b shrink-0">
+            <Skeleton className="h-7 w-24" />
+            <Skeleton className="h-4 flex-1 max-w-48" />
+            <Skeleton className="h-7 w-32" />
+          </div>
+          <div className="flex-1 p-3 grid grid-cols-7 gap-1">
+            {Array.from({ length: 35 }).map((_, i) => (
+              <Skeleton key={i} className="aspect-square rounded-md" />
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
+export function BasecampSkeleton({ title }: { title?: string }) {
+  return (
+    <>
+      {title && <PlatformHeader title={title} />}
+      <div className="flex flex-col flex-1 gap-4 p-4 overflow-hidden min-h-0">
+        <div className="rounded-lg border border-border bg-card p-2 shrink-0">
+          <div className="flex gap-2">
+            <Skeleton className="h-8 flex-1" />
+            <Skeleton className="h-8 w-20" />
+            <Skeleton className="h-8 w-20" />
+          </div>
+        </div>
+        <div className="flex flex-col lg:flex-row flex-1 gap-4 min-h-0 overflow-hidden">
+          <div className="flex flex-col flex-1 min-w-0 rounded-lg border border-border bg-card overflow-hidden">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="px-4 py-3 space-y-2 border-b border-border">
+                <Skeleton className="h-3.5 w-32" />
+                <Skeleton className="h-3 w-full" />
+              </div>
+            ))}
+          </div>
+          <div className="lg:w-72 shrink-0 flex flex-col gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="rounded-lg border border-border bg-card p-3 space-y-2">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-3 w-full" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
+export function GuidePassSkeleton({ title }: { title?: string }) {
+  return (
+    <>
+      {title && <PlatformHeader title={title} />}
+      <div className="flex flex-col flex-1 items-center justify-center gap-6 p-4 min-h-0">
+        <Skeleton className="h-6 w-48" />
+        <Skeleton className="h-64 w-full max-w-lg rounded-xl" />
+        <div className="flex gap-2">
+          <Skeleton className="h-9 w-24" />
+          <Skeleton className="h-9 w-24" />
+          <Skeleton className="h-9 w-24" />
+        </div>
+      </div>
+    </>
+  )
+}
+
+export function StarfieldSkeleton({ title }: { title?: string }) {
+  return (
+    <>
+      {title && <PlatformHeader title={title} />}
+      <div className="flex flex-col flex-1 gap-4 p-4 min-h-0 overflow-hidden">
+        <div className="flex gap-2 shrink-0">
+          <Skeleton className="h-9 w-32" />
+          <Skeleton className="h-9 w-32" />
+          <Skeleton className="h-9 flex-1" />
+        </div>
+        <Skeleton className="flex-1 min-h-64 rounded-lg" />
+      </div>
+    </>
+  )
+}
+
+export function HeadwatersSkeleton({ title }: { title?: string }) {
+  return (
+    <>
+      {title && <PlatformHeader title={title} />}
+      <div className="flex flex-col flex-1 gap-4 p-4 min-h-0 overflow-hidden">
+        <div className="flex gap-2 shrink-0">
+          <Skeleton className="h-9 w-48" />
+          <Skeleton className="h-9 w-9" />
+        </div>
+        <Skeleton className="flex-1 min-h-96 rounded-lg" />
+      </div>
+    </>
+  )
+}
+
+export function OutpostSkeleton({ title }: { title?: string }) {
+  return (
+    <>
+      {title && <PlatformHeader title={title} />}
+      <div className="w-full px-4 py-4 flex flex-col gap-4">
+        <div className="flex flex-col gap-2 bg-card rounded-xl px-6 py-4">
+          <Skeleton className="h-7 w-32" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          <div className="lg:col-span-3 bg-card rounded-xl p-4 space-y-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-10 w-full" />
+            ))}
+          </div>
+          <div className="lg:col-span-1 bg-card rounded-xl p-4 space-y-3">
+            <Skeleton className="h-4 w-24" />
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-3 w-full" />
+            ))}
           </div>
         </div>
       </div>

@@ -6,28 +6,30 @@ import { getOutpostData } from '@/lib/api/outpost'
 import { FooterNav } from '@/components/nav/footer'
 import { PublicHeader } from '@/components/nav/public/public-header'
 import { PlatformHeader } from '@/components/nav/platform/platform-header'
+import { OutpostSkeleton } from '@/components/ui/page-skeleton'
 import { OutpostTable } from './home/outpost-table'
 import { OutpostStats } from './home/outpost-stats'
 import { useTerminology } from '@/contexts/terminology-context'
+import { isInitialRouteLoad } from '@/hooks/use-route-ready'
 
 export default function Home() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const { terms } = useTerminology()
 
-  const { data, isLoading } = useQuery({
+  const outpostQuery = useQuery({
     queryKey: ['outpost'],
     queryFn: getOutpostData,
   })
 
-  const wayfarers = data?.wayfarers ?? []
+  const wayfarers = outpostQuery.data?.wayfarers ?? []
 
   // Single listed wayfarer and not logged in → go straight to their manifest
   useEffect(() => {
-    if (!isLoading && !user && wayfarers.length === 1 && wayfarers[0].username) {
+    if (!outpostQuery.isPending && !user && wayfarers.length === 1 && wayfarers[0].username) {
       navigate(`/manifest/${wayfarers[0].username}`, { replace: true })
     }
-  }, [isLoading, user, wayfarers, navigate])
+  }, [outpostQuery.isPending, user, wayfarers, navigate])
 
   // Stats — top gear
   const gearCounts = wayfarers
@@ -52,6 +54,29 @@ export default function Home() {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5)
     .map(([location, count]) => ({ location, count }))
+
+  if (isInitialRouteLoad([outpostQuery])) {
+    if (user) {
+      return (
+        <>
+          <PlatformHeader title={terms.outpost} />
+          <OutpostSkeleton />
+        </>
+      )
+    }
+    return (
+      <div className="min-h-screen flex flex-col">
+        <header className="sticky top-0 z-10 flex items-center justify-between bg-header px-6 py-3 border-b">
+          <img src="/cairn-lockup.png" alt="Cairn Summit Lockup" height={50} width={160} />
+          <PublicHeader wayfarer={null} />
+        </header>
+        <div className="max-w-7xl mx-auto w-full">
+          <OutpostSkeleton />
+        </div>
+        <FooterNav showCairn={true} />
+      </div>
+    )
+  }
 
   const content = (
     <div className="w-full px-4 py-4 flex flex-col gap-4">

@@ -1,7 +1,10 @@
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/hooks/use-auth'
+import { useTerminology } from '@/contexts/terminology-context'
 import { BasecampClient } from './basecamp/basecamp-client'
+import { BasecampSkeleton } from '@/components/ui/page-skeleton'
+import { isInitialRouteLoad } from '@/hooks/use-route-ready'
 import { getBasecamp, getBasecampSidebar, type BasecampParams } from '@/lib/api/basecamp'
 
 const SIDEBAR_DEFAULTS = {
@@ -15,17 +18,18 @@ const SIDEBAR_DEFAULTS = {
 
 export default function Basecamp() {
   const { user } = useAuth()
+  const { terms } = useTerminology()
   const queryClient = useQueryClient()
   const [searchParams] = useSearchParams()
 
-  const { data, isLoading: mainLoading } = useQuery({
+  const mainQuery = useQuery({
     queryKey: ['basecamp', searchParams.toString()],
     queryFn: () => getBasecamp(Object.fromEntries(searchParams) as BasecampParams),
     enabled: !!user,
     placeholderData: keepPreviousData,
   })
 
-  const { data: sidebarData, isLoading: sidebarLoading } = useQuery({
+  const sidebarQuery = useQuery({
     queryKey: ['basecamp-sidebar'],
     queryFn: getBasecampSidebar,
     enabled: !!user,
@@ -36,6 +40,12 @@ export default function Basecamp() {
     queryClient.invalidateQueries({ queryKey: ['basecamp-sidebar'] })
   }
 
+  if (isInitialRouteLoad([mainQuery, sidebarQuery])) {
+    return <BasecampSkeleton title={terms.basecamp} />
+  }
+
+  const data = mainQuery.data
+
   return (
     <BasecampClient
       initialFolders={data?.folders ?? []}
@@ -43,9 +53,7 @@ export default function Basecamp() {
       tags={data?.tags ?? []}
       folders={data?.allFolders ?? []}
       filteredCountMap={data?.filteredCountMap ?? null}
-      sidebarData={sidebarData ?? SIDEBAR_DEFAULTS}
-      mainLoading={mainLoading}
-      sidebarLoading={sidebarLoading}
+      sidebarData={sidebarQuery.data ?? SIDEBAR_DEFAULTS}
       onRefresh={onRefresh}
     />
   )
