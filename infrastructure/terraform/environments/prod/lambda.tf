@@ -18,8 +18,10 @@ module "lambdas" {
   lambda_delete_ssm_policy_arn       = module.iam.lambda_delete_ssm_policy_arn
   lambda_read_policy_arn             = module.iam.lambda_read_policy_arn
   lambda_read_ssm_policy_arn         = module.iam.lambda_read_ssm_policy_arn
-  lambda_s3_private_media_policy_arn = module.iam.lambda_s3_private_media_policy_arn
-  lambda_s3_public_media_policy_arn  = module.iam.lambda_s3_public_media_policy_arn
+  lambda_s3_private_media_policy_arn              = module.iam.lambda_s3_private_media_policy_arn
+  lambda_s3_private_media_read_policy_arn         = module.iam.lambda_s3_private_media_read_policy_arn
+  lambda_s3_private_media_dynamo_write_policy_arn = module.iam.lambda_s3_private_media_dynamo_write_policy_arn
+  lambda_s3_public_media_policy_arn               = module.iam.lambda_s3_public_media_policy_arn
   lambda_ses_write_policy_arn        = module.iam.lambda_ses_write_policy_arn
   lambda_write_policy_arn            = module.iam.lambda_write_policy_arn
   lambda_write_ssm_policy_arn        = module.iam.lambda_write_ssm_policy_arn

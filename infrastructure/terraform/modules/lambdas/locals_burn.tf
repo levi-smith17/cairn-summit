@@ -13,7 +13,7 @@ locals {
       route_key  = "GET /burn"
     }
     "burn-receipt-delete" = {
-      policy_arn = var.lambda_s3_private_media_policy_arn
+      policy_arn = var.lambda_s3_private_media_dynamo_write_policy_arn
       route_key  = "DELETE /burn/receipt-url"
     }
     "burn-receipt-upload-url" = {
@@ -21,7 +21,7 @@ locals {
       route_key  = "POST /burn/receipt-upload-url"
     }
     "burn-receipt-url" = {
-      policy_arn = var.lambda_s3_private_media_policy_arn
+      policy_arn = var.lambda_s3_private_media_read_policy_arn
       route_key  = "GET /burn/receipt-url"
     }
     "burn-update" = {

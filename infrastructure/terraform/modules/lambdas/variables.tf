@@ -12,6 +12,8 @@ variable "lambda_read_policy_arn" {}
 
 variable "lambda_read_ssm_policy_arn" {}
 variable "lambda_s3_private_media_policy_arn" {}
+variable "lambda_s3_private_media_read_policy_arn" {}
+variable "lambda_s3_private_media_dynamo_write_policy_arn" {}
 variable "lambda_s3_public_media_policy_arn" {}
 variable "lambda_write_policy_arn" {}
 variable "lambda_ses_write_policy_arn" {}

@@ -44,10 +44,20 @@ const utilizationColor = (pct: number) => {
   return 'bg-primary'
 }
 
+function cacheMarkerLabel(
+  cache: BudgetUtilization,
+  markers: Props['markers'],
+): string {
+  const name = markers.find(m => m.id === cache.markerId)?.name ?? cache.marker?.name
+  if (!name || name === 'Uncategorized') return 'Uncategorized'
+  return name.split('/').pop() ?? name
+}
+
 export function CacheRow({ cache, markers, month, year, onSaved, onDeleted }: Props) {
   const { terms } = useTerminology()
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const markerLabel = cacheMarkerLabel(cache, markers)
 
   if (editing) {
     return (
@@ -66,7 +76,7 @@ export function CacheRow({ cache, markers, month, year, onSaved, onDeleted }: Pr
     <>
       <div className="px-3 py-2.5 hover:bg-muted/30 group">
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-sm font-medium">{cache.marker?.name.split('/').pop() ?? 'Uncategorized'}</span>
+          <span className="text-sm font-medium">{markerLabel}</span>
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <Tooltip>
               <TooltipTrigger asChild>
@@ -115,7 +125,7 @@ export function CacheRow({ cache, markers, month, year, onSaved, onDeleted }: Pr
           <AlertDialogHeader>
             <AlertDialogTitle>Remove {terms.cache.toLowerCase()}?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove the &ldquo;{cache.marker?.name.split('/').pop() ?? 'Uncategorized'}&rdquo; {terms.cache.toLowerCase()} limit for this month. This action cannot be undone.
+              This will remove the &ldquo;{markerLabel}&rdquo; {terms.cache.toLowerCase()} limit for this month. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -53,7 +53,33 @@ describe('cache/create handler', () => {
         vi.clearAllMocks()
     })
 
+    it('stores markerName from marker record when not provided', async () => {
+        vi.mocked(dynamo.send)
+            .mockResolvedValueOnce({
+                Responses: {
+                    'cairn-test': [{
+                        pk: 'USER#user-123',
+                        sk: 'MARKER#marker-456',
+                        name: 'Provisions/Dining',
+                        color: '#3b82f6',
+                    }],
+                },
+            })
+            .mockResolvedValueOnce({})
+
+        const result = await handler(
+            mockEvent('user-123', { markerId: 'marker-456', limit: 1000, month: 5, year: 2026 }),
+        ) as any
+
+        expect(result.statusCode).toBe(201)
+        expect(JSON.parse(result.body).data.markerName).toBe('Provisions/Dining')
+    })
+
     it('creates a cache and returns 201', async () => {
+        vi.mocked(dynamo.send)
+            .mockResolvedValueOnce({ Responses: { 'cairn-test': [] } })
+            .mockResolvedValueOnce({})
+
         const result = await handler(
             mockEvent('user-123', { markerId: 'marker-456', limit: 1000, month: 5, year: 2026 })
         ) as any
@@ -70,6 +96,10 @@ describe('cache/create handler', () => {
     })
 
     it('creates a cache with optional markerName', async () => {
+        vi.mocked(dynamo.send)
+            .mockResolvedValueOnce({ Responses: { 'cairn-test': [] } })
+            .mockResolvedValueOnce({})
+
         const result = await handler(
             mockEvent('user-123', { markerId: 'marker-456', markerName: 'Test Marker', limit: 500, month: 6, year: 2026 })
         ) as any
