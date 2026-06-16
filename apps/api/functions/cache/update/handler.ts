@@ -3,6 +3,7 @@ import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 }
 import type { Cache } from '@cairn/types'
 import { dynamo, TABLE_NAME } from '../../shared/db'
 import { getPathId, getPk } from '../../shared/auth'
+import { findCacheById } from '../../shared/cache'
 import { toApiGatewayResponse, ok, badRequest, notFound, serverError } from '../../shared/response'
 
 export const handler = async (
@@ -32,7 +33,7 @@ export const handler = async (
             },
         }))
 
-        const cache = (result.Items ?? []).find((b: any) => b.id === id) as (Cache & { id: string }) | undefined
+        const cache = findCacheById((result.Items ?? []) as (Cache & { id?: string })[], id)
 
         if (!cache) {
             return toApiGatewayResponse(notFound('Cache not found'))

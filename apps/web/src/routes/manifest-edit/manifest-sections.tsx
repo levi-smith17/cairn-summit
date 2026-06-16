@@ -180,7 +180,7 @@ export function ManifestSections({ origins, expeditions, training, gear, landmar
 
   function renderContent() {
     switch (selectedSection) {
-      case 'origins':     return <OriginsForm defaultValues={{ headline: origins?.headline ?? '', summary: origins?.summary ?? '', bio: origins?.bio ?? '', location: origins?.location ?? '', website: origins?.website ?? '', linkedin: origins?.linkedin ?? '', github: origins?.github ?? '' }} />
+      case 'origins':     return <OriginsForm defaultValues={{ headline: origins?.headline ?? '', summary: origins?.summary ?? '', bio: origins?.bio ?? '', location: origins?.location ?? '', website: origins?.website ?? '', linkedin: origins?.linkedin ?? '', github: origins?.github ?? '' }} onSaved={onRefresh} />
       case 'expeditions': return <ExpeditionsForm expeditions={expeditions} adding={adding} setAdding={setAdding} saving={saving} saved={saved} error={error} handleSubmit={handleSubmit} />
       case 'training':    return <TrainingForm training={training} adding={adding} setAdding={setAdding} saving={saving} saved={saved} error={error} handleSubmit={handleSubmit} />
       case 'gear':        return <GearForm gear={gear} adding={adding} setAdding={setAdding} saving={saving} saved={saved} error={error} handleSubmit={handleSubmit} />

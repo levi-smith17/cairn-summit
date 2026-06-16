@@ -1,6 +1,6 @@
 'use client'
 
-import { Bookmark, Unlink, X } from 'lucide-react'
+import { Bookmark, Mail, Unlink, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { SearchInput } from './search-input'
 import { MarkerFilter } from './marker-filter'
@@ -21,6 +21,7 @@ interface FilterBarProps {
   showReadLater?: boolean
   showUnattached?: boolean
   showDateRange?: boolean
+  showUnreadOnly?: boolean
   sortOptions?: { value: SortOption; label: string }[]
   searchPlaceholder?: string
   fill?: boolean
@@ -36,6 +37,7 @@ export function FilterBar({
   showReadLater = false,
   showUnattached = false,
   showDateRange = false,
+  showUnreadOnly = false,
   sortOptions,
   searchPlaceholder,
   fill = false,
@@ -92,6 +94,15 @@ export function FilterBar({
           onToggle={() => setFilter('unattached', !filters.unattached)}
           label="No Trail"
           icon={<Unlink className="h-3.5 w-3.5" />}
+        />
+      )}
+
+      {showUnreadOnly && (
+        <ToggleFilter
+          active={filters.unreadOnly}
+          onToggle={() => setFilter('unreadOnly', !filters.unreadOnly)}
+          label="Unread"
+          icon={<Mail className="h-3.5 w-3.5" />}
         />
       )}
 

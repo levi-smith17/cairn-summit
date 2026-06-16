@@ -2,15 +2,15 @@ locals {
   lambdas_manifest = {
     "manifest-companions-create" = {
       policy_arn = var.lambda_write_policy_arn
-      route_key  = "POST /companions"
+      route_key  = "POST /manifest/companions"
     }
     "manifest-companions-delete" = {
       policy_arn = var.lambda_delete_policy_arn
-      route_key  = "DELETE /companions/{id}"
+      route_key  = "DELETE /manifest/companions/{id}"
     }
     "manifest-companions-media-delete" = {
       policy_arn = var.lambda_s3_public_media_policy_arn
-      route_key  = "DELETE /companions/media"
+      route_key  = "DELETE /manifest/companions/media"
     }
     "manifest-companions-media-upload" = {
       policy_arn = var.lambda_s3_public_media_policy_arn
@@ -18,31 +18,31 @@ locals {
     }
     "manifest-companions-update" = {
       policy_arn = var.lambda_write_policy_arn
-      route_key  = "PUT /companions/{id}"
+      route_key  = "PUT /manifest/companions/{id}"
     }
     "manifest-expeditions-create" = {
       policy_arn = var.lambda_write_policy_arn
-      route_key  = "POST /expeditions"
+      route_key  = "POST /manifest/expeditions"
     }
     "manifest-expeditions-delete" = {
       policy_arn = var.lambda_delete_policy_arn
-      route_key  = "DELETE /expeditions/{id}"
+      route_key  = "DELETE /manifest/expeditions/{id}"
     }
     "manifest-expeditions-update" = {
       policy_arn = var.lambda_write_policy_arn
-      route_key  = "PUT /expeditions/{id}"
+      route_key  = "PUT /manifest/expeditions/{id}"
     }
     "manifest-gear-create" = {
       policy_arn = var.lambda_write_policy_arn
-      route_key  = "POST /gear"
+      route_key  = "POST /manifest/gear"
     }
     "manifest-gear-delete" = {
       policy_arn = var.lambda_delete_policy_arn
-      route_key  = "DELETE /gear/{id}"
+      route_key  = "DELETE /manifest/gear/{id}"
     }
     "manifest-gear-update" = {
       policy_arn = var.lambda_write_policy_arn
-      route_key  = "PUT /gear/{id}"
+      route_key  = "PUT /manifest/gear/{id}"
     }
     "manifest-get" = {
       policy_arn = var.lambda_read_policy_arn
@@ -66,15 +66,15 @@ locals {
     }
     "manifest-landmarks-create" = {
       policy_arn = var.lambda_write_policy_arn
-      route_key  = "POST /landmarks"
+      route_key  = "POST /manifest/landmarks"
     }
     "manifest-landmarks-delete" = {
       policy_arn = var.lambda_delete_policy_arn
-      route_key  = "DELETE /landmarks/{id}"
+      route_key  = "DELETE /manifest/landmarks/{id}"
     }
     "manifest-landmarks-update" = {
       policy_arn = var.lambda_write_policy_arn
-      route_key  = "PUT /landmarks/{id}"
+      route_key  = "PUT /manifest/landmarks/{id}"
     }
     "manifest-origins-update" = {
       policy_arn = var.lambda_write_policy_arn
@@ -82,39 +82,39 @@ locals {
     }
     "manifest-pathfinding-create" = {
       policy_arn = var.lambda_write_policy_arn
-      route_key  = "POST /pathfinding"
+      route_key  = "POST /manifest/pathfinding"
     }
     "manifest-pathfinding-delete" = {
       policy_arn = var.lambda_delete_policy_arn
-      route_key  = "DELETE /pathfinding/{id}"
+      route_key  = "DELETE /manifest/pathfinding/{id}"
     }
     "manifest-pathfinding-update" = {
       policy_arn = var.lambda_write_policy_arn
-      route_key  = "PUT /pathfinding/{id}"
+      route_key  = "PUT /manifest/pathfinding/{id}"
     }
     "manifest-summits-create" = {
       policy_arn = var.lambda_write_policy_arn
-      route_key  = "POST /summits"
+      route_key  = "POST /manifest/summits"
     }
     "manifest-summits-delete" = {
       policy_arn = var.lambda_delete_policy_arn
-      route_key  = "DELETE /summits/{id}"
+      route_key  = "DELETE /manifest/summits/{id}"
     }
     "manifest-summits-update" = {
       policy_arn = var.lambda_write_policy_arn
-      route_key  = "PUT /summits/{id}"
+      route_key  = "PUT /manifest/summits/{id}"
     }
     "manifest-training-create" = {
       policy_arn = var.lambda_write_policy_arn
-      route_key  = "POST /training"
+      route_key  = "POST /manifest/training"
     }
     "manifest-training-delete" = {
       policy_arn = var.lambda_delete_policy_arn
-      route_key  = "DELETE /training/{id}"
+      route_key  = "DELETE /manifest/training/{id}"
     }
     "manifest-training-update" = {
       policy_arn = var.lambda_write_policy_arn
-      route_key  = "PUT /training/{id}"
+      route_key  = "PUT /manifest/training/{id}"
     }
   }
 }

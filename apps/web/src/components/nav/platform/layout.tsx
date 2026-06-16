@@ -6,6 +6,7 @@ import { CommandPalette } from '@/components/search/command-palette'
 import { SignalNotifier } from '@/components/signal-notifier'
 import { useAuth } from '@/hooks/use-auth'
 import { getProfile } from '@/lib/api/profile'
+import { resolveProfileImage } from '@/lib/profile-image'
 
 export default function PlatformLayout() {
     const { user } = useAuth()
@@ -23,7 +24,7 @@ export default function PlatformLayout() {
                     username: profile?.username ?? null,
                     name: profile?.name ?? user?.name ?? null,
                     email: profile?.email ?? user?.email ?? null,
-                    avatar: profile?.image ?? user?.image ?? null,
+                    avatar: resolveProfileImage(profile?.image ?? user?.image ?? null),
                     isAdmin: profile?.isAdmin ?? false,
                 }}
                 badges={{

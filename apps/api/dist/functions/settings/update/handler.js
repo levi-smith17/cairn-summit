@@ -5,7 +5,7 @@ const lib_dynamodb_1 = require("@aws-sdk/lib-dynamodb");
 const db_1 = require("../../shared/db");
 const auth_1 = require("../../shared/auth");
 const response_1 = require("../../shared/response");
-const SETTINGS_SECTIONS = ['appearance', 'notifications', 'privacy', 'itinerary', 'waypoints', 'logs', 'signals'];
+const SETTINGS_SECTIONS = ['appearance', 'privacy', 'itinerary', 'waypoints', 'logs', 'signals'];
 const ACCOUNT_FIELDS = ['name', 'image', 'username', 'timeFormat', 'listed', 'defaultTerminology', 'defaultTheme', 'headline', 'summary', 'location', 'linkedin', 'github', 'customDomain'];
 const handler = async (event) => {
     try {

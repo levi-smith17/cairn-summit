@@ -1,6 +1,7 @@
 import { useParams, Navigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { useAuth } from '@/hooks/use-auth'
+import { useWayfarerHeader } from '@/hooks/use-wayfarer-header'
+import { resolveProfileImage } from '@/lib/profile-image'
 import { getPublicContact } from '@/lib/api/manifest-public'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -10,7 +11,7 @@ import { ContactContent } from './contact-content'
 
 export default function PublicManifestContact() {
   const { username } = useParams<{ username: string }>()
-  const { user } = useAuth()
+  const currentWayfarer = useWayfarerHeader()
 
   const { data, isError } = useQuery({
     queryKey: ['public-manifest-contact', username],
@@ -20,10 +21,6 @@ export default function PublicManifestContact() {
   })
 
   if (isError) return <Navigate to="/" replace />
-
-  const currentWayfarer = user
-    ? { name: user.name ?? null, email: user.email, avatar: user.image ?? null }
-    : null
 
   if (!data) {
     return (
@@ -74,7 +71,7 @@ export default function PublicManifestContact() {
     username: username!,
     name: wayfarer.name ?? null,
     email: wayfarer.email ?? null,
-    avatar: wayfarer.image ?? null,
+    avatar: resolveProfileImage(wayfarer.image ?? null),
   }
 
   return (
@@ -91,7 +88,7 @@ export default function PublicManifestContact() {
         <div className="rounded-xl bg-muted/50 p-6 flex flex-col max-w-md w-full gap-6">
           <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16 shrink-0">
-              <AvatarImage src={wayfarer.image ?? undefined} />
+              <AvatarImage src={resolveProfileImage(wayfarer.image) ?? undefined} />
               <AvatarFallback className="text-lg">{initials}</AvatarFallback>
             </Avatar>
             <div>

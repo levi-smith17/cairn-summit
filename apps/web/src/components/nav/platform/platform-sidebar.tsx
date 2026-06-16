@@ -13,9 +13,9 @@ import {
   NotebookPen,
   Rocket,
   Search,
-  Shield,
   Tag,
   TreePine,
+  Users,
   Wallet,
 } from "lucide-react"
 import { useNavigate, useLocation } from "react-router-dom"
@@ -73,13 +73,13 @@ function buildNavItems(terms: Terms): { group: string; items: NavItem[] }[] {
         { title: terms.outpost, url: '/', icon: LayoutList, tooltip: terms.outpost },
         { title: terms.basecamp, url: '/basecamp', icon: LayoutDashboard, tooltip: terms.basecamp },
         { title: terms.itinerary, url: '/itinerary', icon: CalendarDays, tooltip: terms.itinerary },
+        { title: terms.signals, url: '/signals', icon: MessageSquare, tooltip: terms.signals },
       ],
     },
     {
       group: 'Platform',
       items: [
         { title: terms.waypoints, url: '/waypoints', icon: Bookmark, tooltip: terms.waypoints },
-        { title: terms.signals, url: '/signals', icon: MessageSquare, tooltip: terms.signals },
         { title: terms.logs, url: '/logs', icon: NotebookPen, tooltip: terms.logs },
         { title: terms.provisions, url: '/provisions', icon: Wallet, tooltip: terms.provisions },
         { title: terms.guides, url: '/guides', icon: LayersIcon, tooltip: terms.guides },
@@ -90,7 +90,7 @@ function buildNavItems(terms: Terms): { group: string; items: NavItem[] }[] {
     {
       group: 'Admin',
       items: [
-        { title: terms.wayfarers, url: '/admin', icon: Shield, tooltip: terms.wayfarers },
+        { title: terms.wayfarers, url: '/admin', icon: Users, tooltip: terms.wayfarers },
       ],
     },
     {

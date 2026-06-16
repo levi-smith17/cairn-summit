@@ -1,5 +1,5 @@
 import { useCallback, useTransition } from 'react'
-import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import {
   FilterState,
   DEFAULT_FILTERS,
@@ -7,9 +7,13 @@ import {
   filtersToParams,
 } from '@/lib/filters'
 
+function mergePreservedParams(params: URLSearchParams, searchParams: URLSearchParams) {
+  const id = searchParams.get('id')
+  if (id) params.set('id', id)
+  return params
+}
+
 export function useFilters() {
-  const navigate = useNavigate()
-  const { pathname } = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const [isPending, startTransition] = useTransition()
 
@@ -19,7 +23,7 @@ export function useFilters() {
     <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
       const current = parseFiltersFromParams(searchParams)
       const updated = { ...current, [key]: value }
-      const params = filtersToParams(updated)
+      const params = mergePreservedParams(filtersToParams(updated), searchParams)
       startTransition(() => {
         setSearchParams(params)
       })
@@ -29,15 +33,18 @@ export function useFilters() {
 
   const clearFilters = useCallback(() => {
     startTransition(() => {
-      navigate(pathname)
+      const params = new URLSearchParams()
+      const id = searchParams.get('id')
+      if (id) params.set('id', id)
+      setSearchParams(params)
     })
-  }, [pathname, navigate])
+  }, [searchParams, setSearchParams])
 
   const setFilters = useCallback(
     (updates: Partial<FilterState>) => {
       const current = parseFiltersFromParams(searchParams)
       const updated = { ...current, ...updates }
-      const params = filtersToParams(updated)
+      const params = mergePreservedParams(filtersToParams(updated), searchParams)
       startTransition(() => {
         setSearchParams(params)
       })

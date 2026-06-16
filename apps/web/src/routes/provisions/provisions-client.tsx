@@ -17,6 +17,7 @@ import { InlineSupplylineForm } from './inline-supplyline-form'
 import { CacheRow, type BudgetUtilization } from './cache-row'
 import { InlineCacheForm } from './inline-cache-form'
 import { carryOverCache, getBurnPage, getSupplylinesFiltered, getSupplylinesSummary } from '@/lib/api/supplylines'
+import { markerDisplayName } from '@/lib/embedded-markers'
 
 interface Summary {
   monthlySupplylineCost: number
@@ -156,7 +157,7 @@ export function ProvisionsClient({ markers }: Props) {
   const monthName = new Date(year, month - 1).toLocaleString('default', { month: 'long', year: 'numeric' })
 
   const groupedExpenses = burnItems.reduce<Record<string, Burn[]>>((acc, e) => {
-    const label = e.markers[0]?.marker?.name.split('/').pop() ?? 'Uncategorized'
+    const label = markerDisplayName(e.markers[0])?.split('/').pop() ?? 'Uncategorized'
     if (!acc[label]) acc[label] = []
     acc[label].push(e)
     return acc

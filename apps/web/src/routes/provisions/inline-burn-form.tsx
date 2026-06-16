@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { MarkerPicker } from '@/components/ui/marker-picker'
 import { saveBurn, getBurnReceiptUploadUrl, getBurnReceiptUrl } from '@/lib/api/supplylines'
 import { useFormStatus } from '@/hooks/use-form-status'
+import { toMarkerId } from '@/lib/embedded-markers'
 import { ImagePlus, X } from 'lucide-react'
 
 const schema = z.object({
@@ -57,7 +58,7 @@ export function InlineBurnForm({ burn, tags, onSaved, onCancel }: Props) {
       amount: burn?.amount ?? 0,
       date: burn?.date?.split('T')[0] ?? new Date().toISOString().split('T')[0],
       notes: burn?.notes ?? '',
-      tagIds: burn?.markers?.map((t: any) => t.markerId) ?? [],
+      tagIds: burn?.markers?.map((t: any) => toMarkerId(t)).filter(Boolean) as string[] ?? [],
     },
   })
 

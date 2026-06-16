@@ -4,6 +4,7 @@ exports.handler = void 0;
 const lib_dynamodb_1 = require("@aws-sdk/lib-dynamodb");
 const db_1 = require("../../shared/db");
 const auth_1 = require("../../shared/auth");
+const cache_1 = require("../../shared/cache");
 const response_1 = require("../../shared/response");
 const handler = async (event) => {
     try {
@@ -20,7 +21,7 @@ const handler = async (event) => {
                 ':prefix': 'CACHE#',
             },
         }));
-        const cache = (result.Items ?? []).find((b) => b.id === id);
+        const cache = (0, cache_1.findCacheById)((result.Items ?? []), id);
         if (!cache) {
             return (0, response_1.toApiGatewayResponse)((0, response_1.notFound)('Cache not found'));
         }

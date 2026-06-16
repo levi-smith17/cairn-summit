@@ -5,7 +5,8 @@ export interface PublicManifestData {
     username: string
     name: string | null
     email: string | null
-    avatar: string | null
+    image?: string | null
+    avatar?: string | null
     defaultTerminology: 'CAIRN' | 'STANDARD'
     defaultTheme: 'LIGHT' | 'DARK' | 'SYSTEM'
   }

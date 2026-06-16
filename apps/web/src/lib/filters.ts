@@ -9,6 +9,7 @@ export interface FilterState {
   unattached: boolean
   dateFrom: string
   dateTo: string
+  unreadOnly: boolean
 }
 
 export const DEFAULT_FILTERS: FilterState = {
@@ -20,6 +21,7 @@ export const DEFAULT_FILTERS: FilterState = {
   unattached: false,
   dateFrom: '',
   dateTo: '',
+  unreadOnly: false,
 }
 
 export function parseFiltersFromParams(params: URLSearchParams): FilterState {
@@ -32,6 +34,7 @@ export function parseFiltersFromParams(params: URLSearchParams): FilterState {
     unattached: params.get('unattached') === 'true',
     dateFrom: params.get('dateFrom') ?? DEFAULT_FILTERS.dateFrom,
     dateTo: params.get('dateTo') ?? DEFAULT_FILTERS.dateTo,
+    unreadOnly: params.get('unreadOnly') === 'true',
   }
 }
 
@@ -47,6 +50,7 @@ export function filtersToParams(filters: Partial<FilterState>): URLSearchParams 
   if (merged.unattached) params.set('unattached', 'true')
   if (merged.dateFrom) params.set('dateFrom', merged.dateFrom)
   if (merged.dateTo) params.set('dateTo', merged.dateTo)
+  if (merged.unreadOnly) params.set('unreadOnly', 'true')
 
   return params
 }
@@ -60,7 +64,8 @@ export function hasActiveFilters(filters: FilterState): boolean {
     filters.readLater !== DEFAULT_FILTERS.readLater ||
     filters.unattached !== DEFAULT_FILTERS.unattached ||
     filters.dateFrom !== DEFAULT_FILTERS.dateFrom ||
-    filters.dateTo !== DEFAULT_FILTERS.dateTo
+    filters.dateTo !== DEFAULT_FILTERS.dateTo ||
+    filters.unreadOnly !== DEFAULT_FILTERS.unreadOnly
   )
 }
 
@@ -152,6 +157,49 @@ export function applyLogFilters(logs: any[], filters: FilterState): any[] {
 
   if (filters.sort === 'oldest') {
     result.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+  } else {
+    result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  }
+
+  return result
+}
+
+export function applySignalFilters<T extends {
+  senderName: string
+  senderEmail: string
+  body: string
+  read: boolean
+  createdAt: string
+}>(signals: T[], filters: FilterState): T[] {
+  let result = [...signals]
+
+  if (filters.search) {
+    const q = filters.search.toLowerCase()
+    result = result.filter(s =>
+      s.senderName.toLowerCase().includes(q) ||
+      s.senderEmail.toLowerCase().includes(q) ||
+      s.body.toLowerCase().includes(q),
+    )
+  }
+
+  if (filters.unreadOnly) {
+    result = result.filter(s => !s.read)
+  }
+
+  if (filters.dateFrom) {
+    const from = new Date(filters.dateFrom).getTime()
+    result = result.filter(s => new Date(s.createdAt).getTime() >= from)
+  }
+
+  if (filters.dateTo) {
+    const to = new Date(filters.dateTo).getTime()
+    result = result.filter(s => new Date(s.createdAt).getTime() <= to)
+  }
+
+  if (filters.sort === 'oldest') {
+    result.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+  } else if (filters.sort === 'alpha') {
+    result.sort((a, b) => a.senderName.localeCompare(b.senderName))
   } else {
     result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   }

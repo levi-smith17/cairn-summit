@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { MoreHorizontal, Pencil, Trash2, Receipt } from 'lucide-react'
 import { MarkerBadge } from '@/routes/waypoints/marker-badge'
+import { toDisplayMarker, toMarkerId } from '@/lib/embedded-markers'
 import { deleteBurn, getBurnReceiptUrl } from '@/lib/api/supplylines'
 import { InlineBurnForm } from './inline-burn-form'
 import { useTerminology } from '@/contexts/terminology-context'
@@ -72,7 +73,11 @@ export function BurnRow({ burn, tags, onSaved, onDeleted }: Props) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-sm font-medium truncate">{burn.name}</span>
-            {burn.markers.map(({ marker }) => <MarkerBadge key={marker.id} marker={marker} />)}
+            {burn.markers.map((entry, i) => {
+              const marker = toDisplayMarker(entry)
+              if (!marker) return null
+              return <MarkerBadge key={marker.id ?? i} marker={marker} />
+            })}
           </div>
           {burn.notes && (
             <div className="text-xs text-muted-foreground truncate">{burn.notes}</div>

@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { MoreHorizontal, Pencil, Trash2, ExternalLink } from 'lucide-react'
 import { MarkerBadge } from '@/routes/waypoints/marker-badge'
+import { toDisplayMarker, toMarkerId } from '@/lib/embedded-markers'
 import { deleteSupplyline, toggleSupplylineActive } from '@/lib/api/supplylines'
 import { InlineSupplylineForm } from './inline-supplyline-form'
 import { useTerminology } from '@/contexts/terminology-context'
@@ -100,7 +101,11 @@ export function SupplylineRow({ supplyline, tags, onSaved, onDeleted }: Props) {
                 {daysUntil}d
               </Badge>
             )}
-            {supplyline.markers.map(({ marker }) => <MarkerBadge key={marker.id} marker={marker} />)}
+            {supplyline.markers.map((entry, i) => {
+              const marker = toDisplayMarker(entry)
+              if (!marker) return null
+              return <MarkerBadge key={marker.id ?? i} marker={marker} />
+            })}
           </div>
           <div className="text-xs text-muted-foreground">
             renews {new Date(supplyline.nextRenewal).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}

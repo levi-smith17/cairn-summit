@@ -1,4 +1,4 @@
-import { useAuth } from "@/hooks/use-auth"
+import { useWayfarerHeader } from '@/hooks/use-wayfarer-header'
 import { PublicHeader } from '@/components/nav/public/public-header'
 import { FooterNav } from '@/components/nav/footer'
 
@@ -8,12 +8,7 @@ export const metadata = {
 }
 
 export default function Terms() {
-    const { user } = useAuth()
-    const wayfarer = user ? {
-        name: user.name ?? null,
-        email: user.email ?? null,
-        avatar: user.image ?? null,
-    } : null
+    const wayfarer = useWayfarerHeader()
 
     return (
         <div className="min-h-screen flex flex-col">
