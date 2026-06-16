@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ChevronLeft } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { resolveProfileImage } from '@/lib/profile-image'
 import { PublicHeader } from '@/components/nav/public/public-header'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -56,7 +57,7 @@ export function ManifestHeader({ wayfarer, currentWayfarer, terminology, onTermi
 
         <div className={`flex items-center gap-3 transition-opacity duration-200 ${showAvatar ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
           <Avatar className="h-8 w-8">
-            <AvatarImage src={wayfarer.avatar ?? undefined} />
+            <AvatarImage src={resolveProfileImage(wayfarer.avatar) ?? undefined} />
             <AvatarFallback className="text-sm">{initials}</AvatarFallback>
           </Avatar>
           <span className="font-medium text-sm hidden sm:inline">{wayfarer.name ?? wayfarer.email}</span>

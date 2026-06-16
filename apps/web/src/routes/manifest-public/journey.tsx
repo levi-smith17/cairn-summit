@@ -1,6 +1,7 @@
 import { useParams, Navigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { useAuth } from '@/hooks/use-auth'
+import { useWayfarerHeader } from '@/hooks/use-wayfarer-header'
+import { resolveProfileImage } from '@/lib/profile-image'
 import { getPublicJourney } from '@/lib/api/manifest-public'
 import { JourneyContent } from './journey-content'
 import { ManifestHeaderSkeleton } from './manifest-header'
@@ -8,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export default function PublicManifestJourney() {
   const { username } = useParams<{ username: string }>()
-  const { user } = useAuth()
+  const currentWayfarer = useWayfarerHeader()
 
   const { data, isError } = useQuery({
     queryKey: ['public-manifest-journey', username],
@@ -46,13 +47,12 @@ export default function PublicManifestJourney() {
     )
   }
 
-  const currentWayfarer = user
-    ? { name: user.name ?? null, email: user.email, avatar: user.image ?? null }
-    : null
-
   return (
     <JourneyContent
-      wayfarer={data.wayfarer}
+      wayfarer={{
+        ...data.wayfarer,
+        avatar: resolveProfileImage(data.wayfarer.image ?? data.wayfarer.avatar ?? null),
+      }}
       origins={data.origins}
       companions={data.companions}
       currentWayfarer={currentWayfarer}

@@ -7,6 +7,7 @@ import { CustomSelect } from '@/components/ui/custom-select'
 import { MarkerPicker } from '@/components/ui/marker-picker'
 import { saveSupplyline } from '@/lib/api/supplylines'
 import { useFormStatus } from '@/hooks/use-form-status'
+import { toMarkerId } from '@/lib/embedded-markers'
 
 const schema = z.object({
   name: z.string().min(1, 'Required'),
@@ -65,7 +66,7 @@ export function InlineSupplylineForm({ supplyline, tags, onSaved, onCancel }: Pr
       nextRenewal: supplyline?.nextRenewal?.split('T')[0] ?? '',
       url: supplyline?.url ?? '',
       notes: supplyline?.notes ?? '',
-      tagIds: supplyline?.markers?.map((t: any) => t.markerId) ?? [],
+      tagIds: supplyline?.markers?.map((t: any) => toMarkerId(t)).filter(Boolean) as string[] ?? [],
     },
   })
 

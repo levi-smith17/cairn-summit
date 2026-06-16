@@ -38,7 +38,8 @@ export function GearChart({ category, items }: GearChartProps) {
         <CardTitle>{category}</CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" aspect={1}>
+        <div className="aspect-square w-full min-h-[240px]">
+          <ResponsiveContainer width="100%" height="100%">
           <RadialBarChart cx="50%" cy="50%" innerRadius="15%" outerRadius="85%" data={data} startAngle={90} endAngle={-270}>
             <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
             <Tooltip cursor={false} content={({ active, payload }) => {
@@ -56,7 +57,8 @@ export function GearChart({ category, items }: GearChartProps) {
               <LabelList position="insideStart" dataKey="name" fontSize={11} className="fill-white capitalize mix-blend-luminosity" formatter={(value: unknown) => data.find(d => d.name === value && d.labelFill === '#ffffff') ? String(value) : ''} />
             </RadialBar>
           </RadialBarChart>
-        </ResponsiveContainer>
+          </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
   )

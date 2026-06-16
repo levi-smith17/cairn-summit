@@ -17,6 +17,7 @@ export default function Manifest() {
     queryKey: ['manifest'],
     queryFn: getManifestData,
     enabled: !!user,
+    staleTime: 0,
   })
 
   if (isLoading) return <ManifestSkeleton title={`My ${terms.manifest}`} />

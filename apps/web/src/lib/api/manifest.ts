@@ -41,10 +41,11 @@ export async function saveExpedition(data: {
   current: boolean
   description: string | null
 }) {
-  await fetch(`${API_BASE}/manifest/expeditions`, {
-    method: data.id ? 'PUT' : 'POST',
+  const { id, ...payload } = data
+  await fetch(id ? `${API_BASE}/manifest/expeditions/${id}` : `${API_BASE}/manifest/expeditions`, {
+    method: id ? 'PUT' : 'POST',
     headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
-    body: JSON.stringify(data),
+    body: JSON.stringify(payload),
   })
 }
 
@@ -65,10 +66,11 @@ export async function saveTraining(data: {
   current: boolean
   description: string | null
 }) {
-  await fetch(`${API_BASE}/manifest/training`, {
-    method: data.id ? 'PUT' : 'POST',
+  const { id, ...payload } = data
+  await fetch(id ? `${API_BASE}/manifest/training/${id}` : `${API_BASE}/manifest/training`, {
+    method: id ? 'PUT' : 'POST',
     headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
-    body: JSON.stringify(data),
+    body: JSON.stringify(payload),
   })
 }
 
@@ -85,10 +87,11 @@ export async function saveGear(data: {
   category: string | null
   level: string | null
 }) {
-  await fetch(`${API_BASE}/manifest/gear`, {
-    method: data.id ? 'PUT' : 'POST',
+  const { id, ...payload } = data
+  await fetch(id ? `${API_BASE}/manifest/gear/${id}` : `${API_BASE}/manifest/gear`, {
+    method: id ? 'PUT' : 'POST',
     headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
-    body: JSON.stringify(data),
+    body: JSON.stringify(payload),
   })
 }
 
@@ -109,10 +112,11 @@ export async function saveLandmark(data: {
   endDate: Date | null
   current: boolean
 }) {
-  await fetch(`${API_BASE}/manifest/landmarks`, {
-    method: data.id ? 'PUT' : 'POST',
+  const { id, ...payload } = data
+  await fetch(id ? `${API_BASE}/manifest/landmarks/${id}` : `${API_BASE}/manifest/landmarks`, {
+    method: id ? 'PUT' : 'POST',
     headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
-    body: JSON.stringify(data),
+    body: JSON.stringify(payload),
   })
 }
 
@@ -131,10 +135,11 @@ export async function saveSummit(data: {
   description: string | null
   url: string | null
 }) {
-  await fetch(`${API_BASE}/manifest/summits`, {
-    method: data.id ? 'PUT' : 'POST',
+  const { id, ...payload } = data
+  await fetch(id ? `${API_BASE}/manifest/summits/${id}` : `${API_BASE}/manifest/summits`, {
+    method: id ? 'PUT' : 'POST',
     headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
-    body: JSON.stringify(data),
+    body: JSON.stringify(payload),
   })
 }
 
@@ -155,10 +160,11 @@ export async function savePathfinding(data: {
   current: boolean
   description: string | null
 }) {
-  await fetch(`${API_BASE}/manifest/pathfinding`, {
-    method: data.id ? 'PUT' : 'POST',
+  const { id, ...payload } = data
+  await fetch(id ? `${API_BASE}/manifest/pathfinding/${id}` : `${API_BASE}/manifest/pathfinding`, {
+    method: id ? 'PUT' : 'POST',
     headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
-    body: JSON.stringify(data),
+    body: JSON.stringify(payload),
   })
 }
 
@@ -178,10 +184,11 @@ export async function saveCompanion(data: {
   bio: string | null
   passed: boolean
 }) {
-  await fetch(`${API_BASE}/manifest/companions`, {
-    method: data.id ? 'PUT' : 'POST',
+  const { id, ...payload } = data
+  await fetch(id ? `${API_BASE}/manifest/companions/${id}` : `${API_BASE}/manifest/companions`, {
+    method: id ? 'PUT' : 'POST',
     headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
-    body: JSON.stringify(data),
+    body: JSON.stringify(payload),
   })
 }
 

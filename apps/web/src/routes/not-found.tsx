@@ -1,17 +1,12 @@
 import { Link } from 'react-router-dom'
-import { useAuth } from '@/hooks/use-auth'
+import { useWayfarerHeader } from '@/hooks/use-wayfarer-header'
 import { FooterNav } from '@/components/nav/footer'
 import { PublicHeader } from '@/components/nav/public/public-header'
 import { Button } from '@/components/ui/button'
 import { MapPin } from 'lucide-react'
 
 export default function NotFound() {
-    const { user } = useAuth()
-    const wayfarer = user ? {
-        name: user.name ?? null,
-        email: user.email ?? null,
-        avatar: user.image ?? null,
-    } : null
+    const wayfarer = useWayfarerHeader()
 
     return (
         <div className="min-h-screen flex flex-col">

@@ -29,9 +29,10 @@ type OriginsFormValues = z.infer<typeof originsSchema>
 
 interface OriginsFormProps {
   defaultValues?: Partial<OriginsFormValues>
+  onSaved?: () => void
 }
 
-export function OriginsForm({ defaultValues }: OriginsFormProps) {
+export function OriginsForm({ defaultValues, onSaved }: OriginsFormProps) {
   const { saving, saved, error, handleSubmit } = useFormStatus()
 
   const form = useForm<OriginsFormValues>({
@@ -48,15 +49,18 @@ export function OriginsForm({ defaultValues }: OriginsFormProps) {
   })
 
   async function onSubmit(values: OriginsFormValues) {
-    await handleSubmit(() => saveOrigins({
-      headline: values.headline ?? null,
-      summary: values.summary ?? null,
-      bio: values.bio ?? null,
-      location: values.location ?? null,
-      website: values.website ?? null,
-      linkedin: values.linkedin ?? null,
-      github: values.github ?? null,
-    }))
+    await handleSubmit(async () => {
+      await saveOrigins({
+        headline: values.headline ?? null,
+        summary: values.summary ?? null,
+        bio: values.bio ?? null,
+        location: values.location ?? null,
+        website: values.website ?? null,
+        linkedin: values.linkedin ?? null,
+        github: values.github ?? null,
+      })
+      onSaved?.()
+    })
   }
 
   return (

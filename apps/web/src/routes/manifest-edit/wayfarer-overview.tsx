@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { resolveProfileImage } from '@/lib/profile-image'
 import { Separator } from '@/components/ui/separator'
 import { SummaryExcerpt } from './summary-excerpt'
 import { ExternalLink, MapPin, Globe, Link2, GitBranch, Mail } from 'lucide-react'
@@ -58,7 +59,7 @@ export function WayfarerOverview({
 
       <div className="flex items-center gap-4">
         <Avatar className="h-16 w-16">
-          <AvatarImage src={image ?? undefined} alt={name ?? 'Wayfarer'} />
+          <AvatarImage src={resolveProfileImage(image) ?? undefined} alt={name ?? 'Wayfarer'} />
           <AvatarFallback className="text-lg">{initials}</AvatarFallback>
         </Avatar>
         <div className="flex flex-col gap-1">

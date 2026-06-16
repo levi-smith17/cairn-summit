@@ -114,6 +114,7 @@ describe('supplylines/summary handler', () => {
                 sk: 'CACHE#marker-1#5#2026',
                 id: 'cache-1',
                 markerId: 'marker-1',
+                markerName: 'Food',
                 limit: 200,
                 month: 5,
                 year: 2026
@@ -145,6 +146,8 @@ describe('supplylines/summary handler', () => {
         expect(data.cacheUtilization[0].markerId).toBe('marker-1')
         expect(data.cacheUtilization[0].limit).toBe(200)
         expect(data.cacheUtilization[0].spent).toBe(50)
+        expect(data.cacheUtilization[0].utilization).toBe(25)
+        expect(data.cacheUtilization[0].marker.name).toBe('Food')
     })
 
     it('handles different billing cycles correctly', async () => {

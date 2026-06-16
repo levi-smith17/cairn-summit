@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -42,6 +43,7 @@ interface AccountFormProps {
 
 export function AccountForm({ defaultValues, isAdmin }: AccountFormProps) {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { saving, saved, error, handleSubmit } = useFormStatus()
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [confirmText, setConfirmText] = useState('')
@@ -70,14 +72,21 @@ export function AccountForm({ defaultValues, isAdmin }: AccountFormProps) {
   })
 
   async function onSubmit(values: AccountFormValues) {
-    await handleSubmit(() => saveAccountSettings({
-      name: values.name || null,
-      image: values.image || null,
-      username: values.username || null,
-      defaultTerminology: values.defaultTerminology,
-      defaultTheme: values.defaultTheme,
-      customDomain: values.customDomain || null,
-    }))
+    await handleSubmit(async () => {
+      await saveAccountSettings({
+        name: values.name || null,
+        image: values.image || null,
+        username: values.username || null,
+        defaultTerminology: values.defaultTerminology,
+        defaultTheme: values.defaultTheme,
+        customDomain: values.customDomain || null,
+      })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['manifest'] }),
+        queryClient.invalidateQueries({ queryKey: ['profile'] }),
+        queryClient.invalidateQueries({ queryKey: ['settings'] }),
+      ])
+    })
   }
 
   const username = form.watch('username')

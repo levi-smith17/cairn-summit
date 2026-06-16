@@ -4,6 +4,8 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Settings } from 'lucide-react'
 import { PlatformHeader } from '@/components/nav/platform/platform-header'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { FilterBar } from '@/components/filters/filter-bar'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,6 +17,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { useTerminology } from '@/contexts/terminology-context'
+import { parseFiltersFromParams, applySignalFilters } from '@/lib/filters'
 import { deleteSignal } from '@/lib/api/signals'
 import type { Signal } from '@/lib/api/signals'
 import { SignalList } from './signal-list'
@@ -41,8 +44,17 @@ export function SignalsClient({ signals, signalSettings }: SignalsClientProps) {
   const [showSettings, setShowSettings] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
 
+  const parsed = parseFiltersFromParams(searchParams)
+  const filters = {
+    ...parsed,
+    sort: searchParams.has('sort') ? parsed.sort : 'newest' as const,
+  }
+  const filteredSignals = applySignalFilters(signals, filters)
+
   const selectedId = searchParams.get('id')
-  const selectedSignal = signals.find(s => s.id === selectedId) ?? null
+  const selectedSignal = filteredSignals.find(s => s.id === selectedId)
+    ?? signals.find(s => s.id === selectedId)
+    ?? null
   const showRight = selectedId !== null || showSettings
 
   function selectSignal(id: string) {
@@ -72,25 +84,46 @@ export function SignalsClient({ signals, signalSettings }: SignalsClientProps) {
       <PlatformHeader title={terms.signals} />
 
       <div className="flex flex-col flex-1 gap-4 p-4 overflow-hidden min-h-0">
-        <div className="flex items-center justify-end shrink-0">
-          <Button
-            variant={showSettings ? 'secondary' : 'outline'}
-            size="sm"
-            className="h-8 gap-1.5 text-sm"
-            onClick={() => {
-              setShowSettings(v => !v)
-              if (!showSettings) clearSelection()
-            }}
-          >
-            <Settings className="h-3.5 w-3.5" />
-            Settings
-          </Button>
+        <div className="rounded-lg border border-border bg-card p-2 shrink-0">
+          <div className="flex items-center gap-1.5">
+            <FilterBar
+              showMarkerFilter={false}
+              showTrailFilter={false}
+              showSort
+              showUnreadOnly
+              showDateRange
+              sortOptions={[
+                { value: 'newest', label: 'Newest' },
+                { value: 'oldest', label: 'Oldest' },
+                { value: 'alpha', label: 'A–Z' },
+              ]}
+              searchPlaceholder={`${terms.explore} ${terms.signals.toLowerCase()}...`}
+              fill
+            />
+            <div className="hidden md:block flex-1" />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={showSettings ? 'secondary' : 'ghost'}
+                  size="icon"
+                  className="hidden md:flex h-8 w-8 shrink-0"
+                  onClick={() => {
+                    setShowSettings(v => !v)
+                    if (!showSettings) clearSelection()
+                  }}
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{terms.signals} settings</TooltipContent>
+            </Tooltip>
+          </div>
         </div>
 
         <div className="flex flex-1 gap-4 overflow-hidden min-h-0">
           <div className={`${showRight ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-1/3 rounded-lg border border-border bg-card overflow-hidden`}>
             <SignalList
-              signals={signals}
+              signals={filteredSignals}
               selectedId={selectedId}
               showSnippets={signalSettings.showSnippets}
               onSelect={selectSignal}
