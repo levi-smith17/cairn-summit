@@ -51,6 +51,14 @@ jobs:
       - name: Run Web tests
         run: npm run test:run --workspace=apps/web --reporter=verbose
 
+      - name: Check for Loading… text in routes
+        run: |
+          if rg 'Loading(\.\.\.| calendars)' apps/web/src/routes --glob '*.tsx'; then
+            echo 'Found forbidden loading text in route files. Use skeletons instead.'
+            exit 1
+          fi
+          echo 'No forbidden loading text found.'
+
   terraform-plan-dev:
     name: Terraform Plan (dev)
     runs-on: ubuntu-latest

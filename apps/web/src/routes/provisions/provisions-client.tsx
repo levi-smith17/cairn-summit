@@ -1,15 +1,20 @@
 import { useState, useEffect } from 'react'
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
 import { CustomSelect } from '@/components/ui/custom-select'
 import { Plus, Search, ChevronLeft, ChevronRight, AlertTriangle, TrendingUp, Wallet, RefreshCw, Copy, X } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { PlatformHeader } from '@/components/nav/platform/platform-header'
 import { useTerminology } from '@/contexts/terminology-context'
+import { useAuth } from '@/hooks/use-auth'
 import { useDebounce } from '@/hooks/use-debounce'
+import { isInitialRouteLoad, isSectionRefetching } from '@/hooks/use-route-ready'
 import { MarkerPicker } from '@/components/ui/marker-picker'
+import { ProvisionsSkeleton, ListSectionSkeleton } from '@/components/ui/page-skeleton'
 import { BurnRow, type Burn } from './burn-row'
 import { InlineBurnForm } from './inline-burn-form'
 import { SupplylineRow, type Supplyline } from './supplyline-row'
@@ -17,6 +22,8 @@ import { InlineSupplylineForm } from './inline-supplyline-form'
 import { CacheRow, type BudgetUtilization } from './cache-row'
 import { InlineCacheForm } from './inline-cache-form'
 import { carryOverCache, getBurnPage, getSupplylinesFiltered, getSupplylinesSummary } from '@/lib/api/supplylines'
+import { getMarkers } from '@/lib/api/markers'
+import { extractId } from '@/lib/utils'
 import { markerDisplayName } from '@/lib/embedded-markers'
 
 interface Summary {
@@ -34,20 +41,18 @@ interface UpcomingRenewal {
   billingCycle: string
 }
 
-interface Props {
-  markers: any[]
-}
-
 const fmt = (n: number) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n)
 
-export function ProvisionsClient({ markers }: Props) {
+export function ProvisionsClient() {
+  const { user } = useAuth()
   const { terms } = useTerminology()
+  const queryClient = useQueryClient()
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ['provisions'] })
+
   const now = new Date()
   const [month, setMonth] = useState(now.getMonth() + 1)
   const [year, setYear] = useState(now.getFullYear())
-  const [refreshKey, setRefreshKey] = useState(0)
-  const refresh = () => setRefreshKey((k) => k + 1)
 
   const [search, setSearch] = useState('')
   const [markerFilter, setMarkerFilter] = useState('all')
@@ -55,92 +60,84 @@ export function ProvisionsClient({ markers }: Props) {
   const debouncedSearch = useDebounce(search, 300)
   const filtersActive = search !== '' || markerFilter !== 'all' || activeFilter !== 'all'
 
+  const [addingBurn, setAddingBurn] = useState(false)
+  const [burnPage, setBurnPage] = useState(1)
+  const [addingProvision, setAddingProvision] = useState(false)
+  const [addingBudget, setAddingBudget] = useState(false)
+
   function clearFilters() {
     setSearch('')
     setMarkerFilter('all')
     setActiveFilter('all')
   }
 
-  const [summary, setSummary] = useState<Summary | null>(null)
-  const [upcomingRenewals, setUpcomingRenewals] = useState<UpcomingRenewal[]>([])
-  const [cacheUtilization, setCacheUtilization] = useState<BudgetUtilization[]>([])
-  const [summaryLoading, setSummaryLoading] = useState(true)
+  const markersQuery = useQuery({
+    queryKey: ['markers', user?.id],
+    queryFn: getMarkers,
+    enabled: !!user,
+  })
 
-  const [burnItems, setBurnItems] = useState<Burn[]>([])
-  const [burnLoading, setBurnLoading] = useState(true)
-  const [addingBurn, setAddingBurn] = useState(false)
-  const [burnPage, setBurnPage] = useState(1)
-  const [burnTotal, setBurnTotal] = useState(0)
-  const [burnPageSize, setBurnPageSize] = useState(20)
+  const summaryQuery = useQuery({
+    queryKey: ['provisions', 'summary', month, year],
+    queryFn: () => getSupplylinesSummary(month, year),
+    enabled: !!user,
+    placeholderData: keepPreviousData,
+  })
 
-  const [supplylines, setSupplylines] = useState<Supplyline[]>([])
-  const [provisionLoading, setProvisionLoading] = useState(true)
-  const [addingProvision, setAddingProvision] = useState(false)
+  const burnQuery = useQuery({
+    queryKey: ['provisions', 'burn', month, year, burnPage, debouncedSearch, markerFilter],
+    queryFn: () =>
+      getBurnPage({
+        month,
+        year,
+        page: burnPage,
+        search: debouncedSearch || undefined,
+        markerId: markerFilter !== 'all' ? markerFilter : undefined,
+      }),
+    enabled: !!user,
+    placeholderData: keepPreviousData,
+  })
 
-  const [addingBudget, setAddingBudget] = useState(false)
-
-  useEffect(() => {
-    const fetchSummary = async () => {
-      setSummaryLoading(true)
-      try {
-        const data = await getSupplylinesSummary(month, year)
-        setSummary(data.summary)
-        setUpcomingRenewals(data.upcomingRenewals)
-        setCacheUtilization(data.cacheUtilization)
-      } catch (err) {
-        console.error('Failed to load summary', err)
-      } finally {
-        setSummaryLoading(false)
-      }
-    }
-    fetchSummary()
-  }, [month, year, refreshKey])
+  const supplylinesQuery = useQuery({
+    queryKey: ['provisions', 'supplylines', debouncedSearch, markerFilter, activeFilter],
+    queryFn: () =>
+      getSupplylinesFiltered({
+        search: debouncedSearch || undefined,
+        markerId: markerFilter !== 'all' ? markerFilter : undefined,
+        active: activeFilter !== 'all' ? activeFilter : undefined,
+      }),
+    enabled: !!user,
+    placeholderData: keepPreviousData,
+  })
 
   useEffect(() => {
     setBurnPage(1)
   }, [month, year, debouncedSearch, markerFilter])
 
-  useEffect(() => {
-    const fetchBurn = async () => {
-      setBurnLoading(true)
-      try {
-        const data = await getBurnPage({
-          month,
-          year,
-          page: burnPage,
-          search: debouncedSearch || undefined,
-          markerId: markerFilter !== 'all' ? markerFilter : undefined,
-        })
-        setBurnItems(data.burn)
-        setBurnTotal(data.total)
-        setBurnPageSize(data.pageSize)
-      } catch (err) {
-        console.error('Failed to load burn', err)
-      } finally {
-        setBurnLoading(false)
-      }
-    }
-    fetchBurn()
-  }, [month, year, debouncedSearch, markerFilter, refreshKey, burnPage])
+  if (isInitialRouteLoad([markersQuery, summaryQuery, burnQuery, supplylinesQuery])) {
+    return <ProvisionsSkeleton title={terms.provisions} />
+  }
 
-  useEffect(() => {
-    const fetchProvisions = async () => {
-      setProvisionLoading(true)
-      try {
-        const data = await getSupplylinesFiltered({
-          search: debouncedSearch || undefined,
-          markerId: markerFilter !== 'all' ? markerFilter : undefined,
-          active: activeFilter !== 'all' ? activeFilter : undefined,
-        })
-        setSupplylines(data)
-      } catch (err) {
-        console.error('Failed to load provisions', err)
-      } finally {
-        setProvisionLoading(false)
-      }
-    }
-    fetchProvisions()
-  }, [debouncedSearch, markerFilter, activeFilter, refreshKey])
+  const markers = (markersQuery.data ?? []).map((m: { sk: string; name: string; color: string; icon?: string | null }) => ({
+    id: extractId(m.sk),
+    name: m.name,
+    color: m.color,
+    icon: m.icon ?? null,
+  }))
+
+  const summaryData = summaryQuery.data
+  const summary = summaryData?.summary as Summary | undefined
+  const upcomingRenewals = (summaryData?.upcomingRenewals ?? []) as UpcomingRenewal[]
+  const cacheUtilization = (summaryData?.cacheUtilization ?? []) as BudgetUtilization[]
+
+  const burnItems = (burnQuery.data?.burn ?? []) as Burn[]
+  const burnTotal = burnQuery.data?.total ?? 0
+  const burnPageSize = burnQuery.data?.pageSize ?? 20
+  const supplylines = (supplylinesQuery.data ?? []) as Supplyline[]
+
+  const summaryRefetching = isSectionRefetching([summaryQuery])
+  const burnRefetching = isSectionRefetching([burnQuery])
+  const supplylinesRefetching = isSectionRefetching([supplylinesQuery])
 
   const visibleBudgets = markerFilter === 'all'
     ? cacheUtilization
@@ -181,8 +178,17 @@ export function ProvisionsClient({ markers }: Props) {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{summaryLoading ? '—' : fmt(summary?.monthlySupplylineCost ?? 0)}</div>
-              <p className="text-xs text-muted-foreground mt-1">{summary?.activeSupplylines ?? 0} active</p>
+              {summaryRefetching ? (
+                <>
+                  <Skeleton className="h-7 w-20" />
+                  <Skeleton className="h-3 w-16 mt-1" />
+                </>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">{fmt(summary?.monthlySupplylineCost ?? 0)}</div>
+                  <p className="text-xs text-muted-foreground mt-1">{summary?.activeSupplylines ?? 0} active</p>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -193,8 +199,17 @@ export function ProvisionsClient({ markers }: Props) {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{summaryLoading ? '—' : fmt(summary?.totalBurn ?? 0)}</div>
-              <p className="text-xs text-muted-foreground mt-1">recorded this month</p>
+              {summaryRefetching ? (
+                <>
+                  <Skeleton className="h-7 w-20" />
+                  <Skeleton className="h-3 w-28 mt-1" />
+                </>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">{fmt(summary?.totalBurn ?? 0)}</div>
+                  <p className="text-xs text-muted-foreground mt-1">recorded this month</p>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -205,8 +220,17 @@ export function ProvisionsClient({ markers }: Props) {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{summaryLoading ? '—' : fmt(summary?.totalMonthSpend ?? 0)}</div>
-              <p className="text-xs text-muted-foreground mt-1">{terms.supplylines.toLowerCase()} + {terms.burn.toLowerCase()}</p>
+              {summaryRefetching ? (
+                <>
+                  <Skeleton className="h-7 w-20" />
+                  <Skeleton className="h-3 w-32 mt-1" />
+                </>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">{fmt(summary?.totalMonthSpend ?? 0)}</div>
+                  <p className="text-xs text-muted-foreground mt-1">{terms.supplylines.toLowerCase()} + {terms.burn.toLowerCase()}</p>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -217,13 +241,22 @@ export function ProvisionsClient({ markers }: Props) {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{upcomingRenewals.length}</div>
-              <p className="text-xs text-muted-foreground mt-1">within 7 days</p>
+              {summaryRefetching ? (
+                <>
+                  <Skeleton className="h-7 w-8" />
+                  <Skeleton className="h-3 w-20 mt-1" />
+                </>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">{upcomingRenewals.length}</div>
+                  <p className="text-xs text-muted-foreground mt-1">within 7 days</p>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
 
-        {upcomingRenewals.length > 0 && (
+        {upcomingRenewals.length > 0 && !summaryRefetching && (
           <div className="shrink-0 p-4 rounded-lg border border-amber-500/30 bg-amber-500/5">
             <div className="flex items-center gap-2 mb-3">
               <AlertTriangle className="h-4 w-4 text-amber-500" />
@@ -341,8 +374,8 @@ export function ProvisionsClient({ markers }: Props) {
             )}
 
             <div className="flex-1 lg:overflow-y-auto">
-              {burnLoading ? (
-                <div className="px-4 py-6 text-sm text-muted-foreground">Loading…</div>
+              {burnRefetching ? (
+                <ListSectionSkeleton rows={5} />
               ) : burnItems.length === 0 ? (
                 <div className="px-4 py-6 text-sm text-muted-foreground">No {terms.burn.toLowerCase()} found.</div>
               ) : (
@@ -384,7 +417,7 @@ export function ProvisionsClient({ markers }: Props) {
                   size="icon"
                   className="h-7 w-7"
                   onClick={() => setBurnPage(p => p - 1)}
-                  disabled={burnPage <= 1}
+                  disabled={burnPage <= 1 || burnRefetching}
                 >
                   <ChevronLeft className="h-3.5 w-3.5" />
                 </Button>
@@ -396,7 +429,7 @@ export function ProvisionsClient({ markers }: Props) {
                   size="icon"
                   className="h-7 w-7"
                   onClick={() => setBurnPage(p => p + 1)}
-                  disabled={burnPage >= Math.ceil(burnTotal / burnPageSize)}
+                  disabled={burnPage >= Math.ceil(burnTotal / burnPageSize) || burnRefetching}
                 >
                   <ChevronRight className="h-3.5 w-3.5" />
                 </Button>
@@ -433,8 +466,8 @@ export function ProvisionsClient({ markers }: Props) {
               )}
 
               <div className="divide-y overflow-y-auto max-h-144">
-                {provisionLoading ? (
-                  <div className="px-3 py-4 text-sm text-muted-foreground">Loading…</div>
+                {supplylinesRefetching ? (
+                  <ListSectionSkeleton rows={4} compact />
                 ) : supplylines.length === 0 ? (
                   <div className="px-3 py-4 text-sm text-muted-foreground">No {terms.supplylines.toLowerCase()} found.</div>
                 ) : (
@@ -495,7 +528,9 @@ export function ProvisionsClient({ markers }: Props) {
               )}
 
               <div className="divide-y overflow-y-auto max-h-96">
-                {visibleBudgets.length === 0 ? (
+                {summaryRefetching ? (
+                  <ListSectionSkeleton rows={3} compact />
+                ) : visibleBudgets.length === 0 ? (
                   <div className="px-3 py-4 text-sm text-muted-foreground">No {terms.cache.toLowerCase()} set for this month.</div>
                 ) : (
                   visibleBudgets.map((b) => (
@@ -512,7 +547,7 @@ export function ProvisionsClient({ markers }: Props) {
                 )}
               </div>
 
-              {visibleBudgets.length > 0 && (() => {
+              {visibleBudgets.length > 0 && !summaryRefetching && (() => {
                 const totalSpent = visibleBudgets.reduce((s, b) => s + b.spent, 0)
                 const totalLimit = visibleBudgets.reduce((s, b) => s + b.limit, 0)
                 const totalPct = totalLimit > 0 ? (totalSpent / totalLimit) * 100 : 0

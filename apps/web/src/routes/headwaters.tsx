@@ -1,9 +1,12 @@
 import { useState, useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/use-auth'
+import { useTerminology } from '@/contexts/terminology-context'
 import { getKin } from '@/lib/api/headwaters'
 import type { Kin } from '@cairn/types'
 import { HeadwatersClient } from './headwaters/headwaters-client'
+import { HeadwatersSkeleton } from '@/components/ui/page-skeleton'
+import { isInitialRouteLoad } from '@/hooks/use-route-ready'
 
 type PanelState =
   | { mode: 'closed' }
@@ -24,17 +27,24 @@ function parseName(fullName: string): { givenName: string; middleName?: string; 
 
 export default function Headwaters() {
   const { user } = useAuth()
+  const { terms } = useTerminology()
   const queryClient = useQueryClient()
   const [panel, setPanel] = useState<PanelState>({ mode: 'closed' })
 
-  const { data: kins = [], isLoading } = useQuery({
+  const kinQuery = useQuery({
     queryKey: ['headwaters', 'kin'],
     queryFn: getKin,
     enabled: !!user,
   })
 
+  if (isInitialRouteLoad([kinQuery])) {
+    return <HeadwatersSkeleton title={terms.headwaters} />
+  }
+
+  const kins = kinQuery.data ?? []
+
   const wayfarerSeed = useMemo<Kin | null>(() => {
-    if (isLoading || kins.length > 0 || !user) return null
+    if (kins.length > 0 || !user) return null
     const rawName = user.name ?? user.email.split('@')[0]
     const { givenName, middleName, surname } = parseName(rawName)
     return {
@@ -49,7 +59,7 @@ export default function Headwaters() {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
-  }, [isLoading, kins.length, user])
+  }, [kins.length, user])
 
   const displayKins = kins.length > 0 ? kins : wayfarerSeed ? [wayfarerSeed] : []
 

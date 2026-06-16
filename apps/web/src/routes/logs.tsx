@@ -7,34 +7,44 @@ import { getMarkers } from '@/lib/api/markers'
 import { getWaypoints } from '@/lib/api/waypoints'
 import { PageSkeleton } from '@/components/ui/page-skeleton'
 import { useTerminology } from '@/contexts/terminology-context'
+import { isInitialRouteLoad } from '@/hooks/use-route-ready'
 
 export default function Logs() {
     const { user } = useAuth()
     const { terms } = useTerminology()
 
-    const { data: logsData, isLoading } = useQuery({
+    const logsQuery = useQuery({
         queryKey: ['logs', user?.id],
         queryFn: getLogs,
         enabled: !!user
     })
 
-    const { data: trailsData } = useQuery({
+    const trailsQuery = useQuery({
         queryKey: ['trails', user?.id],
         queryFn: getTrails,
         enabled: !!user
     })
 
-    const { data: markersData } = useQuery({
+    const markersQuery = useQuery({
         queryKey: ['markers', user?.id],
         queryFn: getMarkers,
         enabled: !!user
     })
 
-    const { data: waypointsData } = useQuery({
+    const waypointsQuery = useQuery({
         queryKey: ['waypoints', user?.id],
         queryFn: getWaypoints,
         enabled: !!user
     })
+
+    if (isInitialRouteLoad([logsQuery, trailsQuery, markersQuery, waypointsQuery])) {
+        return <PageSkeleton title={terms.logs} hasFilterBar />
+    }
+
+    const logsData = logsQuery.data
+    const trailsData = trailsQuery.data
+    const markersData = markersQuery.data
+    const waypointsData = waypointsQuery.data
 
     const trails = (trailsData ?? []).map((t: any) => ({
         ...t,
@@ -70,8 +80,6 @@ export default function Logs() {
         ...w,
         id: w.sk?.split('#').pop() ?? w.id,
     }))
-
-    if (isLoading) return <PageSkeleton title={terms.logs} hasFilterBar />
 
     return (
         <LogsClient

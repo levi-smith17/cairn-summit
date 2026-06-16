@@ -6,28 +6,37 @@ import { getTrails } from '@/lib/api/trails'
 import { getMarkers } from '@/lib/api/markers'
 import { PageSkeleton } from '@/components/ui/page-skeleton'
 import { useTerminology } from '@/contexts/terminology-context'
+import { isInitialRouteLoad } from '@/hooks/use-route-ready'
 
 export default function Waypoints() {
     const { user } = useAuth()
     const { terms } = useTerminology()
 
-    const { data: waypointsData, isLoading: loadingW } = useQuery({
+    const waypointsQuery = useQuery({
         queryKey: ['waypoints', user?.id],
         queryFn: getWaypoints,
         enabled: !!user
     })
 
-    const { data: trailsData } = useQuery({
+    const trailsQuery = useQuery({
         queryKey: ['trails', user?.id],
         queryFn: getTrails,
         enabled: !!user
     })
 
-    const { data: markersData } = useQuery({
+    const markersQuery = useQuery({
         queryKey: ['markers', user?.id],
         queryFn: getMarkers,
         enabled: !!user
     })
+
+    if (isInitialRouteLoad([waypointsQuery, trailsQuery, markersQuery])) {
+        return <PageSkeleton title={terms.waypoints} hasFilterBar />
+    }
+
+    const trailsData = trailsQuery.data
+    const waypointsData = waypointsQuery.data
+    const markersData = markersQuery.data
 
     const trails = (trailsData ?? []).map((t: any) => ({
         ...t,
@@ -58,8 +67,6 @@ export default function Waypoints() {
         ...m,
         id: m.sk?.split('#').pop() ?? m.id,
     }))
-
-    if (loadingW) return <PageSkeleton title={terms.waypoints} hasFilterBar />
 
     return (
         <WaypointsClient

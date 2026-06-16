@@ -37,7 +37,6 @@ interface ItineraryClientProps {
   stops: StopWithMarkers[]
   calendars: CalendarOption[]
   events: ICloudEventDisplay[]
-  eventsLoading: boolean
 }
 
 function addDays(date: Date, n: number): Date {
@@ -81,7 +80,7 @@ const MODE_OPTIONS: { value: CalendarMode; label: string; short: string; tip: st
   { value: 'luvi-full', label: 'Full Luvi', short: 'L*', tip: 'Full Luvi calendar (14 months × 26 days)' },
 ]
 
-export function ItineraryClient({ stops, calendars, events, eventsLoading }: ItineraryClientProps) {
+export function ItineraryClient({ stops, calendars, events }: ItineraryClientProps) {
   const { terms } = useTerminology()
   const navigate = useNavigate()
   const [view, setView] = useState<CalendarView>('month')
@@ -136,12 +135,6 @@ export function ItineraryClient({ stops, calendars, events, eventsLoading }: Iti
             <span className="text-sm font-medium flex-1 min-w-0 truncate">
               {navLabel(view, anchor, calendarMode)}
             </span>
-
-            {eventsLoading && (
-              <span className="text-xs text-muted-foreground animate-pulse shrink-0">
-                Loading calendars…
-              </span>
-            )}
 
             <div className="flex items-center rounded-md border divide-x overflow-hidden text-xs shrink-0">
               {(Object.entries(viewLabels) as [CalendarView, string][]).map(([v, label]) => (

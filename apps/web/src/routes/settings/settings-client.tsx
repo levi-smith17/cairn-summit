@@ -2,7 +2,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Bookmark, CalendarDays, Monitor, NotebookPen, Shield, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PlatformHeader } from '@/components/nav/platform/platform-header'
-import { SettingsContentSkeleton } from '@/components/ui/page-skeleton'
 import { useTerminology } from '@/contexts/terminology-context'
 import { AccountForm } from './account-form'
 import { AppearanceForm } from './appearance-form'
@@ -52,7 +51,6 @@ interface SettingsClientProps {
     openInNewTab: boolean
     waypointsPerPage: number
   }
-  isLoading?: boolean
   onRefresh: () => void
 }
 
@@ -72,7 +70,6 @@ export function SettingsClient({
   privacySettings,
   itinerarySettings,
   waypointSettings,
-  isLoading,
   onRefresh,
 }: SettingsClientProps) {
   const navigate = useNavigate()
@@ -192,7 +189,7 @@ export function SettingsClient({
             })()}
           </div>
           <div className="flex-1 overflow-y-auto p-6">
-            {isLoading ? <SettingsContentSkeleton /> : renderContent()}
+            {renderContent()}
           </div>
         </div>
       </div>

@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Loader2, Plus } from 'lucide-react'
-import { Skeleton } from '@/components/ui/skeleton'
 import { useSearchParams } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -66,8 +65,6 @@ interface BasecampClientProps {
   folders: any[]
   filteredCountMap: Record<string, number> | null
   sidebarData: SnapshotData
-  mainLoading?: boolean
-  sidebarLoading?: boolean
   onRefresh: () => void
 }
 
@@ -78,8 +75,6 @@ export function BasecampClient({
   folders,
   filteredCountMap,
   sidebarData,
-  mainLoading = false,
-  sidebarLoading = false,
   onRefresh,
 }: BasecampClientProps) {
   const { terms } = useTerminology()
@@ -146,26 +141,17 @@ export function BasecampClient({
 
       <div className="flex flex-col flex-1 gap-4 p-4 overflow-y-auto lg:overflow-hidden lg:min-h-0">
         <div className="rounded-lg border border-border bg-card p-2 shrink-0">
-          {mainLoading ? (
-            <div className="flex gap-2 px-1">
-              <Skeleton className="h-8 flex-1" />
-              <Skeleton className="h-8 w-20" />
-              <Skeleton className="h-8 w-20" />
-              <Skeleton className="h-8 w-20" />
-            </div>
-          ) : (
-            <FilterBar
-              markers={tags}
-              trails={folders}
-              showTrailFilter
-              showMarkerFilter
-              showSort
-              showReadLater
-              showDateRange
-              searchPlaceholder={`${terms.explore} ${terms.waypoints.toLowerCase()}...`}
-              fill
-            />
-          )}
+          <FilterBar
+            markers={tags}
+            trails={folders}
+            showTrailFilter
+            showMarkerFilter
+            showSort
+            showReadLater
+            showDateRange
+            searchPlaceholder={`${terms.explore} ${terms.waypoints.toLowerCase()}...`}
+            fill
+          />
         </div>
 
         <div className="flex flex-col lg:flex-row flex-1 gap-4 lg:overflow-hidden lg:min-h-0">
@@ -199,17 +185,7 @@ export function BasecampClient({
             )}
 
             <div className="lg:flex-1 lg:overflow-y-auto">
-              {mainLoading ? (
-                <div className="flex flex-col divide-y">
-                  {Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="px-4 py-3 space-y-2">
-                      <Skeleton className="h-3.5 w-32" />
-                      <Skeleton className="h-3 w-full" />
-                      <Skeleton className="h-3 w-4/5" />
-                    </div>
-                  ))}
-                </div>
-              ) : loadedTrails.length === 0 ? (
+              {loadedTrails.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full py-16 px-4 text-center">
                   <p className="text-sm text-muted-foreground">
                     No {terms.waypoints.toLowerCase()} yet.{' '}
@@ -253,7 +229,7 @@ export function BasecampClient({
           </div>
 
           <div className="lg:w-72 lg:shrink-0 overflow-y-auto">
-            <SnapshotPanels {...sidebarData} isLoading={sidebarLoading} />
+            <SnapshotPanels {...sidebarData} />
           </div>
         </div>
       </div>
