@@ -128,7 +128,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: changes
     if: needs.changes.outputs.infra == 'true'
-    environment: prod
+    #environment: prod
     env:
       AWS_REGION: ${{ secrets.AWS_REGION }}
 

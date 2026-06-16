@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export default function PublicManifest() {
   const { username } = useParams<{ username: string }>()
+  const currentWayfarer = useWayfarerHeader()
 
   const { data, isError } = useQuery({
     queryKey: ['public-manifest', username],
@@ -43,8 +44,6 @@ export default function PublicManifest() {
       </div>
     )
   }
-
-  const currentWayfarer = useWayfarerHeader()
 
   return (
     <ManifestContent
