@@ -86,8 +86,12 @@ export function BurnRow({ burn, tags, onSaved, onDeleted }: Props) {
         {burn.receiptUrl && (
           <button
             onClick={async () => {
-              const url = await getBurnReceiptUrl(burn.receiptUrl!)
-              window.open(url, '_blank')
+              try {
+                const url = await getBurnReceiptUrl(burn.receiptUrl!)
+                window.open(url, '_blank')
+              } catch {
+                // receipt URL fetch failed — ignore click
+              }
             }}
             className="text-muted-foreground hover:text-foreground shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
           >

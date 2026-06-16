@@ -125,6 +125,7 @@ describe('supplylines/summary handler', () => {
             .mockResolvedValueOnce({ Items: mockSupplylines })
             .mockResolvedValueOnce({ Items: mockBurns })
             .mockResolvedValueOnce({ Items: mockCaches })
+            .mockResolvedValueOnce({ Responses: { 'cairn-test': [] } })
 
         const result = await handler(
             mockEvent('user-123', { month: '5', year: '2026' })
@@ -148,6 +149,43 @@ describe('supplylines/summary handler', () => {
         expect(data.cacheUtilization[0].spent).toBe(50)
         expect(data.cacheUtilization[0].utilization).toBe(25)
         expect(data.cacheUtilization[0].marker.name).toBe('Food')
+    })
+
+    it('resolves marker name when cache markerName is empty', async () => {
+        const mockCaches = [
+            {
+                pk: 'USER#user-123',
+                sk: 'CACHE#marker-1#5#2026',
+                id: 'cache-1',
+                markerId: 'marker-1',
+                markerName: '',
+                limit: 200,
+                month: 5,
+                year: 2026,
+            },
+        ]
+
+        vi.mocked(dynamo.send)
+            .mockResolvedValueOnce({ Items: [] })
+            .mockResolvedValueOnce({ Items: [] })
+            .mockResolvedValueOnce({ Items: mockCaches })
+            .mockResolvedValueOnce({
+                Responses: {
+                    'cairn-test': [{
+                        pk: 'USER#user-123',
+                        sk: 'MARKER#marker-1',
+                        name: 'Provisions/Groceries',
+                        color: '#22c55e',
+                    }],
+                },
+            })
+
+        const result = await handler(
+            mockEvent('user-123', { month: '5', year: '2026' }),
+        ) as any
+
+        expect(result.statusCode).toBe(200)
+        expect(JSON.parse(result.body).data.cacheUtilization[0].marker.name).toBe('Provisions/Groceries')
     })
 
     it('handles different billing cycles correctly', async () => {

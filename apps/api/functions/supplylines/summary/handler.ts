@@ -3,6 +3,7 @@ import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 }
 import type { Supplyline, Burn, Cache } from '@cairn/types'
 import { dynamo, TABLE_NAME } from '../../shared/db'
 import { getPk } from '../../shared/auth'
+import { resolveMarkersById } from '../../shared/markers'
 import { toApiGatewayResponse, ok, badRequest, serverError } from '../../shared/response'
 
 function normalizeToMonthly(amount: number, billingCycle: Supplyline['billingCycle']): number {
@@ -89,9 +90,15 @@ export const handler = async (
             return parts[2] === String(month) && parts[3] === String(year)
         })
 
+        const markerMap = await resolveMarkersById(
+            pk,
+            monthCache.map(c => c.sk.split('#')[1]),
+        )
+
         const cacheUtilization = monthCache.map(c => {
             const parts = c.sk.split('#')
             const markerId = parts[1]
+            const resolved = markerMap.get(markerId)
             const spent = monthBurn
                 .filter(b => b.markers.some(m => m.id === markerId))
                 .reduce((sum, b) => sum + b.amount, 0)
@@ -101,8 +108,8 @@ export const handler = async (
                 markerId,
                 marker: {
                     id: markerId,
-                    name: c.markerName || 'Uncategorized',
-                    color: '#6b7280',
+                    name: c.markerName || resolved?.name || 'Uncategorized',
+                    color: resolved?.color || '#6b7280',
                 },
                 limit: c.limit,
                 spent,

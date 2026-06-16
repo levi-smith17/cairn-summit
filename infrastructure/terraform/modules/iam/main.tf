@@ -145,6 +145,94 @@ resource "aws_iam_policy" "lambda_s3_private_media" {
   })
 }
 
+resource "aws_iam_policy" "lambda_s3_private_media_read" {
+  name        = "${var.project_name}-${var.environment}-lambda-s3-private-media-read"
+  description = "Private media S3 access plus DynamoDB read for receipt URL validation"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:BatchGetItem",
+          "dynamodb:GetItem",
+          "dynamodb:Query",
+          "dynamodb:Scan",
+        ]
+        Resource = [
+          var.dynamodb_table_arn,
+          "${var.dynamodb_table_arn}/index/*",
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:DeleteObject",
+          "s3:ListBucket",
+        ]
+        Resource = [
+          "arn:aws:s3:::${var.project_name}-${var.environment}-private-media",
+          "arn:aws:s3:::${var.project_name}-${var.environment}-private-media/*",
+        ]
+      }
+    ]
+  })
+
+  tags = {
+    environment = var.environment
+    managed_by  = var.managed_by
+    owner       = var.owner
+    project     = var.project_name
+  }
+}
+
+resource "aws_iam_policy" "lambda_s3_private_media_dynamo_write" {
+  name        = "${var.project_name}-${var.environment}-lambda-s3-private-media-dynamo-write"
+  description = "Private media S3 access plus DynamoDB write for receipt delete"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:DeleteItem",
+          "dynamodb:GetItem",
+          "dynamodb:Query",
+          "dynamodb:UpdateItem",
+        ]
+        Resource = [
+          var.dynamodb_table_arn,
+          "${var.dynamodb_table_arn}/index/*",
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:DeleteObject",
+          "s3:ListBucket",
+        ]
+        Resource = [
+          "arn:aws:s3:::${var.project_name}-${var.environment}-private-media",
+          "arn:aws:s3:::${var.project_name}-${var.environment}-private-media/*",
+        ]
+      }
+    ]
+  })
+
+  tags = {
+    environment = var.environment
+    managed_by  = var.managed_by
+    owner       = var.owner
+    project     = var.project_name
+  }
+}
+
 resource "aws_iam_policy" "lambda_s3_public_media" {
   name        = "${var.project_name}-${var.environment}-lambda-s3-public-media"
   description = "Lambda access to public media bucket (companions)"
