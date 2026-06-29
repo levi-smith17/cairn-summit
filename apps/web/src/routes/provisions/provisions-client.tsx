@@ -3,18 +3,16 @@ import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-quer
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import { CustomSelect } from '@/components/ui/custom-select'
-import { Plus, Search, ChevronLeft, ChevronRight, AlertTriangle, TrendingUp, Wallet, RefreshCw, Copy, X } from 'lucide-react'
+import { Plus, ChevronLeft, ChevronRight, AlertTriangle, TrendingUp, Wallet, RefreshCw, Copy } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { PlatformHeader } from '@/components/nav/platform/platform-header'
 import { useTerminology } from '@/contexts/terminology-context'
 import { useAuth } from '@/hooks/use-auth'
 import { useDebounce } from '@/hooks/use-debounce'
 import { isInitialRouteLoad, isSectionRefetching } from '@/hooks/use-route-ready'
-import { MarkerPicker } from '@/components/ui/marker-picker'
 import { ProvisionsSkeleton, ListSectionSkeleton } from '@/components/ui/page-skeleton'
+import { ProvisionsFilterBar } from './provisions-filter-bar'
 import { BurnRow, type Burn } from './burn-row'
 import { InlineBurnForm } from './inline-burn-form'
 import { SupplylineRow, type Supplyline } from './supplyline-row'
@@ -275,73 +273,22 @@ export function ProvisionsClient() {
           </div>
         )}
 
-        <div className="rounded-lg border border-border bg-card p-2 shrink-0">
-          <div className="flex flex-col md:flex-row flex-wrap items-center gap-1.5">
-            <div className="flex items-center gap-2 bg-muted/70 rounded-md border border-border h-9 md:h-8 min-w-54 w-full md:w-auto">
-              <Button variant="ghost" size="icon" className="h-9 md:h-8 w-9 md:w-8" onClick={prevMonth}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="text-sm font-medium w-full md:w-36 text-center">{monthName}</span>
-              <Button variant="ghost" size="icon" className="h-9 md:h-8 w-9 md:w-8" onClick={nextMonth}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-
-            <div className="relative h-9 md:h-8 min-w-48 max-w-112 w-full">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
-              <Input
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder={`${terms.explore} ${terms.burn.toLowerCase()} & ${terms.supplylines.toLowerCase()}…`}
-                className="pl-8 pr-8 h-9 md:h-8 text-sm"
-              />
-              {search && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6"
-                  onClick={() => setSearch('')}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              )}
-            </div>
-
-            <div className="flex flex-col md:flex-row items-center gap-1.5 w-full md:w-auto">
-              {markers.length > 0 && (
-                <div className="w-full md:w-64 shrink-0">
-                  <MarkerPicker
-                    markers={markers}
-                    selected={markerFilter !== 'all' ? [markerFilter] : []}
-                    onChange={ids => setMarkerFilter(ids[0] ?? 'all')}
-                    singleSelect
-                    placeholder={`All ${terms.markers}`}
-                    align="start"
-                    initialPath={['Provisions']}
-                  />
-                </div>
-              )}
-
-              <CustomSelect
-                options={[
-                  { value: 'all', label: 'All status' },
-                  { value: 'true', label: 'Active' },
-                  { value: 'false', label: 'Inactive' },
-                ]}
-                value={activeFilter}
-                onChange={setActiveFilter}
-                triggerClassName="w-full md:w-28"
-              />
-
-              {filtersActive && (
-                <Button variant="ghost" size="sm" className="h-9 md:h-8 gap-1.5 text-sm" onClick={clearFilters}>
-                  <X className="h-3.5 w-3.5" />
-                  Clear
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
+        <ProvisionsFilterBar
+          monthName={monthName}
+          onPrevMonth={prevMonth}
+          onNextMonth={nextMonth}
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder={`${terms.explore} ${terms.burn.toLowerCase()} & ${terms.supplylines.toLowerCase()}…`}
+          markerFilter={markerFilter}
+          onMarkerFilterChange={setMarkerFilter}
+          activeFilter={activeFilter}
+          onActiveFilterChange={setActiveFilter}
+          markers={markers}
+          markersLabel={terms.markers}
+          filtersActive={filtersActive}
+          onClearFilters={clearFilters}
+        />
 
         <div className="flex flex-col lg:flex-row lg:flex-1 gap-4 lg:overflow-hidden lg:min-h-0">
 

@@ -3,6 +3,7 @@ import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 }
 import { dynamo, TABLE_NAME } from '../../shared/db'
 import { getPk, getUserId } from '../../shared/auth'
 import { toApiGatewayResponse, ok, badRequest, serverError } from '../../shared/response'
+import { parseWaypointFilterParams, filterWaypoints, sortWaypoints } from '../waypoint-filters'
 
 const DEFAULT_PAGE_SIZE = 5
 
@@ -18,9 +19,8 @@ export const handler = async (
         const userId = getUserId(event)
         const page = Math.max(1, parseInt(qs.page ?? '1', 10))
         const pageSize = Math.min(50, Math.max(1, parseInt(qs.pageSize ?? String(DEFAULT_PAGE_SIZE), 10)))
-        const sort = qs.sort ?? 'newest'
+        const filterParams = parseWaypointFilterParams(qs)
 
-        // Use GSI to efficiently fetch only waypoints for this trail
         const [waypointsResult, logsResult] = await Promise.all([
             dynamo.send(new QueryCommand({
                 TableName: TABLE_NAME,
@@ -35,47 +35,44 @@ export const handler = async (
             })),
         ])
 
-        // Verify the trail belongs to this user by checking waypoint pk
         const rawWaypoints = (waypointsResult.Items ?? []).filter(
-            (w: any) => w.pk === `USER#${userId}`
+            (w: { pk?: string }) => w.pk === `USER#${userId}`
         )
 
-        const logsByWaypoint = new Map<string, any[]>()
+        const logsByWaypoint = new Map<string, { id: string; content: string; createdAt: string }[]>()
         for (const log of logsResult.Items ?? []) {
             if (!log.waypointId) continue
-            if (!logsByWaypoint.has(log.waypointId)) logsByWaypoint.set(log.waypointId, [])
-            logsByWaypoint.get(log.waypointId)!.push({
-                id: (log.sk as string).split('#').pop(),
-                content: log.content ?? '',
-                createdAt: log.createdAt,
+            const waypointId = log.waypointId as string
+            if (!logsByWaypoint.has(waypointId)) logsByWaypoint.set(waypointId, [])
+            logsByWaypoint.get(waypointId)!.push({
+                id: (log.sk as string).split('#').pop()!,
+                content: (log.content as string) ?? '',
+                createdAt: log.createdAt as string,
             })
         }
 
-        let waypoints = rawWaypoints.map((w: any) => ({
-            id: (w.sk as string).split('#').pop() as string,
-            title: w.title as string,
-            url: w.url as string,
-            favicon: w.favicon ?? null,
-            read: w.read ?? false,
-            readLater: w.readLater ?? false,
-            trailId: w.trailId ?? null,
-            markers: (w.markers ?? []).map((m: any) => ({
-                markerId: m.id,
-                marker: { id: m.id, name: m.name, color: m.color, icon: m.icon ?? null },
-            })),
-            createdAt: w.createdAt as string,
-            logs: (logsByWaypoint.get((w.sk as string).split('#').pop()!) ?? [])
-                .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                .slice(0, 3),
-        }))
+        let waypoints = rawWaypoints.map((w: Record<string, unknown>) => {
+            const id = (w.sk as string).split('#').pop() as string
+            return {
+                id,
+                title: w.title as string,
+                url: w.url as string,
+                favicon: (w.favicon as string | null) ?? null,
+                read: (w.read as boolean) ?? false,
+                readLater: (w.readLater as boolean) ?? false,
+                trailId: (w.trailId as string | null) ?? null,
+                markers: ((w.markers as { id: string; name: string; color: string; icon?: string | null }[]) ?? []).map(m => ({
+                    markerId: m.id,
+                    marker: { id: m.id, name: m.name, color: m.color, icon: m.icon ?? null },
+                })),
+                createdAt: w.createdAt as string,
+                logs: (logsByWaypoint.get(id) ?? [])
+                    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                    .slice(0, 1),
+            }
+        })
 
-        if (sort === 'oldest') {
-            waypoints.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-        } else if (sort === 'alpha') {
-            waypoints.sort((a, b) => a.title.localeCompare(b.title))
-        } else {
-            waypoints.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        }
+        waypoints = sortWaypoints(filterWaypoints(waypoints, filterParams), filterParams.sort)
 
         const filteredCount = waypoints.length
         const skip = (page - 1) * pageSize

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { PlatformHeader } from '@/components/nav/platform/platform-header'
 import { useTerminology } from '@/contexts/terminology-context'
-import { FilterBar } from '@/components/filters/filter-bar'
+import { MobileFilterBar } from '@/components/filters/mobile-filter-bar'
 import { WaypointList } from './waypoint-list'
 import { WaypointForm } from './waypoint-form'
 import { parseFiltersFromParams, applyWaypointFilters } from '@/lib/filters'
@@ -58,7 +58,7 @@ export function WaypointsClient({ waypoints, trails, markers, waypointsPerPage }
       <div className="flex flex-col flex-1 gap-4 p-4 overflow-hidden min-h-0">
         <div className="rounded-lg border border-border bg-card p-2 shrink-0">
           <div className="flex items-center gap-1.5">
-            <FilterBar
+            <MobileFilterBar
               markers={markers}
               trails={trails}
               showTrailFilter
@@ -72,7 +72,7 @@ export function WaypointsClient({ waypoints, trails, markers, waypointsPerPage }
                 <Button
                   variant="outline"
                   size="sm"
-                  className="md:hidden h-8 gap-1.5 text-sm"
+                  className="md:hidden h-8 gap-1.5 text-sm shrink-0"
                   onClick={() => navigate('/settings?section=waypoints')}
                 >
                   <Settings className="h-3.5 w-3.5" />

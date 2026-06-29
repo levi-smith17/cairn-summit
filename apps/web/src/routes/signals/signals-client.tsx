@@ -5,7 +5,7 @@ import { Settings } from 'lucide-react'
 import { PlatformHeader } from '@/components/nav/platform/platform-header'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { FilterBar } from '@/components/filters/filter-bar'
+import { MobileFilterBar } from '@/components/filters/mobile-filter-bar'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -86,7 +86,7 @@ export function SignalsClient({ signals, signalSettings }: SignalsClientProps) {
       <div className="flex flex-col flex-1 gap-4 p-4 overflow-hidden min-h-0">
         <div className="rounded-lg border border-border bg-card p-2 shrink-0">
           <div className="flex items-center gap-1.5">
-            <FilterBar
+            <MobileFilterBar
               showMarkerFilter={false}
               showTrailFilter={false}
               showSort

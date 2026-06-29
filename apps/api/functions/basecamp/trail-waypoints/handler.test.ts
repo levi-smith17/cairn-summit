@@ -122,6 +122,23 @@ describe('basecamp/trail-waypoints handler', () => {
         expect(data.waypoints[0].logs[0].content).toBe('Test log')
     })
 
+    it('filters waypoints by search query', async () => {
+        const waypoints = [
+            { ...makeWaypoint('wp-1', 'user-123', 'trail-abc'), title: 'Match Me' },
+            { ...makeWaypoint('wp-2', 'user-123', 'trail-abc'), title: 'Other' },
+        ]
+        vi.mocked(dynamo.send)
+            .mockResolvedValueOnce({ Items: waypoints })
+            .mockResolvedValueOnce({ Items: [] })
+
+        const result = await handler(mockEvent('user-123', { trailId: 'trail-abc', search: 'Match' })) as any
+        expect(result.statusCode).toBe(200)
+        const data = JSON.parse(result.body).data
+        expect(data.waypoints).toHaveLength(1)
+        expect(data.waypoints[0].title).toBe('Match Me')
+        expect(data.filteredCount).toBe(1)
+    })
+
     it('returns 500 when DynamoDB throws', async () => {
         vi.mocked(dynamo.send).mockRejectedValueOnce(new Error('DynamoDB error'))
         const result = await handler(mockEvent('user-123', { trailId: 'trail-abc' })) as any

@@ -13,7 +13,12 @@ export interface BasecampParams {
   dateTo?: string
 }
 
-export async function getBasecamp(params: BasecampParams = {}) {
+export interface TrailWaypointsParams extends BasecampParams {
+  trailId: string
+  pageSize?: number
+}
+
+function buildBasecampQuery(params: BasecampParams): URLSearchParams {
   const qs = new URLSearchParams()
   if (params.page)      qs.set('page', String(params.page))
   if (params.search)    qs.set('search', params.search)
@@ -23,6 +28,11 @@ export async function getBasecamp(params: BasecampParams = {}) {
   if (params.readLater) qs.set('readLater', 'true')
   if (params.dateFrom)  qs.set('dateFrom', params.dateFrom)
   if (params.dateTo)    qs.set('dateTo', params.dateTo)
+  return qs
+}
+
+export async function getBasecamp(params: BasecampParams = {}) {
+  const qs = buildBasecampQuery(params)
 
   const res = await fetch(`${API_BASE}/basecamp?${qs.toString()}`, {
     headers: await getAuthHeaders(),
@@ -45,6 +55,22 @@ export async function getBasecampSidebar() {
   if (!res.ok) throw new Error('Failed to fetch sidebar')
   const json = await res.json()
   return json.data as SidebarData
+}
+
+export async function getTrailWaypoints(params: TrailWaypointsParams) {
+  const qs = buildBasecampQuery(params)
+  qs.set('trailId', params.trailId)
+  if (params.pageSize) qs.set('pageSize', String(params.pageSize))
+
+  const res = await fetch(`${API_BASE}/basecamp/trail-waypoints?${qs.toString()}`, {
+    headers: await getAuthHeaders(),
+  })
+  if (!res.ok) throw new Error('Failed to fetch trail waypoints')
+  const json = await res.json()
+  return json.data as {
+    waypoints: Waypoint[]
+    filteredCount: number
+  }
 }
 
 interface RawExternalEvent {

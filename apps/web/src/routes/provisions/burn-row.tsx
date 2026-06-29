@@ -20,6 +20,7 @@ import { MoreHorizontal, Pencil, Trash2, Receipt } from 'lucide-react'
 import { MarkerBadge } from '@/routes/waypoints/marker-badge'
 import { toDisplayMarker, toMarkerId } from '@/lib/embedded-markers'
 import { deleteBurn, getBurnReceiptUrl } from '@/lib/api/supplylines'
+import { hoverReveal } from '@/lib/utils'
 import { InlineBurnForm } from './inline-burn-form'
 import { useTerminology } from '@/contexts/terminology-context'
 
@@ -93,7 +94,7 @@ export function BurnRow({ burn, tags, onSaved, onDeleted }: Props) {
                 // receipt URL fetch failed — ignore click
               }
             }}
-            className="text-muted-foreground hover:text-foreground shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+            className={`text-muted-foreground hover:text-foreground shrink-0 ${hoverReveal}`}
           >
             <Receipt className="h-3.5 w-3.5" />
           </button>
@@ -104,7 +105,7 @@ export function BurnRow({ burn, tags, onSaved, onDeleted }: Props) {
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+              className={`h-7 w-7 shrink-0 ${hoverReveal}`}
             >
               <MoreHorizontal className="h-4 w-4" />
             </Button>

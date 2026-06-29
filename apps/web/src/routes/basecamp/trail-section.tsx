@@ -1,11 +1,24 @@
 import { useState, useEffect } from 'react'
-import { BookOpen, Bookmark, NotebookPen, Plus } from 'lucide-react'
+import { BookOpen, Bookmark, ChevronLeft, ChevronRight, NotebookPen, Plus } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { ListSectionSkeleton } from '@/components/ui/page-skeleton'
 import { WaypointRow } from './waypoint-row'
 import { InlineWaypointForm } from './inline-waypoint-form'
 import { useTerminology } from '@/contexts/terminology-context'
+import { getTrailWaypoints, type BasecampParams } from '@/lib/api/basecamp'
+
+const PAGE_SIZE = 5
+
+export interface TrailFilterContext {
+  search?: string
+  markerId?: string
+  sort?: BasecampParams['sort']
+  readLater?: boolean
+  dateFrom?: string
+  dateTo?: string
+}
 
 interface TrailSectionProps {
   trail: { id: string; name: string }
@@ -14,6 +27,7 @@ interface TrailSectionProps {
   tags: any[]
   folders: any[]
   totalWaypointCount: number
+  filterContext: TrailFilterContext
   onRefresh?: () => void
 }
 
@@ -24,14 +38,55 @@ export function TrailSection({
   tags,
   folders,
   totalWaypointCount,
+  filterContext,
   onRefresh,
 }: TrailSectionProps) {
   const navigate = useNavigate()
   const { terms } = useTerminology()
+  const [page, setPage] = useState(1)
   const [currentWaypoints, setCurrentWaypoints] = useState(waypoints)
+  const [loading, setLoading] = useState(false)
   const [addingWaypoint, setAddingWaypoint] = useState(false)
 
-  useEffect(() => { setCurrentWaypoints(waypoints) }, [waypoints])
+  const totalPages = Math.max(1, Math.ceil(totalWaypointCount / PAGE_SIZE))
+  const showPagination = totalWaypointCount > PAGE_SIZE
+  const filterKey = JSON.stringify(filterContext)
+
+  useEffect(() => {
+    setPage(1)
+  }, [trail.id, filterKey])
+
+  useEffect(() => {
+    if (page === 1) {
+      setCurrentWaypoints(waypoints)
+      return
+    }
+
+    let cancelled = false
+    setLoading(true)
+    getTrailWaypoints({
+      trailId: trail.id,
+      page,
+      pageSize: PAGE_SIZE,
+      search: filterContext.search,
+      markerId: filterContext.markerId,
+      sort: filterContext.sort,
+      readLater: filterContext.readLater,
+      dateFrom: filterContext.dateFrom,
+      dateTo: filterContext.dateTo,
+    })
+      .then(data => {
+        if (!cancelled) setCurrentWaypoints(data.waypoints)
+      })
+      .catch(() => {
+        if (!cancelled) setCurrentWaypoints([])
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+
+    return () => { cancelled = true }
+  }, [page, trail.id, waypoints, filterKey, filterContext])
 
   return (
     <div>
@@ -114,7 +169,9 @@ export function TrailSection({
       )}
 
       <div className="flex flex-col divide-y">
-        {currentWaypoints.length === 0 ? (
+        {loading ? (
+          <ListSectionSkeleton rows={3} />
+        ) : currentWaypoints.length === 0 ? (
           <p className="text-sm text-muted-foreground px-4 py-3 text-center">
             No {terms.waypoints.toLowerCase()} in this {terms.trails.slice(0, -1).toLowerCase()}.
           </p>
@@ -130,6 +187,32 @@ export function TrailSection({
           ))
         )}
       </div>
+
+      {showPagination && (
+        <div className="flex items-center justify-center gap-2 px-4 py-2 border-t bg-muted/20">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => setPage(p => p - 1)}
+            disabled={page <= 1 || loading}
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </Button>
+          <span className="text-xs text-muted-foreground tabular-nums">
+            {page} / {totalPages}
+          </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => setPage(p => p + 1)}
+            disabled={page >= totalPages || loading}
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

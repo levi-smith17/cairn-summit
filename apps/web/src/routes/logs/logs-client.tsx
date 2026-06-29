@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { PlatformHeader } from '@/components/nav/platform/platform-header'
 import { useTerminology } from '@/contexts/terminology-context'
-import { FilterBar } from '@/components/filters/filter-bar'
+import { MobileFilterBar } from '@/components/filters/mobile-filter-bar'
 import { LogList } from './log-list'
 import { LogForm } from './log-form'
 import { Logbook } from './logbook'
@@ -118,7 +118,7 @@ export function LogsClient({ logs, logbookTrailLogs, trails, waypoints, markers,
         {/* Filter bar */}
         <div className="rounded-lg border border-border bg-card p-2 shrink-0">
           <div className="flex items-center gap-1.5">
-            <FilterBar
+            <MobileFilterBar
               markers={markers}
               trails={trails}
               showTrailFilter

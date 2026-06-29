@@ -23,6 +23,7 @@ import { MoreHorizontal, Pencil, Trash2, ExternalLink } from 'lucide-react'
 import { MarkerBadge } from '@/routes/waypoints/marker-badge'
 import { toDisplayMarker, toMarkerId } from '@/lib/embedded-markers'
 import { deleteSupplyline, toggleSupplylineActive } from '@/lib/api/supplylines'
+import { hoverReveal } from '@/lib/utils'
 import { InlineSupplylineForm } from './inline-supplyline-form'
 import { useTerminology } from '@/contexts/terminology-context'
 
@@ -120,7 +121,7 @@ export function SupplylineRow({ supplyline, tags, onSaved, onDeleted }: Props) {
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+              className={`h-7 w-7 shrink-0 ${hoverReveal}`}
             >
               <MoreHorizontal className="h-4 w-4" />
             </Button>
