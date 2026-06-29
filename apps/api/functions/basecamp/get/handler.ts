@@ -3,7 +3,7 @@ import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 }
 import { dynamo, TABLE_NAME } from '../../shared/db'
 import { getPk } from '../../shared/auth'
 import { toApiGatewayResponse, ok, serverError } from '../../shared/response'
-import { parseWaypointFilterParams, filterWaypoints, sortWaypoints } from '../waypoint-filters'
+import { parseWaypointFilterParams, filterWaypoints, sortWaypoints } from '../../shared/waypoint-filters'
 
 const PAGE_SIZE = 15
 const WAYPOINTS_PER_TRAIL = 5

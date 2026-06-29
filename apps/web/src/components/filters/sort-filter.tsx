@@ -8,6 +8,7 @@ interface SortFilterProps {
   value: SortOption
   onChange: (value: SortOption) => void
   options?: { value: SortOption; label: string }[]
+  triggerClassName?: string
 }
 
 const DEFAULT_OPTIONS = [
@@ -16,7 +17,7 @@ const DEFAULT_OPTIONS = [
   { value: 'alpha' as SortOption, label: 'Alphabetical' },
 ]
 
-export function SortFilter({ value, onChange, options = DEFAULT_OPTIONS }: SortFilterProps) {
+export function SortFilter({ value, onChange, options = DEFAULT_OPTIONS, triggerClassName }: SortFilterProps) {
   return (
     <CustomSelect
       options={options}
@@ -24,7 +25,7 @@ export function SortFilter({ value, onChange, options = DEFAULT_OPTIONS }: SortF
       onChange={v => onChange(v as SortOption)}
       icon={ArrowUpDown}
       placeholderValue={DEFAULT_FILTERS.sort}
-      triggerClassName="w-full md:w-36"
+      triggerClassName={triggerClassName ?? 'w-full md:w-36'}
     />
   )
 }

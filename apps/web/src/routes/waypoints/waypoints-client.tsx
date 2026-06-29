@@ -71,12 +71,12 @@ export function WaypointsClient({ waypoints, trails, markers, waypointsPerPage }
               trailingAction={
                 <Button
                   variant="outline"
-                  size="sm"
-                  className="md:hidden h-8 gap-1.5 text-sm shrink-0"
+                  size="icon"
+                  className="md:hidden h-8 w-8 shrink-0"
                   onClick={() => navigate('/settings?section=waypoints')}
                 >
                   <Settings className="h-3.5 w-3.5" />
-                  Settings
+                  <span className="sr-only">Settings</span>
                 </Button>
               }
             />

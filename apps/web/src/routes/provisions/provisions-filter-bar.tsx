@@ -10,6 +10,7 @@ import {
   Drawer,
   DrawerClose,
   DrawerContent,
+  DrawerDescription,
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
@@ -176,12 +177,12 @@ export function ProvisionsFilterBar({
       {/* Mobile */}
       <div className="flex flex-col gap-2 md:hidden">
         {monthNav}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <div className="flex-1 min-w-0">{searchInput}</div>
           <Button
             variant="outline"
             size="sm"
-            className="h-9 gap-1.5 shrink-0"
+            className="h-8 gap-1.5 shrink-0 px-2.5"
             onClick={() => setSheetOpen(true)}
           >
             <SlidersHorizontal className="h-3.5 w-3.5" />
@@ -215,6 +216,9 @@ export function ProvisionsFilterBar({
         <DrawerContent className="max-h-[85vh] flex flex-col md:hidden">
           <DrawerHeader className="shrink-0 text-left">
             <DrawerTitle>Filters</DrawerTitle>
+            <DrawerDescription className="sr-only">
+              Adjust marker and status filters. Changes apply when you tap Apply.
+            </DrawerDescription>
           </DrawerHeader>
           <div className="flex-1 overflow-y-auto px-4 pb-4 flex flex-col gap-4">
             {markers.length > 0 && (
@@ -238,7 +242,7 @@ export function ProvisionsFilterBar({
               ]}
               value={draft.activeFilter}
               onChange={v => setDraft({ ...draft, activeFilter: v })}
-              triggerClassName="w-full"
+                triggerClassName="w-full h-8"
             />
           </div>
           <DrawerFooter className="shrink-0 border-t flex-row gap-2">

@@ -8,6 +8,7 @@ import {
   Drawer,
   DrawerClose,
   DrawerContent,
+  DrawerDescription,
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
@@ -17,11 +18,15 @@ import { SortFilter } from './sort-filter'
 import { FilterBar, FilterBarControls, type FilterBarProps } from './filter-bar'
 import { useFilters } from '@/hooks/use-filters'
 import { useFilterDraft } from '@/hooks/use-filter-draft'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { countSheetFilters, deriveFilterChips } from '@/lib/filter-chips'
 import { useTerminology } from '@/contexts/terminology-context'
 
+const MOBILE_CONTROL_HEIGHT = 'h-8'
+
 export function MobileFilterBar({ fill = false, trailingAction, ...props }: FilterBarProps) {
   const { terms } = useTerminology()
+  const isMobile = useIsMobile()
   const { filters, setFilter, setFilters, clearFilters } = useFilters()
   const [sheetOpen, setSheetOpen] = useState(false)
   const { draft, setDraftFilter, applyDraft, clearDraft } = useFilterDraft(
@@ -44,16 +49,14 @@ export function MobileFilterBar({ fill = false, trailingAction, ...props }: Filt
     setSheetOpen(false)
   }
 
+  if (!isMobile) {
+    return <FilterBar fill={fill} trailingAction={trailingAction} {...props} />
+  }
+
   return (
     <>
-      {/* Desktop: unchanged */}
-      <div className="hidden md:contents">
-        <FilterBar fill={fill} trailingAction={trailingAction} {...props} />
-      </div>
-
-      {/* Mobile: compact row + chips + sheet */}
-      <div className="flex flex-col gap-2 md:hidden w-full">
-        <div className="flex items-center gap-1.5">
+      <div className="flex flex-col gap-2 w-full">
+        <div className="flex items-center gap-2 w-full">
           <div className="flex-1 min-w-0">
             <SearchInput
               value={filters.search}
@@ -65,7 +68,7 @@ export function MobileFilterBar({ fill = false, trailingAction, ...props }: Filt
           <Button
             variant="outline"
             size="sm"
-            className="h-8 gap-1.5 shrink-0"
+            className={`${MOBILE_CONTROL_HEIGHT} gap-1.5 shrink-0 px-2.5`}
             onClick={() => setSheetOpen(true)}
           >
             <SlidersHorizontal className="h-3.5 w-3.5" />
@@ -78,11 +81,12 @@ export function MobileFilterBar({ fill = false, trailingAction, ...props }: Filt
           </Button>
 
           {props.showSort !== false && (
-            <div className="shrink-0 w-28">
+            <div className="shrink-0 w-[7.5rem]">
               <SortFilter
                 value={filters.sort}
                 onChange={v => setFilter('sort', v)}
                 options={props.sortOptions}
+                triggerClassName={`${MOBILE_CONTROL_HEIGHT} w-full`}
               />
             </div>
           )}
@@ -91,7 +95,7 @@ export function MobileFilterBar({ fill = false, trailingAction, ...props }: Filt
         </div>
 
         {chips.length > 0 && (
-          <div className="flex gap-1.5 overflow-x-auto pb-0.5 -mx-0.5 px-0.5">
+          <div className="flex gap-1.5 overflow-x-auto pb-0.5">
             {chips.map(chip => (
               <button
                 key={chip.id}
@@ -111,6 +115,9 @@ export function MobileFilterBar({ fill = false, trailingAction, ...props }: Filt
         <DrawerContent className="max-h-[85vh] flex flex-col">
           <DrawerHeader className="shrink-0 text-left">
             <DrawerTitle>Filters</DrawerTitle>
+            <DrawerDescription className="sr-only">
+              Adjust filters for this page. Changes apply when you tap Apply.
+            </DrawerDescription>
           </DrawerHeader>
           <div className="flex-1 overflow-y-auto px-4 pb-4 flex flex-col gap-4">
             <FilterBarControls
