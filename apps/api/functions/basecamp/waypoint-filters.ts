@@ -1,0 +1,72 @@
+export interface NormalizedWaypoint {
+    id: string
+    title: string
+    url: string
+    favicon: string | null
+    read: boolean
+    readLater: boolean
+    trailId: string | null
+    markers: { markerId: string; marker: { id: string; name: string; color: string; icon: string | null } }[]
+    createdAt: string
+}
+
+export interface WaypointFilterParams {
+    search: string
+    markerIds: string[]
+    readLater: boolean
+    dateFrom: string
+    dateTo: string
+    sort: string
+}
+
+export function parseWaypointFilterParams(qs: Record<string, string | undefined>): WaypointFilterParams {
+    return {
+        search: qs.search ?? '',
+        markerIds: qs.markerId ? qs.markerId.split(',').filter(Boolean) : [],
+        readLater: qs.readLater === 'true',
+        dateFrom: qs.dateFrom ?? '',
+        dateTo: qs.dateTo ?? '',
+        sort: qs.sort ?? 'alpha',
+    }
+}
+
+export function filterWaypoints<T extends NormalizedWaypoint>(waypoints: T[], params: WaypointFilterParams): T[] {
+    let result = [...waypoints]
+
+    if (params.search) {
+        const q = params.search.toLowerCase()
+        result = result.filter(w =>
+            w.title?.toLowerCase().includes(q) || w.url?.toLowerCase().includes(q)
+        )
+    }
+    if (params.markerIds.length > 0) {
+        result = result.filter(w =>
+            params.markerIds.some(id => w.markers.some(m => m.markerId === id))
+        )
+    }
+    if (params.readLater) {
+        result = result.filter(w => w.readLater)
+    }
+    if (params.dateFrom) {
+        const from = new Date(params.dateFrom).getTime()
+        result = result.filter(w => new Date(w.createdAt).getTime() >= from)
+    }
+    if (params.dateTo) {
+        const to = new Date(params.dateTo).getTime()
+        result = result.filter(w => new Date(w.createdAt).getTime() <= to)
+    }
+
+    return result
+}
+
+export function sortWaypoints<T extends NormalizedWaypoint>(waypoints: T[], sort: string): T[] {
+    const result = [...waypoints]
+    if (sort === 'newest') {
+        result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    } else if (sort === 'oldest') {
+        result.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    } else {
+        result.sort((a, b) => a.title.localeCompare(b.title))
+    }
+    return result
+}

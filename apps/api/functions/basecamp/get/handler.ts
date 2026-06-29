@@ -3,6 +3,7 @@ import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 }
 import { dynamo, TABLE_NAME } from '../../shared/db'
 import { getPk } from '../../shared/auth'
 import { toApiGatewayResponse, ok, serverError } from '../../shared/response'
+import { parseWaypointFilterParams, filterWaypoints, sortWaypoints } from '../waypoint-filters'
 
 const PAGE_SIZE = 15
 const WAYPOINTS_PER_TRAIL = 5
@@ -29,13 +30,9 @@ export const handler = async (
         const pk = getPk(event)
         const qs = event.queryStringParameters ?? {}
         const page = Math.max(1, parseInt(qs.page ?? '1', 10))
-        const search = qs.search ?? ''
-        const markerIds = qs.markerId ? qs.markerId.split(',').filter(Boolean) : []
+        const filterParams = parseWaypointFilterParams(qs)
         const filterTrailId = qs.trailId && qs.trailId !== 'all' ? qs.trailId : null
-        const sort = qs.sort ?? 'alpha'
-        const readLater = qs.readLater === 'true'
-        const dateFrom = qs.dateFrom ?? ''
-        const dateTo = qs.dateTo ?? ''
+        const { search, markerIds, readLater, dateFrom, dateTo, sort } = filterParams
 
         const [trailsResult, waypointsResult, markersResult, logsResult] = await Promise.all([
             queryAll(pk, 'TRAIL#'),
@@ -78,40 +75,13 @@ export const handler = async (
         }))
 
         // Apply filters
-        if (search) {
-            const q = search.toLowerCase()
-            waypoints = waypoints.filter(w =>
-                w.title?.toLowerCase().includes(q) || w.url?.toLowerCase().includes(q)
-            )
-        }
-        if (markerIds.length > 0) {
-            waypoints = waypoints.filter(w =>
-                markerIds.some(id => w.markers.some((m: { markerId: string }) => m.markerId === id))
-            )
-        }
+        waypoints = filterWaypoints(waypoints, filterParams)
         if (filterTrailId) {
             waypoints = waypoints.filter(w => w.trailId === filterTrailId)
         }
-        if (readLater) {
-            waypoints = waypoints.filter(w => w.readLater)
-        }
-        if (dateFrom) {
-            const from = new Date(dateFrom).getTime()
-            waypoints = waypoints.filter(w => new Date(w.createdAt).getTime() >= from)
-        }
-        if (dateTo) {
-            const to = new Date(dateTo).getTime()
-            waypoints = waypoints.filter(w => new Date(w.createdAt).getTime() <= to)
-        }
 
         // Sort waypoints
-        if (sort === 'newest') {
-            waypoints.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        } else if (sort === 'oldest') {
-            waypoints.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-        } else {
-            waypoints.sort((a, b) => a.title.localeCompare(b.title))
-        }
+        waypoints = sortWaypoints(waypoints, sort)
 
         // Group filtered waypoints by trail
         const filteredWaypointsByTrail = new Map<string, typeof waypoints>()

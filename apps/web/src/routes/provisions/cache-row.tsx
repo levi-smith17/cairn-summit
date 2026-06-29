@@ -16,6 +16,7 @@ import { deleteCache } from '@/lib/api/supplylines'
 import { InlineCacheForm } from './inline-cache-form'
 import { useTerminology } from '@/contexts/terminology-context'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { hoverReveal, hoverRevealHidden } from '@/lib/utils'
 
 export interface BudgetUtilization {
   id: string
@@ -77,7 +78,7 @@ export function CacheRow({ cache, markers, month, year, onSaved, onDeleted }: Pr
       <div className="px-3 py-2.5 hover:bg-muted/30 group">
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-sm font-medium">{markerLabel}</span>
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className={`flex items-center gap-1 ${hoverReveal}`}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -105,7 +106,7 @@ export function CacheRow({ cache, markers, month, year, onSaved, onDeleted }: Pr
               <TooltipContent>Remove {terms.cache}</TooltipContent>
             </Tooltip>
           </div>
-          <span className="text-xs text-muted-foreground tabular-nums group-hover:hidden">
+          <span className={`text-xs text-muted-foreground tabular-nums ${hoverRevealHidden}`}>
             {fmt(cache.spent)} / {fmt(cache.limit)}
           </span>
         </div>

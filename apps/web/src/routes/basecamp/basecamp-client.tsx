@@ -4,7 +4,8 @@ import { useSearchParams } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { PlatformHeader } from '@/components/nav/platform/platform-header'
-import { FilterBar } from '@/components/filters/filter-bar'
+import { MobileFilterBar } from '@/components/filters/mobile-filter-bar'
+import { parseFiltersFromParams } from '@/lib/filters'
 import { useTerminology } from '@/contexts/terminology-context'
 import { TrailSection } from './trail-section'
 import { SnapshotPanels } from './snapshot-panels'
@@ -81,6 +82,16 @@ export function BasecampClient({
   const [searchParams] = useSearchParams()
   const searchParamsStr = searchParams.toString()
 
+  const filters = parseFiltersFromParams(searchParams)
+  const trailFilterContext = {
+    search: filters.search || undefined,
+    markerId: filters.markerIds.length > 0 ? filters.markerIds.join(',') : undefined,
+    sort: filters.sort,
+    readLater: filters.readLater || undefined,
+    dateFrom: filters.dateFrom || undefined,
+    dateTo: filters.dateTo || undefined,
+  }
+
   const [extraTrails, setExtraTrails] = useState<any[]>([])
   const [hasMore, setHasMore] = useState(initialHasMore)
   const [page, setPage] = useState(1)
@@ -141,7 +152,7 @@ export function BasecampClient({
 
       <div className="flex flex-col flex-1 gap-4 p-4 overflow-y-auto lg:overflow-hidden lg:min-h-0">
         <div className="rounded-lg border border-border bg-card p-2 shrink-0">
-          <FilterBar
+          <MobileFilterBar
             markers={tags}
             trails={folders}
             showTrailFilter
@@ -212,6 +223,7 @@ export function BasecampClient({
                           ? (filteredCountMap[trail.id] ?? 0)
                           : (trail._count?.waypoints ?? 0)
                       }
+                      filterContext={trailFilterContext}
                       onRefresh={onRefresh}
                     />
                   ))}
