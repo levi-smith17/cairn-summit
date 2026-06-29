@@ -55,7 +55,7 @@ export function CustomSelect({
           variant="outline"
           size="sm"
           disabled={disabled}
-          className={cn('h-9 md:h-8 gap-1.5 text-sm justify-start', triggerClassName)}
+          className={cn('h-8 gap-1.5 text-sm justify-start', triggerClassName)}
         >
           {TriggerIcon && <TriggerIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
           <span className={`flex-1 text-left truncate ${muted ? 'text-muted-foreground' : ''}`}>

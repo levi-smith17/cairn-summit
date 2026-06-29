@@ -131,12 +131,12 @@ export function LogsClient({ logs, logbookTrailLogs, trails, waypoints, markers,
               trailingAction={
                 <Button
                   variant="outline"
-                  size="sm"
-                  className="md:hidden h-8 gap-1.5 text-sm"
+                  size="icon"
+                  className="md:hidden h-8 w-8 shrink-0"
                   onClick={() => navigate('/settings?section=logs')}
                 >
                   <Settings className="h-3.5 w-3.5" />
-                  Settings
+                  <span className="sr-only">Settings</span>
                 </Button>
               }
             />
