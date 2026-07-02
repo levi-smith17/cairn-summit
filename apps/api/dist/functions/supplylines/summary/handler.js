@@ -4,6 +4,7 @@ exports.handler = void 0;
 const lib_dynamodb_1 = require("@aws-sdk/lib-dynamodb");
 const db_1 = require("../../shared/db");
 const auth_1 = require("../../shared/auth");
+const markers_1 = require("../../shared/markers");
 const response_1 = require("../../shared/response");
 function normalizeToMonthly(amount, billingCycle) {
     switch (billingCycle) {
@@ -71,9 +72,11 @@ const handler = async (event) => {
             const parts = c.sk.split('#');
             return parts[2] === String(month) && parts[3] === String(year);
         });
+        const markerMap = await (0, markers_1.resolveMarkersById)(pk, monthCache.map(c => c.sk.split('#')[1]));
         const cacheUtilization = monthCache.map(c => {
             const parts = c.sk.split('#');
             const markerId = parts[1];
+            const resolved = markerMap.get(markerId);
             const spent = monthBurn
                 .filter(b => b.markers.some(m => m.id === markerId))
                 .reduce((sum, b) => sum + b.amount, 0);
@@ -83,8 +86,8 @@ const handler = async (event) => {
                 markerId,
                 marker: {
                     id: markerId,
-                    name: c.markerName || 'Uncategorized',
-                    color: '#6b7280',
+                    name: c.markerName || resolved?.name || 'Uncategorized',
+                    color: resolved?.color || '#6b7280',
                 },
                 limit: c.limit,
                 spent,

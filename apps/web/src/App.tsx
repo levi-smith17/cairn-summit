@@ -42,6 +42,7 @@ import Provisions from '@/routes/provisions'
 import Settings from '@/routes/settings'
 import Headwaters from '@/routes/headwaters'
 import Starfield from '@/routes/starfield'
+import AsgardEmbed from '@/routes/asgard'
 import Signals from '@/routes/signals'
 import Trails from '@/routes/trails'
 import Waypoints from '@/routes/waypoints'
@@ -94,6 +95,8 @@ export default function App() {
                                 <Route path="/manifest" element={<ManifestEdit />} />
                                 <Route path="/headwaters" element={<Headwaters />} />
                                 <Route path="/starfield" element={<Starfield />} />
+                                <Route path="/apps/asgard" element={<AsgardEmbed />} />
+                                <Route path="/apps/asgard/:section" element={<AsgardEmbed />} />
                                 <Route path="/settings" element={<Settings />} />
                             </Route>
                         </Route>

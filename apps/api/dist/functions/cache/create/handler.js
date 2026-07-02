@@ -5,6 +5,7 @@ const lib_dynamodb_1 = require("@aws-sdk/lib-dynamodb");
 const crypto_1 = require("crypto");
 const db_1 = require("../../shared/db");
 const auth_1 = require("../../shared/auth");
+const markers_1 = require("../../shared/markers");
 const response_1 = require("../../shared/response");
 const handler = async (event) => {
     try {
@@ -15,12 +16,14 @@ const handler = async (event) => {
         const pk = (0, auth_1.getPk)(event);
         const id = (0, crypto_1.randomUUID)();
         const sk = `CACHE#${body.markerId}#${body.month}#${body.year}`;
+        const markers = await (0, markers_1.resolveMarkersById)(pk, [body.markerId]);
+        const marker = markers.get(body.markerId);
         const cache = {
             pk,
             sk,
             id,
             markerId: body.markerId,
-            markerName: body.markerName ?? '',
+            markerName: body.markerName ?? marker?.name ?? '',
             limit: body.limit,
             month: body.month,
             year: body.year,
