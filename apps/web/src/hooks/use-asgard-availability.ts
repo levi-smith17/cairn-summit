@@ -6,13 +6,19 @@ async function checkAsgardAvailability(): Promise<boolean> {
   const timeout = window.setTimeout(() => controller.abort(), 2500)
 
   try {
-    const response = await fetch(asgardHealthUrl(), {
+    // We only care about reachability: asgard.levismith.us resolves solely on
+    // the internal network. `no-cors` avoids a cross-origin CORS failure — an
+    // opaque response still resolves the promise, while a DNS/connection error
+    // (off-network) or the abort timeout rejects it.
+    await fetch(asgardHealthUrl(), {
       cache: 'no-store',
       credentials: 'omit',
-      mode: 'cors',
+      mode: 'no-cors',
       signal: controller.signal,
     })
-    return response.ok
+    return true
+  } catch {
+    return false
   } finally {
     window.clearTimeout(timeout)
   }
