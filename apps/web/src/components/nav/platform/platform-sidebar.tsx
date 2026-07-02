@@ -130,8 +130,6 @@ function buildNavItems(terms: Terms): { group: string; items: NavItem[] }[] {
     {
       group: 'Apps',
       items: [
-        { title: terms.headwaters, url: '/headwaters', icon: TreePine, tooltip: terms.headwaters },
-        { title: 'Starfield', url: '/starfield', icon: Rocket, tooltip: 'Starfield' },
         {
           title: 'Asgard',
           url: '/apps/asgard',
@@ -144,6 +142,8 @@ function buildNavItems(terms: Terms): { group: string; items: NavItem[] }[] {
             icon: asgardChildIcons[section.key],
           })),
         },
+        { title: terms.headwaters, url: '/headwaters', icon: TreePine, tooltip: terms.headwaters },
+        { title: 'Starfield', url: '/starfield', icon: Rocket, tooltip: 'Starfield' },
       ],
     },
   ]
