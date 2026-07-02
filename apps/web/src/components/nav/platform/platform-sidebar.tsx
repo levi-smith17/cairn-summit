@@ -2,26 +2,48 @@
 
 import { useSidebar } from "@/components/ui/sidebar"
 import {
+  AlertTriangle,
   Bookmark,
   CalendarDays,
   ChevronRight,
   Folder,
+  Globe,
+  HardDrive,
   LayoutDashboard,
   LayoutList,
   LayersIcon,
   MessageSquare,
+  MonitorPlay,
   NotebookPen,
+  Network,
   Rocket,
   Search,
+  Settings,
+  Shield,
   Tag,
   TreePine,
   Users,
   Wallet,
 } from "lucide-react"
+import type { ComponentType } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
+import { AsgardIcon } from '@/components/brand/asgard-icon'
 import { FooterNav } from '@/components/nav/footer'
 import { PlatformWayfarerMenu } from "@/components/nav/platform/platform-wayfarer-menu"
 import { useTerminology } from '@/contexts/terminology-context'
+import {
+  ASGARD_ALLOWED_EMAIL,
+  ASGARD_SECTIONS,
+} from '@/lib/asgard-embed'
+import { useAsgardAvailability } from '@/hooks/use-asgard-availability'
+import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 import {
   Sidebar,
   SidebarContent,
@@ -48,21 +70,33 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { type LucideIcon } from "lucide-react"
 import { type Terms } from '@/lib/terminology'
+
+type NavIcon = ComponentType<{ className?: string }>
 
 interface NavSubItem {
   title: string
   url: string
-  icon?: LucideIcon
+  icon?: NavIcon
 }
 
 interface NavItem {
   title: string
   url: string
-  icon: LucideIcon
+  icon: NavIcon
   tooltip: string
   children?: NavSubItem[]
+  allowedEmail?: string
+}
+
+const asgardChildIcons: Partial<Record<string, NavIcon>> = {
+  dns: Globe,
+  dhcp: Network,
+  firewall: Shield,
+  pihole: Globe,
+  shares: HardDrive,
+  'virtual-machines': MonitorPlay,
+  settings: Settings,
 }
 
 function buildNavItems(terms: Terms): { group: string; items: NavItem[] }[] {
@@ -98,6 +132,18 @@ function buildNavItems(terms: Terms): { group: string; items: NavItem[] }[] {
       items: [
         { title: terms.headwaters, url: '/headwaters', icon: TreePine, tooltip: terms.headwaters },
         { title: 'Starfield', url: '/starfield', icon: Rocket, tooltip: 'Starfield' },
+        {
+          title: 'Asgard',
+          url: '/apps/asgard',
+          icon: AsgardIcon,
+          tooltip: 'Asgard',
+          allowedEmail: ASGARD_ALLOWED_EMAIL,
+          children: ASGARD_SECTIONS.map((section) => ({
+            title: section.title,
+            url: section.cairnPath,
+            icon: asgardChildIcons[section.key],
+          })),
+        },
       ],
     },
   ]
@@ -126,6 +172,12 @@ export function PlatformSidebar({ wayfarer, badges, terms, ...props }: PlatformS
   const collapsed = state === 'collapsed'
   const { terms: uiTerms } = useTerminology()
   const navItems = buildNavItems(uiTerms)
+  const asgardAllowed = wayfarer.email === ASGARD_ALLOWED_EMAIL
+  const asgardAvailability = useAsgardAvailability(asgardAllowed)
+  const asgardUnavailable =
+    asgardAllowed &&
+    !asgardAvailability.isLoading &&
+    (asgardAvailability.isError || asgardAvailability.data !== true)
 
   function getBadge(url: string): number {
     if (url === '/itinerary') return badges?.itinerary ?? 0
@@ -169,14 +221,44 @@ export function PlatformSidebar({ wayfarer, badges, terms, ...props }: PlatformS
           </div>
         </SidebarHeader>
         <SidebarContent>
-          {navItems.filter(({ group }) => group !== 'Admin' || wayfarer.isAdmin).map(({ group, items }) => (
+          {navItems.filter(({ group }) => group !== 'Admin' || wayfarer.isAdmin).map(({ group, items }) => {
+            const visibleItems = items.filter((item) => !item.allowedEmail || item.allowedEmail === wayfarer.email)
+            if (visibleItems.length === 0) return null
+            return (
               <SidebarGroup key={group}>
                 <SidebarGroupLabel>{group}</SidebarGroupLabel>
                 <SidebarMenu>
-                  {items.map(({ title, url, icon: Icon, tooltip, children }) => {
+                  {visibleItems.map(({ title, url, icon: Icon, tooltip, children }) => {
                     const isActive = children
                         ? pathname.startsWith(url)
                         : pathname === url
+
+                    if (title === 'Asgard' && asgardUnavailable) {
+                      return (
+                        <SidebarMenuItem key={url}>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <SidebarMenuButton tooltip={tooltip} isActive={isActive}>
+                                <div className="relative shrink-0">
+                                  <Icon className="h-4 w-4" />
+                                  <AlertTriangle className="absolute -right-2 -top-2 h-3 w-3 text-amber-500" />
+                                </div>
+                                <span>{title}</span>
+                              </SidebarMenuButton>
+                            </PopoverTrigger>
+                            <PopoverContent side="right" align="start">
+                              <PopoverHeader>
+                                <PopoverTitle>Asgard unavailable</PopoverTitle>
+                                <PopoverDescription>
+                                  Asgard is only available on your local network. Connect to the network,
+                                  then try again.
+                                </PopoverDescription>
+                              </PopoverHeader>
+                            </PopoverContent>
+                          </Popover>
+                        </SidebarMenuItem>
+                      )
+                    }
 
                     if (children) {
                       // When collapsed the collapsible sub-items are invisible.
@@ -264,7 +346,8 @@ export function PlatformSidebar({ wayfarer, badges, terms, ...props }: PlatformS
                   })}
                 </SidebarMenu>
               </SidebarGroup>
-          ))}
+            )
+          })}
         </SidebarContent>
         <SidebarFooter>
           <PlatformWayfarerMenu wayfarer={wayfarer} terms={terms} />

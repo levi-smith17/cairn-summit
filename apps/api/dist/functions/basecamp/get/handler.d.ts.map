@@ -1,1 +1,1 @@
-{"version":3,"file":"handler.d.ts","sourceRoot":"","sources":["../../../../functions/basecamp/get/handler.ts"],"names":[],"mappings":"AACA,OAAO,KAAK,EAAE,uCAAuC,EAAE,uBAAuB,EAAE,MAAM,YAAY,CAAA;AAuBlG,eAAO,MAAM,OAAO,GAChB,OAAO,uCAAuC,KAC/C,OAAO,CAAC,uBAAuB,CAyLjC,CAAA"}
+{"version":3,"file":"handler.d.ts","sourceRoot":"","sources":["../../../../functions/basecamp/get/handler.ts"],"names":[],"mappings":"AACA,OAAO,KAAK,EAAE,uCAAuC,EAAE,uBAAuB,EAAE,MAAM,YAAY,CAAA;AAwBlG,eAAO,MAAM,OAAO,GAChB,OAAO,uCAAuC,KAC/C,OAAO,CAAC,uBAAuB,CA0JjC,CAAA"}

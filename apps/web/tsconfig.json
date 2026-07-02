@@ -2,6 +2,7 @@
   "extends": "../../packages/config/tsconfig.web.json",
   "compilerOptions": {
     "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
     "types": ["@testing-library/jest-dom","vite/client"],
     "paths": {
       "@/*": ["./src/*"],
