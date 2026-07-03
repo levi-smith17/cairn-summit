@@ -34,7 +34,7 @@ resource "aws_route53_record" "txt" {
 
 resource "aws_route53_record" "dkim" {
   zone_id = aws_route53_zone.main.zone_id
-  name    = "sig1._domainkey"
+  name    = "sig1._domainkey.${var.domain}"
   type    = "CNAME"
   ttl     = 3600
   records = ["sig1.dkim.cairn.ing.at.icloudmailadmin.com."]

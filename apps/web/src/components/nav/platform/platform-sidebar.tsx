@@ -307,6 +307,7 @@ export function PlatformSidebar({ wayfarer, badges, terms, ...props }: PlatformS
                                         <SidebarMenuSubButton
                                             onClick={() => handleClick(child.url)}
                                             isActive={pathname === child.url}
+                                            className="cursor-pointer"
                                         >
                                           {child.icon && <child.icon className="h-4 w-4" />}
                                           {child.title}

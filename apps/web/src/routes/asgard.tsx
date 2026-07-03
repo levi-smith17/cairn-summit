@@ -1,4 +1,5 @@
 import { ExternalLink, RefreshCw, TriangleAlert } from 'lucide-react'
+import { useRef } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import { PlatformHeader } from '@/components/nav/platform/platform-header'
 import { Button } from '@/components/ui/button'
@@ -36,6 +37,13 @@ function AsgardUnavailable({ onRetry }: { onRetry: () => void }) {
 export default function AsgardEmbed() {
   const { section: sectionKey } = useParams()
   const { user } = useAuth()
+  const iframeRef = useRef<HTMLIFrameElement>(null)
+
+  // Cross-origin iframes don't receive focus until clicked, which makes the
+  // first click inside the embed only focus the frame (requiring a second
+  // click to actually interact). Focusing the frame's window on pointer-enter
+  // and on load makes interaction seamless.
+  const focusIframe = () => iframeRef.current?.contentWindow?.focus()
   const section = asgardSectionForKey(sectionKey)
   const availability = useAsgardAvailability(user?.email === ASGARD_ALLOWED_EMAIL)
 
@@ -77,10 +85,13 @@ export default function AsgardEmbed() {
       ) : (
         <iframe
           key={iframeUrl}
+          ref={iframeRef}
           src={iframeUrl}
           title={`Asgard ${section.title}`}
           className="min-h-0 flex-1 border-0 bg-background"
           referrerPolicy="strict-origin-when-cross-origin"
+          onMouseEnter={focusIframe}
+          onLoad={focusIframe}
         />
       )}
     </div>
