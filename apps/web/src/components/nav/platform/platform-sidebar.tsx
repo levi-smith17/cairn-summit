@@ -7,19 +7,14 @@ import {
   CalendarDays,
   ChevronRight,
   Folder,
-  Globe,
-  HardDrive,
   LayoutDashboard,
   LayoutList,
   LayersIcon,
   MessageSquare,
-  MonitorPlay,
   NotebookPen,
   Network,
   Rocket,
   Search,
-  Settings,
-  Shield,
   Tag,
   TreePine,
   Users,
@@ -33,9 +28,11 @@ import { PlatformWayfarerMenu } from "@/components/nav/platform/platform-wayfare
 import { useTerminology } from '@/contexts/terminology-context'
 import {
   ASGARD_ALLOWED_EMAIL,
-  ASGARD_SECTIONS,
+  type AsgardNavSection,
 } from '@/lib/asgard-embed'
+import { asgardNavIcon } from '@/lib/asgard-nav-icons'
 import { useAsgardAvailability } from '@/hooks/use-asgard-availability'
+import { useAsgardNav } from '@/hooks/use-asgard-nav'
 import {
   Popover,
   PopoverContent,
@@ -89,17 +86,17 @@ interface NavItem {
   allowedEmail?: string
 }
 
-const asgardChildIcons: Partial<Record<string, NavIcon>> = {
-  dns: Globe,
-  dhcp: Network,
-  firewall: Shield,
-  pihole: Globe,
-  shares: HardDrive,
-  'virtual-machines': MonitorPlay,
-  settings: Settings,
-}
+const asgardNavChildren = (sections: AsgardNavSection[]): NavSubItem[] =>
+  sections.map((section) => ({
+    title: section.title,
+    url: section.cairnPath,
+    icon: asgardNavIcon(section.icon),
+  }))
 
-function buildNavItems(terms: Terms): { group: string; items: NavItem[] }[] {
+function buildNavItems(
+  terms: Terms,
+  asgardSections: AsgardNavSection[],
+): { group: string; items: NavItem[] }[] {
   return [
     {
       group: 'Navigation',
@@ -136,11 +133,7 @@ function buildNavItems(terms: Terms): { group: string; items: NavItem[] }[] {
           icon: AsgardIcon,
           tooltip: 'Asgard',
           allowedEmail: ASGARD_ALLOWED_EMAIL,
-          children: ASGARD_SECTIONS.map((section) => ({
-            title: section.title,
-            url: section.cairnPath,
-            icon: asgardChildIcons[section.key],
-          })),
+          children: asgardNavChildren(asgardSections),
         },
         { title: terms.headwaters, url: '/headwaters', icon: TreePine, tooltip: terms.headwaters },
         { title: 'Starfield', url: '/starfield', icon: Rocket, tooltip: 'Starfield' },
@@ -171,9 +164,10 @@ export function PlatformSidebar({ wayfarer, badges, terms, ...props }: PlatformS
   const { isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === 'collapsed'
   const { terms: uiTerms } = useTerminology()
-  const navItems = buildNavItems(uiTerms)
   const asgardAllowed = wayfarer.email === ASGARD_ALLOWED_EMAIL
+  const asgardNav = useAsgardNav(asgardAllowed)
   const asgardAvailability = useAsgardAvailability(asgardAllowed)
+  const navItems = buildNavItems(uiTerms, asgardNav.data ?? [])
   const asgardUnavailable =
     asgardAllowed &&
     !asgardAvailability.isLoading &&
@@ -307,6 +301,7 @@ export function PlatformSidebar({ wayfarer, badges, terms, ...props }: PlatformS
                                         <SidebarMenuSubButton
                                             onClick={() => handleClick(child.url)}
                                             isActive={pathname === child.url}
+                                            className="cursor-pointer"
                                         >
                                           {child.icon && <child.icon className="h-4 w-4" />}
                                           {child.title}
