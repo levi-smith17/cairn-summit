@@ -1,6 +1,7 @@
 import {
   Globe,
   HardDrive,
+  Home,
   MonitorPlay,
   Network,
   Server,
@@ -8,6 +9,7 @@ import {
   Shield,
 } from 'lucide-react'
 import type { ComponentType } from 'react'
+import { PiholeRaspberryIcon } from '@/components/brand/pihole-raspberry-icon'
 
 export type AsgardNavIcon = ComponentType<{ className?: string }>
 
@@ -18,8 +20,10 @@ export const asgardNavIconById: Record<string, AsgardNavIcon> = {
   shield: Shield,
   'hard-drive': HardDrive,
   'monitor-play': MonitorPlay,
+  home: Home,
   server: Server,
   settings: Settings,
+  pihole: PiholeRaspberryIcon,
 }
 
 export function asgardNavIcon(iconId: string): AsgardNavIcon {
