@@ -73,7 +73,7 @@ export function ThreadForm({ token, wayfarerName }: ThreadFormProps) {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="rounded-lg border border-input bg-background overflow-hidden">
+      <div className="rounded-lg border border-border bg-input overflow-hidden">
         <TipTapToolbar editor={editor} />
         <EditorContent editor={editor} />
       </div>

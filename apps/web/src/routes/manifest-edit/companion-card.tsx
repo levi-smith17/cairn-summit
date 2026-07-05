@@ -294,7 +294,7 @@ export function CompanionCard({ companion, onRefresh }: CompanionCardProps) {
                   type="text"
                   defaultValue={m.caption ?? ''}
                   placeholder="Add caption..."
-                  className="w-full text-xs px-2 py-1 rounded-md border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                  className="w-full text-xs px-2 py-1 rounded-md border border-border bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                   onBlur={async (e) => {
                     const caption = e.target.value.trim() || null
                     if (caption !== m.caption) {
@@ -310,7 +310,7 @@ export function CompanionCard({ companion, onRefresh }: CompanionCardProps) {
         <div>
           <label
             htmlFor={`companion-upload-${companion.id}`}
-            className={`inline-flex items-center gap-2 text-sm px-3 py-1.5 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
+            className={`inline-flex items-center gap-2 text-sm px-3 py-1.5 rounded-md border border-border bg-input hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
           >
             <ImagePlus className="h-4 w-4" />
             {uploading ? 'Uploading...' : 'Add Photo / Video'}
