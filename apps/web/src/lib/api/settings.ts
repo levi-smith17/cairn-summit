@@ -154,3 +154,39 @@ export async function deleteCalendarSubscription(id: string): Promise<void> {
   })
   if (!res.ok) throw new Error('Failed to delete subscription')
 }
+
+export async function getApiTokenStatus(): Promise<{
+  configured: boolean
+  tokenPrefix?: string
+  createdAt?: string
+  lastUsedAt?: string | null
+}> {
+  const res = await fetch(`${API_BASE}/settings/api-token`, {
+    headers: await getAuthHeaders(),
+  })
+  if (!res.ok) throw new Error('Failed to fetch API token status')
+  const json = await res.json()
+  return json.data ?? json
+}
+
+export async function createApiToken(): Promise<{
+  token: string
+  tokenPrefix: string
+  createdAt: string
+}> {
+  const res = await fetch(`${API_BASE}/settings/api-token`, {
+    method: 'POST',
+    headers: await getAuthHeaders(),
+  })
+  if (!res.ok) throw new Error('Failed to create API token')
+  const json = await res.json()
+  return json.data ?? json
+}
+
+export async function revokeApiToken(): Promise<void> {
+  const res = await fetch(`${API_BASE}/settings/api-token`, {
+    method: 'DELETE',
+    headers: await getAuthHeaders(),
+  })
+  if (!res.ok) throw new Error('Failed to revoke API token')
+}

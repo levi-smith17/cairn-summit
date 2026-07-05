@@ -16,3 +16,11 @@ output "lambda_functions" {
     }
   }
 }
+
+output "authorizer_invoke_arn" {
+  value = module.auth_authorizer.invoke_arn
+}
+
+output "authorizer_function_name" {
+  value = module.auth_authorizer.function_name
+}

@@ -64,6 +64,7 @@ resource "aws_lambda_function" "main" {
   environment {
     variables = {
       CLOUDFRONT_PUBLIC_MEDIA_URL = var.cloudfront_public_media_url
+      COGNITO_CLIENT_ID           = var.cognito_client_id
       COGNITO_USER_POOL_ID        = var.cognito_user_pool_id
       DYNAMODB_TABLE              = var.dynamodb_table_name
       MEDIA_CDN_URL               = var.media_cdn_url

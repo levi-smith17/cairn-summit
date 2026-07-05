@@ -17,17 +17,14 @@ resource "aws_apigatewayv2_api" "main" {
   }
 }
 
-# Authorizer and stage — depend on API
-resource "aws_apigatewayv2_authorizer" "cognito" {
-  api_id           = aws_apigatewayv2_api.main.id
-  authorizer_type  = "JWT"
-  identity_sources = ["$request.header.Authorization"]
-  name             = "cognito"
-
-  jwt_configuration {
-    audience = [var.cognito_client_id]
-    issuer   = "https://cognito-idp.us-east-2.amazonaws.com/${var.cognito_user_pool_id}"
-  }
+resource "aws_apigatewayv2_authorizer" "request" {
+  api_id                            = aws_apigatewayv2_api.main.id
+  authorizer_type                   = "REQUEST"
+  authorizer_uri                    = var.authorizer_invoke_arn
+  identity_sources                  = ["$request.header.Authorization"]
+  name                              = "cairn-request"
+  authorizer_payload_format_version = "2.0"
+  enable_simple_responses           = true
 }
 
 resource "aws_apigatewayv2_stage" "main" {
@@ -43,7 +40,6 @@ resource "aws_apigatewayv2_stage" "main" {
   }
 }
 
-# Integrations and permissions — depend on API and Lambda
 resource "aws_apigatewayv2_integration" "main" {
   for_each = var.lambda_functions
 
@@ -64,13 +60,20 @@ resource "aws_lambda_permission" "api_gateway" {
   statement_id  = "AllowAPIGateway-${each.key}"
 }
 
-# Routes — depend on API, authorizer, and integrations
+resource "aws_lambda_permission" "authorizer" {
+  action        = "lambda:InvokeFunction"
+  function_name = var.authorizer_function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.main.execution_arn}/authorizers/${aws_apigatewayv2_authorizer.request.id}"
+  statement_id  = "AllowAPIGatewayAuthorizer"
+}
+
 resource "aws_apigatewayv2_route" "main" {
   for_each = var.lambda_functions
 
   api_id             = aws_apigatewayv2_api.main.id
-  authorization_type = "JWT"
-  authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
+  authorization_type = "CUSTOM"
+  authorizer_id      = aws_apigatewayv2_authorizer.request.id
   route_key          = each.value.route_key
   target             = "integrations/${aws_apigatewayv2_integration.main[each.key].id}"
 }

@@ -2,17 +2,14 @@
 
 import { useSidebar } from "@/components/ui/sidebar"
 import {
-  AlertTriangle,
   Bookmark,
   CalendarDays,
-  ChevronRight,
   Folder,
   LayoutDashboard,
   LayoutList,
   LayersIcon,
   MessageSquare,
   NotebookPen,
-  Network,
   Rocket,
   Search,
   Tag,
@@ -22,25 +19,9 @@ import {
 } from "lucide-react"
 import type { ComponentType } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
-import { AsgardIcon } from '@/components/brand/asgard-icon'
 import { FooterNav } from '@/components/nav/footer'
 import { PlatformWayfarerMenu } from "@/components/nav/platform/platform-wayfarer-menu"
 import { useTerminology } from '@/contexts/terminology-context'
-import {
-  ASGARD_ALLOWED_EMAIL,
-  type AsgardNavSection,
-} from '@/lib/asgard-embed'
-import { asgardNavIcon } from '@/lib/asgard-nav-icons'
-import { useAsgardAvailability } from '@/hooks/use-asgard-availability'
-import { useAsgardNav } from '@/hooks/use-asgard-nav'
-import {
-  Popover,
-  PopoverContent,
-  PopoverDescription,
-  PopoverHeader,
-  PopoverTitle,
-  PopoverTrigger,
-} from '@/components/ui/popover'
 import {
   Sidebar,
   SidebarContent,
@@ -51,52 +32,20 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarMenuSub,
-  SidebarMenuSubItem,
-  SidebarMenuSubButton,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { type Terms } from '@/lib/terminology'
 
 type NavIcon = ComponentType<{ className?: string }>
-
-interface NavSubItem {
-  title: string
-  url: string
-  icon?: NavIcon
-}
 
 interface NavItem {
   title: string
   url: string
   icon: NavIcon
   tooltip: string
-  children?: NavSubItem[]
-  allowedEmail?: string
 }
 
-const asgardNavChildren = (sections: AsgardNavSection[]): NavSubItem[] =>
-  sections.map((section) => ({
-    title: section.title,
-    url: section.cairnPath,
-    icon: asgardNavIcon(section.icon),
-  }))
-
-function buildNavItems(
-  terms: Terms,
-  asgardSections: AsgardNavSection[],
-): { group: string; items: NavItem[] }[] {
+function buildNavItems(terms: Terms): { group: string; items: NavItem[] }[] {
   return [
     {
       group: 'Navigation',
@@ -127,14 +76,6 @@ function buildNavItems(
     {
       group: 'Apps',
       items: [
-        {
-          title: 'Asgard',
-          url: '/apps/asgard',
-          icon: AsgardIcon,
-          tooltip: 'Asgard',
-          allowedEmail: ASGARD_ALLOWED_EMAIL,
-          children: asgardNavChildren(asgardSections),
-        },
         { title: terms.headwaters, url: '/headwaters', icon: TreePine, tooltip: terms.headwaters },
         { title: 'Starfield', url: '/starfield', icon: Rocket, tooltip: 'Starfield' },
       ],
@@ -164,14 +105,7 @@ export function PlatformSidebar({ wayfarer, badges, terms, ...props }: PlatformS
   const { isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === 'collapsed'
   const { terms: uiTerms } = useTerminology()
-  const asgardAllowed = wayfarer.email === ASGARD_ALLOWED_EMAIL
-  const asgardNav = useAsgardNav(asgardAllowed)
-  const asgardAvailability = useAsgardAvailability(asgardAllowed)
-  const navItems = buildNavItems(uiTerms, asgardNav.data ?? [])
-  const asgardUnavailable =
-    asgardAllowed &&
-    !asgardAvailability.isLoading &&
-    (asgardAvailability.isError || asgardAvailability.data !== true)
+  const navItems = buildNavItems(uiTerms)
 
   function getBadge(url: string): number {
     if (url === '/itinerary') return badges?.itinerary ?? 0
@@ -215,106 +149,12 @@ export function PlatformSidebar({ wayfarer, badges, terms, ...props }: PlatformS
           </div>
         </SidebarHeader>
         <SidebarContent>
-          {navItems.filter(({ group }) => group !== 'Admin' || wayfarer.isAdmin).map(({ group, items }) => {
-            const visibleItems = items.filter((item) => !item.allowedEmail || item.allowedEmail === wayfarer.email)
-            if (visibleItems.length === 0) return null
-            return (
+          {navItems.filter(({ group }) => group !== 'Admin' || wayfarer.isAdmin).map(({ group, items }) => (
               <SidebarGroup key={group}>
                 <SidebarGroupLabel>{group}</SidebarGroupLabel>
                 <SidebarMenu>
-                  {visibleItems.map(({ title, url, icon: Icon, tooltip, children }) => {
-                    const isActive = children
-                        ? pathname.startsWith(url)
-                        : pathname === url
-
-                    if (title === 'Asgard' && asgardUnavailable) {
-                      return (
-                        <SidebarMenuItem key={url}>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <SidebarMenuButton tooltip={tooltip} isActive={isActive}>
-                                <div className="relative shrink-0">
-                                  <Icon className="h-4 w-4" />
-                                  <AlertTriangle className="absolute -right-2 -top-2 h-3 w-3 text-amber-500" />
-                                </div>
-                                <span>{title}</span>
-                              </SidebarMenuButton>
-                            </PopoverTrigger>
-                            <PopoverContent side="right" align="start">
-                              <PopoverHeader>
-                                <PopoverTitle>Asgard unavailable</PopoverTitle>
-                                <PopoverDescription>
-                                  Asgard is only available on your local network. Connect to the network,
-                                  then try again.
-                                </PopoverDescription>
-                              </PopoverHeader>
-                            </PopoverContent>
-                          </Popover>
-                        </SidebarMenuItem>
-                      )
-                    }
-
-                    if (children) {
-                      // When collapsed the collapsible sub-items are invisible.
-                      // Show a right-anchored dropdown with all sub-items instead.
-                      if (collapsed) {
-                        return (
-                          <SidebarMenuItem key={url}>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <SidebarMenuButton tooltip={tooltip} isActive={isActive}>
-                                  <Icon className="h-4 w-4" />
-                                  <span>{title}</span>
-                                </SidebarMenuButton>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent side="right" align="start" className="min-w-40">
-                                {children.map(child => (
-                                  <DropdownMenuItem
-                                    key={child.url}
-                                    onClick={() => handleClick(child.url)}
-                                    className={pathname === child.url ? 'bg-accent' : ''}
-                                  >
-                                    {child.icon && <child.icon className="h-4 w-4 mr-2" />}
-                                    {child.title}
-                                  </DropdownMenuItem>
-                                ))}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </SidebarMenuItem>
-                        )
-                      }
-
-                      return (
-                          <Collapsible key={url} defaultOpen={isActive} className="group/collapsible">
-                            <SidebarMenuItem>
-                              <CollapsibleTrigger asChild>
-                                <SidebarMenuButton tooltip={tooltip} isActive={isActive}>
-                                  <Icon className="h-4 w-4" />
-                                  <span>{title}</span>
-                                  <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
-                                </SidebarMenuButton>
-                              </CollapsibleTrigger>
-                              <CollapsibleContent>
-                                <SidebarMenuSub>
-                                  {children.map(child => (
-                                      <SidebarMenuSubItem key={child.url}>
-                                        <SidebarMenuSubButton
-                                            onClick={() => handleClick(child.url)}
-                                            isActive={pathname === child.url}
-                                            className="cursor-pointer"
-                                        >
-                                          {child.icon && <child.icon className="h-4 w-4" />}
-                                          {child.title}
-                                        </SidebarMenuSubButton>
-                                      </SidebarMenuSubItem>
-                                  ))}
-                                </SidebarMenuSub>
-                              </CollapsibleContent>
-                            </SidebarMenuItem>
-                          </Collapsible>
-                      )
-                    }
-
+                  {items.map(({ title, url, icon: Icon, tooltip }) => {
+                    const isActive = pathname === url
                     const badge = getBadge(url)
                     return (
                         <SidebarMenuItem key={url}>
@@ -341,8 +181,7 @@ export function PlatformSidebar({ wayfarer, badges, terms, ...props }: PlatformS
                   })}
                 </SidebarMenu>
               </SidebarGroup>
-            )
-          })}
+            ))}
         </SidebarContent>
         <SidebarFooter>
           <PlatformWayfarerMenu wayfarer={wayfarer} terms={terms} />

@@ -1,5 +1,5 @@
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Bookmark, CalendarDays, Monitor, NotebookPen, Shield, User } from 'lucide-react'
+import { ArrowLeft, Bookmark, CalendarDays, KeyRound, Monitor, NotebookPen, Shield, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PlatformHeader } from '@/components/nav/platform/platform-header'
 import { useTerminology } from '@/contexts/terminology-context'
@@ -9,8 +9,9 @@ import { PrivacyForm } from './privacy-form'
 import { ItinerarySettingsForm, type CalendarEntry, type SubscriptionEntry } from './itinerary-settings-form'
 import { WaypointsSettingsForm } from './waypoints-settings-form'
 import { LogSettingsForm } from './log-settings-form'
+import { IntegrationsForm } from './integrations-form'
 
-type Section = 'account' | 'appearance' | 'privacy' | 'itinerary' | 'waypoints' | 'logs'
+type Section = 'account' | 'appearance' | 'privacy' | 'itinerary' | 'waypoints' | 'logs' | 'integrations'
 
 interface SettingsClientProps {
   initialSection: string
@@ -54,7 +55,7 @@ interface SettingsClientProps {
   onRefresh: () => void
 }
 
-const VALID_SECTIONS: Section[] = ['account', 'appearance', 'privacy', 'itinerary', 'waypoints', 'logs']
+const VALID_SECTIONS: Section[] = ['account', 'appearance', 'privacy', 'integrations', 'itinerary', 'waypoints', 'logs']
 
 function isValidSection(s: string | null): s is Section {
   return VALID_SECTIONS.includes(s as Section)
@@ -80,6 +81,7 @@ export function SettingsClient({
     { value: 'account', label: 'Account', icon: User, group: 'Profile' },
     { value: 'appearance', label: 'Appearance', icon: Monitor, group: 'Profile' },
     { value: 'privacy', label: 'Privacy', icon: Shield, group: 'Profile' },
+    { value: 'integrations', label: 'Integrations', icon: KeyRound, group: 'Profile' },
     { value: 'itinerary', label: terms.itinerary, icon: CalendarDays, group: 'Platform' },
     { value: 'logs', label: terms.logs, icon: NotebookPen, group: 'Platform' },
     { value: 'waypoints', label: terms.waypoints, icon: Bookmark, group: 'Platform' },
@@ -109,6 +111,7 @@ export function SettingsClient({
       case 'account': return <AccountForm defaultValues={account} isAdmin={account.isAdmin} />
       case 'appearance': return <AppearanceForm defaultValues={{ ...appearanceSettings, timeFormat: account.timeFormat }} />
       case 'privacy': return <PrivacyForm defaultValues={{ ...privacySettings, listed: account.listed }} />
+      case 'integrations': return <IntegrationsForm />
       case 'itinerary': return <ItinerarySettingsForm preferences={itinerarySettings} calendars={calendars} subscriptions={subscriptions} onRefresh={onRefresh} />
       case 'logs': return <LogSettingsForm defaultValues={logSettings} />
       case 'waypoints': return <WaypointsSettingsForm defaultValues={waypointSettings} />
