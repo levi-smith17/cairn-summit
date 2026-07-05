@@ -31,7 +31,7 @@ export function TipTapToolbar({ editor }: TipTapToolbarProps) {
     const btn = (active: boolean) => cn('h-7 w-7', active && 'bg-muted')
 
     return (
-        <div className="flex flex-wrap items-center gap-0.5 border-b border-input px-2 py-1">
+        <div className="flex flex-wrap items-center gap-0.5 border-b border-border px-2 py-1">
             <Button type="button" variant="ghost" size="icon" className={btn(editor.isActive('bold'))} onClick={() => editor.chain().focus().toggleBold().run()}>
                 <Bold className="h-3.5 w-3.5" />
             </Button>
