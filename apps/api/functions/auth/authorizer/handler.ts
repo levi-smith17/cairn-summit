@@ -4,8 +4,8 @@ import type {
   APIGatewayRequestAuthorizerEventV2,
   APIGatewaySimpleAuthorizerResult,
 } from 'aws-lambda'
-import { dynamo, TABLE_NAME } from '../shared/db'
-import { hashApiToken, isApiToken } from '../../shared/api-token'
+import { dynamo, TABLE_NAME } from '../../shared/db'
+import { hashApiToken, isApiToken, tokenLookupPk } from '../../shared/api-token'
 
 const region = process.env.AWS_REGION ?? 'us-east-2'
 const userPoolId = process.env.COGNITO_USER_POOL_ID

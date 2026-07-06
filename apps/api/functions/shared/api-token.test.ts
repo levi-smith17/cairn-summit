@@ -4,7 +4,7 @@ import {
     hashApiToken,
     isApiToken,
     tokenPrefixFromToken,
-} from '../../shared/api-token'
+} from './api-token'
 
 describe('api-token helpers', () => {
     it('generates prefixed tokens', () => {
