@@ -55,12 +55,25 @@ for (const fn of functions) {
             { stdio: 'inherit' }
         )
 
-        // auth/authorizer depends on jose (not used by other handlers)
-        if (fn === 'auth/authorizer' && existsSync(join(MONO_NODE_MODULES, 'jose'))) {
+        // auth/authorizer depends on jose (not used by other handlers).
+        // Lambda resolves packages from node_modules/ at the zip root.
+        const josePaths = [
+            join(MONO_NODE_MODULES, 'jose'),
+            join(ROOT, 'node_modules/jose'),
+        ]
+        const joseDir = josePaths.find((p) => existsSync(p))
+        if (fn === 'auth/authorizer' && joseDir) {
+            const joseModulesRoot = joseDir.includes(`${ROOT}/`)
+                ? join(ROOT, 'node_modules')
+                : MONO_NODE_MODULES
             execSync(
-                `cd ${MONO_ROOT} && zip -rq ${zipPath} node_modules/jose`,
+                `cd ${dirname(joseModulesRoot)} && zip -rq ${zipPath} node_modules/jose`,
                 { stdio: 'inherit' }
             )
+        } else if (fn === 'auth/authorizer') {
+            console.error('jose not found — run npm ci at repo root before deploying auth/authorizer')
+            failed = true
+            continue
         }
 
         // Upload to Lambda
