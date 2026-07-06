@@ -9,6 +9,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, '..')
 const DIST = join(ROOT, 'dist/functions')
 const TMP = join(ROOT, '.deploy-tmp')
+const MONO_ROOT = join(ROOT, '../..')
+const MONO_NODE_MODULES = join(MONO_ROOT, 'node_modules')
 
 const functions = process.argv.slice(2)
 
@@ -52,6 +54,14 @@ for (const fn of functions) {
             `cd ${DIST} && zip -r ${zipPath} ${feature}/${method} shared`,
             { stdio: 'inherit' }
         )
+
+        // auth/authorizer depends on jose (not used by other handlers)
+        if (fn === 'auth/authorizer' && existsSync(join(MONO_NODE_MODULES, 'jose'))) {
+            execSync(
+                `cd ${MONO_ROOT} && zip -rq ${zipPath} node_modules/jose`,
+                { stdio: 'inherit' }
+            )
+        }
 
         // Upload to Lambda
         const profile = process.env.AWS_PROFILE ? `--profile ${process.env.AWS_PROFILE}` : ''
