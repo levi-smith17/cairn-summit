@@ -12,6 +12,10 @@ function getUserId(event) {
     if (typeof lambdaSub === 'string' && lambdaSub.length > 0) {
         return lambdaSub;
     }
+    const flatSub = authorizer?.sub;
+    if (typeof flatSub === 'string' && flatSub.length > 0) {
+        return flatSub;
+    }
     const jwtSub = authorizer?.jwt?.claims?.sub;
     if (typeof jwtSub === 'string' && jwtSub.length > 0) {
         return jwtSub;

@@ -1,1 +1,1 @@
-{"version":3,"file":"handler.d.ts","sourceRoot":"","sources":["../../../../functions/auth/authorizer/handler.ts"],"names":[],"mappings":"AAEA,OAAO,KAAK,EACV,kCAAkC,EAClC,gCAAgC,EACjC,MAAM,YAAY,CAAA;AAgFnB,eAAO,MAAM,OAAO,GAClB,OAAO,kCAAkC,KACxC,OAAO,CAAC,gCAAgC,CA+B1C,CAAA"}
+{"version":3,"file":"handler.d.ts","sourceRoot":"","sources":["../../../../functions/auth/authorizer/handler.ts"],"names":[],"mappings":"AACA,OAAO,KAAK,EACV,kCAAkC,EAClC,gCAAgC,EACjC,MAAM,YAAY,CAAA;AAmHnB,eAAO,MAAM,OAAO,GAClB,OAAO,kCAAkC,KACxC,OAAO,CAAC,gCAAgC,CAiC1C,CAAA"}
