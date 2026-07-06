@@ -1,4 +1,5 @@
 variable "cognito_user_pool_id" {}
+variable "cognito_client_id" {}
 variable "dynamodb_table_name" {}
 variable "environment" {}
 variable "managed_by" {}

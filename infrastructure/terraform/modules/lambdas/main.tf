@@ -29,6 +29,7 @@ module "lambda" {
 
   source                        = "../../modules/lambda"
   cloudfront_public_media_url   = var.cloudfront_public_media_url
+  cognito_client_id             = var.cognito_client_id
   cognito_user_pool_id          = var.cognito_user_pool_id
   dynamodb_table_name           = var.dynamodb_table_name
   environment                   = var.environment

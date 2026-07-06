@@ -1,7 +1,9 @@
 module "api_gateway" {
-  source               = "../../modules/api_gateway"
-  cognito_client_id    = module.cognito.cognito_client_id
-  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  source                    = "../../modules/api_gateway"
+  authorizer_function_name  = module.lambdas.authorizer_function_name
+  authorizer_invoke_arn     = module.lambdas.authorizer_invoke_arn
+  cognito_client_id         = module.cognito.cognito_client_id
+  cognito_user_pool_id      = module.cognito.cognito_user_pool_id
   environment          = var.environment
   managed_by           = var.managed_by
   owner                = var.owner

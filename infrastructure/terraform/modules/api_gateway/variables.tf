@@ -4,6 +4,14 @@ variable "allowed_origins" {
   default     = ["http://localhost:3000", "http://localhost:5173"]
 }
 
+variable "authorizer_function_name" {
+  type = string
+}
+
+variable "authorizer_invoke_arn" {
+  type = string
+}
+
 variable "cognito_client_id" {
   type = string
 }

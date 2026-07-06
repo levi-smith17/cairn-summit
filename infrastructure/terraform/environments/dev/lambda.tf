@@ -6,6 +6,7 @@ locals {
 module "lambdas" {
   source                             = "../../modules/lambdas"
   cloudfront_public_media_url        = local.media_cdn_url
+  cognito_client_id                  = module.cognito.cognito_client_id
   cognito_user_pool_id               = module.cognito.cognito_user_pool_id
   dynamodb_table_name                = module.dynamodb.table_name
   environment                        = var.environment

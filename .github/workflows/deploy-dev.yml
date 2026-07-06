@@ -352,7 +352,6 @@ jobs:
           VITE_COGNITO_CLIENT_ID: ${{ secrets.DEV_COGNITO_CLIENT_ID }}
           VITE_AWS_REGION: ${{ secrets.AWS_REGION }}
           VITE_CLOUDFRONT_PUBLIC_MEDIA_URL: ${{ secrets.DEV_CLOUDFRONT_PUBLIC_MEDIA_URL }}
-          VITE_ASGARD_URL: https://asgard.cairn.ing
           VITE_APP_ENV: dev
         run: npm run build
 
