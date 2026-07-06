@@ -11,12 +11,18 @@ export function getUserId(
         authorizer?: {
             lambda?: { sub?: string }
             jwt?: { claims?: { sub?: string } }
+            sub?: string
         }
     }).authorizer
 
     const lambdaSub = authorizer?.lambda?.sub
     if (typeof lambdaSub === 'string' && lambdaSub.length > 0) {
         return lambdaSub
+    }
+
+    const flatSub = authorizer?.sub
+    if (typeof flatSub === 'string' && flatSub.length > 0) {
+        return flatSub
     }
 
     const jwtSub = authorizer?.jwt?.claims?.sub

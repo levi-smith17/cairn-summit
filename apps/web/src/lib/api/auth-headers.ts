@@ -14,8 +14,10 @@ export async function getAuthHeaders(): Promise<Record<string, string>> {
             const fiveMinutes = 5 * 60 * 1000
             const needsRefresh = expiresAt - Date.now() < fiveMinutes
 
+            const authHeader = (token: string) => `Bearer ${token}`
+
             if (!needsRefresh) {
-                return resolve({ Authorization: session.getIdToken().getJwtToken() })
+                return resolve({ Authorization: authHeader(session.getIdToken().getJwtToken()) })
             }
 
             // Proactively refresh the session before it expires
@@ -24,9 +26,9 @@ export async function getAuthHeaders(): Promise<Record<string, string>> {
                 (refreshErr: Error | null, refreshedSession: CognitoUserSession | null) => {
                     if (refreshErr || !refreshedSession) {
                         // Fall back to existing token if refresh fails
-                        return resolve({ Authorization: session.getIdToken().getJwtToken() })
+                        return resolve({ Authorization: authHeader(session.getIdToken().getJwtToken()) })
                     }
-                    resolve({ Authorization: refreshedSession.getIdToken().getJwtToken() })
+                    resolve({ Authorization: authHeader(refreshedSession.getIdToken().getJwtToken()) })
                 }
             )
         })
