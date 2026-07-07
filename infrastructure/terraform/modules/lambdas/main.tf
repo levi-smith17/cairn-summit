@@ -6,6 +6,7 @@ locals {
     local.lambdas_cache,
     local.lambdas_guides,
     local.lambdas_headwaters,
+    local.lambdas_health,
     local.lambdas_invite,
     local.lambdas_itinerary,
     local.lambdas_logs,

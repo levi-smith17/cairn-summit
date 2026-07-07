@@ -13,7 +13,7 @@ module "api_gateway" {
     module.cloudfront.cloudfront_url,
   ]
   # Exclude public routes — those are wired explicitly below without JWT auth
-  lambda_functions = { for k, v in module.lambdas.lambda_functions : k => v if !contains(["outpost-get", "manifest-public-get", "manifest-public-journey", "manifest-public-contact-get", "manifest-domain-lookup", "privacy-contact", "signals-public-thread-get", "signals-public-thread-reply", "invite-public-get", "invite-public-accept"], k) }
+  lambda_functions = { for k, v in module.lambdas.lambda_functions : k => v if !contains(["health-get", "outpost-get", "manifest-public-get", "manifest-public-journey", "manifest-public-contact-get", "manifest-domain-lookup", "privacy-contact", "signals-public-thread-get", "signals-public-thread-reply", "invite-public-get", "invite-public-accept"], k) }
 }
 
 # Public routes — authorization_type = "NONE", defined outside the module
@@ -44,6 +44,29 @@ resource "aws_lambda_permission" "outpost_get" {
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${local.api_execution_arn}/*/*"
   statement_id  = "AllowAPIGateway-outpost-get"
+}
+
+resource "aws_apigatewayv2_integration" "health_get" {
+  api_id                 = module.api_gateway.api_id
+  integration_method     = "POST"
+  integration_type       = "AWS_PROXY"
+  integration_uri        = module.lambdas.lambdas["health-get"].invoke_arn
+  payload_format_version = "2.0"
+}
+
+resource "aws_apigatewayv2_route" "health_get" {
+  api_id             = module.api_gateway.api_id
+  authorization_type = "NONE"
+  route_key          = "GET /health"
+  target             = "integrations/${aws_apigatewayv2_integration.health_get.id}"
+}
+
+resource "aws_lambda_permission" "health_get" {
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambdas.lambdas["health-get"].function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${local.api_execution_arn}/*/*"
+  statement_id  = "AllowAPIGateway-health-get"
 }
 
 resource "aws_apigatewayv2_integration" "manifest_public_get" {
