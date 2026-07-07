@@ -7,13 +7,19 @@ vi.mock('../../shared/db', () => ({
 }))
 
 vi.mock('@aws-sdk/client-ssm', () => ({
-    SSMClient: vi.fn(function() { return { send: vi.fn().mockResolvedValue({}) } }),
+    SSMClient: vi.fn(function() { return { send: vi.fn().mockResolvedValue({ Parameter: { Value: 'app-password' } }) } }),
     PutParameterCommand: vi.fn(),
+    GetParameterCommand: vi.fn(),
+}))
+
+vi.mock('../../shared/caldav', () => ({
+    resolveCalendarUrl: vi.fn().mockResolvedValue('https://caldav.icloud.com/u/123/calendars/personal/'),
 }))
 
 import { handler } from './handler'
 import { dynamo } from '../../shared/db'
 import { SSMClient } from '@aws-sdk/client-ssm'
+import { resolveCalendarUrl } from '../../shared/caldav'
 
 const mockEvent = (id: string | undefined, body: object): APIGatewayProxyEventV2WithJWTAuthorizer => ({
     requestContext: {
@@ -51,20 +57,43 @@ describe('itinerary/update handler', () => {
     })
 
     it('returns 400 when no valid fields provided', async () => {
+        vi.mocked(dynamo.send).mockResolvedValueOnce({ Item: existingCalendar })
+
         const result = await handler(mockEvent('cal-1', { unknownField: 'foo' })) as any
         expect(result.statusCode).toBe(400)
     })
 
-    it('updates calendar fields without touching SSM when no password provided', async () => {
-        vi.mocked(SSMClient).mockImplementation(function() { return { send: vi.fn().mockResolvedValue({}) } as any })
-        vi.mocked(dynamo.send).mockResolvedValueOnce({
-            Attributes: { ...existingCalendar, name: 'Personal', ssmPasswordPath: existingCalendar.ssmPasswordPath }
-        })
+    it('updates calendar fields and re-resolves calendarUrl when name changes', async () => {
+        vi.mocked(SSMClient).mockImplementation(function() { return { send: vi.fn().mockResolvedValue({ Parameter: { Value: 'app-password' } }) } as any })
+        vi.mocked(dynamo.send)
+            .mockResolvedValueOnce({ Item: existingCalendar })
+            .mockResolvedValueOnce({
+                Attributes: {
+                    ...existingCalendar,
+                    name: 'Personal',
+                    calendarUrl: 'https://caldav.icloud.com/u/123/calendars/personal/',
+                    ssmPasswordPath: existingCalendar.ssmPasswordPath,
+                },
+            })
 
         const result = await handler(mockEvent('cal-1', { name: 'Personal' })) as any
         expect(result.statusCode).toBe(200)
-        // Only one dynamo call (UpdateCommand) — no GetCommand needed without password
-        expect(vi.mocked(dynamo.send).mock.calls).toHaveLength(1)
+        expect(resolveCalendarUrl).toHaveBeenCalled()
+        expect(vi.mocked(dynamo.send).mock.calls).toHaveLength(2)
+    })
+
+    it('updates calendar fields without re-resolving when only color changes', async () => {
+        vi.mocked(SSMClient).mockImplementation(function() { return { send: vi.fn().mockResolvedValue({}) } as any })
+        vi.mocked(dynamo.send)
+            .mockResolvedValueOnce({ Item: existingCalendar })
+            .mockResolvedValueOnce({
+                Attributes: { ...existingCalendar, color: '#FF0000', ssmPasswordPath: existingCalendar.ssmPasswordPath },
+            })
+
+        const result = await handler(mockEvent('cal-1', { color: '#FF0000' })) as any
+        expect(result.statusCode).toBe(200)
+        expect(resolveCalendarUrl).not.toHaveBeenCalled()
+        expect(vi.mocked(dynamo.send).mock.calls).toHaveLength(2)
     })
 
     it('fetches existing item and updates SSM when password is provided', async () => {
@@ -80,7 +109,7 @@ describe('itinerary/update handler', () => {
         expect(vi.mocked(dynamo.send).mock.calls).toHaveLength(2)
     })
 
-    it('returns 404 when calendar does not exist and password update attempted', async () => {
+    it('returns 404 when calendar does not exist', async () => {
         vi.mocked(SSMClient).mockImplementation(function() { return { send: vi.fn().mockResolvedValue({}) } as any })
         vi.mocked(dynamo.send).mockResolvedValueOnce({ Item: undefined })
 
@@ -90,9 +119,11 @@ describe('itinerary/update handler', () => {
 
     it('strips ssmPasswordPath from response', async () => {
         vi.mocked(SSMClient).mockImplementation(function() { return { send: vi.fn().mockResolvedValue({}) } as any })
-        vi.mocked(dynamo.send).mockResolvedValueOnce({
-            Attributes: { ...existingCalendar, ssmPasswordPath: '/secret/path' }
-        })
+        vi.mocked(dynamo.send)
+            .mockResolvedValueOnce({ Item: existingCalendar })
+            .mockResolvedValueOnce({
+                Attributes: { ...existingCalendar, ssmPasswordPath: '/secret/path' },
+            })
 
         const result = await handler(mockEvent('cal-1', { color: '#FF0000' })) as any
         const data = JSON.parse(result.body).data
@@ -103,7 +134,7 @@ describe('itinerary/update handler', () => {
         vi.mocked(SSMClient).mockImplementation(function() { return { send: vi.fn().mockResolvedValue({}) } as any })
         vi.mocked(dynamo.send).mockRejectedValueOnce(new Error('DynamoDB error'))
 
-        const result = await handler(mockEvent('cal-1', { name: 'X' })) as any
+        const result = await handler(mockEvent('cal-1', { color: '#00FF00' })) as any
         expect(result.statusCode).toBe(500)
     })
 })

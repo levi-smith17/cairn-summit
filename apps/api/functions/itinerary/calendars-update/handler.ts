@@ -1,11 +1,20 @@
 import { UpdateCommand, GetCommand } from '@aws-sdk/lib-dynamodb'
-import { SSMClient, PutParameterCommand } from '@aws-sdk/client-ssm'
+import { SSMClient, PutParameterCommand, GetParameterCommand } from '@aws-sdk/client-ssm'
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from 'aws-lambda'
 import { dynamo, TABLE_NAME } from '../../shared/db'
 import { getPk, getPathId } from '../../shared/auth'
+import { resolveCalendarUrl } from '../../shared/caldav'
 import { toApiGatewayResponse, ok, badRequest, notFound, serverError } from '../../shared/response'
 
-const UPDATABLE_FIELDS = ['name', 'appleId', 'serverUrl', 'color', 'syncEnabled'] as const
+const UPDATABLE_FIELDS = ['name', 'appleId', 'serverUrl', 'color', 'syncEnabled', 'calendarUrl'] as const
+
+async function readPassword(ssm: SSMClient, path: string): Promise<string> {
+    const result = await ssm.send(new GetParameterCommand({
+        Name: path,
+        WithDecryption: true,
+    }))
+    return result.Parameter?.Value ?? ''
+}
 
 export const handler = async (
     event: APIGatewayProxyEventV2WithJWTAuthorizer
@@ -19,17 +28,39 @@ export const handler = async (
         const pk = getPk(event)
         const sk = `ITINERARY#${id}`
 
-        // Fetch existing item to get the SSM path (needed if updating password)
-        if (body.password) {
-            const existing = await dynamo.send(new GetCommand({ TableName: TABLE_NAME, Key: { pk, sk } }))
-            if (!existing.Item) return toApiGatewayResponse(notFound('Itinerary calendar not found'))
+        const existing = await dynamo.send(new GetCommand({ TableName: TABLE_NAME, Key: { pk, sk } }))
+        if (!existing.Item) return toApiGatewayResponse(notFound('Itinerary calendar not found'))
 
+        if (body.password) {
             await ssm.send(new PutParameterCommand({
                 Name: existing.Item.ssmPasswordPath,
                 Value: body.password,
                 Type: 'SecureString',
                 Overwrite: true,
             }))
+        }
+
+        const shouldResolveUrl =
+            'name' in body
+            || 'password' in body
+            || 'appleId' in body
+            || 'serverUrl' in body
+
+        if (shouldResolveUrl) {
+            const password = body.password
+                ? body.password
+                : await readPassword(ssm, existing.Item.ssmPasswordPath as string)
+            const appleId = body.appleId ?? existing.Item.appleId
+            const name = body.name ?? existing.Item.name
+            const serverUrl = body.serverUrl ?? existing.Item.serverUrl ?? 'https://caldav.icloud.com'
+
+            const calendarUrl = await resolveCalendarUrl(serverUrl, appleId, password, name)
+            if (!calendarUrl) {
+                return toApiGatewayResponse(
+                    badRequest(`Calendar "${name}" not found. Check the name matches Apple Calendar exactly.`),
+                )
+            }
+            body.calendarUrl = calendarUrl
         }
 
         const setExprs: string[] = []

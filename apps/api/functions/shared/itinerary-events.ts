@@ -25,6 +25,7 @@ interface CalendarItem {
     color: string
     appleId: string
     serverUrl: string
+    calendarUrl?: string
     syncEnabled?: boolean
     ssmPasswordPath: string
 }
@@ -115,6 +116,7 @@ export async function fetchUserItineraryEvents(
                     cal.name,
                     rangeFrom,
                     rangeTo,
+                    cal.calendarUrl,
                 )
                 return events.map(e => toExternalEvent(e, id, cal.color))
             } catch (err) {
