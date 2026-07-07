@@ -1,130 +1,74 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
+import { parseCalDavCalendarList } from './caldav'
 
-vi.mock('tsdav', () => ({
-    createDAVClient: vi.fn(),
-}))
+const ICLOUD_MULTISTATUS = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<multistatus xmlns="DAV:" xmlns:cal="urn:ietf:params:xml:ns:caldav">
+  <response>
+    <href>/123456789/calendars/</href>
+    <propstat>
+      <prop>
+        <displayname>Home</displayname>
+        <resourcetype><collection/><calendar/></resourcetype>
+        <cal:supported-calendar-component-set><cal:comp name="VEVENT"/></cal:supported-calendar-component-set>
+      </prop>
+      <status>HTTP/1.1 200 OK</status>
+    </propstat>
+  </response>
+  <response>
+    <href>/123456789/calendars/work/</href>
+    <propstat>
+      <prop>
+        <displayname>Work</displayname>
+        <resourcetype><collection/><calendar/></resourcetype>
+        <cal:supported-calendar-component-set><cal:comp name="VEVENT"/></cal:supported-calendar-component-set>
+      </prop>
+      <status>HTTP/1.1 200 OK</status>
+    </propstat>
+  </response>
+  <response>
+    <href>/123456789/calendars/reminders/</href>
+    <propstat>
+      <prop>
+        <displayname>Reminders</displayname>
+        <resourcetype><collection/><calendar/></resourcetype>
+        <cal:supported-calendar-component-set><cal:comp name="VTODO"/></cal:supported-calendar-component-set>
+      </prop>
+      <status>HTTP/1.1 200 OK</status>
+    </propstat>
+  </response>
+</multistatus>`
 
-import { createDAVClient } from 'tsdav'
-import {
-    fetchCalDavEvents,
-    fetchCalDavEventsByUrl,
-    listICloudCalendarNames,
-    resolveCalendarUrl,
-} from './caldav'
-
-describe('caldav (tsdav)', () => {
-    beforeEach(() => {
-        vi.clearAllMocks()
-    })
-
-    it('resolveCalendarUrl matches display names case-insensitively', async () => {
-        vi.mocked(createDAVClient).mockResolvedValue({
-            fetchCalendars: vi.fn().mockResolvedValue([
-                {
-                    url: 'https://caldav.icloud.com/u/123/calendars/home/',
-                    displayName: 'Home',
-                    components: ['VEVENT'],
-                },
-                {
-                    url: 'https://caldav.icloud.com/u/123/calendars/work/',
-                    displayName: 'Work',
-                    components: ['VEVENT'],
-                },
-            ]),
-        } as never)
-
-        await expect(
-            resolveCalendarUrl(
-                'https://caldav.icloud.com',
-                'user@icloud.com',
-                'password',
-                'home',
-            ),
-        ).resolves.toBe('https://caldav.icloud.com/u/123/calendars/home/')
-    })
-
-    it('fetchCalDavEvents uses a stored calendar URL without re-resolving by name', async () => {
-        const fetchCalendarObjects = vi.fn().mockResolvedValue([
-            {
-                url: 'https://caldav.icloud.com/u/123/calendars/home/event.ics',
-                data: [
-                    'BEGIN:VCALENDAR',
-                    'BEGIN:VEVENT',
-                    'UID:evt-1',
-                    'SUMMARY:Standup',
-                    'DTSTART:20260707T140000Z',
-                    'DTEND:20260707T143000Z',
-                    'END:VEVENT',
-                    'END:VCALENDAR',
-                ].join('\r\n'),
-            },
-        ])
-        vi.mocked(createDAVClient).mockResolvedValue({
-            fetchCalendars: vi.fn(),
-            fetchCalendarObjects,
-        } as never)
-
-        const from = new Date('2026-07-01T00:00:00.000Z')
-        const to = new Date('2026-07-31T23:59:59.999Z')
-        const events = await fetchCalDavEvents(
-            'https://caldav.icloud.com',
-            'user@icloud.com',
-            'password',
-            'Wrong Name',
-            from,
-            to,
-            'https://caldav.icloud.com/u/123/calendars/home/',
+describe('parseCalDavCalendarList', () => {
+    it('parses iCloud unprefixed DAV XML and ignores non-event calendars', () => {
+        const calendars = parseCalDavCalendarList(
+            ICLOUD_MULTISTATUS,
+            'https://caldav.icloud.com/123456789/calendars/',
         )
 
-        expect(events).toHaveLength(1)
-        expect(events[0]?.title).toBe('Standup')
-        expect(fetchCalendarObjects).toHaveBeenCalledOnce()
+        expect(calendars).toHaveLength(2)
+        expect(calendars.map(c => c.displayName)).toEqual(['Home', 'Work'])
+        expect(calendars[1]?.url).toBe('https://caldav.icloud.com/123456789/calendars/work/')
     })
 
-    it('listICloudCalendarNames returns VEVENT calendars only', async () => {
-        vi.mocked(createDAVClient).mockResolvedValue({
-            fetchCalendars: vi.fn().mockResolvedValue([
-                { displayName: 'Home', components: ['VEVENT'] },
-                { displayName: 'Reminders', components: ['VTODO'] },
-            ]),
-        } as never)
-
-        await expect(
-            listICloudCalendarNames('https://caldav.icloud.com', 'user@icloud.com', 'password'),
-        ).resolves.toEqual(['Home'])
-    })
-
-    it('fetchCalDavEventsByUrl parses returned ICS blocks', async () => {
-        vi.mocked(createDAVClient).mockResolvedValue({
-            fetchCalendarObjects: vi.fn().mockResolvedValue([
-                {
-                    url: 'https://caldav.icloud.com/u/123/calendars/home/event.ics',
-                    data: [
-                        'BEGIN:VCALENDAR',
-                        'BEGIN:VEVENT',
-                        'UID:evt-2',
-                        'SUMMARY:Lunch',
-                        'DTSTART:20260707T120000Z',
-                        'DTEND:20260707T130000Z',
-                        'END:VEVENT',
-                        'END:VCALENDAR',
-                    ].join('\r\n'),
-                },
-            ]),
-        } as never)
-
-        const from = new Date('2026-07-01T00:00:00.000Z')
-        const to = new Date('2026-07-31T23:59:59.999Z')
-        const events = await fetchCalDavEventsByUrl(
-            'https://caldav.icloud.com',
-            'user@icloud.com',
-            'password',
-            'https://caldav.icloud.com/u/123/calendars/home/',
-            from,
-            to,
+    it('parses prefixed DAV XML from other servers', () => {
+        const calendars = parseCalDavCalendarList(
+            `<?xml version="1.0" encoding="UTF-8"?>
+<d:multistatus xmlns:d="DAV:" xmlns:cal="urn:ietf:params:xml:ns:caldav">
+  <d:response>
+    <d:href>/calendars/personal/</d:href>
+    <d:propstat>
+      <d:prop>
+        <d:displayname>Personal</d:displayname>
+        <d:resourcetype><d:collection/><cal:calendar/></d:resourcetype>
+        <cal:supported-calendar-component-set><cal:comp name="VEVENT"/></cal:supported-calendar-component-set>
+      </d:prop>
+    </d:propstat>
+  </d:response>
+</d:multistatus>`,
+            'https://caldav.example.com/calendars/',
         )
 
-        expect(events).toHaveLength(1)
-        expect(events[0]?.title).toBe('Lunch')
+        expect(calendars).toHaveLength(1)
+        expect(calendars[0]?.displayName).toBe('Personal')
     })
 })
