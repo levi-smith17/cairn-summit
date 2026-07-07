@@ -11,9 +11,14 @@ vi.mock('@aws-sdk/client-ssm', () => ({
     PutParameterCommand: vi.fn(),
 }))
 
+vi.mock('../../shared/caldav', () => ({
+    resolveCalendarUrl: vi.fn().mockResolvedValue('https://caldav.icloud.com/u/123/calendars/work/'),
+}))
+
 import { handler } from './handler'
 import { dynamo } from '../../shared/db'
 import { SSMClient } from '@aws-sdk/client-ssm'
+import { resolveCalendarUrl } from '../../shared/caldav'
 
 const mockEvent = (body: object): APIGatewayProxyEventV2WithJWTAuthorizer => ({
     requestContext: {
@@ -42,6 +47,14 @@ describe('itinerary/create handler', () => {
         expect(JSON.parse(result.body).error).toContain('required')
     })
 
+    it('returns 400 when the calendar name cannot be resolved', async () => {
+        vi.mocked(resolveCalendarUrl).mockResolvedValueOnce(null)
+
+        const result = await handler(mockEvent(validBody)) as any
+        expect(result.statusCode).toBe(400)
+        expect(JSON.parse(result.body).error).toContain('not found')
+    })
+
     it('returns 201 with calendar id (no ssmPasswordPath)', async () => {
         vi.mocked(SSMClient).mockImplementation(function() { return { send: vi.fn().mockResolvedValue({}) } as any })
 
@@ -50,6 +63,7 @@ describe('itinerary/create handler', () => {
         const data = JSON.parse(result.body).data
         expect(data.id).toBeDefined()
         expect(data.name).toBe('Work')
+        expect(data.calendarUrl).toBe('https://caldav.icloud.com/u/123/calendars/work/')
         expect(data.ssmPasswordPath).toBeUndefined()
     })
 
@@ -62,6 +76,7 @@ describe('itinerary/create handler', () => {
         expect(ssmSend).toHaveBeenCalledOnce()
         const putCall = vi.mocked(dynamo.send).mock.calls[0][0]
         expect(putCall.input.Item.appleId).toBe('levi@icloud.com')
+        expect(putCall.input.Item.calendarUrl).toBe('https://caldav.icloud.com/u/123/calendars/work/')
         expect(putCall.input.Item.ssmPasswordPath).toMatch(/\/cairn\/users\/user-123\/itinerary\/.+\/password/)
         expect(putCall.input.Item.password).toBeUndefined()
     })

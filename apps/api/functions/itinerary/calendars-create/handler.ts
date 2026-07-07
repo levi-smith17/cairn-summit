@@ -4,6 +4,7 @@ import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 }
 import { randomUUID } from 'crypto'
 import { dynamo, TABLE_NAME } from '../../shared/db'
 import { getPk, getUserId } from '../../shared/auth'
+import { resolveCalendarUrl } from '../../shared/caldav'
 import { toApiGatewayResponse, created, badRequest, serverError } from '../../shared/response'
 
 export const handler = async (
@@ -15,6 +16,19 @@ export const handler = async (
 
         if (!body.name || !body.appleId || !body.password) {
             return toApiGatewayResponse(badRequest('name, appleId, and password are required'))
+        }
+
+        const serverUrl = body.serverUrl ?? 'https://caldav.icloud.com'
+        const calendarUrl = await resolveCalendarUrl(
+            serverUrl,
+            body.appleId,
+            body.password,
+            body.name,
+        )
+        if (!calendarUrl) {
+            return toApiGatewayResponse(
+                badRequest(`Calendar "${body.name}" not found. Check the name matches Apple Calendar exactly.`),
+            )
         }
 
         const pk = getPk(event)
@@ -36,7 +50,8 @@ export const handler = async (
             sk,
             name: body.name,
             appleId: body.appleId,
-            serverUrl: body.serverUrl ?? 'https://caldav.icloud.com',
+            serverUrl,
+            calendarUrl,
             color: body.color ?? '#007AFF',
             syncEnabled: body.syncEnabled ?? true,
             ssmPasswordPath,
