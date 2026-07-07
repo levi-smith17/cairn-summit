@@ -48,6 +48,7 @@ describe('fetchUserItineraryEvents (integration)', () => {
                 serverUrl: 'https://caldav.icloud.com',
                 syncEnabled: true,
                 ssmPasswordPath: '/cairn/users/user-123/itinerary/cal-1/password',
+                calendarUrl: 'https://caldav.icloud.com/u/123/calendars/personal/',
             },
             {
                 pk: USER_PK,
@@ -88,19 +89,20 @@ describe('fetchUserItineraryEvents (integration)', () => {
             },
         ])
 
-        const events = await fetchUserItineraryEvents(
+        const result = await fetchUserItineraryEvents(
             USER_PK,
             new Date('2026-05-01'),
             new Date('2026-06-01'),
         )
 
-        expect(events).toHaveLength(2)
-        expect(events[0].title).toBe('Memorial Day')
-        expect(events[0].calendarId).toBe('sub-1')
-        expect(events[0].readonly).toBe(true)
-        expect(events[1].title).toBe('Morning hike')
-        expect(events[1].calendarId).toBe('cal-1')
-        expect(events[1].color).toBe('#007AFF')
+        expect(result.events).toHaveLength(2)
+        expect(result.events[0].title).toBe('Memorial Day')
+        expect(result.events[0].calendarId).toBe('sub-1')
+        expect(result.events[0].readonly).toBe(true)
+        expect(result.events[1].title).toBe('Morning hike')
+        expect(result.events[1].calendarId).toBe('cal-1')
+        expect(result.events[1].color).toBe('#007AFF')
+        expect(result.calendarSync).toHaveLength(2)
         expect(fetchCalDavEvents).toHaveBeenCalledOnce()
         expect(fetchSubscriptionEvents).toHaveBeenCalledOnce()
     })
@@ -120,8 +122,9 @@ describe('fetchUserItineraryEvents (integration)', () => {
             },
         ])
 
-        const events = await fetchUserItineraryEvents(USER_PK)
-        expect(events).toHaveLength(0)
+        const result = await fetchUserItineraryEvents(USER_PK)
+        expect(result.events).toHaveLength(0)
+        expect(result.calendarSync).toHaveLength(0)
         expect(fetchCalDavEvents).not.toHaveBeenCalled()
         expect(fetchSubscriptionEvents).not.toHaveBeenCalled()
     })

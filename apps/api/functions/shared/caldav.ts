@@ -21,6 +21,38 @@ function extractTag(xml: string, tag: string): string | null {
     return match ? decodeXmlText(match[1].trim()) : null
 }
 
+function extractTagFromSuccessfulPropstats(chunk: string, tag: string): string | null {
+    const propstats = chunk.split(/<(?:[\w-]+:)?propstat\b/i).slice(1)
+    for (const propstat of propstats) {
+        if (!/HTTP\/1\.1\s+200\b/i.test(propstat)) continue
+        const value = extractTag(propstat, tag)
+        if (value) return value
+    }
+    return extractTag(chunk, tag)
+}
+
+function extractCalendarDataBlocks(xml: string): string[] {
+    const responses = xml.split(/<(?:[\w-]+:)?response\b/i).slice(1)
+    const blocks: string[] = []
+
+    for (const chunk of responses) {
+        const propstats = chunk.split(/<(?:[\w-]+:)?propstat\b/i).slice(1)
+        for (const propstat of propstats) {
+            if (!/HTTP\/1\.1\s+200\b/i.test(propstat)) continue
+            const re = /<(?:[\w-]+:)?calendar-data[^>]*>([\s\S]*?)<\/(?:[\w-]+:)?calendar-data>/gi
+            let match
+            while ((match = re.exec(propstat)) !== null) {
+                const decoded = decodeXmlText(match[1].trim())
+                if (decoded.includes('BEGIN:VCALENDAR')) {
+                    blocks.push(decoded)
+                }
+            }
+        }
+    }
+
+    return blocks
+}
+
 async function davRequest(
     method: string,
     url: string,
@@ -101,7 +133,7 @@ export function parseCalDavCalendarList(xml: string, homeUrl: string): CalDavCal
         const hrefMatch = chunk.match(/<(?:[\w-]+:)?href>([^<]+)<\/(?:[\w-]+:)?href>/i)
         if (!hrefMatch) continue
         const href = decodeURIComponent(hrefMatch[1].trim())
-        const displayName = extractTag(chunk, 'displayname') ?? ''
+        const displayName = extractTagFromSuccessfulPropstats(chunk, 'displayname') ?? ''
         calendars.push({
             url: resolveHref(homeUrl, href),
             displayName,
@@ -145,13 +177,7 @@ async function fetchCalendarObjects(
   </c:filter>
 </c:calendar-query>`
     const xml = await davRequest('REPORT', calendarUrl, auth, body, '1')
-    const dataBlocks: string[] = []
-    const re = /<(?:[\w-]+:)?calendar-data[^>]*>([\s\S]*?)<\/(?:[\w-]+:)?calendar-data>/gi
-    let match
-    while ((match = re.exec(xml)) !== null) {
-        dataBlocks.push(decodeXmlText(match[1].trim()))
-    }
-    return dataBlocks
+    return extractCalendarDataBlocks(xml)
 }
 
 /** Discover iCloud calendar display names (used for settings validation). */
