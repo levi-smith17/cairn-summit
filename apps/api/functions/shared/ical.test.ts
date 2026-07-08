@@ -37,4 +37,27 @@ describe('parseICSEvents', () => {
         const events = parseICSEvents(SAMPLE_ICS, 'https://example.com/cal.ics', from, to)
         expect(events).toHaveLength(0)
     })
+
+    it('parses TZID local times into correct UTC instants', () => {
+        const ics = `BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+UID:tz-test
+SUMMARY:Morning appointment
+DTSTART;TZID=America/New_York:20260707T101500
+DTEND;TZID=America/New_York:20260707T111500
+END:VEVENT
+END:VCALENDAR`
+
+        const events = parseICSEvents(
+            ics,
+            'https://example.com/cal.ics',
+            new Date('2026-07-01'),
+            new Date('2026-08-01'),
+        )
+
+        expect(events).toHaveLength(1)
+        expect(events[0].startDate.toISOString()).toBe('2026-07-07T14:15:00.000Z')
+        expect(events[0].endDate?.toISOString()).toBe('2026-07-07T15:15:00.000Z')
+    })
 })

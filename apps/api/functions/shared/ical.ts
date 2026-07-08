@@ -10,7 +10,72 @@ export interface ICalEvent {
     recurrenceRule: string | null
 }
 
-function parseICSDate(value: string): { date: Date; allDay: boolean } {
+interface ICSProperty {
+    value: string
+    params: Record<string, string>
+}
+
+function parseICSProperty(ics: string, key: string): ICSProperty | null {
+    const re = new RegExp(`^${key}((?:;[^:\\r\\n]+)*):([^\\r\\n]+)`, 'm')
+    const match = ics.match(re)
+    if (!match) return null
+
+    const params: Record<string, string> = {}
+    for (const part of match[1].split(';').filter(Boolean)) {
+        const eq = part.indexOf('=')
+        if (eq === -1) params[part.toUpperCase()] = 'TRUE'
+        else params[part.slice(0, eq).toUpperCase()] = part.slice(eq + 1)
+    }
+
+    return { params, value: match[2].trim() }
+}
+
+function zonedComponentsToUtc(
+    comps: { year: number; month: number; day: number; hour: number; minute: number; second: number },
+    timeZone: string,
+): Date {
+    const desiredUtc = Date.UTC(
+        comps.year,
+        comps.month - 1,
+        comps.day,
+        comps.hour,
+        comps.minute,
+        comps.second,
+    )
+    let utcMs = desiredUtc
+
+    const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone,
+        hourCycle: 'h23',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+    })
+
+    for (let i = 0; i < 4; i++) {
+        const parts = formatter.formatToParts(new Date(utcMs))
+        const read = (type: Intl.DateTimeFormatPartTypes) =>
+            Number(parts.find(part => part.type === type)?.value ?? '0')
+        const asUtc = Date.UTC(
+            read('year'),
+            read('month') - 1,
+            read('day'),
+            read('hour'),
+            read('minute'),
+            read('second'),
+        )
+        const diff = desiredUtc - asUtc
+        if (diff === 0) break
+        utcMs += diff
+    }
+
+    return new Date(utcMs)
+}
+
+function parseICSDate(value: string, tzid?: string | null): { date: Date; allDay: boolean } {
     if (/^\d{8}$/.test(value)) {
         const y = parseInt(value.slice(0, 4), 10)
         const m = parseInt(value.slice(4, 6), 10) - 1
@@ -28,12 +93,31 @@ function parseICSDate(value: string): { date: Date; allDay: boolean } {
     }
     const m = value.match(/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})/)
     if (m) {
+        const comps = {
+            year: +m[1],
+            month: +m[2],
+            day: +m[3],
+            hour: +m[4],
+            minute: +m[5],
+            second: +m[6],
+        }
+        if (tzid) {
+            return { date: zonedComponentsToUtc(comps, tzid), allDay: false }
+        }
         return {
-            date: new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]),
+            date: new Date(comps.year, comps.month - 1, comps.day, comps.hour, comps.minute, comps.second),
             allDay: false,
         }
     }
     return { date: new Date(value), allDay: false }
+}
+
+function parseICSDateProperty(property: ICSProperty | null): { date: Date; allDay: boolean } | null {
+    if (!property) return null
+    if (property.params.VALUE === 'DATE') {
+        return parseICSDate(property.value)
+    }
+    return parseICSDate(property.value, property.params.TZID ?? null)
 }
 
 function extractICSValue(ics: string, key: string): string | null {
@@ -150,27 +234,28 @@ export function parseICSEvents(
 
     for (const vevent of vevents) {
         const uid = extractICSValue(vevent, 'UID')
-        const recId = extractICSValue(vevent, 'RECURRENCE-ID')
-        if (uid && recId) {
-            const parsed = parseICSDate(recId)
-            overrides.add(`${uid}:${parsed.date.toISOString().slice(0, 10)}`)
+        const recIdProp = parseICSProperty(vevent, 'RECURRENCE-ID')
+        if (uid && recIdProp) {
+            const recId = parseICSDateProperty(recIdProp)
+            if (recId) overrides.add(`${uid}:${recId.date.toISOString().slice(0, 10)}`)
         }
     }
 
     return vevents.flatMap(vevent => {
         const uid = extractICSValue(vevent, 'UID')
         const summary = extractICSValue(vevent, 'SUMMARY')
-        const dtstart = extractICSValue(vevent, 'DTSTART')
-        const dtend = extractICSValue(vevent, 'DTEND')
+        const dtstartProp = parseICSProperty(vevent, 'DTSTART')
+        const dtendProp = parseICSProperty(vevent, 'DTEND')
         const description = extractICSValue(vevent, 'DESCRIPTION')
         const location = extractICSValue(vevent, 'LOCATION')
         const rrule = extractICSValue(vevent, 'RRULE')
-        const recId = extractICSValue(vevent, 'RECURRENCE-ID')
+        const recIdProp = parseICSProperty(vevent, 'RECURRENCE-ID')
 
-        if (!uid || !dtstart) return []
+        if (!uid || !dtstartProp) return []
 
-        const start = parseICSDate(dtstart)
-        const end = dtend ? parseICSDate(dtend) : null
+        const start = parseICSDateProperty(dtstartProp)
+        const end = dtendProp ? parseICSDateProperty(dtendProp) : null
+        if (!start) return []
 
         let endDate = end?.date ?? null
         if (start.allDay && endDate) {
@@ -191,7 +276,7 @@ export function parseICSEvents(
             recurrenceRule: rrule ?? null,
         }
 
-        if (recId) {
+        if (recIdProp) {
             return start.date >= windowFrom && start.date <= windowTo ? [base] : []
         }
 
