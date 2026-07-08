@@ -71,4 +71,34 @@ describe('parseCalDavCalendarList', () => {
         expect(calendars).toHaveLength(1)
         expect(calendars[0]?.displayName).toBe('Personal')
     })
+
+    it('reads displayname from successful propstat blocks only', () => {
+        const calendars = parseCalDavCalendarList(
+            `<?xml version="1.0" encoding="UTF-8"?>
+<multistatus xmlns="DAV:" xmlns:cal="urn:ietf:params:xml:ns:caldav">
+  <response>
+    <href>/123456789/calendars/home/</href>
+    <propstat>
+      <prop><displayname>Home</displayname></prop>
+      <status>HTTP/1.1 200 OK</status>
+    </propstat>
+    <propstat>
+      <prop><getctag>ignored</getctag></prop>
+      <status>HTTP/1.1 404 Not Found</status>
+    </propstat>
+    <propstat>
+      <prop>
+        <resourcetype><collection/><calendar/></resourcetype>
+        <cal:supported-calendar-component-set><cal:comp name="VEVENT"/></cal:supported-calendar-component-set>
+      </prop>
+      <status>HTTP/1.1 200 OK</status>
+    </propstat>
+  </response>
+</multistatus>`,
+            'https://caldav.icloud.com/123456789/calendars/',
+        )
+
+        expect(calendars).toHaveLength(1)
+        expect(calendars[0]?.displayName).toBe('Home')
+    })
 })

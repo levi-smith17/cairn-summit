@@ -13,8 +13,8 @@ export const handler = async (
         const from = qs.from ? new Date(qs.from) : undefined
         const to = qs.to ? new Date(qs.to) : undefined
 
-        const events = await fetchUserItineraryEvents(pk, from, to)
-        return toApiGatewayResponse(ok({ events }))
+        const result = await fetchUserItineraryEvents(pk, from, to)
+        return toApiGatewayResponse(ok(result))
     } catch (err) {
         console.error(err)
         return toApiGatewayResponse(serverError())

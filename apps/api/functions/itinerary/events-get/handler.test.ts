@@ -50,22 +50,25 @@ describe('itinerary/events-get handler', () => {
     beforeEach(() => vi.clearAllMocks())
 
     it('returns external calendar events', async () => {
-        vi.mocked(fetchUserItineraryEvents).mockResolvedValueOnce([
-            {
-                uid: 'evt-1',
-                title: 'Team standup',
-                startDate: '2026-05-30T14:00:00.000Z',
-                endDate: '2026-05-30T14:30:00.000Z',
-                allDay: false,
-                location: null,
-                notes: null,
-                color: '#007AFF',
-                readonly: true,
-                calendarId: 'cal-1',
-                url: 'https://caldav.icloud.com/cal/evt-1.ics',
-                recurrenceRule: null,
-            },
-        ])
+        vi.mocked(fetchUserItineraryEvents).mockResolvedValueOnce({
+            events: [
+                {
+                    uid: 'evt-1',
+                    title: 'Team standup',
+                    startDate: '2026-05-30T14:00:00.000Z',
+                    endDate: '2026-05-30T14:30:00.000Z',
+                    allDay: false,
+                    location: null,
+                    notes: null,
+                    color: '#007AFF',
+                    readonly: true,
+                    calendarId: 'cal-1',
+                    url: 'https://caldav.icloud.com/cal/evt-1.ics',
+                    recurrenceRule: null,
+                },
+            ],
+            calendarSync: [],
+        })
 
         const result = await handler(mockEvent()) as any
         const data = JSON.parse(result.body).data
@@ -81,7 +84,7 @@ describe('itinerary/events-get handler', () => {
     })
 
     it('passes from/to query params', async () => {
-        vi.mocked(fetchUserItineraryEvents).mockResolvedValueOnce([])
+        vi.mocked(fetchUserItineraryEvents).mockResolvedValueOnce({ events: [], calendarSync: [] })
 
         await handler(mockEvent('from=2026-05-01&to=2026-05-31'))
 
