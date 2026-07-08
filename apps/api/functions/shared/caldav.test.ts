@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseCalDavCalendarList } from './caldav'
+import { parseCalDavCalendarList, parseDavHref } from './caldav'
 
 const ICLOUD_MULTISTATUS = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <multistatus xmlns="DAV:" xmlns:cal="urn:ietf:params:xml:ns:caldav">
@@ -100,5 +100,74 @@ describe('parseCalDavCalendarList', () => {
 
         expect(calendars).toHaveLength(1)
         expect(calendars[0]?.displayName).toBe('Home')
+    })
+})
+
+describe('parseDavHref', () => {
+    it('parses iCloud current-user-principal from successful propstat', () => {
+        const href = parseDavHref(
+            `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<multistatus xmlns="DAV:">
+  <response>
+    <href>/</href>
+    <propstat>
+      <prop>
+        <current-user-principal>
+          <href>/1757386581/principal/</href>
+        </current-user-principal>
+      </prop>
+      <status>HTTP/1.1 200 OK</status>
+    </propstat>
+  </response>
+</multistatus>`,
+            'current-user-principal',
+        )
+
+        expect(href).toBe('/1757386581/principal/')
+    })
+
+    it('ignores failed propstat blocks when resolving principal href', () => {
+        const href = parseDavHref(
+            `<?xml version="1.0" encoding="UTF-8"?>
+<multistatus xmlns="DAV:">
+  <response>
+    <href>/</href>
+    <propstat>
+      <prop><current-user-principal/></prop>
+      <status>HTTP/1.1 404 Not Found</status>
+    </propstat>
+    <propstat>
+      <prop>
+        <current-user-principal>
+          <href>/123456789/principal/</href>
+        </current-user-principal>
+      </prop>
+      <status>HTTP/1.1 200 OK</status>
+    </propstat>
+  </response>
+</multistatus>`,
+            'current-user-principal',
+        )
+
+        expect(href).toBe('/123456789/principal/')
+    })
+
+    it('throws when principal is unauthenticated', () => {
+        expect(() => parseDavHref(
+            `<?xml version="1.0" encoding="UTF-8"?>
+<multistatus xmlns="DAV:">
+  <response>
+    <propstat>
+      <prop>
+        <current-user-principal>
+          <unauthenticated/>
+        </current-user-principal>
+      </prop>
+      <status>HTTP/1.1 200 OK</status>
+    </propstat>
+  </response>
+</multistatus>`,
+            'current-user-principal',
+        )).toThrow(/authentication failed/i)
     })
 })

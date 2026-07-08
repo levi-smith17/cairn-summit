@@ -201,7 +201,7 @@ export async function fetchUserItineraryEvents(
                     calendarId: id,
                     name: cal.name,
                     source: 'icloud',
-                    status: message.includes('(401)') || message.includes('(403)')
+                    status: message.includes('(401)') || message.includes('(403)') || message.includes('authentication failed')
                         ? 'auth_failed'
                         : 'error',
                     eventCount: 0,

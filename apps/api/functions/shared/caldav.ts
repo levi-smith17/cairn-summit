@@ -63,6 +63,7 @@ async function davRequest(
     const headers: Record<string, string> = {
         Authorization: auth,
         Accept: 'application/xml,text/xml',
+        'User-Agent': 'Cairn-CalDAV/1.0',
     }
     if (body) headers['Content-Type'] = 'application/xml; charset=utf-8'
     if (depth) headers.Depth = depth
@@ -75,13 +76,53 @@ async function davRequest(
     return res.text()
 }
 
+function extractHrefFromTagContent(content: string): string | null {
+    const hrefMatch = content.match(/<(?:[\w-]+:)?href[^>]*>([^<]*)<\/(?:[\w-]+:)?href>/i)
+    if (!hrefMatch) return null
+    const href = decodeURIComponent(hrefMatch[1].trim())
+    return href || null
+}
+
+function extractHrefFromSuccessfulPropstats(xml: string, tag: string): string | null {
+    const responses = xml.split(/<(?:[\w-]+:)?response\b/i).slice(1)
+    for (const chunk of responses) {
+        const propstats = chunk.split(/<(?:[\w-]+:)?propstat\b/i).slice(1)
+        for (const propstat of propstats) {
+            if (!/HTTP\/1\.1\s+200\b/i.test(propstat)) continue
+            const tagRe = new RegExp(`<(?:[\\w-]+:)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:[\\w-]+:)?${tag}>`, 'i')
+            const tagMatch = propstat.match(tagRe)
+            if (!tagMatch) continue
+            if (/<(?:[\w-]+:)?unauthenticated\b/i.test(tagMatch[1])) {
+                throw new Error('CalDAV authentication failed (invalid Apple ID or app password)')
+            }
+            const href = extractHrefFromTagContent(tagMatch[1])
+            if (href) return href
+        }
+    }
+
+    return extractHref(xml, tag)
+}
+
+function normalizeServerUrl(serverUrl: string): string {
+    const trimmed = serverUrl.trim().replace(/\/+$/, '')
+    return trimmed || 'https://caldav.icloud.com'
+}
+
+function principalDiscoveryUrls(serverUrl: string): string[] {
+    const normalized = normalizeServerUrl(serverUrl)
+    const origin = new URL(normalized.endsWith('://') ? `${normalized}/` : normalized).origin
+    return [
+        `${origin}/`,
+        `${origin}/.well-known/caldav`,
+        normalized,
+    ]
+}
 function extractHref(xml: string, tag: string): string | null {
     const tagRe = new RegExp(`<(?:[\\w-]+:)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:[\\w-]+:)?${tag}>`, 'i')
     const tagMatch = xml.match(tagRe)
     if (!tagMatch) return null
 
-    const hrefMatch = tagMatch[1].match(/<(?:[\w-]+:)?href>([^<]+)<\/(?:[\w-]+:)?href>/i)
-    return hrefMatch ? decodeURIComponent(hrefMatch[1].trim()) : null
+    return extractHrefFromTagContent(tagMatch[1])
 }
 
 function resolveHref(base: string, href: string): string {
@@ -101,24 +142,40 @@ interface CalDavCalendar {
 
 async function getPrincipalUrl(serverUrl: string, auth: string): Promise<string> {
     const body = `<?xml version="1.0" encoding="UTF-8"?>
-<d:propfind xmlns:d="DAV:">
-  <d:prop><d:current-user-principal/></d:prop>
-</d:propfind>`
-    const xml = await davRequest('PROPFIND', serverUrl, auth, body, '0')
-    const href = extractHref(xml, 'current-user-principal')
-    if (!href) throw new Error('CalDAV principal not found')
-    return resolveHref(serverUrl, href)
+<propfind xmlns="DAV:">
+  <prop><current-user-principal/></prop>
+</propfind>`
+    let lastError: Error | null = null
+
+    for (const url of principalDiscoveryUrls(serverUrl)) {
+        try {
+            const xml = await davRequest('PROPFIND', url, auth, body, '0')
+            const href = extractHrefFromSuccessfulPropstats(xml, 'current-user-principal')
+            if (href) return resolveHref(url, href)
+            lastError = new Error(`CalDAV principal not found at ${url}`)
+        } catch (err) {
+            lastError = err instanceof Error ? err : new Error('CalDAV principal discovery failed')
+            if (lastError.message.includes('authentication failed')) throw lastError
+        }
+    }
+
+    throw lastError ?? new Error('CalDAV principal not found')
 }
 
 async function getCalendarHome(principalUrl: string, auth: string): Promise<string> {
     const body = `<?xml version="1.0" encoding="UTF-8"?>
-<d:propfind xmlns:d="DAV:" xmlns:cal="${CALDAV_NS}">
-  <d:prop><cal:calendar-home-set/></d:prop>
-</d:propfind>`
+<propfind xmlns="DAV:" xmlns:cal="${CALDAV_NS}">
+  <prop><cal:calendar-home-set/></prop>
+</propfind>`
     const xml = await davRequest('PROPFIND', principalUrl, auth, body, '0')
-    const href = extractHref(xml, 'calendar-home-set')
+    const href = extractHrefFromSuccessfulPropstats(xml, 'calendar-home-set')
     if (!href) throw new Error('CalDAV calendar-home-set not found')
     return resolveHref(principalUrl, href)
+}
+
+/** Parse a DAV href from multistatus XML (used in tests and principal discovery). */
+export function parseDavHref(xml: string, tag: string): string | null {
+    return extractHrefFromSuccessfulPropstats(xml, tag)
 }
 
 export function parseCalDavCalendarList(xml: string, homeUrl: string): CalDavCalendar[] {
@@ -145,13 +202,13 @@ export function parseCalDavCalendarList(xml: string, homeUrl: string): CalDavCal
 
 async function listCalendars(homeUrl: string, auth: string): Promise<CalDavCalendar[]> {
     const body = `<?xml version="1.0" encoding="UTF-8"?>
-<d:propfind xmlns:d="DAV:" xmlns:cal="${CALDAV_NS}">
-  <d:prop>
-    <d:displayname/>
-    <d:resourcetype/>
+<propfind xmlns="DAV:" xmlns:cal="${CALDAV_NS}">
+  <prop>
+    <displayname/>
+    <resourcetype/>
     <cal:supported-calendar-component-set/>
-  </d:prop>
-</d:propfind>`
+  </prop>
+</propfind>`
     const xml = await davRequest('PROPFIND', homeUrl, auth, body, '1')
     return parseCalDavCalendarList(xml, homeUrl)
 }
