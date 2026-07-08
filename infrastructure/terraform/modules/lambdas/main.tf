@@ -1,6 +1,7 @@
 locals {
   lambdas = merge(
     local.lambdas_admin,
+    local.lambdas_auth,
     local.lambdas_basecamp,
     local.lambdas_burn,
     local.lambdas_cache,
