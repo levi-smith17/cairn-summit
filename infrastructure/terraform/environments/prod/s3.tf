@@ -6,8 +6,11 @@ module "s3" {
   project_name    = var.project_name
   custom_domain   = "media.${var.domain}"
   certificate_arn = aws_acm_certificate_validation.cloudfront.certificate_arn
-  allowed_origins = [
-    "https://${var.domain}",
-    module.cloudfront.cloudfront_url,
-  ]
+  allowed_origins = concat(
+    [
+      "https://${var.domain}",
+      module.cloudfront.cloudfront_url,
+    ],
+    [for domain in var.manifest_web_domains : "https://${domain}"]
+  )
 }
