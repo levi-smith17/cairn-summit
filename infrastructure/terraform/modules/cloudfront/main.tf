@@ -61,7 +61,7 @@ resource "aws_s3_bucket_policy" "web" {
 
 # CloudFront distribution
 resource "aws_cloudfront_distribution" "web" {
-  aliases             = var.custom_domain != null ? [var.custom_domain] : []
+  aliases             = var.custom_domain != null ? distinct(concat([var.custom_domain], var.additional_aliases)) : []
   comment             = "${var.project_name}-${var.environment}"
   default_root_object = "index.html"
   enabled             = true

@@ -5,9 +5,15 @@ variable "certificate_arn" {
 }
 
 variable "custom_domain" {
-  description = "Custom domain name e.g. cairn.ing. Leave null to use CloudFront default domain."
+  description = "Primary custom domain e.g. cairn.ing. Leave null to use CloudFront default domain."
   type        = string
   default     = null
+}
+
+variable "additional_aliases" {
+  description = "Extra alternate domain names served by the same distribution (e.g. levismith.us)."
+  type        = list(string)
+  default     = []
 }
 
 variable "environment" {

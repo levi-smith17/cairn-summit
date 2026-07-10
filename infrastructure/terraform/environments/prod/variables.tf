@@ -30,6 +30,18 @@ variable "hosted_zone_id" {
   type        = string
 }
 
+variable "manifest_web_domains" {
+  description = "Additional apex/www domains that alias to the prod web CloudFront distribution (e.g. levismith.us manifest)."
+  type        = list(string)
+  default     = []
+}
+
+variable "manifest_hosted_zone_name" {
+  description = "Route 53 hosted zone for manifest_web_domains when it differs from var.domain."
+  type        = string
+  default     = null
+}
+
 variable "managed_by" {
   type = string
 }
