@@ -8,10 +8,13 @@ module "api_gateway" {
   managed_by           = var.managed_by
   owner                = var.owner
   project_name         = var.project_name
-  allowed_origins      = [
-    "https://cairn.ing",
-    module.cloudfront.cloudfront_url,
-  ]
+  allowed_origins      = concat(
+    [
+      "https://${var.domain}",
+      module.cloudfront.cloudfront_url,
+    ],
+    [for domain in var.manifest_web_domains : "https://${domain}"]
+  )
   # Exclude public routes — those are wired explicitly below without JWT auth
   lambda_functions = { for k, v in module.lambdas.lambda_functions : k => v if !contains(["health-get", "outpost-get", "manifest-public-get", "manifest-public-journey", "manifest-public-contact-get", "manifest-domain-lookup", "privacy-contact", "signals-public-thread-get", "signals-public-thread-reply", "invite-public-get", "invite-public-accept"], k) }
 }

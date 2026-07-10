@@ -6,6 +6,10 @@ output "bucket_arn" {
   value = aws_s3_bucket.web.arn
 }
 
+output "cloudfront_domain_name" {
+  value = aws_cloudfront_distribution.web.domain_name
+}
+
 output "cloudfront_url" {
   value = "https://${aws_cloudfront_distribution.web.domain_name}"
 }
