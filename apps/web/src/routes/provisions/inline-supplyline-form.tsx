@@ -1,6 +1,5 @@
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
+import { useState, useId } from 'react'
+import { toast } from 'sonner'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { CustomSelect } from '@/components/ui/custom-select'
@@ -8,18 +7,7 @@ import { MarkerPicker } from '@/components/ui/marker-picker'
 import { saveSupplyline } from '@/lib/api/supplylines'
 import { useFormStatus } from '@/hooks/use-form-status'
 import { toMarkerId } from '@/lib/embedded-markers'
-
-const schema = z.object({
-  name: z.string().min(1, 'Required'),
-  amount: z.number().min(0, 'Must be ≥ 0'),
-  billingCycle: z.enum(['WEEKLY', 'BIWEEKLY', 'MONTHLY', 'QUARTERLY', 'ANNUALLY']),
-  nextRenewal: z.string().min(1, 'Required'),
-  url: z.string().url('Invalid URL').optional().or(z.literal('')),
-  notes: z.string().optional(),
-  tagIds: z.array(z.string()),
-})
-
-type FormValues = z.infer<typeof schema>
+import { useTerminology } from '@/contexts/terminology-context'
 
 const BILLING_CYCLES = ['WEEKLY', 'BIWEEKLY', 'MONTHLY', 'QUARTERLY', 'ANNUALLY'] as const
 const CYCLE_LABELS: Record<string, string> = {
@@ -28,6 +16,21 @@ const CYCLE_LABELS: Record<string, string> = {
   MONTHLY: 'Monthly',
   QUARTERLY: 'Quarterly',
   ANNUALLY: 'Annually',
+}
+
+function todayDateInputValue(): string {
+  return new Date().toISOString().split('T')[0]!
+}
+
+function normalizeOptionalUrl(value: string): string | null {
+  const trimmed = value.trim()
+  if (!trimmed) return null
+  try {
+    const parsed = new URL(trimmed.includes('://') ? trimmed : `https://${trimmed}`)
+    return parsed.toString()
+  } catch {
+    return null
+  }
 }
 
 interface Marker {
@@ -49,103 +52,138 @@ interface Supplyline {
 
 interface Props {
   supplyline?: Supplyline
-  tags: any[]
+  tags: { id: string; name: string; color: string; icon?: string | null }[]
+  formId?: string
   onSaved: () => void
-  onCancel: () => void
+  onCancel?: () => void
 }
 
-export function InlineSupplylineForm({ supplyline, tags, onSaved, onCancel }: Props) {
+export function InlineSupplylineForm({
+  supplyline,
+  tags,
+  formId: formIdProp,
+  onSaved,
+  onCancel,
+}: Props) {
+  const { terms } = useTerminology()
+  const generatedId = useId()
+  const formId = formIdProp ?? generatedId
   const { saving, handleSubmit } = useFormStatus()
+  const [name, setName] = useState(supplyline?.name ?? '')
+  const [amount, setAmount] = useState(String(supplyline?.amount ?? 0))
+  const [billingCycle, setBillingCycle] = useState(supplyline?.billingCycle ?? 'MONTHLY')
+  const [nextRenewal, setNextRenewal] = useState(
+    supplyline?.nextRenewal?.split('T')[0] ?? todayDateInputValue(),
+  )
+  const [url, setUrl] = useState(supplyline?.url ?? '')
+  const [notes, setNotes] = useState(supplyline?.notes ?? '')
+  const [tagIds, setTagIds] = useState(
+    (supplyline?.markers?.map((t) => toMarkerId(t)).filter(Boolean) as string[]) ?? [],
+  )
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(schema),
-    defaultValues: {
-      name: supplyline?.name ?? '',
-      amount: supplyline?.amount ?? 0,
-      billingCycle: (supplyline?.billingCycle as FormValues['billingCycle']) ?? 'MONTHLY',
-      nextRenewal: supplyline?.nextRenewal?.split('T')[0] ?? '',
-      url: supplyline?.url ?? '',
-      notes: supplyline?.notes ?? '',
-      tagIds: supplyline?.markers?.map((t: any) => toMarkerId(t)).filter(Boolean) as string[] ?? [],
-    },
-  })
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!name.trim()) {
+      toast.error('Name is required.')
+      return
+    }
+    if (!nextRenewal) {
+      toast.error('Next renewal date is required.')
+      return
+    }
+    const normalizedUrl = normalizeOptionalUrl(url)
+    if (url.trim() && !normalizedUrl) {
+      toast.error('Enter a valid URL or leave the field empty.')
+      return
+    }
 
-  const selectedTagIds = form.watch('tagIds')
-  const billingCycle = form.watch('billingCycle')
-
-  async function onSubmit(values: FormValues) {
-    await handleSubmit(async () => {
-      await saveSupplyline({
-        id: supplyline?.id,
-        name: values.name,
-        amount: values.amount,
-        billingCycle: values.billingCycle,
-        nextRenewal: values.nextRenewal,
-        url: values.url || null,
-        notes: values.notes || null,
-        markerIds: values.tagIds,
+    try {
+      await handleSubmit(async () => {
+        await saveSupplyline({
+          id: supplyline?.id,
+          name: name.trim(),
+          amount: parseFloat(amount) || 0,
+          billingCycle,
+          nextRenewal,
+          url: normalizedUrl,
+          notes: notes.trim() || null,
+          markerIds: tagIds,
+          active: supplyline?.active ?? true,
+        })
+        onSaved()
       })
-      onSaved()
-    })
+    } catch {
+      // useFormStatus already surfaced the error toast
+    }
   }
 
-  return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="bg-muted/30 border-b">
-      <div className="flex flex-col gap-2 flex-wrap p-4">
+  const form = (
+    <form id={formId} onSubmit={onSubmit} className="space-y-4 px-5 py-4 text-sm">
+      <label className="block space-y-1.5">
+        <span className="text-xs font-medium text-muted-foreground">Name</span>
+        <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" />
+      </label>
+      <label className="block space-y-1.5">
+        <span className="text-xs font-medium text-muted-foreground">Amount</span>
         <Input
-          placeholder="Name"
-          className="grow h-9 md:h-8 text-sm"
-          {...form.register('name')}
+          type="number"
+          min="0"
+          step="0.01"
+          placeholder="0.00"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
         />
-        <div className="flex flex-col lg:flex-row gap-2">
-          <Input
-            type="number"
-            min="0"
-            step="0.01"
-            placeholder="0.00"
-            className="h-9 md:h-8 text-sm"
-            {...form.register('amount', {
-              valueAsNumber: true,
-              setValueAs: (v) => (v === '' ? 0 : parseFloat(v)),
-            })}
-          />
-          <CustomSelect
-            options={BILLING_CYCLES.map(c => ({ value: c, label: CYCLE_LABELS[c] }))}
-            value={billingCycle}
-            onChange={v => form.setValue('billingCycle', v as FormValues['billingCycle'])}
-          />
-          <Input
-            type="date"
-            className="h-9 md:h-8 text-sm"
-            {...form.register('nextRenewal')}
-          />
-        </div>
+      </label>
+      <label className="block space-y-1.5">
+        <span className="text-xs font-medium text-muted-foreground">Billing cycle</span>
+        <CustomSelect
+          options={BILLING_CYCLES.map((c) => ({ value: c, label: CYCLE_LABELS[c] }))}
+          value={billingCycle}
+          onChange={setBillingCycle}
+        />
+      </label>
+      <label className="block space-y-1.5">
+        <span className="text-xs font-medium text-muted-foreground">Next renewal</span>
+        <Input type="date" value={nextRenewal} onChange={(e) => setNextRenewal(e.target.value)} />
+      </label>
+      <label className="block space-y-1.5">
+        <span className="text-xs font-medium text-muted-foreground">{terms.markers}</span>
         <MarkerPicker
           markers={tags}
-          selected={selectedTagIds}
-          onChange={ids => form.setValue('tagIds', ids)}
-          placeholder="Select marker…"
+          selected={tagIds}
+          onChange={setTagIds}
+          placeholder={`Select ${terms.markers.toLowerCase()}…`}
           singleSelect
           initialPath={['Provisions']}
         />
-        <Input
-          placeholder="URL (optional)"
-          className="grow h-9 md:h-8 text-sm"
-          {...form.register('url')}
-        />
-        <Input
-          placeholder="Notes (optional)"
-          className="grow h-9 md:h-8 text-sm m-0"
-          {...form.register('notes')}
-        />
-      </div>
-
-      <div className="flex flex-col-reverse md:flex-row justify-end gap-2 p-4 md:py-2 border-t">
-        <Button type="button" variant="ghost" size="sm" onClick={onCancel} className="h-9 md:h-7 text-xs">Cancel</Button>
-        <Button type="submit" size="sm" disabled={saving} className="h-9 md:h-7 text-xs">
-          {saving ? 'Saving…' : 'Save'}
-        </Button>
-      </div>
+      </label>
+      <label className="block space-y-1.5">
+        <span className="text-xs font-medium text-muted-foreground">URL</span>
+        <Input placeholder="Optional URL" value={url} onChange={(e) => setUrl(e.target.value)} />
+      </label>
+      <label className="block space-y-1.5">
+        <span className="text-xs font-medium text-muted-foreground">Notes</span>
+        <Input placeholder="Optional notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
+      </label>
+      {saving ? <p className="text-xs text-muted-foreground">Saving…</p> : null}
     </form>
   )
+
+  if (onCancel) {
+    return (
+      <>
+        {form}
+        <div className="flex justify-end gap-2 border-t p-4 py-2">
+          <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit" form={formId} size="sm" disabled={saving} className="h-7 text-xs">
+            {saving ? 'Saving…' : 'Save'}
+          </Button>
+        </div>
+      </>
+    )
+  }
+
+  return form
 }

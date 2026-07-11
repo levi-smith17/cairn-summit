@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useSearchParams } from 'react-router-dom'
 import { Loader2, Save } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '@/hooks/use-auth'
@@ -104,6 +105,7 @@ export default function Manifest() {
   const queryClient = useQueryClient()
   const { terms } = useTerminology()
   const { pinned: inspectorPinned } = useInspectorPin()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const [inspectorEngaged, setInspectorEngaged] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -113,6 +115,7 @@ export default function Manifest() {
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null)
   const [creatingEntry, setCreatingEntry] = useState(false)
   const [draft, setDraft] = useState<ManifestData | null>(null)
+  const deepLinkApplied = useRef(false)
 
   const manifestSectionRefs = useRef<Partial<Record<ManifestSectionId, HTMLElement | null>>>({})
   const journeySectionRefs = useRef<Partial<Record<ManifestJourneySectionId, HTMLElement | null>>>({})
@@ -201,6 +204,46 @@ export default function Manifest() {
       journeySectionRefs.current[sectionId]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     })
   }
+
+  useEffect(() => {
+    if (!draft || deepLinkApplied.current) return
+    const section = searchParams.get('section')
+    if (!section) {
+      deepLinkApplied.current = true
+      return
+    }
+
+    if (MANIFEST_SECTIONS.has(section as ManifestSectionId)) {
+      setCanvasView('manifest')
+      setActiveManifestSection(section as ManifestSectionId)
+      requestAnimationFrame(() => {
+        manifestSectionRefs.current[section as ManifestSectionId]?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        })
+      })
+    } else if (section === 'companions' || JOURNEY_SECTIONS.has(section as ManifestJourneySectionId)) {
+      const journeyId = (section === 'companions' ? 'companions' : section) as ManifestJourneySectionId
+      setCanvasView('journey')
+      setActiveJourneySection(journeyId)
+      requestAnimationFrame(() => {
+        journeySectionRefs.current[journeyId]?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        })
+      })
+    }
+
+    deepLinkApplied.current = true
+    setSearchParams(
+      (params) => {
+        const next = new URLSearchParams(params)
+        next.delete('section')
+        return next
+      },
+      { replace: true },
+    )
+  }, [draft, searchParams, setSearchParams])
 
   function handleAddManifestEntry(sectionId: ManifestSectionId) {
     if (!draft || sectionId === 'origins') return

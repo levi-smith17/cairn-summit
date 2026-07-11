@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
-import { Plus, ChevronLeft, ChevronRight, Copy, Wallet, RefreshCw, TrendingUp } from 'lucide-react'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { ChevronLeft, ChevronRight, Wallet, RefreshCw, TrendingUp } from 'lucide-react'
 import { PlatformStudioContextBar } from '@/components/studio/platform-studio-context-bar'
 import { StudioLayout } from '@/components/studio/layout/studio-layout'
-import { StudioDataToolbar } from '@/components/studio/layout/studio-data-toolbar'
+import { ContextBarAddButton } from '@/components/studio/ui/context-bar-add-button'
 import { useInspectorPin } from '@/contexts/inspector-pin-context'
 import { useTerminology } from '@/contexts/terminology-context'
 import { useAuth } from '@/hooks/use-auth'
@@ -13,12 +12,10 @@ import { useDebounce } from '@/hooks/use-debounce'
 import { isInitialRouteLoad, isSectionRefetching } from '@/hooks/use-route-ready'
 import { ListSectionSkeleton } from '@/components/ui/page-skeleton'
 import { ProvisionsStudioSkeleton } from '@/components/studio/ui/studio-skeletons'
-import { Input } from '@/components/ui/input'
-import { CustomSelect } from '@/components/ui/custom-select'
-import { MarkerPicker } from '@/components/ui/marker-picker'
 import { SelectableBurnRow, BurnGroupHeaderActions } from './selectable-burn-row'
 import { ProvisionsRail } from './provisions-rail'
 import { ProvisionsInspector } from './provisions-inspector'
+import { ProvisionsFilterBar } from './provisions-filter-bar'
 import type { Burn } from './burn-row'
 import type { Supplyline } from './supplyline-row'
 import type { BudgetUtilization } from './cache-row'
@@ -154,6 +151,11 @@ export function ProvisionsClient() {
     [cacheUtilization],
   )
 
+  const targetMarkerIds = useMemo(
+    () => new Set(cacheUtilization.map((c) => c.markerId)),
+    [cacheUtilization],
+  )
+
   if (isInitialRouteLoad([markersQuery, summaryQuery, burnQuery, supplylinesQuery])) {
     return <ProvisionsStudioSkeleton />
   }
@@ -162,14 +164,21 @@ export function ProvisionsClient() {
   const supplylinesRefetching = isSectionRefetching([supplylinesQuery])
 
   const prevMonth = () => {
-    if (month === 1) { setMonth(12); setYear(year - 1) }
-    else setMonth(month - 1)
+    if (month === 1) {
+      setMonth(12)
+      setYear(year - 1)
+    } else setMonth(month - 1)
   }
   const nextMonth = () => {
-    if (month === 12) { setMonth(1); setYear(year + 1) }
-    else setMonth(month + 1)
+    if (month === 12) {
+      setMonth(1)
+      setYear(year + 1)
+    } else setMonth(month + 1)
   }
-  const monthName = new Date(year, month - 1).toLocaleString('default', { month: 'long', year: 'numeric' })
+  const monthName = new Date(year, month - 1).toLocaleString('default', {
+    month: 'long',
+    year: 'numeric',
+  })
 
   const groupedExpenses = burnItems.reduce<Record<string, Burn[]>>((acc, e) => {
     const label = markerDisplayName(e.markers[0])?.split('/').pop() ?? 'Uncategorized'
@@ -183,7 +192,6 @@ export function ProvisionsClient() {
     return acc
   }, {})
 
-  // Also show cache-only groups with no burns this page
   const cacheOnlyGroups = cacheUtilization
     .filter((c) => {
       if (markerFilter !== 'all' && c.markerId !== markerFilter) return false
@@ -214,10 +222,7 @@ export function ProvisionsClient() {
   const selectedSupplylineId = selection?.kind === 'supplyline' ? selection.id : null
   const selectedBurnId = selection?.kind === 'burn' ? selection.id : null
 
-  const markerOptions = [
-    { value: 'all', label: `All ${terms.markers.toLowerCase()}` },
-    ...markers.map((m) => ({ value: m.id, label: m.name })),
-  ]
+  const emptyCacheMessage = `No ${terms.burn.toLowerCase()} in this ${terms.cache.toLowerCase()} yet.`
 
   return (
     <StudioLayout
@@ -244,27 +249,18 @@ export function ProvisionsClient() {
             </div>
           }
           actions={
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => setSelection({ kind: 'new-burn' })}
-                  aria-label={`Add ${terms.burn}`}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Add {terms.burn}</TooltipContent>
-            </Tooltip>
+            <ContextBarAddButton
+              label={`Add ${terms.burn}`}
+              onClick={() => setSelection({ kind: 'new-burn' })}
+            />
           }
         />
       }
       rail={
         supplylinesRefetching && supplylines.length === 0 ? (
-          <div className="p-3"><ListSectionSkeleton rows={6} compact /></div>
+          <div className="p-3">
+            <ListSectionSkeleton rows={6} compact />
+          </div>
         ) : (
           <ProvisionsRail
             supplylines={supplylines}
@@ -275,82 +271,28 @@ export function ProvisionsClient() {
             onClearFilters={() => setActiveFilter('true')}
             onSelect={(id) => setSelection({ kind: 'supplyline', id })}
             onAdd={() => setSelection({ kind: 'new-supplyline' })}
+            onOpenCatalog={() => setSelection({ kind: 'catalog' })}
             onRefresh={refresh}
           />
         )
       }
       canvas={
         <div className="flex h-full min-h-0 flex-col" onPointerDown={handleCanvasPointerDown}>
-          <StudioDataToolbar
-            leading={
-              <div className="flex items-center gap-1">
-                <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={prevMonth}>
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="min-w-28 text-center text-sm font-medium tabular-nums">{monthName}</span>
-                <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={nextMonth}>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            }
-            trailing={
-              <div className="flex min-w-0 items-center gap-1.5">
-                <Input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder={`${terms.explore} ${terms.burn.toLowerCase()}…`}
-                  className="h-8 w-36 sm:w-48"
-                />
-                <div className="hidden md:block">
-                  <CustomSelect
-                    value={markerFilter}
-                    onChange={setMarkerFilter}
-                    options={markerOptions}
-                    placeholder={`All ${terms.markers.toLowerCase()}`}
-                    placeholderValue="all"
-                    triggerClassName="h-8 w-36"
-                  />
-                </div>
-                <div className="md:hidden">
-                  <MarkerPicker
-                    markers={markers}
-                    selected={markerFilter === 'all' ? [] : [markerFilter]}
-                    onChange={(ids) => setMarkerFilter(ids[0] ?? 'all')}
-                    placeholder={terms.markers}
-                    singleSelect
-                  />
-                </div>
-                {surtrFiltersActive ? (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 px-2 text-xs"
-                    onClick={() => {
-                      setSearch('')
-                      setMarkerFilter('all')
-                    }}
-                  >
-                    Clear
-                  </Button>
-                ) : null}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => setSelection({ kind: 'cache-carry' })}
-                      aria-label="Copy cache from last month"
-                    >
-                      <Copy className="h-3.5 w-3.5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Copy {terms.cache.toLowerCase()} from last month</TooltipContent>
-                </Tooltip>
-              </div>
-            }
+          <ProvisionsFilterBar
+            monthName={monthName}
+            onPrevMonth={prevMonth}
+            onNextMonth={nextMonth}
+            search={search}
+            onSearchChange={setSearch}
+            markerFilter={markerFilter}
+            onMarkerFilterChange={setMarkerFilter}
+            markers={markers}
+            filtersActive={surtrFiltersActive}
+            onClearFilters={() => {
+              setSearch('')
+              setMarkerFilter('all')
+            }}
+            onBringCache={() => setSelection({ kind: 'cache-carry' })}
           />
 
           <div className="shrink-0 border-b border-border px-4 py-2 sm:px-6">
@@ -369,9 +311,10 @@ export function ProvisionsClient() {
                 {sortedExpenseGroups.map((label) => {
                   const groupBurns = groupedExpenses[label]
                   const firstMarkerId = groupBurns[0]?.markers[0]
-                    ? (groupBurns[0].markers[0] as any).marker?.id
-                      ?? (groupBurns[0].markers[0] as any).markerId
-                      ?? null
+                    ? ((groupBurns[0].markers[0] as { marker?: { id: string }; markerId?: string })
+                        .marker?.id ??
+                        (groupBurns[0].markers[0] as { markerId?: string }).markerId ??
+                        null)
                     : null
                   const cache = firstMarkerId ? cacheByMarkerId.get(firstMarkerId) : undefined
                   return (
@@ -382,7 +325,8 @@ export function ProvisionsClient() {
                           data-inspectable
                           onClick={() => {
                             if (cache) setSelection({ kind: 'cache', id: cache.id })
-                            else if (firstMarkerId) setSelection({ kind: 'cache-marker', markerId: firstMarkerId })
+                            else if (firstMarkerId)
+                              setSelection({ kind: 'cache-marker', markerId: firstMarkerId })
                             else setSelection({ kind: 'new-cache' })
                           }}
                           className="min-w-0 flex-1 text-left transition-colors hover:opacity-80"
@@ -433,16 +377,22 @@ export function ProvisionsClient() {
                           }
                         />
                       </div>
-                      <div className="divide-y divide-border">
-                        {groupBurns.map((burn) => (
-                          <SelectableBurnRow
-                            key={burn.id}
-                            burn={burn}
-                            selected={selectedBurnId === burn.id}
-                            onSelect={() => setSelection({ kind: 'burn', id: burn.id })}
-                          />
-                        ))}
-                      </div>
+                      {groupBurns.length > 0 ? (
+                        <div className="divide-y divide-border">
+                          {groupBurns.map((burn) => (
+                            <SelectableBurnRow
+                              key={burn.id}
+                              burn={burn}
+                              selected={selectedBurnId === burn.id}
+                              onSelect={() => setSelection({ kind: 'burn', id: burn.id })}
+                            />
+                          ))}
+                        </div>
+                      ) : cache ? (
+                        <div className="border-b border-border px-4 py-4 text-xs text-muted-foreground sm:px-6">
+                          {emptyCacheMessage}
+                        </div>
+                      ) : null}
                     </div>
                   )
                 })}
@@ -483,6 +433,9 @@ export function ProvisionsClient() {
                         onAdd={() => setSelection({ kind: 'new-burn', markerId: cache.markerId })}
                       />
                     </div>
+                    <div className="border-b border-border px-4 py-4 text-xs text-muted-foreground sm:px-6">
+                      {emptyCacheMessage}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -490,7 +443,7 @@ export function ProvisionsClient() {
           </div>
 
           {burnTotal > burnPageSize && (
-            <div className="flex items-center justify-between border-t px-4 py-2 shrink-0">
+            <div className="flex shrink-0 items-center justify-between border-t px-4 py-2">
               <Button
                 variant="ghost"
                 size="icon"
@@ -528,6 +481,7 @@ export function ProvisionsClient() {
             burn={selectedBurn}
             supplyline={selectedSupplyline}
             cache={selectedCache}
+            targetMarkerIds={targetMarkerIds}
             onSaved={() => {
               refresh()
               if (

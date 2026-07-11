@@ -7,6 +7,7 @@ export type ProvisionsSelection =
   | { kind: 'new-supplyline' }
   | { kind: 'new-cache' }
   | { kind: 'cache-carry' }
+  | { kind: 'catalog' }
 
 export type ProvisionsMarker = {
   id: string

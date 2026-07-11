@@ -26,7 +26,7 @@ export function StudioContextBar({
   return (
     <header
       className={cn(
-        'box-border shrink-0 border-b border-border bg-card',
+        'box-border shrink-0 border-b border-border bg-header',
         hasTabs &&
           'lg:grid lg:h-14 lg:min-h-14 lg:max-h-14 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-center lg:gap-2 lg:overflow-hidden lg:px-4',
         !hasTabs &&
