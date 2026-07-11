@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   LayoutList,
   LayersIcon,
+  LogIn,
   MessageSquare,
   NotebookPen,
   Rocket,
@@ -16,7 +17,7 @@ import {
   Wallet,
 } from "lucide-react"
 import type { ComponentType } from "react"
-import { useNavigate, useLocation } from "react-router-dom"
+import { Link, useNavigate, useLocation } from "react-router-dom"
 import { FooterNav } from '@/components/nav/footer'
 import { PlatformWayfarerMenu } from "@/components/nav/platform/platform-wayfarer-menu"
 import { SidebarUtilities } from "@/components/nav/platform/sidebar-utilities"
@@ -33,7 +34,9 @@ import {
   SidebarMenuButton,
   SidebarRail,
 } from "@/components/ui/sidebar"
+import { Button } from "@/components/ui/button"
 import { type Terms } from '@/lib/terminology'
+import type { PlatformLayoutMode } from './layout'
 
 type NavIcon = ComponentType<{ className?: string }>
 
@@ -81,28 +84,47 @@ function buildNavItems(terms: Terms): { group: string; items: NavItem[] }[] {
   ]
 }
 
+function buildPublicNavItems(terms: Terms): { group: string; items: NavItem[] }[] {
+  return [
+    {
+      group: 'Navigation',
+      items: [
+        { title: terms.outpost, url: '/', icon: LayoutList, tooltip: terms.outpost },
+      ],
+    },
+  ]
+}
+
 interface PlatformSidebarProps extends React.ComponentProps<typeof Sidebar> {
+  mode?: PlatformLayoutMode
   wayfarer: {
     username: string | null
     name: string | null
     email: string | null
     avatar: string | null
     isAdmin: boolean
-  }
+  } | null
   badges?: {
     itinerary: number
     signals: number
   }
 }
 
-export function PlatformSidebar({ wayfarer, badges, ...props }: PlatformSidebarProps) {
+export function PlatformSidebar({
+  mode = 'full',
+  wayfarer,
+  badges,
+  ...props
+}: PlatformSidebarProps) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const { state } = useSidebar()
-  const { isMobile, setOpenMobile } = useSidebar();
+  const { isMobile, setOpenMobile } = useSidebar()
   const collapsed = state === 'collapsed'
   const { terms: uiTerms } = useTerminology()
-  const navItems = buildNavItems(uiTerms)
+  const isPublic = mode === 'public'
+  const isAuthenticated = Boolean(wayfarer)
+  const navItems = isPublic ? buildPublicNavItems(uiTerms) : buildNavItems(uiTerms)
 
   function getBadge(url: string): number {
     if (url === '/itinerary') return badges?.itinerary ?? 0
@@ -110,22 +132,29 @@ export function PlatformSidebar({ wayfarer, badges, ...props }: PlatformSidebarP
     return 0
   }
 
-  const handleClick = (url : string) => {
-    navigate(url);
+  const handleClick = (url: string) => {
+    navigate(url)
     if (isMobile) {
-      setOpenMobile(false);
+      setOpenMobile(false)
     }
-  };
+  }
 
   return (
       <Sidebar collapsible="icon" {...props}>
         <SidebarHeader>
-          <div className="flex items-center justify-center py-2">
+          <button
+            type="button"
+            className="flex w-full items-center justify-center py-2"
+            onClick={() => handleClick(isAuthenticated && isPublic ? '/basecamp' : '/')}
+            aria-label={isAuthenticated && isPublic ? uiTerms.basecamp : uiTerms.outpost}
+          >
             <img src="/cairn-summit.png" alt="Cairn Summit Logo" height={180} width={180} />
-          </div>
+          </button>
         </SidebarHeader>
         <SidebarContent>
-          {navItems.filter(({ group }) => group !== 'Admin' || wayfarer.isAdmin).map(({ group, items }) => (
+          {navItems
+            .filter(({ group }) => group !== 'Admin' || Boolean(wayfarer?.isAdmin))
+            .map(({ group, items }) => (
               <SidebarGroup key={group}>
                 <SidebarGroupLabel>{group}</SidebarGroupLabel>
                 <SidebarMenu>
@@ -160,8 +189,31 @@ export function PlatformSidebar({ wayfarer, badges, ...props }: PlatformSidebarP
             ))}
         </SidebarContent>
         <SidebarFooter className="gap-2">
-          <SidebarUtilities />
-          <PlatformWayfarerMenu wayfarer={wayfarer} />
+          <SidebarUtilities showSettings={isAuthenticated} />
+          {isAuthenticated && wayfarer ? (
+            <PlatformWayfarerMenu wayfarer={wayfarer} />
+          ) : (
+            <div className={collapsed ? 'flex flex-col gap-1' : 'flex flex-col gap-1.5'}>
+              <Button
+                asChild
+                variant="secondary"
+                size={collapsed ? 'icon' : 'sm'}
+                className={collapsed ? 'w-full' : 'w-full justify-start gap-2'}
+              >
+                <Link to="/login" onClick={() => isMobile && setOpenMobile(false)}>
+                  <LogIn className="h-4 w-4 shrink-0" />
+                  {!collapsed && <span>Log in</span>}
+                </Link>
+              </Button>
+              {!collapsed && (
+                <Button asChild variant="outline" size="sm" className="w-full">
+                  <Link to="/signup" onClick={() => isMobile && setOpenMobile(false)}>
+                    Sign up
+                  </Link>
+                </Button>
+              )}
+            </div>
+          )}
           {!collapsed && <FooterNav />}
         </SidebarFooter>
         <SidebarRail />

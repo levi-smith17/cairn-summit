@@ -6,8 +6,13 @@ vi.mock('../../shared/db', () => ({
     TABLE_NAME: 'cairn-test',
 }))
 
+vi.mock('../../shared/optional-auth', () => ({
+    resolveRequesterAccess: vi.fn().mockResolvedValue({ userId: null, isAdmin: false }),
+}))
+
 import { handler } from './handler'
 import { dynamo } from '../../shared/db'
+import { resolveRequesterAccess } from '../../shared/optional-auth'
 
 const mockEvent = (queryStringParameters?: Record<string, string>): APIGatewayProxyEventV2 => ({
     requestContext: {
@@ -40,6 +45,7 @@ const mockEvent = (queryStringParameters?: Record<string, string>): APIGatewayPr
 describe('outpost/get handler', () => {
     beforeEach(() => {
         vi.clearAllMocks()
+        vi.mocked(resolveRequesterAccess).mockResolvedValue({ userId: null, isAdmin: false })
     })
 
     it('returns empty wayfarers when no profiles exist', async () => {
@@ -61,10 +67,12 @@ describe('outpost/get handler', () => {
             image: null,
             username: 'janehiker',
             location: 'Denver, CO',
+            listed: true,
             createdAt: '2026-01-01T00:00:00.000Z',
         }
         vi.mocked(dynamo.send)
             .mockResolvedValueOnce({ Items: [profile] })
+            .mockResolvedValueOnce({ Item: { privacy: { manifestVisibility: 'PUBLIC' } } })
             .mockResolvedValueOnce({ Count: 3 })
             .mockResolvedValueOnce({ Items: [{ name: 'TypeScript' }, { name: 'AWS' }] })
 
@@ -83,11 +91,82 @@ describe('outpost/get handler', () => {
         })
     })
 
+    it('excludes PRIVATE and unlisted profiles for non-admins', async () => {
+        const privateProfile = {
+            pk: 'USER#priv',
+            sk: 'PROFILE',
+            listed: true,
+            username: 'private',
+            createdAt: '2026-01-01T00:00:00.000Z',
+        }
+        const unlistedProfile = {
+            pk: 'USER#unlist',
+            sk: 'PROFILE',
+            listed: false,
+            username: 'hidden',
+            createdAt: '2026-01-01T00:00:00.000Z',
+        }
+        vi.mocked(dynamo.send)
+            .mockResolvedValueOnce({ Items: [privateProfile, unlistedProfile] })
+            .mockResolvedValueOnce({ Item: { privacy: { manifestVisibility: 'PRIVATE' } } })
+            .mockResolvedValueOnce({ Count: 0 })
+            .mockResolvedValueOnce({ Items: [] })
+            .mockResolvedValueOnce({ Item: { privacy: { manifestVisibility: 'PUBLIC' } } })
+            .mockResolvedValueOnce({ Count: 0 })
+            .mockResolvedValueOnce({ Items: [] })
+
+        const result = await handler(mockEvent()) as any
+        expect(JSON.parse(result.body).data.wayfarers).toHaveLength(0)
+    })
+
+    it('excludes UNLISTED from directory for non-admins (link-only)', async () => {
+        const profile = {
+            pk: 'USER#user-1',
+            sk: 'PROFILE',
+            listed: true,
+            username: 'unlisted-but-listed',
+            createdAt: '2026-01-01T00:00:00.000Z',
+        }
+        vi.mocked(dynamo.send)
+            .mockResolvedValueOnce({ Items: [profile] })
+            .mockResolvedValueOnce({ Item: { privacy: { manifestVisibility: 'UNLISTED' } } })
+            .mockResolvedValueOnce({ Count: 0 })
+            .mockResolvedValueOnce({ Items: [] })
+
+        const result = await handler(mockEvent()) as any
+        expect(JSON.parse(result.body).data.wayfarers).toHaveLength(0)
+    })
+
+    it('admins see PRIVATE and unlisted profiles', async () => {
+        vi.mocked(resolveRequesterAccess).mockResolvedValue({ userId: 'admin-1', isAdmin: true })
+        const profile = {
+            pk: 'USER#priv',
+            sk: 'PROFILE',
+            listed: false,
+            username: 'secret',
+            createdAt: '2026-01-01T00:00:00.000Z',
+        }
+        vi.mocked(dynamo.send)
+            .mockResolvedValueOnce({ Items: [profile] })
+            .mockResolvedValueOnce({ Item: { privacy: { manifestVisibility: 'PRIVATE' } } })
+            .mockResolvedValueOnce({ Count: 0 })
+            .mockResolvedValueOnce({ Items: [] })
+
+        const result = await handler(mockEvent()) as any
+        expect(JSON.parse(result.body).data.wayfarers).toHaveLength(1)
+    })
+
     it('caps topGear at 5 items', async () => {
-        const profile = { pk: 'USER#user-123', sk: 'PROFILE', createdAt: '2026-01-01T00:00:00.000Z' }
+        const profile = {
+            pk: 'USER#user-123',
+            sk: 'PROFILE',
+            listed: true,
+            createdAt: '2026-01-01T00:00:00.000Z',
+        }
         const gear = [1, 2, 3, 4, 5, 6, 7].map(i => ({ name: `Skill${i}` }))
         vi.mocked(dynamo.send)
             .mockResolvedValueOnce({ Items: [profile] })
+            .mockResolvedValueOnce({ Item: {} })
             .mockResolvedValueOnce({ Count: 0 })
             .mockResolvedValueOnce({ Items: gear })
 

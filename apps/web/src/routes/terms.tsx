@@ -1,25 +1,13 @@
-import { useWayfarerHeader } from '@/hooks/use-wayfarer-header'
-import { PublicHeader } from '@/components/nav/public/public-header'
-import { FooterNav } from '@/components/nav/footer'
-
-export const metadata = {
-    title: 'Terms of Service — Cairn',
-    description: 'Terms of Service for Cairn.',
-}
+import { PlatformHeader } from '@/components/nav/platform/platform-header'
 
 export default function Terms() {
-    const wayfarer = useWayfarerHeader()
-
     return (
-        <div className="min-h-screen flex flex-col">
-            <header className="sticky top-0 z-10 flex items-center justify-between bg-header px-6 py-3 border-b">
-                <img src="/cairn-lockup.png" alt="Cairn Summit Lockup" height={50} width={160} />
-                <PublicHeader wayfarer={wayfarer} />
-            </header>
-
-            <div className="max-w-3xl mx-auto w-full px-6 py-12">
-                <div className="bg-card border rounded-xl px-10 py-10">
-                <div className="prose prose-neutral dark:prose-invert prose-sm max-w-none">
+        <>
+            <PlatformHeader title="Terms of Service" />
+            <div className="min-h-0 flex-1 overflow-y-auto">
+                <div className="max-w-3xl mx-auto w-full px-6 py-12">
+                    <div className="bg-card border rounded-xl px-10 py-10">
+                        <div className="prose prose-neutral dark:prose-invert prose-sm max-w-none">
                     <h1>Terms of Service</h1>
                     <p className="text-muted-foreground">Effective Date: March 11, 2026</p>
 
@@ -129,12 +117,10 @@ export default function Terms() {
                         For questions about these Terms, contact us at:{' '}
                         <a href="mailto:contact@cairn.ing">contact@cairn.ing</a>
                     </p>
-                </div>
+                    </div>
+                    </div>
                 </div>
             </div>
-            <div className="pb-6 flex justify-center">
-                <FooterNav showCairn={true} />
-            </div>
-        </div>
+        </>
     )
 }

@@ -67,8 +67,8 @@ export function PrivacyForm({ defaultValues }: PrivacyFormProps) {
 
         <div className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground space-y-1">
           <p><strong>Public</strong> — anyone with the link can view your Manifest.</p>
-          <p><strong>Unlisted</strong> — accessible via direct link but hidden from the directory.</p>
-          <p><strong>Private</strong> — only you can view it when logged in.</p>
+          <p><strong>Unlisted</strong> — accessible via direct link; directory listing still depends on “Listed in directory”.</p>
+          <p><strong>Private</strong> — only you (or an admin) can view it when logged in. Hidden from the directory.</p>
         </div>
 
         <SettingRow

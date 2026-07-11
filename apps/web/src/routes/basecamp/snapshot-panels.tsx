@@ -9,10 +9,13 @@ import {
   MapPin,
   CalendarDays,
   Lock,
+  Globe,
+  Link2,
+  GitBranch,
 } from 'lucide-react'
 import { useTerminology } from '@/contexts/terminology-context'
 import { fetchExternalCalendarEvents } from '@/lib/api/basecamp'
-import { cn } from '@/lib/utils'
+import { cardHoverBorder, cn } from '@/lib/utils'
 
 export interface SnapshotData {
   wayfarer: {
@@ -63,10 +66,14 @@ const fmt = (n: number) =>
 
 function SnapshotSkeleton() {
   return (
-    <div className="h-[8rem] animate-pulse rounded-xl border border-border bg-card p-4">
-      <div className="mb-2 h-3 w-16 rounded bg-muted" />
-      <div className="h-4 w-24 rounded bg-muted" />
-      <div className="mt-3 h-3 w-full rounded bg-muted" />
+    <div className="min-h-[11rem] animate-pulse rounded-lg border border-border bg-card p-4">
+      <div className="mb-3 h-3 w-20 rounded bg-muted" />
+      <div className="h-4 w-28 rounded bg-muted" />
+      <div className="mt-4 space-y-2">
+        <div className="h-3 w-full rounded bg-muted" />
+        <div className="h-3 w-4/5 rounded bg-muted" />
+        <div className="h-3 w-3/5 rounded bg-muted" />
+      </div>
     </div>
   )
 }
@@ -85,14 +92,19 @@ function PanelShell({
   return (
     <Link
       to={href}
-      className="group flex h-[8rem] flex-col rounded-xl border border-border bg-card p-3 transition-colors hover:border-primary/40 hover:bg-muted/30"
+      className={cn(
+        'group flex min-h-[11rem] flex-col rounded-lg border bg-card p-4 hover:bg-muted/40',
+        cardHoverBorder,
+      )}
     >
-      <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-        <Icon className="h-3 w-3" aria-hidden />
-        {label}
-        <ChevronRight className="ml-auto h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
+      <div className="mb-3 flex items-center gap-2">
+        <Icon className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
+        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {label}
+        </span>
+        <ChevronRight className="ml-auto h-3.5 w-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
       </div>
-      <div className="mt-2 min-h-0 flex-1 overflow-hidden">{children}</div>
+      <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
     </Link>
   )
 }
@@ -164,32 +176,51 @@ export function SnapshotPanels({
   return (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
       <PanelShell href="/manifest" label={wayfarerLabel} icon={User}>
-        <div className="flex items-center gap-2">
+        <div className="mb-3 flex items-center gap-3">
           {wayfarer.image ? (
-            <img src={wayfarer.image} alt="" className="h-8 w-8 rounded-full shrink-0" />
+            <img src={wayfarer.image} alt="" className="h-10 w-10 shrink-0 rounded-full" />
           ) : (
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted-foreground/20">
-              <User className="h-3.5 w-3.5 text-muted-foreground" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted-foreground/20">
+              <User className="h-4 w-4 text-muted-foreground" />
             </div>
           )}
           <div className="min-w-0">
-            <p className="truncate text-xs font-medium">{wayfarer.name ?? 'No name set'}</p>
+            <p className="truncate text-sm font-medium">{wayfarer.name ?? 'No name set'}</p>
             {wayfarer.origins?.headline ? (
-              <p className="truncate text-[11px] text-muted-foreground">{wayfarer.origins.headline}</p>
+              <p className="truncate text-xs text-muted-foreground">{wayfarer.origins.headline}</p>
             ) : null}
           </div>
         </div>
-        <div className="mt-2 space-y-1">
+        <div className="mb-3 border-t border-border" />
+        <div className="flex flex-col gap-1.5">
+          {wayfarer.email ? (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Mail className="h-3 w-3 shrink-0" />
+              <span className="truncate">{wayfarer.email}</span>
+            </div>
+          ) : null}
           {wayfarer.origins?.location ? (
-            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <MapPin className="h-3 w-3 shrink-0" />
               <span className="truncate">{wayfarer.origins.location}</span>
             </div>
           ) : null}
-          {wayfarer.email ? (
-            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              <Mail className="h-3 w-3 shrink-0" />
-              <span className="truncate">{wayfarer.email}</span>
+          {wayfarer.origins?.website ? (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Globe className="h-3 w-3 shrink-0" />
+              <span className="truncate">{wayfarer.origins.website}</span>
+            </div>
+          ) : null}
+          {wayfarer.origins?.linkedin ? (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Link2 className="h-3 w-3 shrink-0" />
+              <span className="truncate">{wayfarer.origins.linkedin}</span>
+            </div>
+          ) : null}
+          {wayfarer.origins?.github ? (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <GitBranch className="h-3 w-3 shrink-0" />
+              <span className="truncate">{wayfarer.origins.github}</span>
             </div>
           ) : null}
         </div>

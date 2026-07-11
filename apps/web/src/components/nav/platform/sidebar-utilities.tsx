@@ -10,7 +10,11 @@ import { useSidebar } from '@/components/ui/sidebar'
 import { useTerminology } from '@/contexts/terminology-context'
 import { cn } from '@/lib/utils'
 
-export function SidebarUtilities() {
+export function SidebarUtilities({
+  showSettings = true,
+}: {
+  showSettings?: boolean
+} = {}) {
   const { state, isMobile, setOpenMobile } = useSidebar()
   const collapsed = state === 'collapsed' && !isMobile
   const { pathname } = useLocation()
@@ -95,10 +99,12 @@ export function SidebarUtilities() {
         </TooltipContent>
       </Tooltip>
 
-      <Tooltip>
-        <TooltipTrigger asChild>{settingsButton}</TooltipTrigger>
-        <TooltipContent side={collapsed ? 'right' : 'top'}>Settings</TooltipContent>
-      </Tooltip>
+      {showSettings ? (
+        <Tooltip>
+          <TooltipTrigger asChild>{settingsButton}</TooltipTrigger>
+          <TooltipContent side={collapsed ? 'right' : 'top'}>Settings</TooltipContent>
+        </Tooltip>
+      ) : null}
     </div>
   )
 }

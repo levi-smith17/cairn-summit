@@ -9,34 +9,50 @@ import { useAuth } from '@/hooks/use-auth'
 import { getProfile } from '@/lib/api/profile'
 import { resolveProfileImage } from '@/lib/profile-image'
 
-export default function PlatformLayout() {
+export type PlatformLayoutMode = 'full' | 'public'
+
+export default function PlatformLayout({
+    mode = 'full',
+}: {
+    mode?: PlatformLayoutMode
+}) {
     const { user } = useAuth()
+    const isAuthenticated = Boolean(user)
 
     const { data: profile } = useQuery({
         queryKey: ['profile'],
         queryFn: getProfile,
-        enabled: !!user,
+        enabled: isAuthenticated,
     })
 
     return (
         <SidebarProvider>
             <InspectorPinProvider>
                 <PlatformSidebar
-                    wayfarer={{
-                        username: profile?.username ?? null,
-                        name: profile?.name ?? user?.name ?? null,
-                        email: profile?.email ?? user?.email ?? null,
-                        avatar: resolveProfileImage(profile?.image ?? user?.image ?? null),
-                        isAdmin: profile?.isAdmin ?? false,
-                    }}
-                    badges={{
-                        itinerary: profile?.itinerary ?? 0,
-                        signals: profile?.signals ?? 0,
-                    }}
+                    mode={mode}
+                    wayfarer={
+                        isAuthenticated
+                            ? {
+                                  username: profile?.username ?? null,
+                                  name: profile?.name ?? user?.name ?? null,
+                                  email: profile?.email ?? user?.email ?? null,
+                                  avatar: resolveProfileImage(profile?.image ?? user?.image ?? null),
+                                  isAdmin: profile?.isAdmin ?? false,
+                              }
+                            : null
+                    }
+                    badges={
+                        isAuthenticated
+                            ? {
+                                  itinerary: profile?.itinerary ?? 0,
+                                  signals: profile?.signals ?? 0,
+                              }
+                            : undefined
+                    }
                 />
                 <SidebarInset className="min-w-0 h-svh overflow-hidden">
-                    <SignalNotifier />
-                    <CommandPalette openInNewTab={true} />
+                    {isAuthenticated && mode === 'full' ? <SignalNotifier /> : null}
+                    {isAuthenticated ? <CommandPalette openInNewTab={true} /> : null}
                     <div className="flex flex-col h-full min-w-0 overflow-hidden">
                         <Outlet />
                     </div>

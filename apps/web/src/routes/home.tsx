@@ -1,129 +1,173 @@
 import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/use-auth'
 import { getOutpostData } from '@/lib/api/outpost'
-import { FooterNav } from '@/components/nav/footer'
-import { PublicHeader } from '@/components/nav/public/public-header'
-import { PlatformHeader } from '@/components/nav/platform/platform-header'
-import { OutpostSkeleton } from '@/components/ui/page-skeleton'
-import { OutpostTable } from './home/outpost-table'
-import { OutpostStats } from './home/outpost-stats'
+import { getPublicManifest } from '@/lib/api/manifest-public'
+import { resolveProfileImage } from '@/lib/profile-image'
+import { PlatformStudioContextBar } from '@/components/studio/platform-studio-context-bar'
+import { StudioLayout } from '@/components/studio/layout/studio-layout'
+import { StudioPageSkeleton } from '@/components/studio/ui/studio-skeletons'
+import { OutpostRail } from './home/outpost-rail'
+import { ManifestContent } from './manifest-public/manifest-content'
+import { useWayfarerHeader } from '@/hooks/use-wayfarer-header'
 import { useTerminology } from '@/contexts/terminology-context'
 import { isInitialRouteLoad } from '@/hooks/use-route-ready'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export default function Home() {
   const { user } = useAuth()
-  const navigate = useNavigate()
   const { terms } = useTerminology()
+  const currentWayfarer = useWayfarerHeader()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const selectedUsername = searchParams.get('w')
 
   const outpostQuery = useQuery({
-    queryKey: ['outpost'],
+    queryKey: ['outpost', user?.id ?? 'anon'],
     queryFn: getOutpostData,
   })
 
   const wayfarers = outpostQuery.data?.wayfarers ?? []
 
-  // Single listed wayfarer and not logged in → go straight to their manifest
+  // Single listed wayfarer and nothing selected → auto-select via URL
   useEffect(() => {
-    if (!outpostQuery.isPending && !user && wayfarers.length === 1 && wayfarers[0].username) {
-      navigate(`/manifest/${wayfarers[0].username}`, { replace: true })
+    if (outpostQuery.isPending || selectedUsername) return
+    const withUsername = wayfarers.filter((w) => w.username)
+    if (!user && withUsername.length === 1 && withUsername[0].username) {
+      setSearchParams({ w: withUsername[0].username }, { replace: true })
     }
-  }, [outpostQuery.isPending, user, wayfarers, navigate])
+  }, [outpostQuery.isPending, user, wayfarers, selectedUsername, setSearchParams])
 
-  // Stats — top gear
-  const gearCounts = wayfarers
-    .flatMap(w => w.topGear)
-    .reduce<Record<string, number>>((acc, name) => {
-      acc[name] = (acc[name] ?? 0) + 1
-      return acc
-    }, {})
-  const topGear = Object.entries(gearCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 6)
-    .map(([name, count]) => ({ name, count }))
+  const filterQuery = searchParams.get('q') ?? ''
 
-  // Stats — top locations
-  const locationCounts = wayfarers
-    .flatMap(w => w.location ? [w.location] : [])
-    .reduce<Record<string, number>>((acc, loc) => {
-      acc[loc] = (acc[loc] ?? 0) + 1
-      return acc
-    }, {})
-  const topLocations = Object.entries(locationCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(([location, count]) => ({ location, count }))
-
-  if (isInitialRouteLoad([outpostQuery])) {
-    if (user) {
-      return (
-        <>
-          <PlatformHeader title={terms.outpost} />
-          <OutpostSkeleton />
-        </>
-      )
-    }
-    return (
-      <div className="min-h-screen flex flex-col">
-        <header className="sticky top-0 z-10 flex items-center justify-between bg-header px-6 py-3 border-b">
-          <img src="/cairn-lockup.png" alt="Cairn Summit Lockup" height={50} width={160} />
-          <PublicHeader wayfarer={null} />
-        </header>
-        <div className="max-w-7xl mx-auto w-full">
-          <OutpostSkeleton />
-        </div>
-        <FooterNav showCairn={true} />
-      </div>
+  function setFilterQuery(value: string) {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        if (value) next.set('q', value)
+        else next.delete('q')
+        return next
+      },
+      { replace: true },
     )
   }
 
-  const content = (
-    <div className="w-full px-4 py-4 flex flex-col gap-4">
-      <div className="flex flex-col gap-1 bg-card rounded-xl px-6 py-4">
-        <h1 className="text-2xl font-semibold">{terms.outpost}</h1>
-        <p className="text-sm text-muted-foreground">
-          Explore the community of {terms.wayfarers.toLowerCase()} on Cairn.
+  function selectWayfarer(username: string) {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        next.set('w', username)
+        return next
+      },
+      { replace: true },
+    )
+  }
+
+  const filteredWayfarers = wayfarers.filter((w) => {
+    if (!w.username) return false
+    if (!filterQuery.trim()) return true
+    const q = filterQuery.trim().toLowerCase()
+    return (
+      (w.name ?? '').toLowerCase().includes(q) ||
+      (w.location ?? '').toLowerCase().includes(q) ||
+      (w.username ?? '').toLowerCase().includes(q) ||
+      (w.email ?? '').toLowerCase().includes(q)
+    )
+  })
+
+  const manifestQuery = useQuery({
+    queryKey: ['public-manifest', selectedUsername],
+    queryFn: () => getPublicManifest(selectedUsername!),
+    enabled: !!selectedUsername,
+    retry: false,
+  })
+
+  if (isInitialRouteLoad([outpostQuery])) {
+    return <StudioPageSkeleton />
+  }
+
+  const canvas = !selectedUsername ? (
+    <div className="flex h-full flex-1 items-center justify-center p-8">
+      <div className="max-w-sm text-center">
+        <p className="text-sm font-medium text-foreground">Select a {terms.wayfarers.slice(0, -1).toLowerCase() || 'wayfarer'}</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Choose someone from the rail to view their public {terms.manifest.toLowerCase()}.
         </p>
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        <div className="lg:col-span-3 bg-card rounded-xl p-4">
-          <OutpostTable data={wayfarers} />
-        </div>
-        <div className="lg:col-span-1">
-          <OutpostStats
-            totalWayfarers={wayfarers.length}
-            topGear={topGear}
-            topLocations={topLocations}
-            terms={terms}
-          />
+    </div>
+  ) : manifestQuery.isError ? (
+    <div className="flex h-full flex-1 items-center justify-center p-8">
+      <div className="max-w-sm text-center">
+        <p className="text-sm font-medium text-foreground">{terms.manifest} unavailable</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          This {terms.manifest.toLowerCase()} is private or could not be loaded.
+        </p>
+      </div>
+    </div>
+  ) : !manifestQuery.data ? (
+    <div className="flex h-full flex-1 flex-col gap-6 overflow-y-auto p-6">
+      <div className="flex items-start gap-4">
+        <Skeleton className="h-16 w-16 shrink-0 rounded-full" />
+        <div className="flex flex-1 flex-col gap-2 pt-2">
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="h-4 w-56" />
         </div>
       </div>
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="flex flex-col gap-2">
+          <Skeleton className="h-4 w-28" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-5/6" />
+        </div>
+      ))}
+    </div>
+  ) : (
+    <div className="h-full min-h-0 flex-1 overflow-y-auto">
+      <ManifestContent
+        embedded
+        wayfarer={{
+          ...manifestQuery.data.wayfarer,
+          avatar: resolveProfileImage(
+            manifestQuery.data.wayfarer.image ?? manifestQuery.data.wayfarer.avatar ?? null,
+          ),
+        }}
+        currentWayfarer={currentWayfarer}
+        origins={manifestQuery.data.origins}
+        expeditions={manifestQuery.data.expeditions}
+        training={manifestQuery.data.training}
+        gear={manifestQuery.data.gear}
+        landmarks={manifestQuery.data.landmarks}
+        summits={manifestQuery.data.summits}
+        pathfinding={manifestQuery.data.pathfinding}
+      />
     </div>
   )
 
-  if (user) {
-    return (
-      <>
-        <PlatformHeader title={terms.outpost} />
-        {content}
-      </>
-    )
-  }
-
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="sticky top-0 z-10 flex items-center justify-between bg-header px-6 py-3 border-b">
-        <img src="/cairn-lockup.png" alt="Cairn Summit Lockup" height={50} width={160} />
-        <PublicHeader wayfarer={null} />
-      </header>
-
-      <div className="max-w-7xl mx-auto w-full">
-        {content}
-      </div>
-
-      <FooterNav showCairn={true} />
-    </div>
+    <StudioLayout
+      railLabel={terms.wayfarers}
+      contextBar={
+        <PlatformStudioContextBar
+          aria-label={terms.outpost}
+          title={terms.outpost}
+          subtitle={
+            selectedUsername
+              ? `@${selectedUsername}`
+              : `Explore ${terms.wayfarers.toLowerCase()} on Cairn`
+          }
+        />
+      }
+      rail={
+        <OutpostRail
+          wayfarers={filteredWayfarers}
+          selectedUsername={selectedUsername}
+          filterQuery={filterQuery}
+          onFilterQueryChange={setFilterQuery}
+          onSelect={selectWayfarer}
+          isLoading={outpostQuery.isFetching && !outpostQuery.data}
+        />
+      }
+      canvas={canvas}
+    />
   )
 }

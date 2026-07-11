@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { useTerminology } from '@/contexts/terminology-context'
 import { SnapshotPanels, type SnapshotData } from './snapshot-panels'
+import { cardHoverBorder, cn } from '@/lib/utils'
 
 export type LogbookCard = {
   id: string
@@ -104,6 +105,10 @@ export function buildManifestSectionCards(
     mostRecentExpedition: { title: string; company: string } | null
     mostRecentTraining: { institution: string; degree: string | null } | null
     topGear: { name: string }[]
+    mostRecentLandmark?: { name: string } | null
+    mostRecentSummit?: { name: string } | null
+    mostRecentPathfinding?: { organization: string | null; role: string | null } | null
+    mostRecentCompanion?: { name: string } | null
   },
 ): ManifestSectionCard[] {
   return [
@@ -140,25 +145,29 @@ export function buildManifestSectionCards(
       id: 'landmarks',
       termKey: 'landmarks',
       count: counts.landmarks,
-      summary: counts.landmarks > 0 ? `${counts.landmarks} entries` : null,
+      summary: highlights.mostRecentLandmark?.name ?? null,
     },
     {
       id: 'summits',
       termKey: 'summits',
       count: counts.summits,
-      summary: counts.summits > 0 ? `${counts.summits} entries` : null,
+      summary: highlights.mostRecentSummit?.name ?? null,
     },
     {
       id: 'pathfinding',
       termKey: 'pathfinding',
       count: counts.pathfinding,
-      summary: counts.pathfinding > 0 ? `${counts.pathfinding} entries` : null,
+      summary: highlights.mostRecentPathfinding
+        ? [highlights.mostRecentPathfinding.role, highlights.mostRecentPathfinding.organization]
+            .filter(Boolean)
+            .join(' · ') || null
+        : null,
     },
     {
       id: 'companions',
       termKey: 'companions',
       count: counts.companions,
-      summary: counts.companions > 0 ? `${counts.companions} entries` : null,
+      summary: highlights.mostRecentCompanion?.name ?? null,
     },
   ]
 }
@@ -209,7 +218,10 @@ export function BasecampCanvas({
                 <Link
                   key={book.id}
                   to={`/logs?book=${encodeURIComponent(book.id)}`}
-                  className="group flex flex-col rounded-xl border border-border bg-card p-3 transition-colors hover:border-primary/40 hover:bg-muted/30"
+                  className={cn(
+                    'group flex flex-col rounded-xl border bg-card p-3 hover:bg-muted/30',
+                    cardHoverBorder,
+                  )}
                 >
                   <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                     <NotebookPen className="h-3 w-3" aria-hidden />
@@ -247,7 +259,10 @@ export function BasecampCanvas({
                 <Link
                   key={section.id}
                   to={`/manifest?section=${section.id}`}
-                  className="group flex flex-col rounded-xl border border-border bg-card p-3 transition-colors hover:border-primary/40 hover:bg-muted/30"
+                  className={cn(
+                    'group flex flex-col rounded-xl border bg-card p-3 hover:bg-muted/30',
+                    cardHoverBorder,
+                  )}
                 >
                   <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                     <Icon className="h-3 w-3" aria-hidden />

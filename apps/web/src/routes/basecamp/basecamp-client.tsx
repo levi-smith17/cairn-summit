@@ -49,6 +49,10 @@ interface BasecampClientProps {
       mostRecentExpedition: { title: string; company: string } | null
       mostRecentTraining: { institution: string; degree: string | null } | null
       topGear: { name: string }[]
+      mostRecentLandmark?: { name: string } | null
+      mostRecentSummit?: { name: string } | null
+      mostRecentPathfinding?: { organization: string | null; role: string | null } | null
+      mostRecentCompanion?: { name: string } | null
     }
   }
   onRefresh: () => void
