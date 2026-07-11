@@ -1,5 +1,5 @@
 import { ExternalLink, Settings, SlidersHorizontal } from 'lucide-react'
-import { Input } from '@/components/ui/input'
+import { FilterInput } from '@/components/ui/filter-input'
 import { CustomSelect } from '@/components/ui/custom-select'
 import { MarkerPicker } from '@/components/ui/marker-picker'
 import { ToolbarTooltip } from '@/components/studio/ui/toolbar-tooltip'
@@ -78,11 +78,10 @@ export function BasecampRail({
       </div>
 
       <div className="shrink-0 space-y-1.5 border-b border-border px-3 py-2">
-        <Input
+        <FilterInput
           value={filterQuery}
-          onChange={(e) => onFilterQueryChange(e.target.value)}
+          onChange={onFilterQueryChange}
           placeholder={`Filter ${terms.waypoints.toLowerCase()}…`}
-          className="h-8"
         />
         <div className="flex gap-1">
           <CustomSelect

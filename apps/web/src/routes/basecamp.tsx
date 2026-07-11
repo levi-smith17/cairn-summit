@@ -136,15 +136,19 @@ export default function Basecamp() {
     url: w.url ?? '',
     favicon: w.favicon ?? null,
     trailId: w.trailId ?? null,
-    markers: (w.markers ?? []).map((entry: any) => ({
-      markerId: entry.markerId ?? entry.marker?.id ?? extractId(entry.marker?.sk),
-      marker: {
-        id: entry.marker?.id ?? entry.markerId,
-        name: entry.marker?.name ?? '',
-        color: entry.marker?.color ?? '#64748b',
-        icon: entry.marker?.icon ?? null,
-      },
-    })),
+    markers: (w.markers ?? []).map((entry: any) => {
+      const markerId =
+        entry.markerId ?? entry.marker?.id ?? (entry.marker?.sk ? extractId(entry.marker.sk) : '')
+      return {
+        markerId,
+        marker: {
+          id: entry.marker?.id ?? entry.markerId ?? markerId,
+          name: entry.marker?.name ?? '',
+          color: entry.marker?.color ?? '#64748b',
+          icon: entry.marker?.icon ?? null,
+        },
+      }
+    }),
     read: w.read ?? false,
   }))
 

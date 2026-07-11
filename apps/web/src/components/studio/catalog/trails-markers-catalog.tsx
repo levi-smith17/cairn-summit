@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { FilterInput } from '@/components/ui/filter-input'
 import { ContextTabButton } from '@/components/studio/ui/context-tab'
 import { ToolbarTooltip } from '@/components/studio/ui/toolbar-tooltip'
 import { TrailForm } from '@/routes/trails/trail-form'
 import { MarkerForm } from '@/routes/markers/marker-form'
+import { MarkerList, type SubmarkerParent } from '@/routes/markers/marker-list'
 import { useTerminology } from '@/contexts/terminology-context'
 import { cn } from '@/lib/utils'
 
@@ -34,19 +36,14 @@ export function TrailsMarkersCatalog({
   onClearSelection: () => void
 }) {
   const { terms } = useTerminology()
-  const [markerFilter, setMarkerFilter] = useState('')
+  const [markerSearch, setMarkerSearch] = useState('')
+  const [markerGroupPath, setMarkerGroupPath] = useState<string[]>([])
+  const [parentMarker, setParentMarker] = useState<SubmarkerParent | null>(null)
 
   const sortedTrails = useMemo(
     () => [...trails].sort((a, b) => a.name.localeCompare(b.name)),
     [trails],
   )
-
-  const filteredMarkers = useMemo(() => {
-    const q = markerFilter.trim().toLowerCase()
-    const list = [...markers].sort((a, b) => a.name.localeCompare(b.name))
-    if (!q) return list
-    return list.filter((m) => m.name.toLowerCase().includes(q))
-  }, [markers, markerFilter])
 
   const selectedTrail =
     activeTab === 'trails' && selectedId && selectedId !== 'new'
@@ -64,6 +61,18 @@ export function TrailsMarkersCatalog({
     (activeTab === 'trails' && (selectedTrail || isNewTrail)) ||
     (activeTab === 'markers' && (selectedMarker || isNewMarker))
 
+  function handleTabChange(tab: CatalogTab) {
+    setParentMarker(null)
+    setMarkerSearch('')
+    setMarkerGroupPath([])
+    onTabChange(tab)
+  }
+
+  function clearMarkerSelection() {
+    setParentMarker(null)
+    onClearSelection()
+  }
+
   if (showEditor) {
     if (activeTab === 'trails') {
       return (
@@ -78,11 +87,15 @@ export function TrailsMarkersCatalog({
     }
     return (
       <MarkerForm
-        key={selectedId ?? 'new'}
+        key={`${selectedId ?? 'new'}-${parentMarker?.name ?? ''}`}
         tag={selectedMarker}
-        onBack={onClearSelection}
-        onSaved={(id) => onSelectId(id)}
-        onDeleted={onClearSelection}
+        parentMarker={parentMarker}
+        onBack={clearMarkerSelection}
+        onSaved={(id) => {
+          setParentMarker(null)
+          onSelectId(id)
+        }}
+        onDeleted={clearMarkerSelection}
       />
     )
   }
@@ -92,14 +105,14 @@ export function TrailsMarkersCatalog({
       <nav className="flex h-14 shrink-0 border-b border-border" aria-label="Catalog">
         <ContextTabButton
           active={activeTab === 'trails'}
-          onClick={() => onTabChange('trails')}
+          onClick={() => handleTabChange('trails')}
           className="flex-1 justify-center text-xs"
         >
           {terms.trails}
         </ContextTabButton>
         <ContextTabButton
           active={activeTab === 'markers'}
-          onClick={() => onTabChange('markers')}
+          onClick={() => handleTabChange('markers')}
           className="flex-1 justify-center text-xs"
         >
           {terms.markers}
@@ -150,55 +163,32 @@ export function TrailsMarkersCatalog({
         </div>
       ) : (
         <div className="flex min-h-0 flex-1 flex-col">
-          <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-3 py-2">
-            <input
-              value={markerFilter}
-              onChange={(e) => setMarkerFilter(e.target.value)}
+          <div className="shrink-0 border-b border-border px-3 py-2">
+            <FilterInput
+              value={markerSearch}
+              onChange={setMarkerSearch}
               placeholder={`Filter ${terms.markers.toLowerCase()}…`}
-              className="h-7 min-w-0 flex-1 rounded-md border border-border bg-transparent px-2 text-xs outline-none placeholder:text-muted-foreground focus:border-primary"
             />
-            <ToolbarTooltip label={`New ${terms.markers.slice(0, -1).toLowerCase()}`}>
-              <Button
-                type="button"
-                size="icon"
-                variant="secondary"
-                className="h-7 w-7 shrink-0"
-                onClick={() => onSelectId('new')}
-                aria-label={`New ${terms.markers.slice(0, -1).toLowerCase()}`}
-              >
-                <Plus className="h-3.5 w-3.5" aria-hidden />
-              </Button>
-            </ToolbarTooltip>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            {filteredMarkers.length === 0 ? (
-              <p className="px-3 py-4 text-xs text-muted-foreground">
-                No {terms.markers.toLowerCase()} match.
-              </p>
-            ) : (
-              <ul>
-                {filteredMarkers.map((marker) => (
-                  <li key={marker.id}>
-                    <button
-                      type="button"
-                      onClick={() => onSelectId(marker.id)}
-                      className={cn(
-                        'flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-muted-hover',
-                        selectedId === marker.id && 'bg-primary/10 text-primary',
-                      )}
-                    >
-                      <span
-                        className="h-2.5 w-2.5 shrink-0 rounded-full"
-                        style={{ backgroundColor: marker.color }}
-                        aria-hidden
-                      />
-                      <span className="truncate font-medium">{marker.name}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          <MarkerList
+            markers={markers}
+            search={markerSearch}
+            groupPath={markerGroupPath}
+            selectedId={selectedId}
+            onSelect={(id) => {
+              setParentMarker(null)
+              onSelectId(id)
+            }}
+            onNew={() => {
+              setParentMarker(null)
+              onSelectId('new')
+            }}
+            onNewSubmarker={(parent) => {
+              setParentMarker(parent)
+              onSelectId('new')
+            }}
+            onNavigateInto={setMarkerGroupPath}
+          />
         </div>
       )}
     </div>

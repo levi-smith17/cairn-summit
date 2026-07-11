@@ -15,7 +15,7 @@ function StudioContextBarSkeleton({
   return (
     <header
       className={cn(
-        'box-border shrink-0 border-b border-border bg-card',
+        'box-border shrink-0 border-b border-border bg-header',
         tabs
           ? 'lg:grid lg:h-14 lg:min-h-14 lg:max-h-14 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-center lg:gap-2 lg:overflow-hidden lg:px-4'
           : 'flex h-14 min-h-14 max-h-14 items-center justify-between gap-2 overflow-hidden px-3 sm:px-4',

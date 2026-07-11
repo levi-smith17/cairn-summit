@@ -15,6 +15,7 @@ import { InspectorFormActions } from '@/components/studio/ui/inspector-form-acti
 import { CatalogInspector } from '@/components/studio/catalog/catalog-inspector'
 import { deleteBurn, deleteCache, deleteSupplyline } from '@/lib/api/supplylines'
 import { useTerminology } from '@/contexts/terminology-context'
+import { markerShortLabel } from '@/lib/utils'
 import { InlineBurnForm } from './inline-burn-form'
 import { InlineSupplylineForm } from './inline-supplyline-form'
 import { InlineCacheForm } from './inline-cache-form'
@@ -82,7 +83,7 @@ export function ProvisionsInspector({
       : selection.kind === 'supplyline'
         ? supplyline?.name ?? terms.supplyline
         : selection.kind === 'cache' || selection.kind === 'cache-marker'
-          ? cache?.marker.name.split('/').pop() ?? cache?.marker.name ?? terms.cache
+          ? markerShortLabel(cache?.marker?.name, terms.cache)
           : selection.kind === 'new-burn'
             ? `New ${terms.burn.toLowerCase()}`
             : selection.kind === 'new-supplyline'
