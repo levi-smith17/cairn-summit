@@ -148,7 +148,7 @@ function ProvisionsRailCard({
       data-inspectable
       className={cn(
         'flex w-full items-start gap-2 rounded-lg border bg-card p-2 text-left text-xs transition-colors',
-        selected ? 'border-primary/40 bg-primary/10' : 'border-border hover:border-primary/50',
+        selected ? 'border-[oklch(0.45_0.1_127)] bg-primary/10 dark:border-header' : 'border-border hover:border-[oklch(0.45_0.1_127)] dark:hover:border-header',
         !supplyline.active && 'opacity-50',
       )}
     >

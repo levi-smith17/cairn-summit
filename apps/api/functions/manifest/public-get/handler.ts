@@ -1,7 +1,9 @@
 import { GetCommand, QueryCommand, ScanCommand } from '@aws-sdk/lib-dynamodb'
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda'
 import { dynamo, TABLE_NAME } from '../../shared/db'
-import { toApiGatewayResponse, badRequest, notFound, serverError } from '../../shared/response'
+import { toApiGatewayResponse, badRequest, forbidden, notFound, serverError } from '../../shared/response'
+import { resolveRequesterAccess } from '../../shared/optional-auth'
+import { canViewPublicManifest, getManifestVisibility } from '../../shared/manifest-visibility'
 
 export const handler = async (
     event: APIGatewayProxyEventV2
@@ -21,6 +23,7 @@ export const handler = async (
         if (!profile) return toApiGatewayResponse(notFound('User not found'))
 
         const pk = profile.pk as string
+        const ownerId = pk.replace('USER#', '')
 
         const [
             settingsResult,
@@ -30,6 +33,7 @@ export const handler = async (
             landmarksResult,
             summitsResult,
             pathfindingResult,
+            requester,
         ] = await Promise.all([
             dynamo.send(new GetCommand({ TableName: TABLE_NAME, Key: { pk, sk: 'SETTINGS' } })),
             dynamo.send(new QueryCommand({ TableName: TABLE_NAME, KeyConditionExpression: 'pk = :pk AND begins_with(sk, :prefix)', ExpressionAttributeValues: { ':pk': pk, ':prefix': 'EXPEDITION#' } })),
@@ -38,9 +42,19 @@ export const handler = async (
             dynamo.send(new QueryCommand({ TableName: TABLE_NAME, KeyConditionExpression: 'pk = :pk AND begins_with(sk, :prefix)', ExpressionAttributeValues: { ':pk': pk, ':prefix': 'LANDMARK#' } })),
             dynamo.send(new QueryCommand({ TableName: TABLE_NAME, KeyConditionExpression: 'pk = :pk AND begins_with(sk, :prefix)', ExpressionAttributeValues: { ':pk': pk, ':prefix': 'SUMMIT#' } })),
             dynamo.send(new QueryCommand({ TableName: TABLE_NAME, KeyConditionExpression: 'pk = :pk AND begins_with(sk, :prefix)', ExpressionAttributeValues: { ':pk': pk, ':prefix': 'PATHFINDING#' } })),
+            resolveRequesterAccess(event),
         ])
 
         const settings = settingsResult.Item ?? {}
+        const visibility = getManifestVisibility(settings as Record<string, unknown>)
+
+        if (!canViewPublicManifest({
+            visibility,
+            isOwner: requester.userId === ownerId,
+            isAdmin: requester.isAdmin,
+        })) {
+            return toApiGatewayResponse(forbidden('This manifest is private'))
+        }
 
         const addId = (items: Record<string, unknown>[], prefix: string) =>
             items.map(item => ({ ...item, id: (item.sk as string).replace(`${prefix}#`, '') }))

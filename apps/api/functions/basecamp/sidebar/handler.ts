@@ -97,6 +97,22 @@ export const handler = async (
 
         const topGear = gear.slice(0, 5).map((g: any) => ({ name: g.name }))
 
+        const mostRecentLandmark = landmarks[0]
+            ? { name: (landmarks[0] as any).name ?? 'Landmark' }
+            : null
+        const mostRecentSummit = summits[0]
+            ? { name: (summits[0] as any).title ?? 'Summit' }
+            : null
+        const mostRecentPathfinding = pathfinding[0]
+            ? {
+                organization: (pathfinding[0] as any).organization ?? null,
+                role: (pathfinding[0] as any).role ?? null,
+              }
+            : null
+        const mostRecentCompanion = companions[0]
+            ? { name: (companions[0] as any).name ?? 'Companion' }
+            : null
+
         // Provisions summary
         const activeSupplylines = supplylines.filter((s: any) => s.active)
         const monthlyTotal = activeSupplylines.reduce(
@@ -184,6 +200,10 @@ export const handler = async (
                 mostRecentExpedition,
                 mostRecentTraining,
                 topGear,
+                mostRecentLandmark,
+                mostRecentSummit,
+                mostRecentPathfinding,
+                mostRecentCompanion,
             },
             provisionsSummary: {
                 monthlyTotal,

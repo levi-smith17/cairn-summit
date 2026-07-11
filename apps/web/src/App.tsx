@@ -1,16 +1,10 @@
-import { Routes, Route, Outlet } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { ThemeProvider } from '@/components/theme/provider'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { Toaster } from '@/components/ui/sonner'
 import { TerminologyProvider } from '@/contexts/terminology-context'
 import ProtectedRoute from '@/components/auth/protected-route'
 import PlatformLayout from '@/components/nav/platform/layout'
-import { useAuth } from '@/hooks/use-auth'
-
-function ConditionalPlatformLayout() {
-    const { user } = useAuth()
-    return user ? <PlatformLayout /> : <Outlet />
-}
 
 // Public Routes
 import Home from '@/routes/home'
@@ -57,28 +51,29 @@ export default function App() {
             <TooltipProvider>
                 <TerminologyProvider>
                     <Routes>
-                        {/* Home — platform layout when logged in, public layout when not */}
-                        <Route element={<ConditionalPlatformLayout />}>
+                        {/* Public shell — sidebar always present (limited nav) */}
+                        <Route element={<PlatformLayout mode="public" />}>
                             <Route path="/" element={<Home />} />
+                            <Route path="/outpost" element={<Navigate to="/" replace />} />
+                            <Route path="/privacy" element={<Privacy />} />
+                            <Route path="/privacy-contact" element={<PrivacyContact />} />
+                            <Route path="/terms" element={<Terms />} />
                         </Route>
 
-                        {/* Public routes */}
+                        {/* Standalone public routes (own chrome) */}
                         <Route path="/login" element={<Login />} />
                         <Route path="/signup" element={<Signup />} />
                         <Route path="/verify-email" element={<VerifyEmail />} />
                         <Route path="/forgot-password" element={<ForgotPassword />} />
-                        <Route path="/privacy" element={<Privacy />} />
-                        <Route path="/privacy-contact" element={<PrivacyContact />} />
-                        <Route path="/terms" element={<Terms />} />
                         <Route path="/manifest/:username" element={<ManifestPublic />} />
                         <Route path="/manifest/:username/contact" element={<ManifestPublicContact />} />
                         <Route path="/manifest/:username/journey" element={<ManifestPublicJourney />} />
                         <Route path="/invite/:token" element={<Invite />} />
                         <Route path="/thread/:token" element={<Thread />} />
 
-                        {/* Protected routes */}
+                        {/* Protected routes — full platform sidebar */}
                         <Route element={<ProtectedRoute />}>
-                            <Route element={<PlatformLayout />}>
+                            <Route element={<PlatformLayout mode="full" />}>
                                 <Route path="/admin" element={<Admin />} />
                                 <Route path="/basecamp" element={<Basecamp />} />
                                 <Route path="/waypoints" element={<Waypoints />} />

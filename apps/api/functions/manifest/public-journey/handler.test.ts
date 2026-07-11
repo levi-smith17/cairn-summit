@@ -6,6 +6,10 @@ vi.mock('../../shared/db', () => ({
     TABLE_NAME: 'cairn-test',
 }))
 
+vi.mock('../../shared/optional-auth', () => ({
+    resolveRequesterAccess: vi.fn().mockResolvedValue({ userId: null, isAdmin: false }),
+}))
+
 import { handler } from './handler'
 import { dynamo } from '../../shared/db'
 

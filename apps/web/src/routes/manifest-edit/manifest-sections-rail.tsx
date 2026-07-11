@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { ExternalLink, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -19,13 +19,13 @@ export function ManifestSectionsRail<T extends string>({
   onSelectSection,
   addSections,
   onAddSection,
-  liveUrl,
 }: {
   sections: ManifestRailSection<T>[]
   activeSection: T
   onSelectSection: (sectionId: T) => void
   addSections?: ManifestRailSection<T>[]
   onAddSection?: (sectionId: T) => void
+  /** @deprecated Public live link removed from Sections header */
   liveUrl?: string | null
 }) {
   const [addOpen, setAddOpen] = useState(false)
@@ -47,18 +47,6 @@ export function ManifestSectionsRail<T extends string>({
       <div className="flex h-14 min-h-14 max-h-14 shrink-0 items-center justify-between gap-2 border-b border-border px-3">
         <span className="text-sm font-semibold text-foreground">Sections</span>
         <div className="flex items-center gap-0.5">
-          {liveUrl ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button asChild variant="ghost" size="icon" className="h-7 w-7">
-                  <a href={liveUrl} target="_blank" rel="noopener noreferrer" aria-label="Live public page">
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Live public page</TooltipContent>
-            </Tooltip>
-          ) : null}
           {addable.length > 0 && onAddSection ? (
             <div ref={addRef} className="relative">
               <Tooltip>

@@ -44,6 +44,8 @@ interface ManifestContentProps {
   summits: { id: string; title: string; issuer: string | null; date: string | null; description: string | null; url: string | null }[]
   pathfinding: { id: string; organization: string; role: string | null; location: string | null; startDate: string; endDate: string | null; current: boolean; description: string | null }[]
   currentWayfarer: { name: string | null; email: string | null; avatar: string | null } | null
+  /** Hide public page chrome when embedded in Outpost studio canvas. */
+  embedded?: boolean
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -109,7 +111,7 @@ function LandmarkCard({ l }: { l: ManifestContentProps['landmarks'][number] }) {
   )
 }
 
-export function ManifestContent({ wayfarer, origins, expeditions, training, gear, landmarks, summits, pathfinding, currentWayfarer }: ManifestContentProps) {
+export function ManifestContent({ wayfarer, origins, expeditions, training, gear, landmarks, summits, pathfinding, currentWayfarer, embedded = false }: ManifestContentProps) {
   const headerRef = useRef<HTMLDivElement>(null)
   const [showStickyHeader, setShowStickyHeader] = useState(false)
 
@@ -155,21 +157,23 @@ export function ManifestContent({ wayfarer, origins, expeditions, training, gear
 
   return (
     <div className="relative manifest-page">
-      <ManifestHeader
-        wayfarer={wayfarer}
-        terminology={terminology}
-        onTerminologyToggle={() => setTerminology(t => {
-          const next = t === 'CAIRN' ? 'STANDARD' : 'CAIRN'
-          sessionStorage.setItem(`manifest-terminology-${wayfarer.username}`, next)
-          return next
-        })}
-        showAvatar={showStickyHeader}
-        currentWayfarer={currentWayfarer}
-      />
+      {!embedded && (
+        <ManifestHeader
+          wayfarer={wayfarer}
+          terminology={terminology}
+          onTerminologyToggle={() => setTerminology(t => {
+            const next = t === 'CAIRN' ? 'STANDARD' : 'CAIRN'
+            sessionStorage.setItem(`manifest-terminology-${wayfarer.username}`, next)
+            return next
+          })}
+          showAvatar={showStickyHeader}
+          currentWayfarer={currentWayfarer}
+        />
+      )}
 
-      <div className="max-w-3xl mx-auto px-6 pb-6 flex flex-col gap-12 print:max-w-none print:px-0 print:mx-0 print:pb-0">
+      <div className={`max-w-3xl mx-auto px-6 pb-6 flex flex-col gap-12 print:max-w-none print:px-0 print:mx-0 print:pb-0 ${embedded ? 'pt-2' : ''}`}>
         <div className="flex flex-col gap-6">
-          <div ref={headerRef} className="flex items-center gap-4 pt-8">
+          <div ref={headerRef} className={`flex items-center gap-4 ${embedded ? 'pt-4' : 'pt-8'}`}>
             <Avatar className="h-20 w-20">
               <AvatarImage src={wayfarer.avatar ?? undefined} />
               <AvatarFallback className="text-xl">{initials}</AvatarFallback>
@@ -281,7 +285,7 @@ export function ManifestContent({ wayfarer, origins, expeditions, training, gear
           </Section>
         )}
 
-        <FooterNav showCairn={true} />
+        {!embedded && <FooterNav showCairn={true} />}
       </div>
     </div>
   )

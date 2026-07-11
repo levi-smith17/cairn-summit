@@ -1,3 +1,5 @@
+import { getAuthHeaders } from '@/lib/api/auth-headers'
+
 const API_BASE = import.meta.env.VITE_API_URL ?? ''
 
 export interface PublicManifestData {
@@ -27,7 +29,8 @@ export interface PublicManifestData {
 }
 
 export async function getPublicManifest(username: string): Promise<PublicManifestData> {
-  const res = await fetch(`${API_BASE}/public/manifest/${username}`)
+  const headers = await getAuthHeaders()
+  const res = await fetch(`${API_BASE}/public/manifest/${username}`, { headers })
   if (!res.ok) throw new Error('Manifest not found')
   return res.json()
 }
@@ -47,7 +50,8 @@ export interface PublicJourneyData {
 }
 
 export async function getPublicJourney(username: string): Promise<PublicJourneyData> {
-  const res = await fetch(`${API_BASE}/public/manifest/${username}/journey`)
+  const headers = await getAuthHeaders()
+  const res = await fetch(`${API_BASE}/public/manifest/${username}/journey`, { headers })
   if (!res.ok) throw new Error('Journey not found')
   return res.json()
 }
@@ -63,7 +67,8 @@ export interface PublicContactData {
 }
 
 export async function getPublicContact(username: string): Promise<PublicContactData> {
-  const res = await fetch(`${API_BASE}/public/manifest/${username}/contact`)
+  const headers = await getAuthHeaders()
+  const res = await fetch(`${API_BASE}/public/manifest/${username}/contact`, { headers })
   if (!res.ok) throw new Error('Contact not found')
   return res.json()
 }

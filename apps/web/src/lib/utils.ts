@@ -16,6 +16,10 @@ export function markerShortLabel(name: string | null | undefined, fallback = 'Un
   return name.split('/').pop() ?? name
 }
 
+/** Card / rail item hover border — dark green matching the platform header brand. */
+export const cardHoverBorder =
+  'border-border transition-colors hover:border-[oklch(0.45_0.1_127)] dark:hover:border-header'
+
 /** Visible on touch; hidden until row hover on hover-capable devices. */
 export const hoverReveal =
   'opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity'

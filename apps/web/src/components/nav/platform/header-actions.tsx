@@ -91,6 +91,14 @@ export function PlatformHeaderActions({
   /** Rendered after search/pin/manifest — typically primary Add buttons on the far right. */
   trailing?: React.ReactNode
 }) {
+  const { user } = useAuth()
+
+  if (!user) {
+    return trailing ? (
+      <div className="flex items-center gap-1.5 sm:gap-2">{trailing}</div>
+    ) : null
+  }
+
   return (
     <div className="flex items-center gap-1.5 sm:gap-2">
       <HeaderSearchTrigger />

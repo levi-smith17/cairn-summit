@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useQueryClient } from '@tanstack/react-query'
-import { Check, ChevronLeft, Loader2, Plus, Trash2, X } from 'lucide-react'
+import { Check, ChevronLeft, Loader2, Plus, X } from 'lucide-react'
 import {
   Form,
   FormControl,
@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { MarkerPicker } from '@/components/ui/marker-picker'
-import { FormActions } from '@/components/forms/form-actions'
+import { InspectorFormActions } from '@/components/studio/ui/inspector-form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
 import { createWaypoint, updateWaypoint, deleteWaypoint, fetchWaypointMeta } from '@/lib/api/waypoints'
 import { createTrail } from '@/lib/api/trails'
@@ -33,7 +33,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useTerminology } from '@/contexts/terminology-context'
 import { extractId } from '@/lib/utils'
 
@@ -66,7 +65,7 @@ interface WaypointFormProps {
 export function WaypointForm({ waypoint, folders, tags, defaultTrailId, onBack, onSaved, onDeleted }: WaypointFormProps) {
   const queryClient = useQueryClient()
   const { terms } = useTerminology()
-  const { saving, saved, error, handleSubmit } = useFormStatus()
+  const { saving, handleSubmit } = useFormStatus()
   const [fetching, setFetching] = useState(false)
   const [favicon, setFavicon] = useState<string | null>(waypoint?.favicon ?? null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -188,13 +187,14 @@ export function WaypointForm({ waypoint, folders, tags, defaultTrailId, onBack, 
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
+      <div className="flex shrink-0 items-center justify-between border-b px-4 py-3">
         <div className="flex items-center gap-2">
           <button
+            type="button"
             onClick={onBack}
-            className="md:hidden text-muted-foreground hover:text-foreground transition-colors"
+            className="text-muted-foreground transition-colors hover:text-foreground md:hidden"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -202,28 +202,10 @@ export function WaypointForm({ waypoint, folders, tags, defaultTrailId, onBack, 
             {waypoint ? `Edit ${terms.waypoints.slice(0, -1)}` : `Add ${terms.waypoints.slice(0, -1)}`}
           </span>
         </div>
-        {waypoint && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 text-destructive hover:text-destructive/80"
-                onClick={() => setDeleteDialogOpen(true)}
-                disabled={deleting}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              Remove {terms.waypoints.slice(0, -1).toLowerCase()}
-            </TooltipContent>
-          </Tooltip>
-        )}
       </div>
 
       {/* Form */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="min-h-0 flex-1 overflow-y-auto p-4">
         <Form {...form}>
           <form id="waypoint-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 
@@ -456,19 +438,21 @@ export function WaypointForm({ waypoint, folders, tags, defaultTrailId, onBack, 
               )}
             />
 
-            {/* Actions */}
-            <div className="-mx-4 border-t" />
-            <FormActions
-              saving={saving}
-              saved={saved}
-              error={error}
-              saveLabel={waypoint ? `Save Changes` : `Add ${terms.waypoints.slice(0, -1)}`}
-              formId="waypoint-form"
-              onCancel={onBack}
-            />
+            {/* Actions moved to sticky inspector footer */}
           </form>
         </Form>
       </div>
+
+      <InspectorFormActions
+        isNew={!waypoint}
+        isSaving={saving || deleting}
+        formId="waypoint-form"
+        saveLabel="Save changes"
+        createLabel={`Add ${terms.waypoints.slice(0, -1)}`}
+        showDelete={!!waypoint}
+        onDelete={() => setDeleteDialogOpen(true)}
+        deleteLabel={`Delete ${terms.waypoints.slice(0, -1).toLowerCase()}`}
+      />
 
       {/* Delete confirmation */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

@@ -1,11 +1,11 @@
-import { ExternalLink, Settings, SlidersHorizontal } from 'lucide-react'
+import { Settings, SlidersHorizontal } from 'lucide-react'
 import { FilterInput } from '@/components/ui/filter-input'
 import { CustomSelect } from '@/components/ui/custom-select'
 import { MarkerPicker } from '@/components/ui/marker-picker'
 import { ToolbarTooltip } from '@/components/studio/ui/toolbar-tooltip'
 import { MarkerBadge } from '@/routes/waypoints/marker-badge'
 import { useTerminology } from '@/contexts/terminology-context'
-import { cn } from '@/lib/utils'
+import { cardHoverBorder, cn } from '@/lib/utils'
 
 export const WAYPOINT_FILTER_ALL = '__all__'
 export const WAYPOINT_UNASSIGNED_TRAIL = '__unassigned__'
@@ -125,10 +125,11 @@ export function BasecampRail({
                   <li key={waypoint.id}>
                     <div
                       className={cn(
-                        'group flex w-full items-start gap-2 rounded-lg border bg-card p-2 text-left text-xs transition-colors',
+                        'group relative flex w-full items-start gap-2 rounded-lg border bg-card p-2 text-left text-xs',
+                        cardHoverBorder,
                         selectedId === waypoint.id
-                          ? 'border-primary/40 bg-primary/10'
-                          : 'border-border hover:border-primary/50',
+                          ? 'border-[oklch(0.45_0.1_127)] bg-primary/10 dark:border-header'
+                          : '',
                         waypoint.read && 'opacity-60',
                       )}
                     >
@@ -165,30 +166,19 @@ export function BasecampRail({
                           ) : null}
                         </span>
                       </button>
-                      <div className="flex shrink-0 flex-col gap-0.5">
-                        <ToolbarTooltip label="Open">
-                          <a
-                            href={waypoint.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                            aria-label="Open"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <ExternalLink className="h-3.5 w-3.5" />
-                          </a>
-                        </ToolbarTooltip>
-                        <ToolbarTooltip label={`Edit ${waypointSingular.toLowerCase()}`}>
-                          <button
-                            type="button"
-                            onClick={() => onInspect(waypoint.id)}
-                            className="rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                            aria-label={`Edit ${waypointSingular.toLowerCase()}`}
-                          >
-                            <Settings className="h-3.5 w-3.5" />
-                          </button>
-                        </ToolbarTooltip>
-                      </div>
+                      <ToolbarTooltip label={`Edit ${waypointSingular.toLowerCase()}`}>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onInspect(waypoint.id)
+                          }}
+                          className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                          aria-label={`Edit ${waypointSingular.toLowerCase()}`}
+                        >
+                          <Settings className="h-3.5 w-3.5" />
+                        </button>
+                      </ToolbarTooltip>
                     </div>
                   </li>
                 ))}
