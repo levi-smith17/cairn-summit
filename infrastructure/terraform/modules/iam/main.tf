@@ -418,6 +418,7 @@ resource "aws_iam_policy" "lambda_write" {
         Action = [
           "dynamodb:BatchGetItem",
           "dynamodb:BatchWriteItem",
+          "dynamodb:DeleteItem",
           "dynamodb:GetItem",
           "dynamodb:PutItem",
           "dynamodb:TransactWriteItems",
