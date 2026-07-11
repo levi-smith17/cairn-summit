@@ -33,13 +33,14 @@ export function ContextBarSearch({
   expandedPanel?: React.ReactNode
   /** Highlight the collapsed trigger when nested filters are active. */
   active?: boolean
-  /** Clears nested palette filters when the X / Escape / outside-click dismisses the control. */
+  /** Clears nested palette filters when the X button dismisses the control. */
   onClearAll?: () => void
 }) {
   const rootRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const TriggerIcon = triggerIcon === 'filter' ? Filter : Search
   const hasPanel = Boolean(expandedPanel)
+  const triggerActive = active || query.trim().length > 0
 
   useEffect(() => {
     if (expanded) inputRef.current?.focus()
@@ -49,9 +50,7 @@ export function ContextBarSearch({
     if (!expanded) return
 
     const collapse = () => {
-      onQueryChange('')
       onExpandedChange(false)
-      onClearAll?.()
     }
 
     const onPointerDown = (event: PointerEvent) => {
@@ -74,7 +73,7 @@ export function ContextBarSearch({
       document.removeEventListener('pointerdown', onPointerDown)
       document.removeEventListener('keydown', onKeyDown)
     }
-  }, [expanded, onClearAll, onExpandedChange, onQueryChange])
+  }, [expanded, onExpandedChange])
 
   if (!enabled) {
     return (
@@ -91,15 +90,14 @@ export function ContextBarSearch({
     )
   }
 
-  const dismiss = () => {
+  const clearAndCollapse = () => {
     onQueryChange('')
-    onExpandedChange(false)
     onClearAll?.()
+    onExpandedChange(false)
   }
 
   return (
     <div ref={rootRef} className="relative">
-      {/* In-flow width driver — keeps toolbar siblings shifting with the expand animation. */}
       <div
         className={cn(
           'h-9 transition-[width] duration-200 ease-out',
@@ -126,7 +124,7 @@ export function ContextBarSearch({
                 onClick={() => onExpandedChange(true)}
                 className={cn(
                   'flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted-hover hover:text-foreground',
-                  active && 'bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary',
+                  triggerActive && 'bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary',
                 )}
                 aria-label={tooltipLabel}
               >
@@ -146,7 +144,7 @@ export function ContextBarSearch({
               <ToolbarTooltip label={triggerIcon === 'filter' ? 'Clear Filters' : 'Close Search'}>
                 <button
                   type="button"
-                  onClick={dismiss}
+                  onClick={clearAndCollapse}
                   className="rounded p-1 text-muted-foreground hover:bg-muted-hover hover:text-foreground"
                   aria-label={triggerIcon === 'filter' ? 'Clear filters' : 'Close search'}
                 >

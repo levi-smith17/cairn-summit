@@ -1,8 +1,9 @@
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Bookmark, CalendarDays, KeyRound, Monitor, NotebookPen, Shield, User } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { PlatformHeader } from '@/components/nav/platform/platform-header'
+import { Bookmark, CalendarDays, KeyRound, Monitor, NotebookPen, Shield, User } from 'lucide-react'
+import { PlatformStudioContextBar } from '@/components/studio/platform-studio-context-bar'
+import { StudioLayout } from '@/components/studio/layout/studio-layout'
 import { useTerminology } from '@/contexts/terminology-context'
+import { cardHoverBorder, cn } from '@/lib/utils'
 import { AccountForm } from './account-form'
 import { AppearanceForm } from './appearance-form'
 import { PrivacyForm } from './privacy-form'
@@ -61,6 +62,60 @@ function isValidSection(s: string | null): s is Section {
   return VALID_SECTIONS.includes(s as Section)
 }
 
+function SettingsRail({
+  sections,
+  groups,
+  active,
+  onSelect,
+}: {
+  sections: { value: Section; label: string; icon: React.ElementType; group: string }[]
+  groups: string[]
+  active: Section
+  onSelect: (section: Section) => void
+}) {
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="flex h-14 min-h-14 max-h-14 shrink-0 items-center border-b border-border px-3">
+        <span className="text-sm font-semibold text-foreground">Settings</span>
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto py-2">
+        {groups.map((group) => (
+          <div key={group} className="mb-2">
+            <p className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+              {group}
+            </p>
+            <ul className="space-y-1 px-2">
+              {sections
+                .filter((s) => s.group === group)
+                .map((s) => {
+                  const selected = active === s.value
+                  return (
+                    <li key={s.value}>
+                      <button
+                        type="button"
+                        onClick={() => onSelect(s.value)}
+                        className={cn(
+                          'flex w-full items-center gap-2.5 rounded-lg border bg-card px-2.5 py-2 text-left text-sm transition-colors',
+                          cardHoverBorder,
+                          selected
+                            ? 'border-[oklch(0.45_0.1_127)] bg-primary/10 dark:border-header'
+                            : '',
+                        )}
+                      >
+                        <s.icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <span className="truncate font-medium text-foreground">{s.label}</span>
+                      </button>
+                    </li>
+                  )
+                })}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export function SettingsClient({
   initialSection,
   account,
@@ -94,16 +149,10 @@ export function SettingsClient({
       ? initialSection as Section
       : 'account'
 
-  const mobileShowNav = sectionParam === null
-
   function setSection(s: Section) {
     const params = new URLSearchParams(searchParams.toString())
     params.set('section', s)
     setSearchParams(params)
-  }
-
-  function clearSection() {
-    setSearchParams(new URLSearchParams())
   }
 
   function renderContent() {
@@ -118,84 +167,51 @@ export function SettingsClient({
     }
   }
 
-  const sectionPageLinks: Partial<Record<Section, { href: string; label: string; icon: React.ElementType }>> = {
-    itinerary: { href: '/itinerary', label: terms.itinerary, icon: CalendarDays },
-    logs:    { href: '/logs',    label: terms.logs,    icon: NotebookPen },
-    waypoints: { href: '/waypoints', label: terms.waypoints, icon: Bookmark },
+  const sectionPageLinks: Partial<Record<Section, { href: string; label: string }>> = {
+    itinerary: { href: '/itinerary', label: terms.itinerary },
+    logs: { href: '/logs', label: terms.logs },
   }
 
   const activeLink = sectionPageLinks[active]
-
+  const activeSection = sections.find((s) => s.value === active)
   const groups = ['Profile', 'Platform']
 
   return (
-    <>
-      <PlatformHeader title="Settings" />
-      <div className="flex flex-1 min-h-0 gap-4 p-4 overflow-hidden w-full">
-        <div className={`
-          ${mobileShowNav ? 'flex' : 'hidden md:flex'}
-          flex-col w-full md:w-52 shrink-0 rounded-lg border border-border bg-card overflow-hidden
-        `}>
-          <div className="px-4 py-3 border-b border-border shrink-0">
-            <span className="text-sm font-medium">Settings</span>
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            {groups.map(group => (
-              <div key={group}>
-                <p className="px-4 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                  {group}
-                </p>
-                {sections.filter(s => s.group === group).map(s => (
-                  <div
-                    key={s.value}
-                    className={`
-                      flex items-center gap-3 px-4 py-2.5 border-b border-border/30
-                      cursor-pointer transition-colors
-                      ${active === s.value ? 'bg-primary/20' : 'hover:bg-muted/50'}
-                    `}
-                    onClick={() => setSection(s.value)}
-                  >
-                    <s.icon className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <span className="text-sm">{s.label}</span>
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className={`
-          ${mobileShowNav ? 'hidden md:flex' : 'flex'}
-          flex-col flex-1 rounded-lg border border-border bg-card overflow-hidden
-        `}>
-          <div className="grid grid-cols-3 items-center w-full gap-2 px-4 min-h-[48px] border-b border-border shrink-0">
-            <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs md:hidden justify-self-start" onClick={clearSection}>
-              <ArrowLeft className="h-3.5 w-3.5" />
-            </Button>
-            {(() => {
-              const sec = sections.find(s => s.value === active)
-              return activeLink
-                ? <>
-                  <Button variant="ghost" size="sm" className="h-7 gap-1 text-sm md:hidden" onClick={() => navigate(activeLink.href)}>
-                    <activeLink.icon className="h-3.5 w-3.5" />
-                    {activeLink.label}
-                  </Button>
-                  <span className="text-sm hidden md:inline">{sec?.label}</span>
-                </>
-                : <>
-                  <span className="flex items-center gap-1.5 text-sm mx-auto md:hidden">
-                    {sec && <sec.icon className="h-3.5 w-3.5" />}
-                    {sec?.label}
-                  </span>
-                  <span className="text-sm hidden md:inline">{sec?.label}</span>
-                </>
-            })()}
-          </div>
-          <div className="flex-1 overflow-y-auto p-6">
+    <StudioLayout
+      railLabel="Settings"
+      contextBar={
+        <PlatformStudioContextBar
+          aria-label="Settings header"
+          title="Settings"
+          subtitle={activeSection?.label}
+        />
+      }
+      rail={
+        <SettingsRail
+          sections={sections}
+          groups={groups}
+          active={active}
+          onSelect={setSection}
+        />
+      }
+      canvas={
+        <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
+          {activeLink ? (
+            <div className="flex shrink-0 items-center border-b border-border px-4 py-2">
+              <button
+                type="button"
+                className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                onClick={() => navigate(activeLink.href)}
+              >
+                Open {activeLink.label}
+              </button>
+            </div>
+          ) : null}
+          <div className="min-h-0 flex-1 overflow-y-auto p-6">
             {renderContent()}
           </div>
         </div>
-      </div>
-    </>
+      }
+    />
   )
 }

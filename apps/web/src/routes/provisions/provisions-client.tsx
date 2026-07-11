@@ -51,7 +51,6 @@ export function ProvisionsClient() {
   const [activeFilter, setActiveFilter] = useState('true')
   const debouncedSearch = useDebounce(search, 300)
   const surtrFiltersActive = search !== '' || markerFilter !== 'all'
-  const idunnFiltersActive = activeFilter !== 'true'
 
   const [selection, setSelection] = useState<ProvisionsSelection | null>(null)
   const [burnPage, setBurnPage] = useState(1)
@@ -267,8 +266,6 @@ export function ProvisionsClient() {
             selectedId={selectedSupplylineId}
             activeFilter={activeFilter}
             onActiveFilterChange={setActiveFilter}
-            filtersActive={idunnFiltersActive}
-            onClearFilters={() => setActiveFilter('true')}
             onSelect={(id) => setSelection({ kind: 'supplyline', id })}
             onAdd={() => setSelection({ kind: 'new-supplyline' })}
             onOpenCatalog={() => setSelection({ kind: 'catalog' })}
@@ -294,10 +291,6 @@ export function ProvisionsClient() {
             }}
             onBringCache={() => setSelection({ kind: 'cache-carry' })}
           />
-
-          <div className="shrink-0 border-b border-border px-4 py-2 sm:px-6">
-            <span className="text-sm font-semibold">{terms.burn}</span>
-          </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto">
             {burnRefetching && burnItems.length === 0 ? (

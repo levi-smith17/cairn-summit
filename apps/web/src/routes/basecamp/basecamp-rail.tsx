@@ -97,7 +97,8 @@ export function BasecampRail({
               onChange={(ids) => onMarkerFilterChange(ids[0] ?? WAYPOINT_FILTER_ALL)}
               placeholder={terms.markers}
               singleSelect
-              compact
+              toolbar
+              triggerClassName="h-8 border bg-background text-sm font-normal"
             />
           </div>
         </div>

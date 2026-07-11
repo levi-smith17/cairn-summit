@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import * as icons from 'lucide-react'
 import { createMarker, updateMarker, deleteMarker } from '@/lib/api/markers'
-import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import {
   Form,
   FormControl,
@@ -16,8 +16,10 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { FormActions } from '@/components/forms/form-actions'
+import {
+  InspectorFormActions,
+  InspectorFormHeader,
+} from '@/components/studio/ui/inspector-form-actions'
 import { MarkerBadge } from '@/components/ui/marker-badge'
 import { useFormStatus } from '@/hooks/use-form-status'
 import { useTerminology } from '@/contexts/terminology-context'
@@ -31,7 +33,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { extractId } from '@/lib/utils'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/use-auth'
@@ -104,12 +105,12 @@ interface MarkerFormProps {
 
 export function MarkerForm({ tag, parentMarker, onBack, onSaved, onDeleted }: MarkerFormProps) {
   const { terms } = useTerminology()
-  const { saving, saved, error, handleSubmit } = useFormStatus()
+  const { saving, handleSubmit } = useFormStatus()
   const [customColor, setCustomColor] = useState(tag?.color ?? parentMarker?.color ?? '')
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [deleting, setDeleting] = useState(false)
   const queryClient = useQueryClient()
   const { user } = useAuth()
+  const markerSingular = terms.markers.slice(0, -1) || terms.markers
 
   const form = useForm<MarkerFormValues>({
     resolver: zodResolver(markerSchema),
@@ -158,69 +159,35 @@ export function MarkerForm({ tag, parentMarker, onBack, onSaved, onDeleted }: Ma
 
   async function handleDelete() {
     if (!tag) return
-    setDeleting(true)
     try {
       await deleteMarker(tag.id)
       await queryClient.invalidateQueries({ queryKey: ['markers', user?.id] })
       onDeleted()
     } catch {
       toast.error('Failed to delete marker. Please try again.')
-    } finally {
-      setDeleting(false)
     }
   }
 
   const isSubmarker = !!parentMarker
+  const headerTitle = tag
+    ? `Edit ${markerSingular}`
+    : isSubmarker
+      ? `New Sub-${markerSingular}`
+      : `New ${markerSingular}`
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={onBack}
-            className="md:hidden text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <span className="text-sm font-medium">
-            {tag
-              ? `Edit ${terms.markers.slice(0, -1)}`
-              : isSubmarker
-                ? `New Sub-${terms.markers.slice(0, -1)}`
-                : `New ${terms.markers.slice(0, -1)}`}
-          </span>
-        </div>
-        {tag && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 text-destructive hover:text-destructive/80"
-                onClick={() => setDeleteDialogOpen(true)}
-                disabled={deleting}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              Remove {terms.markers.slice(0, -1).toLowerCase()}
-            </TooltipContent>
-          </Tooltip>
-        )}
-      </div>
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
+      <InspectorFormHeader title={headerTitle} onBack={onBack} showBack />
 
-      {/* Form */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto">
         <Form {...form}>
           <form id="marker-form" onSubmit={form.handleSubmit(onSubmit)}>
-            <div className="p-4 space-y-6">
+            <div className="space-y-6 p-4">
 
               {/* Preview */}
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">Preview:</span>
-                <MarkerBadge marker={{ name: resolvedName || terms.markers.slice(0, -1).toLowerCase(), color: watchedColor, icon: watchedIcon || null }} />
+                <MarkerBadge marker={{ name: resolvedName || markerSingular.toLowerCase(), color: watchedColor, icon: watchedIcon || null }} />
               </div>
 
               {/* Parent path — locked, shown only for sub-markers */}
@@ -339,29 +306,27 @@ export function MarkerForm({ tag, parentMarker, onBack, onSaved, onDeleted }: Ma
                 )}
               />
             </div>
-
-            {/* Actions */}
-            <div className="p-4 border-t w-full md:w-auto">
-              <FormActions
-                saving={saving}
-                saved={saved}
-                error={error}
-                saveLabel={tag ? 'Save Changes' : `Add ${terms.markers.slice(0, -1)}`}
-                formId="marker-form"
-                onCancel={onBack}
-              />
-            </div>
           </form>
         </Form>
       </div>
 
-      {/* Delete confirmation */}
+      <InspectorFormActions
+        isNew={!tag}
+        isSaving={saving}
+        formId="marker-form"
+        saveLabel="Save changes"
+        createLabel={`Add ${markerSingular}`}
+        showDelete={!!tag}
+        onDelete={() => setDeleteDialogOpen(true)}
+        deleteLabel={`Delete ${markerSingular.toLowerCase()}`}
+      />
+
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove {terms.markers.slice(0, -1)}</AlertDialogTitle>
+            <AlertDialogTitle>Remove {markerSingular}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to remove &quot;{tag?.name}&quot;? All {terms.waypoints.toLowerCase()} and {terms.logs.toLowerCase()} associated with this {terms.markers.slice(0, -1).toLowerCase()} will be unassigned. This cannot be undone.
+              Are you sure you want to remove &quot;{tag?.name}&quot;? All {terms.waypoints.toLowerCase()} and {terms.logs.toLowerCase()} associated with this {markerSingular.toLowerCase()} will be unassigned. This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

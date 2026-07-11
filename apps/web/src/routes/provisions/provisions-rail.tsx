@@ -27,8 +27,6 @@ export function ProvisionsRail({
   selectedId,
   activeFilter,
   onActiveFilterChange,
-  filtersActive,
-  onClearFilters,
   onSelect,
   onAdd,
   onOpenCatalog,
@@ -38,8 +36,6 @@ export function ProvisionsRail({
   selectedId: string | null
   activeFilter: string
   onActiveFilterChange: (value: string) => void
-  filtersActive: boolean
-  onClearFilters: () => void
   onSelect: (id: string) => void
   onAdd: () => void
   onOpenCatalog: () => void
@@ -77,29 +73,16 @@ export function ProvisionsRail({
       </div>
 
       <div className="shrink-0 border-b border-border px-3 py-2">
-        <div className="flex items-center gap-2">
-          <CustomSelect
-            value={activeFilter}
-            onChange={onActiveFilterChange}
-            options={[
-              { value: 'true', label: 'Active' },
-              { value: 'false', label: 'Inactive' },
-              { value: 'all', label: 'All status' },
-            ]}
-            triggerClassName="min-w-0 flex-1"
-          />
-          {filtersActive ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-8 shrink-0 px-2 text-xs"
-              onClick={onClearFilters}
-            >
-              Reset
-            </Button>
-          ) : null}
-        </div>
+        <CustomSelect
+          value={activeFilter}
+          onChange={onActiveFilterChange}
+          options={[
+            { value: 'true', label: 'Active' },
+            { value: 'false', label: 'Inactive' },
+            { value: 'all', label: 'All status' },
+          ]}
+          triggerClassName="w-full"
+        />
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-2">

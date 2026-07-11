@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/use-auth'
 import { getOutpostData } from '@/lib/api/outpost'
@@ -19,8 +19,10 @@ export default function Home() {
   const { user } = useAuth()
   const { terms } = useTerminology()
   const currentWayfarer = useWayfarerHeader()
+  const navigate = useNavigate()
+  const { username: paramUsername } = useParams<{ username?: string }>()
   const [searchParams, setSearchParams] = useSearchParams()
-  const selectedUsername = searchParams.get('w')
+  const selectedUsername = paramUsername ?? null
 
   const outpostQuery = useQuery({
     queryKey: ['outpost', user?.id ?? 'anon'],
@@ -29,14 +31,14 @@ export default function Home() {
 
   const wayfarers = outpostQuery.data?.wayfarers ?? []
 
-  // Single listed wayfarer and nothing selected → auto-select via URL
+  // Single listed wayfarer and nothing selected → auto-open their manifest URL
   useEffect(() => {
     if (outpostQuery.isPending || selectedUsername) return
     const withUsername = wayfarers.filter((w) => w.username)
     if (!user && withUsername.length === 1 && withUsername[0].username) {
-      setSearchParams({ w: withUsername[0].username }, { replace: true })
+      navigate(`/manifest/${withUsername[0].username}`, { replace: true })
     }
-  }, [outpostQuery.isPending, user, wayfarers, selectedUsername, setSearchParams])
+  }, [outpostQuery.isPending, user, wayfarers, selectedUsername, navigate])
 
   const filterQuery = searchParams.get('q') ?? ''
 
@@ -53,14 +55,7 @@ export default function Home() {
   }
 
   function selectWayfarer(username: string) {
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev)
-        next.set('w', username)
-        return next
-      },
-      { replace: true },
-    )
+    navigate(`/manifest/${username}`)
   }
 
   const filteredWayfarers = wayfarers.filter((w) => {
@@ -150,11 +145,6 @@ export default function Home() {
         <PlatformStudioContextBar
           aria-label={terms.outpost}
           title={terms.outpost}
-          subtitle={
-            selectedUsername
-              ? `@${selectedUsername}`
-              : `Explore ${terms.wayfarers.toLowerCase()} on Cairn`
-          }
         />
       }
       rail={

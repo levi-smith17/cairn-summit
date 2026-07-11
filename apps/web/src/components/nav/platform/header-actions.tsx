@@ -1,6 +1,7 @@
 'use client'
 
 import { BookUser, Pin, PinOff, Search } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useAuth } from '@/hooks/use-auth'
@@ -58,6 +59,7 @@ export function HeaderInspectorPin() {
 export function HeaderPublicManifest() {
   const { user } = useAuth()
   const { terms } = useTerminology()
+  const navigate = useNavigate()
   const { data: profile } = useQuery({
     queryKey: ['profile'],
     queryFn: getProfile,
@@ -71,7 +73,7 @@ export function HeaderPublicManifest() {
         <button
           type="button"
           disabled={!username}
-          onClick={() => username && window.open(`/manifest/${username}`, '_blank')}
+          onClick={() => username && navigate(`/manifest/${username}`)}
           className={cn(iconButtonClass, !username && 'opacity-40 cursor-not-allowed')}
           aria-label={`View public ${terms.manifest}`}
         >
