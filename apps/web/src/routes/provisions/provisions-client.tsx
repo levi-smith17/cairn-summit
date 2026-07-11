@@ -22,7 +22,7 @@ import type { BudgetUtilization } from './cache-row'
 import type { ProvisionsSelection } from './provisions-types'
 import { getBurnPage, getSupplylinesFiltered, getSupplylinesSummary } from '@/lib/api/supplylines'
 import { getMarkers } from '@/lib/api/markers'
-import { extractId, cn } from '@/lib/utils'
+import { extractId, markerShortLabel, cn } from '@/lib/utils'
 import { markerDisplayName } from '@/lib/embedded-markers'
 
 interface Summary {
@@ -181,7 +181,7 @@ export function ProvisionsClient() {
   })
 
   const groupedExpenses = burnItems.reduce<Record<string, Burn[]>>((acc, e) => {
-    const label = markerDisplayName(e.markers[0])?.split('/').pop() ?? 'Uncategorized'
+    const label = markerShortLabel(markerDisplayName(e.markers[0]), 'Uncategorized')
     if (!acc[label]) acc[label] = []
     acc[label].push(e)
     return acc
@@ -195,11 +195,11 @@ export function ProvisionsClient() {
   const cacheOnlyGroups = cacheUtilization
     .filter((c) => {
       if (markerFilter !== 'all' && c.markerId !== markerFilter) return false
-      const label = c.marker.name.split('/').pop() ?? c.marker.name
+      const label = markerShortLabel(c.marker?.name)
       return !groupedExpenses[label]
     })
     .map((c) => ({
-      label: c.marker.name.split('/').pop() ?? c.marker.name,
+      label: markerShortLabel(c.marker?.name),
       cache: c,
     }))
 

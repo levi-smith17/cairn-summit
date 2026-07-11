@@ -2,6 +2,9 @@ import { useEffect } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
+import Underline from '@tiptap/extension-underline'
+import Image from '@tiptap/extension-image'
+import { TableKit } from '@tiptap/extension-table'
 import { cn } from '@/lib/utils'
 import { useManifestRichText } from './manifest-rich-text-context'
 
@@ -30,6 +33,9 @@ export function ManifestInlineRichText({
       Placeholder.configure({
         placeholder: placeholder ?? 'Write…',
       }),
+      Underline,
+      Image.configure({ inline: false, allowBase64: false }),
+      TableKit,
     ],
     content: value,
     editorProps: {

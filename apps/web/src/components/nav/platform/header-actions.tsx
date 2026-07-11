@@ -10,7 +10,7 @@ import { getProfile } from '@/lib/api/profile'
 import { cn } from '@/lib/utils'
 
 const iconButtonClass =
-  'rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted-hover hover:text-foreground'
+  'rounded-md p-2 text-foreground/85 transition-colors hover:bg-muted-hover hover:text-foreground'
 
 export function HeaderSearchTrigger() {
   return (

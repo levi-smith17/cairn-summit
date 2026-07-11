@@ -126,7 +126,7 @@ export function MarkerPicker({
             className="inline-block h-2 w-2 rounded-full shrink-0"
             style={{ backgroundColor: m.color }}
           />
-          <span className="truncate">{m.name.split('/').pop()}</span>
+          <span className="truncate">{m.name ? m.name.split('/').pop() : placeholder}</span>
         </span>
       )
     }
@@ -139,7 +139,7 @@ export function MarkerPicker({
     ))
     const label =
       selectedMarkers.length <= 5
-        ? selectedMarkers.map(m => m.name.split('/').pop()).join(', ')
+        ? selectedMarkers.map(m => (m.name ? m.name.split('/').pop() : m.id)).join(', ')
         : `${selectedMarkers.length} selected`
     return (
       <span className="flex items-center gap-1.5 min-w-0">

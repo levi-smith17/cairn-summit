@@ -32,6 +32,7 @@ export function buildMarkerTree(markers: RawMarker[]): MarkerTreeNode[] {
   const root: MarkerTreeNode[] = []
 
   for (const marker of markers) {
+    if (!marker?.name || !marker.id) continue
     const parts = marker.name.split('/')
     insertNode(root, parts, marker)
   }

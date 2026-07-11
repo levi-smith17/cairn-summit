@@ -186,8 +186,8 @@ function SearchResultRow({
   addLabel: string
 }) {
   const Icon = marker.icon ? (lucide as any)[marker.icon] as lucide.LucideIcon | undefined : null
-  const segments = marker.name.split('/')
-  const label = segments[segments.length - 1]
+  const segments = (marker.name ?? '').split('/')
+  const label = segments[segments.length - 1] || marker.name || 'Untitled'
   const parentPath = segments.slice(0, -1).join(' / ')
 
   return (

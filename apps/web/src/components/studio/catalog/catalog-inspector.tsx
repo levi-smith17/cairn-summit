@@ -39,19 +39,21 @@ export function CatalogInspector({
     () =>
       (trailsQuery.data ?? []).map((t) => ({
         id: extractId(t.sk),
-        name: t.name,
+        name: t.name ?? '',
       })),
     [trailsQuery.data],
   )
 
   const markers = useMemo(
     () =>
-      (markersQuery.data ?? []).map((m) => ({
-        id: extractId(m.sk),
-        name: m.name,
-        color: m.color,
-        icon: m.icon ?? null,
-      })),
+      (markersQuery.data ?? [])
+        .map((m) => ({
+          id: extractId(m.sk),
+          name: m.name ?? '',
+          color: m.color ?? '#6b7280',
+          icon: m.icon ?? null,
+        }))
+        .filter((m) => m.id && m.name),
     [markersQuery.data],
   )
 

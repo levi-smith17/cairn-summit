@@ -1,6 +1,6 @@
 import { Plus, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { FilterInput } from '@/components/ui/filter-input'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ToolbarTooltip } from '@/components/studio/ui/toolbar-tooltip'
 import { useTerminology } from '@/contexts/terminology-context'
@@ -89,11 +89,10 @@ export function LogsRail({
       </div>
 
       <div className="shrink-0 border-b border-border px-3 py-2">
-        <Input
+        <FilterInput
           value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
+          onChange={onSearchChange}
           placeholder={`Filter ${terms.logbook.toLowerCase()}s…`}
-          className="h-8"
         />
       </div>
 
