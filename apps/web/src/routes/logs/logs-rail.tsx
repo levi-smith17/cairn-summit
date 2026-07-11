@@ -1,7 +1,8 @@
-import { Plus } from 'lucide-react'
+import { Plus, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { ToolbarTooltip } from '@/components/studio/ui/toolbar-tooltip'
 import { useTerminology } from '@/contexts/terminology-context'
 import { cn } from '@/lib/utils'
 
@@ -27,6 +28,7 @@ export function LogsRail({
   onSearchChange,
   onSelectBook,
   onNew,
+  onOpenCatalog,
 }: {
   logbooks: LogbookSummary[]
   selectedBookId: string | null
@@ -34,6 +36,7 @@ export function LogsRail({
   onSearchChange: (value: string) => void
   onSelectBook: (bookId: string, pageId?: string) => void
   onNew: () => void
+  onOpenCatalog?: () => void
 }) {
   const { terms } = useTerminology()
   const singular = terms.logs.slice(0, -1) || terms.logs
@@ -53,22 +56,36 @@ export function LogsRail({
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <div className="flex h-14 min-h-14 max-h-14 shrink-0 items-center justify-between gap-2 border-b border-border px-3">
-        <span className="text-sm font-semibold text-foreground">{terms.logbook}s</span>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              type="button"
-              size="icon"
-              variant="secondary"
-              className="h-7 w-7"
-              onClick={onNew}
-              aria-label={`Add ${singular.toLowerCase()}`}
-            >
-              <Plus className="h-3.5 w-3.5" aria-hidden />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Add {singular.toLowerCase()}</TooltipContent>
-        </Tooltip>
+        <span className="text-sm font-semibold text-foreground">{terms.logs}</span>
+        <div className="flex items-center gap-1">
+          {onOpenCatalog ? (
+            <ToolbarTooltip label={`${terms.trails} & ${terms.markers}`}>
+              <button
+                type="button"
+                className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted-hover hover:text-foreground"
+                onClick={onOpenCatalog}
+                aria-label={`${terms.trails} & ${terms.markers}`}
+              >
+                <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden />
+              </button>
+            </ToolbarTooltip>
+          ) : null}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                size="icon"
+                variant="secondary"
+                className="h-7 w-7"
+                onClick={onNew}
+                aria-label={`Add ${singular.toLowerCase()}`}
+              >
+                <Plus className="h-3.5 w-3.5" aria-hidden />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Add {singular.toLowerCase()}</TooltipContent>
+          </Tooltip>
+        </div>
       </div>
 
       <div className="shrink-0 border-b border-border px-3 py-2">

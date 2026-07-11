@@ -1,250 +1,307 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
-import { Loader2, Plus } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Button } from '@/components/ui/button'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { PlatformHeader } from '@/components/nav/platform/platform-header'
-import { MobileFilterBar } from '@/components/filters/mobile-filter-bar'
-import { parseFiltersFromParams } from '@/lib/filters'
+import { PlatformStudioContextBar } from '@/components/studio/platform-studio-context-bar'
+import { StudioLayout } from '@/components/studio/layout/studio-layout'
+import { ContextBarAddButton } from '@/components/studio/ui/context-bar-add-button'
+import { CatalogInspector } from '@/components/studio/catalog/catalog-inspector'
+import { useInspectorPin } from '@/contexts/inspector-pin-context'
 import { useTerminology } from '@/contexts/terminology-context'
-import { TrailSection } from './trail-section'
-import { SnapshotPanels } from './snapshot-panels'
-import { InlineWaypointForm } from './inline-waypoint-form'
+import { WaypointForm } from '@/routes/waypoints/waypoint-form'
+import {
+  BasecampRail,
+  WAYPOINT_FILTER_ALL,
+  WAYPOINT_UNASSIGNED_TRAIL,
+  type BasecampWaypoint,
+} from './basecamp-rail'
+import {
+  BasecampCanvas,
+  buildLogbookCards,
+  buildManifestSectionCards,
+} from './basecamp-canvas'
+import type { SnapshotData } from './snapshot-panels'
 
-const API_BASE = import.meta.env.VITE_API_URL
-
-interface SnapshotData {
-  wayfarer: {
-    name: string | null
-    email: string | null
-    image: string | null
-    username: string | null
-    origins: { headline: string | null; location: string | null; website: string | null; linkedin: string | null; github: string | null } | null
-  }
-  manifestCounts: {
-    expeditions: number
-    training: number
-    gear: number
-    landmarks: number
-    summits: number
-    pathfinding: number
-    companions: number
-  }
-  manifestHighlights: {
-    totalYearsExperience: number
-    mostRecentExpedition: { title: string; company: string } | null
-    mostRecentTraining: { institution: string; degree: string | null } | null
-    topGear: { name: string }[]
-  }
-  provisionsSummary: {
-    monthlyTotal: number
-    monthlyBurn: number
-    cacheTotalLimit: number
-    cacheTotalSpent: number
-    activeCount: number
-    upcomingRenewals: number
-  }
-  itinerarySummary: {
-    stops: { id: string; title: string; startDate: Date | string; endDate: Date | string | null; allDay: boolean; color: string }[]
-  }
-  signalsSummary: {
-    unreadCount: number
-    latestMessages: {
-      id: string
-      senderName: string
-      body: string
-      createdAt: string
-      read: boolean
-    }[]
-  }
-}
+type InspectorMode = 'waypoint' | 'catalog' | null
 
 interface BasecampClientProps {
-  initialFolders: any[]
-  initialHasMore: boolean
-  tags: any[]
-  folders: any[]
-  filteredCountMap: Record<string, number> | null
-  sidebarData: SnapshotData
+  waypoints: BasecampWaypoint[]
+  trails: { id: string; name: string }[]
+  markers: { id: string; name: string; color: string; icon: string | null }[]
+  logs: Array<{
+    id: string
+    title?: string | null
+    content?: string
+    trailId?: string | null
+    createdAt?: string
+    updatedAt?: string
+  }>
+  sidebarData: SnapshotData & {
+    manifestCounts: {
+      expeditions: number
+      training: number
+      gear: number
+      landmarks: number
+      summits: number
+      pathfinding: number
+      companions: number
+    }
+    manifestHighlights: {
+      totalYearsExperience: number
+      mostRecentExpedition: { title: string; company: string } | null
+      mostRecentTraining: { institution: string; degree: string | null } | null
+      topGear: { name: string }[]
+    }
+  }
   onRefresh: () => void
 }
 
 export function BasecampClient({
-  initialFolders,
-  initialHasMore,
-  tags,
-  folders,
-  filteredCountMap,
+  waypoints,
+  trails,
+  markers,
+  logs,
   sidebarData,
   onRefresh,
 }: BasecampClientProps) {
   const { terms } = useTerminology()
-  const [searchParams] = useSearchParams()
-  const searchParamsStr = searchParams.toString()
+  const { pinned: inspectorPinned } = useInspectorPin()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [filterQuery, setFilterQuery] = useState('')
+  const [trailFilterId, setTrailFilterId] = useState(WAYPOINT_FILTER_ALL)
+  const [markerFilterId, setMarkerFilterId] = useState(WAYPOINT_FILTER_ALL)
+  const [inspectorMode, setInspectorMode] = useState<InspectorMode>(null)
+  const [inspectorEngaged, setInspectorEngaged] = useState(false)
 
-  const filters = parseFiltersFromParams(searchParams)
-  const trailFilterContext = {
-    search: filters.search || undefined,
-    markerId: filters.markerIds.length > 0 ? filters.markerIds.join(',') : undefined,
-    sort: filters.sort,
-    readLater: filters.readLater || undefined,
-    dateFrom: filters.dateFrom || undefined,
-    dateTo: filters.dateTo || undefined,
-  }
+  const selectedWaypointId = searchParams.get('waypoint')
+  const waypointSingular = terms.waypoints.slice(0, -1) || terms.waypoints
 
-  const [extraTrails, setExtraTrails] = useState<any[]>([])
-  const [hasMore, setHasMore] = useState(initialHasMore)
-  const [page, setPage] = useState(1)
-  const [loading, setLoading] = useState(false)
-  const [addingWaypoint, setAddingWaypoint] = useState(false)
+  const trailsById = useMemo(
+    () => new Map(trails.map((trail) => [trail.id, trail])),
+    [trails],
+  )
 
-  const sentinelRef = useRef<HTMLDivElement>(null)
-  const prevSearchParamsStr = useRef(searchParamsStr)
-  const prevInitialFolders = useRef(initialFolders)
+  const filteredWaypoints = useMemo(() => {
+    let list = waypoints.map((wp) => ({
+      ...wp,
+      trailName: wp.trailId ? (trailsById.get(wp.trailId)?.name ?? null) : null,
+    }))
 
-  if (prevSearchParamsStr.current !== searchParamsStr) {
-    prevSearchParamsStr.current = searchParamsStr
-    setExtraTrails([])
-    setHasMore(initialHasMore)
-    setPage(1)
-  }
-
-  if (prevInitialFolders.current !== initialFolders) {
-    prevInitialFolders.current = initialFolders
-    setExtraTrails([])
-    setHasMore(initialHasMore)
-    setPage(1)
-  }
-
-  const loadedTrails = [...initialFolders, ...extraTrails]
-
-  const loadMore = useCallback(async () => {
-    if (loading || !hasMore) return
-    setLoading(true)
-    try {
-      const nextPage = page + 1
-      const params = new URLSearchParams(searchParams.toString())
-      params.set('page', nextPage.toString())
-      const res = await fetch(`${API_BASE}/basecamp?${params.toString()}`)
-      const data = await res.json()
-      setExtraTrails(prev => [...prev, ...data.folders])
-      setHasMore(data.hasMore)
-      setPage(nextPage)
-    } finally {
-      setLoading(false)
+    if (trailFilterId === WAYPOINT_UNASSIGNED_TRAIL) {
+      list = list.filter((wp) => !wp.trailId)
+    } else if (trailFilterId !== WAYPOINT_FILTER_ALL) {
+      list = list.filter((wp) => wp.trailId === trailFilterId)
     }
-  }, [loading, hasMore, page, searchParams])
+
+    if (markerFilterId !== WAYPOINT_FILTER_ALL) {
+      list = list.filter((wp) =>
+        wp.markers.some((m) => m.markerId === markerFilterId || m.marker?.id === markerFilterId),
+      )
+    }
+
+    const q = filterQuery.trim().toLowerCase()
+    if (q) {
+      list = list.filter((wp) => {
+        const haystack = [
+          wp.title,
+          wp.url,
+          wp.trailName ?? '',
+          ...wp.markers.map((m) => m.marker?.name ?? ''),
+        ]
+          .join(' ')
+          .toLowerCase()
+        return haystack.includes(q)
+      })
+    }
+
+    return list
+  }, [waypoints, trailsById, trailFilterId, markerFilterId, filterQuery])
+
+  const groups = useMemo(() => {
+    const byTrail = new Map<string, BasecampWaypoint[]>()
+    for (const waypoint of filteredWaypoints) {
+      const label = waypoint.trailName ?? 'Unassigned'
+      const bucket = byTrail.get(label) ?? []
+      bucket.push(waypoint)
+      byTrail.set(label, bucket)
+    }
+    return [...byTrail.entries()]
+      .sort(([left], [right]) => {
+        if (left === 'Unassigned') return 1
+        if (right === 'Unassigned') return -1
+        return left.localeCompare(right)
+      })
+      .map(([label, items]) => ({
+        label,
+        waypoints: items.sort((a, b) => (a.title || a.url).localeCompare(b.title || b.url)),
+      }))
+  }, [filteredWaypoints])
+
+  const selectedWaypoint =
+    selectedWaypointId && selectedWaypointId !== 'new'
+      ? (waypoints.find((wp) => wp.id === selectedWaypointId) ?? null)
+      : null
+
+  const logbooks = useMemo(
+    () => buildLogbookCards(logs, trails, 8),
+    [logs, trails],
+  )
+
+  const manifestSections = useMemo(
+    () =>
+      buildManifestSectionCards(
+        sidebarData.manifestCounts,
+        sidebarData.manifestHighlights,
+      ),
+    [sidebarData.manifestCounts, sidebarData.manifestHighlights],
+  )
+
+  const snapshot: SnapshotData = {
+    wayfarer: sidebarData.wayfarer,
+    provisionsSummary: sidebarData.provisionsSummary,
+    itinerarySummary: sidebarData.itinerarySummary,
+    signalsSummary: sidebarData.signalsSummary,
+  }
+
+  function selectWaypoint(id: string) {
+    setInspectorMode('waypoint')
+    setInspectorEngaged(true)
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('waypoint', id)
+    setSearchParams(params)
+  }
+
+  function showNewWaypoint() {
+    selectWaypoint('new')
+  }
+
+  const clearSelection = useCallback(() => {
+    setInspectorMode(null)
+    setInspectorEngaged(false)
+    setSearchParams((params) => {
+      const next = new URLSearchParams(params)
+      next.delete('waypoint')
+      return next
+    })
+  }, [setSearchParams])
+
+  function openCatalog() {
+    setInspectorMode('catalog')
+    setInspectorEngaged(true)
+    setSearchParams((params) => {
+      const next = new URLSearchParams(params)
+      next.delete('waypoint')
+      return next
+    })
+  }
+
+  const handleCanvasPointerDown = useCallback(
+    (event: React.PointerEvent) => {
+      if (inspectorPinned || !inspectorEngaged) return
+      const target = event.target as HTMLElement
+      if (target.closest('[data-inspectable]')) return
+      clearSelection()
+    },
+    [inspectorPinned, inspectorEngaged, clearSelection],
+  )
 
   useEffect(() => {
-    const sentinel = sentinelRef.current
-    if (!sentinel) return
-    const observer = new IntersectionObserver(
-      entries => { if (entries[0].isIntersecting) loadMore() },
-      { threshold: 0.1 }
-    )
-    observer.observe(sentinel)
-    return () => observer.disconnect()
-  }, [loadMore])
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape' && !inspectorPinned && inspectorEngaged) {
+        clearSelection()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [inspectorPinned, inspectorEngaged, clearSelection])
+
+  useEffect(() => {
+    if (selectedWaypointId) {
+      setInspectorMode('waypoint')
+      setInspectorEngaged(true)
+    }
+  }, [selectedWaypointId])
+
+  const showingWaypoint =
+    inspectorMode === 'waypoint' && (selectedWaypointId != null || selectedWaypointId === 'new')
+  const showingCatalog = inspectorMode === 'catalog'
+  const inspectorContentAvailable = showingWaypoint || showingCatalog
+  const inspectorOpen =
+    (inspectorPinned || inspectorEngaged) && inspectorContentAvailable
+  const inspectorState = inspectorOpen ? 'open' : 'hint'
+
+  const inspectorHint = showingCatalog
+    ? `Manage ${terms.trails.toLowerCase()} and ${terms.markers.toLowerCase()}`
+    : `Select a ${waypointSingular.toLowerCase()} to edit`
 
   return (
-    <>
-      <PlatformHeader title={terms.basecamp} />
-
-      <div className="flex flex-col flex-1 gap-4 p-4 overflow-y-auto lg:overflow-hidden lg:min-h-0">
-        <div className="rounded-lg border border-border bg-card p-2 shrink-0">
-          <MobileFilterBar
-            markers={tags}
-            trails={folders}
-            showTrailFilter
-            showMarkerFilter
-            showSort
-            showReadLater
-            showDateRange
-            searchPlaceholder={`${terms.explore} ${terms.waypoints.toLowerCase()}...`}
-            fill
+    <StudioLayout
+      railLabel={terms.waypoints}
+      contextBar={
+        <PlatformStudioContextBar
+          aria-label={terms.basecamp}
+          title={terms.basecamp}
+          subtitle={`${waypoints.length} ${terms.waypoints.toLowerCase()}`}
+          actions={
+            <ContextBarAddButton
+              label={`Add ${waypointSingular.toLowerCase()}`}
+              shortLabel={waypointSingular}
+              onClick={showNewWaypoint}
+            />
+          }
+        />
+      }
+      rail={
+        <BasecampRail
+          groups={groups}
+          selectedId={selectedWaypointId}
+          filterQuery={filterQuery}
+          onFilterQueryChange={setFilterQuery}
+          trailFilterId={trailFilterId}
+          onTrailFilterChange={setTrailFilterId}
+          markerFilterId={markerFilterId}
+          onMarkerFilterChange={setMarkerFilterId}
+          trails={trails}
+          markers={markers}
+          onInspect={selectWaypoint}
+          onOpenUrl={(url) => window.open(url, '_blank', 'noopener,noreferrer')}
+          onOpenCatalog={openCatalog}
+        />
+      }
+      canvas={
+        <div className="flex min-h-0 flex-1 flex-col" onPointerDown={handleCanvasPointerDown}>
+          <BasecampCanvas
+            snapshot={snapshot}
+            logbooks={logbooks}
+            manifestSections={manifestSections}
           />
         </div>
-
-        <div className="flex flex-col lg:flex-row flex-1 gap-4 lg:overflow-hidden lg:min-h-0">
-          <div className="flex flex-col flex-1 min-w-0 rounded-lg border border-border bg-card lg:overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
-              <span className="text-sm font-medium text-muted-foreground">
-                {loadedTrails.length} {loadedTrails.length !== 1 ? terms.trails.toLowerCase() : terms.trails.slice(0, -1).toLowerCase()}
-              </span>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7"
-                    onClick={() => setAddingWaypoint(v => !v)}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Add {terms.waypoints.slice(0, -1).toLowerCase()}</TooltipContent>
-              </Tooltip>
-            </div>
-
-            {addingWaypoint && (
-              <InlineWaypointForm
-                folders={folders}
-                tags={tags}
-                onCancel={() => setAddingWaypoint(false)}
-                onSaved={() => { setAddingWaypoint(false); onRefresh() }}
-              />
-            )}
-
-            <div className="lg:flex-1 lg:overflow-y-auto">
-              {loadedTrails.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full py-16 px-4 text-center">
-                  <p className="text-sm text-muted-foreground">
-                    No {terms.waypoints.toLowerCase()} yet.{' '}
-                    <button
-                      onClick={() => setAddingWaypoint(true)}
-                      className="text-primary hover:underline"
-                    >
-                      Add one to get started.
-                    </button>
-                  </p>
-                </div>
-              ) : (
-                <div className="flex flex-col divide-y">
-                  {loadedTrails.map((trail: any) => (
-                    <TrailSection
-                      key={trail.id}
-                      trail={trail}
-                      waypoints={trail.waypoints ?? []}
-                      logCount={trail._count?.logs ?? 0}
-                      tags={tags}
-                      folders={folders}
-                      totalWaypointCount={
-                        filteredCountMap
-                          ? (filteredCountMap[trail.id] ?? 0)
-                          : (trail._count?.waypoints ?? 0)
-                      }
-                      filterContext={trailFilterContext}
-                      onRefresh={onRefresh}
-                    />
-                  ))}
-                </div>
-              )}
-
-              <div ref={sentinelRef} className="h-4" />
-
-              {loading && (
-                <div className="flex justify-center py-4">
-                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                </div>
-              )}
-            </div>
+      }
+      inspectorState={inspectorState}
+      inspectorHint={inspectorHint}
+      inspector={
+        showingCatalog ? (
+          <CatalogInspector initialTab="trails" onClose={clearSelection} />
+        ) : showingWaypoint ? (
+          <WaypointForm
+            key={selectedWaypointId ?? 'new'}
+            waypoint={selectedWaypoint}
+            folders={trails}
+            tags={markers}
+            onBack={clearSelection}
+            onSaved={() => {
+              onRefresh()
+              clearSelection()
+            }}
+            onDeleted={() => {
+              onRefresh()
+              clearSelection()
+            }}
+          />
+        ) : inspectorPinned ? (
+          <div className="flex h-full flex-col items-center justify-center gap-1 px-4 text-center">
+            <p className="text-sm text-muted-foreground">{inspectorHint}</p>
           </div>
-
-          <div className="lg:w-72 lg:shrink-0 overflow-y-auto">
-            <SnapshotPanels {...sidebarData} />
-          </div>
-        </div>
-      </div>
-    </>
+        ) : null
+      }
+    />
   )
 }

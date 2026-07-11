@@ -1,9 +1,9 @@
-import { Plus } from 'lucide-react'
+import { Plus, SlidersHorizontal } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { CustomSelect } from '@/components/ui/custom-select'
 import { Switch } from '@/components/ui/switch'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { ToolbarTooltip } from '@/components/studio/ui/toolbar-tooltip'
 import { MarkerBadge } from '@/routes/waypoints/marker-badge'
 import { toDisplayMarker } from '@/lib/embedded-markers'
 import { toggleSupplylineActive } from '@/lib/api/supplylines'
@@ -31,6 +31,7 @@ export function ProvisionsRail({
   onClearFilters,
   onSelect,
   onAdd,
+  onOpenCatalog,
   onRefresh,
 }: {
   supplylines: Supplyline[]
@@ -41,6 +42,7 @@ export function ProvisionsRail({
   onClearFilters: () => void
   onSelect: (id: string) => void
   onAdd: () => void
+  onOpenCatalog: () => void
   onRefresh: () => void
 }) {
   const { terms } = useTerminology()
@@ -48,21 +50,30 @@ export function ProvisionsRail({
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <div className="flex h-14 min-h-14 max-h-14 shrink-0 items-center justify-between gap-2 border-b border-border px-3">
         <span className="text-sm font-semibold text-foreground">{terms.supplylines}</span>
-        <Tooltip>
-          <TooltipTrigger asChild>
+        <div className="flex items-center gap-1">
+          <ToolbarTooltip label={`${terms.trails} & ${terms.markers}`}>
+            <button
+              type="button"
+              className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted-hover hover:text-foreground"
+              onClick={onOpenCatalog}
+              aria-label={`${terms.trails} & ${terms.markers}`}
+            >
+              <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden />
+            </button>
+          </ToolbarTooltip>
+          <ToolbarTooltip label={`Add ${terms.supplyline}`}>
             <Button
               type="button"
               size="icon"
               variant="secondary"
               className="h-7 w-7"
               onClick={onAdd}
-              aria-label={`Add ${terms.supplylines.toLowerCase()}`}
+              aria-label={`Add ${terms.supplyline}`}
             >
               <Plus className="h-3.5 w-3.5" aria-hidden />
             </Button>
-          </TooltipTrigger>
-          <TooltipContent>Add {terms.supplylines}</TooltipContent>
-        </Tooltip>
+          </ToolbarTooltip>
+        </div>
       </div>
 
       <div className="shrink-0 border-b border-border px-3 py-2">
@@ -130,13 +141,14 @@ function ProvisionsRailCard({
     (new Date(supplyline.nextRenewal).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
   )
   const renewingSoon = daysUntil <= 7 && supplyline.active
+  const renewalDate = new Date(supplyline.nextRenewal)
 
   return (
     <div
       data-inspectable
       className={cn(
-        'flex items-start gap-2 rounded-md border border-transparent px-2 py-2 transition-colors',
-        selected ? 'border-primary/30 bg-primary/10' : 'hover:bg-muted-hover',
+        'flex w-full items-start gap-2 rounded-lg border bg-card p-2 text-left text-xs transition-colors',
+        selected ? 'border-primary/40 bg-primary/10' : 'border-border hover:border-primary/50',
         !supplyline.active && 'opacity-50',
       )}
     >
@@ -147,25 +159,35 @@ function ProvisionsRailCard({
           onToggleActive()
         }}
         className="mt-0.5 shrink-0 scale-75"
+        onClick={(e) => e.stopPropagation()}
       />
       <button type="button" onClick={onSelect} className="min-w-0 flex-1 text-left">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="truncate text-sm font-medium">{supplyline.name}</span>
+        <div className="flex items-center gap-1.5">
+          <span className="truncate text-sm font-medium text-foreground">{supplyline.name}</span>
           {renewingSoon ? (
-            <Badge variant="outline" className="border-amber-500/40 text-[10px] text-amber-700 dark:text-amber-400">
+            <Badge className="border-amber-500/30 bg-amber-500/10 px-1 py-0 text-[10px] text-amber-700 dark:text-amber-400">
               {daysUntil}d
             </Badge>
           ) : null}
         </div>
-        <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-          <span className="tabular-nums">{fmt(supplyline.amount)}</span>
-          <span>·</span>
-          <span>{CYCLE_LABELS[supplyline.billingCycle] ?? supplyline.billingCycle}</span>
+        <div className="mt-1 flex flex-wrap items-center gap-1">
           {supplyline.markers.map((entry, i) => {
             const marker = toDisplayMarker(entry)
             if (!marker) return null
             return <MarkerBadge key={marker.id ?? i} marker={marker} />
           })}
+        </div>
+        <div className="mt-1.5 flex items-center justify-between gap-2 text-muted-foreground">
+          <span>
+            {renewalDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          </span>
+          <span className="font-medium tabular-nums text-foreground">
+            {fmt(supplyline.amount)}
+            <span className="font-normal text-muted-foreground">
+              {' '}
+              / {CYCLE_LABELS[supplyline.billingCycle] ?? supplyline.billingCycle}
+            </span>
+          </span>
         </div>
       </button>
     </div>

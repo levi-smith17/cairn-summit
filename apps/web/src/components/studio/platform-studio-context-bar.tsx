@@ -1,10 +1,9 @@
 'use client'
 
-import { SidebarTrigger } from '@/components/ui/sidebar'
 import { StudioContextBar } from '@/components/studio/layout/studio-context-bar'
 import { PlatformHeaderActions } from '@/components/nav/platform/header-actions'
 
-/** Studio page header with Cairn sidebar trigger + global actions (search / pin / public manifest). */
+/** Studio page header with global actions (search / pin / public manifest) and optional page actions on the right. */
 export function PlatformStudioContextBar({
   'aria-label': ariaLabel,
   title,
@@ -18,7 +17,7 @@ export function PlatformStudioContextBar({
   subtitle?: string
   metadata?: React.ReactNode
   tabs?: React.ReactNode
-  /** Page-specific actions rendered before the global search/pin/manifest cluster. */
+  /** Page-specific actions (e.g. Add buttons) rendered after the global cluster, on the far right. */
   actions?: React.ReactNode
 }) {
   return (
@@ -26,10 +25,9 @@ export function PlatformStudioContextBar({
       aria-label={ariaLabel}
       title={title}
       subtitle={subtitle}
-      leading={<SidebarTrigger className="shrink-0" variant="outline" />}
       metadata={metadata}
       tabs={tabs}
-      actions={<PlatformHeaderActions extra={actions} />}
+      actions={<PlatformHeaderActions trailing={actions} />}
     />
   )
 }

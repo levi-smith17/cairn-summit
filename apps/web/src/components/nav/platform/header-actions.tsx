@@ -85,13 +85,18 @@ export function HeaderPublicManifest() {
   )
 }
 
-export function PlatformHeaderActions({ extra }: { extra?: React.ReactNode }) {
+export function PlatformHeaderActions({
+  trailing,
+}: {
+  /** Rendered after search/pin/manifest — typically primary Add buttons on the far right. */
+  trailing?: React.ReactNode
+}) {
   return (
     <div className="flex items-center gap-1.5 sm:gap-2">
-      {extra}
       <HeaderSearchTrigger />
       <HeaderInspectorPin />
       <HeaderPublicManifest />
+      {trailing}
     </div>
   )
 }

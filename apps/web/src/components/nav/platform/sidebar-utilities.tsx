@@ -33,7 +33,10 @@ export function SidebarUtilities() {
       type="button"
       variant="secondary"
       size={collapsed ? 'icon' : 'sm'}
-      className={cn('h-8 w-full', !collapsed && 'gap-1.5 px-2')}
+      className={cn(
+        'h-8',
+        collapsed ? 'w-full' : 'min-w-0 flex-1 gap-1.5 px-2',
+      )}
       onClick={toggleTerminology}
       aria-label={termsTooltip}
     >
@@ -47,7 +50,7 @@ export function SidebarUtilities() {
       type="button"
       variant="secondary"
       size="icon"
-      className="h-8 w-full"
+      className="h-8 w-8 shrink-0"
       onClick={() => setTheme(themeIsDark ? 'light' : 'dark')}
       aria-label={themeIsDark ? 'Light mode' : 'Dark mode'}
       disabled={!mounted}
@@ -63,7 +66,7 @@ export function SidebarUtilities() {
       variant="secondary"
       size="icon"
       className={cn(
-        'h-8 w-full',
+        'h-8 w-8 shrink-0',
         settingsActive && 'bg-sidebar-accent text-sidebar-accent-foreground',
       )}
     >
@@ -77,7 +80,7 @@ export function SidebarUtilities() {
     <div
       className={cn(
         'w-full',
-        collapsed ? 'flex flex-col items-stretch gap-1' : 'grid grid-cols-3 gap-1',
+        collapsed ? 'flex flex-col items-stretch gap-1' : 'flex items-center gap-1',
       )}
     >
       <Tooltip>

@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { BookOpen, LayoutList, Plus } from 'lucide-react'
+import { BookOpen, LayoutList } from 'lucide-react'
 import { PlatformStudioContextBar } from '@/components/studio/platform-studio-context-bar'
 import { StudioLayout } from '@/components/studio/layout/studio-layout'
+import { CatalogInspector } from '@/components/studio/catalog/catalog-inspector'
+import { ContextBarAddButton } from '@/components/studio/ui/context-bar-add-button'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useInspectorPin } from '@/contexts/inspector-pin-context'
@@ -23,7 +25,7 @@ interface LogClientProps {
   markers: any[]
 }
 
-type InspectorMode = 'new' | 'reorder'
+type InspectorMode = 'new' | 'reorder' | 'catalog'
 
 function sortLogs(a: any, b: any) {
   if (a.position != null && b.position != null) return a.position - b.position
@@ -169,6 +171,11 @@ export function LogsClient({ logs, trails, waypoints, markers }: LogClientProps)
     setInspectorEngaged(true)
   }
 
+  function openCatalog() {
+    setInspectorMode('catalog')
+    setInspectorEngaged(true)
+  }
+
   async function handleCreateLogbook(input: { trailId?: string; newTrailName?: string }) {
     setCreating(true)
     try {
@@ -233,7 +240,9 @@ export function LogsClient({ logs, trails, waypoints, markers }: LogClientProps)
   const activeInspectorMode =
     inspectorMode ?? (selectedBook && inspectorEngaged ? 'reorder' : null)
   const inspectorContentAvailable =
-    activeInspectorMode === 'new' || (activeInspectorMode === 'reorder' && Boolean(selectedBook))
+    activeInspectorMode === 'catalog' ||
+    activeInspectorMode === 'new' ||
+    (activeInspectorMode === 'reorder' && Boolean(selectedBook))
   const inspectorOpen = (inspectorPinned || inspectorEngaged) && inspectorContentAvailable
   const inspectorState = inspectorOpen
     ? 'open'
@@ -245,11 +254,13 @@ export function LogsClient({ logs, trails, waypoints, markers }: LogClientProps)
 
   const singular = terms.logs.slice(0, -1) || terms.logs
   const inspectorHint =
-    activeInspectorMode === 'new'
-      ? `Open the inspector to create a ${singular.toLowerCase()}`
-      : selectedBook
-        ? 'Open the inspector to reorder pages'
-        : `Select a ${terms.logbook.toLowerCase()}`
+    activeInspectorMode === 'catalog'
+      ? `Manage ${terms.trails.toLowerCase()} and ${terms.markers.toLowerCase()}`
+      : activeInspectorMode === 'new'
+        ? `Open the inspector to create a ${singular.toLowerCase()}`
+        : selectedBook
+          ? 'Open the inspector to reorder pages'
+          : `Select a ${terms.logbook.toLowerCase()}`
 
   return (
     <StudioLayout
@@ -278,21 +289,10 @@ export function LogsClient({ logs, trails, waypoints, markers }: LogClientProps)
                   <TooltipContent>Reorder pages</TooltipContent>
                 </Tooltip>
               ) : null}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant={activeInspectorMode === 'new' ? 'secondary' : 'ghost'}
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={openNewInspector}
-                    aria-label={`Add ${singular.toLowerCase()}`}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Add {singular.toLowerCase()}</TooltipContent>
-              </Tooltip>
+              <ContextBarAddButton
+                label={`Add ${singular}`}
+                onClick={openNewInspector}
+              />
             </>
           }
         />
@@ -305,6 +305,7 @@ export function LogsClient({ logs, trails, waypoints, markers }: LogClientProps)
           onSearchChange={setSearch}
           onSelectBook={selectBook}
           onNew={openNewInspector}
+          onOpenCatalog={openCatalog}
         />
       }
       canvas={
@@ -339,7 +340,15 @@ export function LogsClient({ logs, trails, waypoints, markers }: LogClientProps)
       inspectorState={inspectorState}
       inspectorHint={inspectorHint}
       inspector={
-        activeInspectorMode === 'new' ? (
+        activeInspectorMode === 'catalog' ? (
+          <CatalogInspector
+            initialTab="trails"
+            onClose={() => {
+              setInspectorEngaged(false)
+              setInspectorMode(null)
+            }}
+          />
+        ) : activeInspectorMode === 'new' ? (
           <LogsNewInspector
             trails={availableTrails}
             onCancel={handleCancelNew}
