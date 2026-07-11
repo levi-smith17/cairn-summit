@@ -243,7 +243,7 @@ export function LogsClient({ logs, trails, waypoints, markers }: LogClientProps)
     activeInspectorMode === 'catalog' ||
     activeInspectorMode === 'new' ||
     (activeInspectorMode === 'reorder' && Boolean(selectedBook))
-  const inspectorOpen = (inspectorPinned || inspectorEngaged) && inspectorContentAvailable
+  const inspectorOpen = inspectorPinned || (inspectorEngaged && inspectorContentAvailable)
   const inspectorState = inspectorOpen
     ? 'open'
     : inspectorContentAvailable || inspectorPinned
@@ -270,6 +270,7 @@ export function LogsClient({ logs, trails, waypoints, markers }: LogClientProps)
           aria-label={`${terms.logs} header`}
           title={terms.logs}
           subtitle={`${logbooks.length} ${terms.logbook.toLowerCase()}${logbooks.length === 1 ? '' : 's'}`}
+          showInspectorPin
           actions={
             <>
               {selectedBook ? (

@@ -228,8 +228,7 @@ export function BasecampClient({
     inspectorMode === 'waypoint' && (selectedWaypointId != null || selectedWaypointId === 'new')
   const showingCatalog = inspectorMode === 'catalog'
   const inspectorContentAvailable = showingWaypoint || showingCatalog
-  const inspectorOpen =
-    (inspectorPinned || inspectorEngaged) && inspectorContentAvailable
+  const inspectorOpen = inspectorPinned || (inspectorEngaged && inspectorContentAvailable)
   const inspectorState = inspectorOpen ? 'open' : 'hint'
 
   const inspectorHint = showingCatalog
@@ -244,6 +243,7 @@ export function BasecampClient({
           aria-label={terms.basecamp}
           title={terms.basecamp}
           subtitle={`${waypoints.length} ${terms.waypoints.toLowerCase()}`}
+          showInspectorPin
           actions={
             <ContextBarAddButton
               label={`Add ${waypointSingular.toLowerCase()}`}

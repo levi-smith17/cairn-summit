@@ -1,4 +1,5 @@
 import { Plus, Receipt } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { MarkerBadge } from '@/routes/waypoints/marker-badge'
 import { toDisplayMarker } from '@/lib/embedded-markers'
 import { getBurnReceiptUrl } from '@/lib/api/supplylines'
@@ -70,18 +71,23 @@ export function SelectableBurnRow({
 
 export function BurnGroupHeaderActions({
   onAdd,
+  label = 'Add burn',
 }: {
   onAdd: () => void
+  label?: string
 }) {
   return (
-    <button
+    <Button
       type="button"
+      variant="outline"
+      size="icon"
       data-inspectable
+      className="mt-0.5 h-9 w-9 shrink-0"
+      title={label}
+      aria-label={label}
       onClick={onAdd}
-      className="shrink-0 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-      aria-label="Add burn"
     >
-      <Plus className="h-3.5 w-3.5" />
-    </button>
+      <Plus className="h-4 w-4" />
+    </Button>
   )
 }
