@@ -5,13 +5,11 @@ import { getLogs } from '@/lib/api/logs'
 import { getTrails } from '@/lib/api/trails'
 import { getMarkers } from '@/lib/api/markers'
 import { getWaypoints } from '@/lib/api/waypoints'
-import { PageSkeleton } from '@/components/ui/page-skeleton'
-import { useTerminology } from '@/contexts/terminology-context'
+import { LogsStudioSkeleton } from '@/components/studio/ui/studio-skeletons'
 import { isInitialRouteLoad } from '@/hooks/use-route-ready'
 
 export default function Logs() {
     const { user } = useAuth()
-    const { terms } = useTerminology()
 
     const logsQuery = useQuery({
         queryKey: ['logs', user?.id],
@@ -38,7 +36,7 @@ export default function Logs() {
     })
 
     if (isInitialRouteLoad([logsQuery, trailsQuery, markersQuery, waypointsQuery])) {
-        return <PageSkeleton title={terms.logs} hasFilterBar />
+        return <LogsStudioSkeleton />
     }
 
     const logsData = logsQuery.data
@@ -87,7 +85,5 @@ export default function Logs() {
             trails={trails}
             waypoints={waypoints}
             markers={markers}
-            logsPerPage={25}
-        />
-    )
+        />    )
 }

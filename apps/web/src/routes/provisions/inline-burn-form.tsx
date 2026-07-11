@@ -38,11 +38,12 @@ interface Burn {
 interface Props {
   burn?: Burn
   tags: any[]
+  defaultMarkerId?: string
   onSaved: () => void
   onCancel: () => void
 }
 
-export function InlineBurnForm({ burn, tags, onSaved, onCancel }: Props) {
+export function InlineBurnForm({ burn, tags, defaultMarkerId, onSaved, onCancel }: Props) {
   const { saving, handleSubmit } = useFormStatus()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [receiptKey, setReceiptKey] = useState<string | null>(burn?.receiptUrl ?? null)
@@ -58,7 +59,8 @@ export function InlineBurnForm({ burn, tags, onSaved, onCancel }: Props) {
       amount: burn?.amount ?? 0,
       date: burn?.date?.split('T')[0] ?? new Date().toISOString().split('T')[0],
       notes: burn?.notes ?? '',
-      tagIds: burn?.markers?.map((t: any) => toMarkerId(t)).filter(Boolean) as string[] ?? [],
+      tagIds: burn?.markers?.map((t: any) => toMarkerId(t)).filter(Boolean) as string[]
+        ?? (defaultMarkerId ? [defaultMarkerId] : []),
     },
   })
 

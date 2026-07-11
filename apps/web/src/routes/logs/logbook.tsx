@@ -200,7 +200,7 @@ interface WaypointItem {
 }
 
 interface LogbookProps {
-  trailId: string
+  trailId: string | null
   trailName: string
   initialLogs: LogItem[]
   markers: any[]
@@ -418,7 +418,7 @@ export function Logbook({
         createdAt: newLog.createdAt,
         trailId: newLog.trailId,
         waypointId: newLog.waypointId,
-        trail: { id: trailId, name: trailName },
+        trail: trailId ? { id: trailId, name: trailName } : null,
         waypoint: null,
         markers: [],
       }

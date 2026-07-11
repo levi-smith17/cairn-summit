@@ -2,8 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/use-auth'
 import { getSignals } from '@/lib/api/signals'
 import { getSettings } from '@/lib/api/settings'
-import { PageSkeleton } from '@/components/ui/page-skeleton'
-import { useTerminology } from '@/contexts/terminology-context'
+import { SignalsStudioSkeleton } from '@/components/studio/ui/studio-skeletons'
 import { SignalsClient } from './signals/signals-client'
 
 const DEFAULT_SIGNAL_SETTINGS = {
@@ -18,7 +17,6 @@ const DEFAULT_SIGNAL_SETTINGS = {
 
 export default function Signals() {
   const { user } = useAuth()
-  const { terms } = useTerminology()
 
   const { data: signals = [], isLoading: signalsLoading } = useQuery({
     queryKey: ['signals', user?.id],
@@ -33,7 +31,7 @@ export default function Signals() {
     enabled: !!user,
   })
 
-  if (signalsLoading || settingsLoading) return <PageSkeleton title={terms.signals} />
+  if (signalsLoading || settingsLoading) return <SignalsStudioSkeleton />
 
   return (
     <SignalsClient

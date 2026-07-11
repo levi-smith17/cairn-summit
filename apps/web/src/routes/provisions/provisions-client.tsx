@@ -1,27 +1,31 @@
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Plus, ChevronLeft, ChevronRight, AlertTriangle, TrendingUp, Wallet, RefreshCw, Copy } from 'lucide-react'
+import { Plus, ChevronLeft, ChevronRight, Copy, Wallet, RefreshCw, TrendingUp } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { PlatformHeader } from '@/components/nav/platform/platform-header'
+import { PlatformStudioContextBar } from '@/components/studio/platform-studio-context-bar'
+import { StudioLayout } from '@/components/studio/layout/studio-layout'
+import { StudioDataToolbar } from '@/components/studio/layout/studio-data-toolbar'
+import { useInspectorPin } from '@/contexts/inspector-pin-context'
 import { useTerminology } from '@/contexts/terminology-context'
 import { useAuth } from '@/hooks/use-auth'
 import { useDebounce } from '@/hooks/use-debounce'
 import { isInitialRouteLoad, isSectionRefetching } from '@/hooks/use-route-ready'
-import { ProvisionsSkeleton, ListSectionSkeleton } from '@/components/ui/page-skeleton'
-import { ProvisionsFilterBar } from './provisions-filter-bar'
-import { BurnRow, type Burn } from './burn-row'
-import { InlineBurnForm } from './inline-burn-form'
-import { SupplylineRow, type Supplyline } from './supplyline-row'
-import { InlineSupplylineForm } from './inline-supplyline-form'
-import { CacheRow, type BudgetUtilization } from './cache-row'
-import { InlineCacheForm } from './inline-cache-form'
-import { carryOverCache, getBurnPage, getSupplylinesFiltered, getSupplylinesSummary } from '@/lib/api/supplylines'
+import { ListSectionSkeleton } from '@/components/ui/page-skeleton'
+import { ProvisionsStudioSkeleton } from '@/components/studio/ui/studio-skeletons'
+import { Input } from '@/components/ui/input'
+import { CustomSelect } from '@/components/ui/custom-select'
+import { MarkerPicker } from '@/components/ui/marker-picker'
+import { SelectableBurnRow, BurnGroupHeaderActions } from './selectable-burn-row'
+import { ProvisionsRail } from './provisions-rail'
+import { ProvisionsInspector } from './provisions-inspector'
+import type { Burn } from './burn-row'
+import type { Supplyline } from './supplyline-row'
+import type { BudgetUtilization } from './cache-row'
+import type { ProvisionsSelection } from './provisions-types'
+import { getBurnPage, getSupplylinesFiltered, getSupplylinesSummary } from '@/lib/api/supplylines'
 import { getMarkers } from '@/lib/api/markers'
-import { extractId } from '@/lib/utils'
+import { extractId, cn } from '@/lib/utils'
 import { markerDisplayName } from '@/lib/embedded-markers'
 
 interface Summary {
@@ -31,14 +35,6 @@ interface Summary {
   activeSupplylines: number
 }
 
-interface UpcomingRenewal {
-  id: string
-  name: string
-  amount: number
-  nextRenewal: string
-  billingCycle: string
-}
-
 const fmt = (n: number) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n)
 
@@ -46,6 +42,7 @@ export function ProvisionsClient() {
   const { user } = useAuth()
   const { terms } = useTerminology()
   const queryClient = useQueryClient()
+  const { pinned: inspectorPinned } = useInspectorPin()
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['provisions'] })
 
   const now = new Date()
@@ -54,20 +51,13 @@ export function ProvisionsClient() {
 
   const [search, setSearch] = useState('')
   const [markerFilter, setMarkerFilter] = useState('all')
-  const [activeFilter, setActiveFilter] = useState('all')
+  const [activeFilter, setActiveFilter] = useState('true')
   const debouncedSearch = useDebounce(search, 300)
-  const filtersActive = search !== '' || markerFilter !== 'all' || activeFilter !== 'all'
+  const surtrFiltersActive = search !== '' || markerFilter !== 'all'
+  const idunnFiltersActive = activeFilter !== 'true'
 
-  const [addingBurn, setAddingBurn] = useState(false)
+  const [selection, setSelection] = useState<ProvisionsSelection | null>(null)
   const [burnPage, setBurnPage] = useState(1)
-  const [addingProvision, setAddingProvision] = useState(false)
-  const [addingBudget, setAddingBudget] = useState(false)
-
-  function clearFilters() {
-    setSearch('')
-    setMarkerFilter('all')
-    setActiveFilter('all')
-  }
 
   const markersQuery = useQuery({
     queryKey: ['markers', user?.id],
@@ -97,11 +87,9 @@ export function ProvisionsClient() {
   })
 
   const supplylinesQuery = useQuery({
-    queryKey: ['provisions', 'supplylines', debouncedSearch, markerFilter, activeFilter],
+    queryKey: ['provisions', 'supplylines', activeFilter],
     queryFn: () =>
       getSupplylinesFiltered({
-        search: debouncedSearch || undefined,
-        markerId: markerFilter !== 'all' ? markerFilter : undefined,
         active: activeFilter !== 'all' ? activeFilter : undefined,
       }),
     enabled: !!user,
@@ -112,34 +100,66 @@ export function ProvisionsClient() {
     setBurnPage(1)
   }, [month, year, debouncedSearch, markerFilter])
 
-  if (isInitialRouteLoad([markersQuery, summaryQuery, burnQuery, supplylinesQuery])) {
-    return <ProvisionsSkeleton title={terms.provisions} />
-  }
+  const clearSelection = useCallback(() => setSelection(null), [])
 
-  const markers = (markersQuery.data ?? []).map((m: { sk: string; name: string; color: string; icon?: string | null }) => ({
-    id: extractId(m.sk),
-    name: m.name,
-    color: m.color,
-    icon: m.icon ?? null,
-  }))
+  const handleCanvasPointerDown = useCallback(
+    (event: React.PointerEvent) => {
+      if (inspectorPinned || selection == null) return
+      const target = event.target as HTMLElement
+      if (target.closest('[data-inspectable]')) return
+      clearSelection()
+    },
+    [inspectorPinned, selection, clearSelection],
+  )
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape' && !inspectorPinned && selection) {
+        clearSelection()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [inspectorPinned, selection, clearSelection])
+
+  const markers = useMemo(
+    () =>
+      (markersQuery.data ?? []).map((m: { sk: string; name: string; color: string; icon?: string | null }) => ({
+        id: extractId(m.sk),
+        name: m.name,
+        color: m.color,
+        icon: m.icon ?? null,
+      })),
+    [markersQuery.data],
+  )
 
   const summaryData = summaryQuery.data
   const summary = summaryData?.summary as Summary | undefined
-  const upcomingRenewals = (summaryData?.upcomingRenewals ?? []) as UpcomingRenewal[]
   const cacheUtilization = (summaryData?.cacheUtilization ?? []) as BudgetUtilization[]
 
   const burnItems = (burnQuery.data?.burn ?? []) as Burn[]
   const burnTotal = burnQuery.data?.total ?? 0
   const burnPageSize = burnQuery.data?.pageSize ?? 20
-  const supplylines = (supplylinesQuery.data ?? []) as Supplyline[]
 
-  const summaryRefetching = isSectionRefetching([summaryQuery])
+  const supplylines = useMemo(
+    () =>
+      [...((supplylinesQuery.data ?? []) as Supplyline[])].sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
+      ),
+    [supplylinesQuery.data],
+  )
+
+  const cacheByMarkerId = useMemo(
+    () => new Map(cacheUtilization.map((c) => [c.markerId, c])),
+    [cacheUtilization],
+  )
+
+  if (isInitialRouteLoad([markersQuery, summaryQuery, burnQuery, supplylinesQuery])) {
+    return <ProvisionsStudioSkeleton />
+  }
+
   const burnRefetching = isSectionRefetching([burnQuery])
   const supplylinesRefetching = isSectionRefetching([supplylinesQuery])
-
-  const visibleBudgets = markerFilter === 'all'
-    ? cacheUtilization
-    : cacheUtilization.filter(b => b.markerId === markerFilter)
 
   const prevMonth = () => {
     if (month === 1) { setMonth(12); setYear(year - 1) }
@@ -163,370 +183,383 @@ export function ProvisionsClient() {
     return acc
   }, {})
 
+  // Also show cache-only groups with no burns this page
+  const cacheOnlyGroups = cacheUtilization
+    .filter((c) => {
+      if (markerFilter !== 'all' && c.markerId !== markerFilter) return false
+      const label = c.marker.name.split('/').pop() ?? c.marker.name
+      return !groupedExpenses[label]
+    })
+    .map((c) => ({
+      label: c.marker.name.split('/').pop() ?? c.marker.name,
+      cache: c,
+    }))
+
+  const inspectorOpen = inspectorPinned || selection != null
+  const inspectorState = inspectorOpen ? 'open' : 'hint'
+
+  const selectedBurn =
+    selection?.kind === 'burn' ? burnItems.find((b) => b.id === selection.id) : undefined
+  const selectedSupplyline =
+    selection?.kind === 'supplyline'
+      ? supplylines.find((s) => s.id === selection.id)
+      : undefined
+  const selectedCache =
+    selection?.kind === 'cache'
+      ? cacheUtilization.find((c) => c.id === selection.id)
+      : selection?.kind === 'cache-marker'
+        ? cacheByMarkerId.get(selection.markerId)
+        : undefined
+
+  const selectedSupplylineId = selection?.kind === 'supplyline' ? selection.id : null
+  const selectedBurnId = selection?.kind === 'burn' ? selection.id : null
+
+  const markerOptions = [
+    { value: 'all', label: `All ${terms.markers.toLowerCase()}` },
+    ...markers.map((m) => ({ value: m.id, label: m.name })),
+  ]
+
   return (
-    <>
-      <PlatformHeader title={terms.provisions} />
-      <div className="flex flex-col flex-1 gap-4 p-4 min-h-0 overflow-y-auto lg:overflow-hidden">
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 shrink-0">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <RefreshCw className="h-4 w-4" /> {terms.supplylines}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {summaryRefetching ? (
-                <>
-                  <Skeleton className="h-7 w-20" />
-                  <Skeleton className="h-3 w-16 mt-1" />
-                </>
-              ) : (
-                <>
-                  <div className="text-2xl font-bold">{fmt(summary?.monthlySupplylineCost ?? 0)}</div>
-                  <p className="text-xs text-muted-foreground mt-1">{summary?.activeSupplylines ?? 0} active</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Wallet className="h-4 w-4" /> {monthName} {terms.burn}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {summaryRefetching ? (
-                <>
-                  <Skeleton className="h-7 w-20" />
-                  <Skeleton className="h-3 w-28 mt-1" />
-                </>
-              ) : (
-                <>
-                  <div className="text-2xl font-bold">{fmt(summary?.totalBurn ?? 0)}</div>
-                  <p className="text-xs text-muted-foreground mt-1">recorded this month</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" /> Total Month Spend
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {summaryRefetching ? (
-                <>
-                  <Skeleton className="h-7 w-20" />
-                  <Skeleton className="h-3 w-32 mt-1" />
-                </>
-              ) : (
-                <>
-                  <div className="text-2xl font-bold">{fmt(summary?.totalMonthSpend ?? 0)}</div>
-                  <p className="text-xs text-muted-foreground mt-1">{terms.supplylines.toLowerCase()} + {terms.burn.toLowerCase()}</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className={upcomingRenewals.length > 0 ? 'border-amber-500/50' : ''}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-500" /> Upcoming Renewals
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {summaryRefetching ? (
-                <>
-                  <Skeleton className="h-7 w-8" />
-                  <Skeleton className="h-3 w-20 mt-1" />
-                </>
-              ) : (
-                <>
-                  <div className="text-2xl font-bold">{upcomingRenewals.length}</div>
-                  <p className="text-xs text-muted-foreground mt-1">within 7 days</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {upcomingRenewals.length > 0 && !summaryRefetching && (
-          <div className="shrink-0 p-4 rounded-lg border border-amber-500/30 bg-amber-500/5">
-            <div className="flex items-center gap-2 mb-3">
-              <AlertTriangle className="h-4 w-4 text-amber-500" />
-              <span className="text-sm font-medium text-amber-700 dark:text-amber-400">Upcoming Renewals</span>
+    <StudioLayout
+      railLabel={terms.supplylines}
+      contextBar={
+        <PlatformStudioContextBar
+          aria-label={`${terms.provisions} header`}
+          title={terms.provisions}
+          subtitle={monthName}
+          metadata={
+            <div className="hidden items-center gap-3 text-xs text-muted-foreground sm:flex">
+              <span className="inline-flex items-center gap-1">
+                <RefreshCw className="h-3 w-3" />
+                {fmt(summary?.monthlySupplylineCost ?? 0)}
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <Wallet className="h-3 w-3" />
+                {fmt(summary?.totalBurn ?? 0)}
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <TrendingUp className="h-3 w-3" />
+                {fmt(summary?.totalMonthSpend ?? 0)}
+              </span>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {upcomingRenewals.map((r) => {
-                const daysUntil = Math.ceil((new Date(r.nextRenewal).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-                return (
-                  <Badge key={r.id} variant="outline" className="border-amber-500/40 text-amber-700 dark:text-amber-400">
-                    {r.name} — {fmt(r.amount)} in {daysUntil}d
-                  </Badge>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
-        <ProvisionsFilterBar
-          monthName={monthName}
-          onPrevMonth={prevMonth}
-          onNextMonth={nextMonth}
-          search={search}
-          onSearchChange={setSearch}
-          searchPlaceholder={`${terms.explore} ${terms.burn.toLowerCase()} & ${terms.supplylines.toLowerCase()}…`}
-          markerFilter={markerFilter}
-          onMarkerFilterChange={setMarkerFilter}
-          activeFilter={activeFilter}
-          onActiveFilterChange={setActiveFilter}
-          markers={markers}
-          markersLabel={terms.markers}
-          filtersActive={filtersActive}
-          onClearFilters={clearFilters}
+          }
+          actions={
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setSelection({ kind: 'new-burn' })}
+                  aria-label={`Add ${terms.burn}`}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Add {terms.burn}</TooltipContent>
+            </Tooltip>
+          }
         />
-
-        <div className="flex flex-col lg:flex-row lg:flex-1 gap-4 lg:overflow-hidden lg:min-h-0">
-
-          <div className="flex flex-col flex-1 min-w-0 rounded-lg border border-border bg-card lg:overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
-              <span className="text-sm font-semibold">{terms.burn}</span>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 w-7 p-0"
-                    onClick={() => setAddingBurn((v) => !v)}
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Add {terms.burn}</TooltipContent>
-              </Tooltip>
-            </div>
-
-            {addingBurn && (
-              <div className="shrink-0">
-                <InlineBurnForm
-                  tags={markers}
-                  onSaved={() => { setAddingBurn(false); refresh() }}
-                  onCancel={() => setAddingBurn(false)}
-                />
+      }
+      rail={
+        supplylinesRefetching && supplylines.length === 0 ? (
+          <div className="p-3"><ListSectionSkeleton rows={6} compact /></div>
+        ) : (
+          <ProvisionsRail
+            supplylines={supplylines}
+            selectedId={selectedSupplylineId}
+            activeFilter={activeFilter}
+            onActiveFilterChange={setActiveFilter}
+            filtersActive={idunnFiltersActive}
+            onClearFilters={() => setActiveFilter('true')}
+            onSelect={(id) => setSelection({ kind: 'supplyline', id })}
+            onAdd={() => setSelection({ kind: 'new-supplyline' })}
+            onRefresh={refresh}
+          />
+        )
+      }
+      canvas={
+        <div className="flex h-full min-h-0 flex-col" onPointerDown={handleCanvasPointerDown}>
+          <StudioDataToolbar
+            leading={
+              <div className="flex items-center gap-1">
+                <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={prevMonth}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="min-w-28 text-center text-sm font-medium tabular-nums">{monthName}</span>
+                <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={nextMonth}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
               </div>
-            )}
+            }
+            trailing={
+              <div className="flex min-w-0 items-center gap-1.5">
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={`${terms.explore} ${terms.burn.toLowerCase()}…`}
+                  className="h-8 w-36 sm:w-48"
+                />
+                <div className="hidden md:block">
+                  <CustomSelect
+                    value={markerFilter}
+                    onChange={setMarkerFilter}
+                    options={markerOptions}
+                    placeholder={`All ${terms.markers.toLowerCase()}`}
+                    placeholderValue="all"
+                    triggerClassName="h-8 w-36"
+                  />
+                </div>
+                <div className="md:hidden">
+                  <MarkerPicker
+                    markers={markers}
+                    selected={markerFilter === 'all' ? [] : [markerFilter]}
+                    onChange={(ids) => setMarkerFilter(ids[0] ?? 'all')}
+                    placeholder={terms.markers}
+                    singleSelect
+                  />
+                </div>
+                {surtrFiltersActive ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2 text-xs"
+                    onClick={() => {
+                      setSearch('')
+                      setMarkerFilter('all')
+                    }}
+                  >
+                    Clear
+                  </Button>
+                ) : null}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setSelection({ kind: 'cache-carry' })}
+                      aria-label="Copy cache from last month"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Copy {terms.cache.toLowerCase()} from last month</TooltipContent>
+                </Tooltip>
+              </div>
+            }
+          />
 
-            <div className="flex-1 lg:overflow-y-auto">
-              {burnRefetching ? (
-                <ListSectionSkeleton rows={5} />
-              ) : burnItems.length === 0 ? (
-                <div className="px-4 py-6 text-sm text-muted-foreground">No {terms.burn.toLowerCase()} found.</div>
-              ) : (
-                <div className="flex flex-col divide-y">
-                  {sortedExpenseGroups.map((label) => (
+          <div className="shrink-0 border-b border-border px-4 py-2 sm:px-6">
+            <span className="text-sm font-semibold">{terms.burn}</span>
+          </div>
+
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            {burnRefetching && burnItems.length === 0 ? (
+              <ListSectionSkeleton rows={8} />
+            ) : sortedExpenseGroups.length === 0 && cacheOnlyGroups.length === 0 ? (
+              <div className="px-4 py-8 text-sm text-muted-foreground sm:px-6">
+                No {terms.cache.toLowerCase()} or {terms.burn.toLowerCase()} found.
+              </div>
+            ) : (
+              <div className="flex flex-col">
+                {sortedExpenseGroups.map((label) => {
+                  const groupBurns = groupedExpenses[label]
+                  const firstMarkerId = groupBurns[0]?.markers[0]
+                    ? (groupBurns[0].markers[0] as any).marker?.id
+                      ?? (groupBurns[0].markers[0] as any).markerId
+                      ?? null
+                    : null
+                  const cache = firstMarkerId ? cacheByMarkerId.get(firstMarkerId) : undefined
+                  return (
                     <div key={label}>
-                      <div className="lg:sticky top-0 z-10 px-4 py-1.5 bg-muted/80 backdrop-blur-sm border-b flex items-center justify-between">
-                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                          {label}
-                          <span className="ml-2 font-normal normal-case">
-                            ({groupedExpenses[label].length})
-                          </span>
-                        </span>
-                        <span className="text-xs font-medium tabular-nums">
-                          {fmt(groupTotals[label])}
-                        </span>
+                      <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-muted/90 px-4 py-2 backdrop-blur-sm sm:px-6">
+                        <button
+                          type="button"
+                          data-inspectable
+                          onClick={() => {
+                            if (cache) setSelection({ kind: 'cache', id: cache.id })
+                            else if (firstMarkerId) setSelection({ kind: 'cache-marker', markerId: firstMarkerId })
+                            else setSelection({ kind: 'new-cache' })
+                          }}
+                          className="min-w-0 flex-1 text-left transition-colors hover:opacity-80"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                              {label}
+                              <span className="ml-2 font-normal normal-case">({groupBurns.length})</span>
+                            </span>
+                            <div className="flex shrink-0 items-center gap-3">
+                              {cache ? (
+                                <span className="text-xs tabular-nums text-muted-foreground">
+                                  {fmt(cache.spent)}{' '}
+                                  <span className="text-muted-foreground/70">/ {fmt(cache.limit)}</span>
+                                </span>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">
+                                  No {terms.cache.toLowerCase()}
+                                </span>
+                              )}
+                              <span className="text-xs font-medium tabular-nums">
+                                {fmt(groupTotals[label])}
+                              </span>
+                            </div>
+                          </div>
+                          {cache ? (
+                            <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-muted">
+                              <div
+                                className={cn(
+                                  'h-full rounded-full transition-all',
+                                  cache.utilization >= 100
+                                    ? 'bg-destructive'
+                                    : cache.utilization >= 80
+                                      ? 'bg-amber-500'
+                                      : 'bg-primary',
+                                )}
+                                style={{ width: `${Math.min(cache.utilization, 100)}%` }}
+                              />
+                            </div>
+                          ) : null}
+                        </button>
+                        <BurnGroupHeaderActions
+                          onAdd={() =>
+                            setSelection({
+                              kind: 'new-burn',
+                              markerId: firstMarkerId ?? undefined,
+                            })
+                          }
+                        />
                       </div>
-                      <div className="divide-y">
-                        {groupedExpenses[label].map((burn) => (
-                          <BurnRow
+                      <div className="divide-y divide-border">
+                        {groupBurns.map((burn) => (
+                          <SelectableBurnRow
                             key={burn.id}
                             burn={burn}
-                            tags={markers}
-                            onSaved={refresh}
-                            onDeleted={refresh}
+                            selected={selectedBurnId === burn.id}
+                            onSelect={() => setSelection({ kind: 'burn', id: burn.id })}
                           />
                         ))}
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                  )
+                })}
 
-            {burnTotal > burnPageSize && (
-              <div className="flex items-center justify-between px-4 py-2 border-t shrink-0">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() => setBurnPage(p => p - 1)}
-                  disabled={burnPage <= 1 || burnRefetching}
-                >
-                  <ChevronLeft className="h-3.5 w-3.5" />
-                </Button>
-                <span className="text-xs text-muted-foreground">
-                  {burnPage} / {Math.ceil(burnTotal / burnPageSize)}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() => setBurnPage(p => p + 1)}
-                  disabled={burnPage >= Math.ceil(burnTotal / burnPageSize) || burnRefetching}
-                >
-                  <ChevronRight className="h-3.5 w-3.5" />
-                </Button>
+                {cacheOnlyGroups.map(({ label, cache }) => (
+                  <div key={`cache-${cache.id}`}>
+                    <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-muted/90 px-4 py-2 backdrop-blur-sm sm:px-6">
+                      <button
+                        type="button"
+                        data-inspectable
+                        onClick={() => setSelection({ kind: 'cache', id: cache.id })}
+                        className="min-w-0 flex-1 text-left transition-colors hover:opacity-80"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                            {label}
+                          </span>
+                          <span className="text-xs tabular-nums text-muted-foreground">
+                            {fmt(cache.spent)}{' '}
+                            <span className="text-muted-foreground/70">/ {fmt(cache.limit)}</span>
+                          </span>
+                        </div>
+                        <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-muted">
+                          <div
+                            className={cn(
+                              'h-full rounded-full transition-all',
+                              cache.utilization >= 100
+                                ? 'bg-destructive'
+                                : cache.utilization >= 80
+                                  ? 'bg-amber-500'
+                                  : 'bg-primary',
+                            )}
+                            style={{ width: `${Math.min(cache.utilization, 100)}%` }}
+                          />
+                        </div>
+                      </button>
+                      <BurnGroupHeaderActions
+                        onAdd={() => setSelection({ kind: 'new-burn', markerId: cache.markerId })}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
 
-          <div className="w-full lg:w-112 shrink-0 flex flex-col gap-4">
-
-            <div className="rounded-lg border border-border bg-card overflow-hidden flex flex-col">
-              <div className="flex items-center justify-between px-3 py-2.5 border-b shrink-0">
-                <span className="text-sm font-semibold">{terms.supplylines}</span>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 w-7 p-0"
-                      onClick={() => setAddingProvision((v) => !v)}
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Add {terms.supplylines}</TooltipContent>
-                </Tooltip>
-              </div>
-
-              {addingProvision && (
-                <InlineSupplylineForm
-                  tags={markers}
-                  onSaved={() => { setAddingProvision(false); refresh() }}
-                  onCancel={() => setAddingProvision(false)}
-                />
-              )}
-
-              <div className="divide-y overflow-y-auto max-h-144">
-                {supplylinesRefetching ? (
-                  <ListSectionSkeleton rows={4} compact />
-                ) : supplylines.length === 0 ? (
-                  <div className="px-3 py-4 text-sm text-muted-foreground">No {terms.supplylines.toLowerCase()} found.</div>
-                ) : (
-                  supplylines.map((p) => (
-                    <SupplylineRow
-                      key={p.id}
-                      supplyline={p}
-                      tags={markers}
-                      onSaved={refresh}
-                      onDeleted={refresh}
-                    />
-                  ))
-                )}
-              </div>
+          {burnTotal > burnPageSize && (
+            <div className="flex items-center justify-between border-t px-4 py-2 shrink-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => setBurnPage((p) => p - 1)}
+                disabled={burnPage <= 1 || burnRefetching}
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                {burnPage} / {Math.ceil(burnTotal / burnPageSize)}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => setBurnPage((p) => p + 1)}
+                disabled={burnPage >= Math.ceil(burnTotal / burnPageSize) || burnRefetching}
+              >
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Button>
             </div>
-
-            <div className="rounded-lg border border-border bg-card overflow-hidden flex flex-col">
-              <div className="flex items-center justify-between px-3 py-2.5 border-b shrink-0">
-                <span className="text-sm font-semibold">{terms.cache}</span>
-                <div className="flex items-center gap-1">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 w-7 p-0"
-                        onClick={async () => { await carryOverCache({ month, year }); refresh() }}
-                      >
-                        <Copy className="h-3.5 w-3.5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Copy from last month</TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 w-7 p-0"
-                        onClick={() => setAddingBudget((v) => !v)}
-                      >
-                        <Plus className="h-3.5 w-3.5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Add {terms.cache}</TooltipContent>
-                  </Tooltip>
-                </div>
-              </div>
-
-              {addingBudget && (
-                <InlineCacheForm
-                  markers={markers}
-                  month={month}
-                  year={year}
-                  onSaved={() => { setAddingBudget(false); refresh() }}
-                  onCancel={() => setAddingBudget(false)}
-                />
-              )}
-
-              <div className="divide-y overflow-y-auto max-h-96">
-                {summaryRefetching ? (
-                  <ListSectionSkeleton rows={3} compact />
-                ) : visibleBudgets.length === 0 ? (
-                  <div className="px-3 py-4 text-sm text-muted-foreground">No {terms.cache.toLowerCase()} set for this month.</div>
-                ) : (
-                  visibleBudgets.map((b) => (
-                    <CacheRow
-                      key={b.id}
-                      cache={b}
-                      markers={markers}
-                      month={month}
-                      year={year}
-                      onSaved={refresh}
-                      onDeleted={refresh}
-                    />
-                  ))
-                )}
-              </div>
-
-              {visibleBudgets.length > 0 && !summaryRefetching && (() => {
-                const totalSpent = visibleBudgets.reduce((s, b) => s + b.spent, 0)
-                const totalLimit = visibleBudgets.reduce((s, b) => s + b.limit, 0)
-                const totalPct = totalLimit > 0 ? (totalSpent / totalLimit) * 100 : 0
-                return (
-                  <div className="px-3 py-2 border-t bg-muted/30">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-medium text-muted-foreground">Total</span>
-                      <span className="text-xs tabular-nums font-medium">
-                        {fmt(totalSpent)} <span className="text-muted-foreground font-normal">/ {fmt(totalLimit)}</span>
-                      </span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all ${totalPct >= 100 ? 'bg-destructive' :
-                          totalPct >= 80 ? 'bg-amber-500' :
-                            'bg-primary'
-                          }`}
-                        style={{ width: `${Math.min(totalPct, 100)}%` }}
-                      />
-                    </div>
-                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                      <span>{Math.round(totalPct)}% used</span>
-                      <span>{fmt(Math.max(totalLimit - totalSpent, 0))} left</span>
-                    </div>
-                  </div>
-                )
-              })()}
-            </div>
-
-          </div>
+          )}
         </div>
-      </div>
-    </>
+      }
+      inspectorState={inspectorState}
+      inspectorHint={`Select ${terms.burn.toLowerCase()}, ${terms.supplylines.toLowerCase()}, or ${terms.cache.toLowerCase()} to inspect`}
+      inspector={
+        selection ? (
+          <ProvisionsInspector
+            selection={selection}
+            markers={markers}
+            month={month}
+            year={year}
+            burn={selectedBurn}
+            supplyline={selectedSupplyline}
+            cache={selectedCache}
+            onSaved={() => {
+              refresh()
+              if (
+                selection.kind === 'new-burn' ||
+                selection.kind === 'new-supplyline' ||
+                selection.kind === 'new-cache' ||
+                selection.kind === 'cache-marker' ||
+                selection.kind === 'cache-carry'
+              ) {
+                clearSelection()
+              }
+            }}
+            onDeleted={() => {
+              refresh()
+              clearSelection()
+            }}
+            onCancel={clearSelection}
+          />
+        ) : inspectorPinned ? (
+          <div className="flex h-full flex-col">
+            <div className="border-b border-border px-5 py-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Inspector
+              </p>
+            </div>
+            <p className="px-5 py-8 text-sm leading-relaxed text-muted-foreground">
+              Select {terms.burn.toLowerCase()}, {terms.supplylines.toLowerCase()}, or{' '}
+              {terms.cache.toLowerCase()} to edit.
+            </p>
+          </div>
+        ) : null
+      }
+    />
   )
 }

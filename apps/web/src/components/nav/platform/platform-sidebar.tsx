@@ -3,6 +3,7 @@
 import { useSidebar } from "@/components/ui/sidebar"
 import {
   Bookmark,
+  BookOpen,
   CalendarDays,
   Folder,
   LayoutDashboard,
@@ -11,7 +12,6 @@ import {
   MessageSquare,
   NotebookPen,
   Rocket,
-  Search,
   Tag,
   TreePine,
   Users,
@@ -21,6 +21,7 @@ import type { ComponentType } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import { FooterNav } from '@/components/nav/footer'
 import { PlatformWayfarerMenu } from "@/components/nav/platform/platform-wayfarer-menu"
+import { SidebarUtilities } from "@/components/nav/platform/sidebar-utilities"
 import { useTerminology } from '@/contexts/terminology-context'
 import {
   Sidebar,
@@ -62,6 +63,7 @@ function buildNavItems(terms: Terms): { group: string; items: NavItem[] }[] {
         { title: terms.waypoints, url: '/waypoints', icon: Bookmark, tooltip: terms.waypoints },
         { title: terms.logs, url: '/logs', icon: NotebookPen, tooltip: terms.logs },
         { title: terms.provisions, url: '/provisions', icon: Wallet, tooltip: terms.provisions },
+        { title: terms.manifest, url: '/manifest', icon: BookOpen, tooltip: terms.manifest },
         { title: terms.guides, url: '/guides', icon: LayersIcon, tooltip: terms.guides },
         { title: terms.trails, url: '/trails', icon: Folder, tooltip: terms.trails },
         { title: terms.markers, url: '/markers', icon: Tag, tooltip: terms.markers },
@@ -95,10 +97,9 @@ interface PlatformSidebarProps extends React.ComponentProps<typeof Sidebar> {
     itinerary: number
     signals: number
   }
-  terms?: Terms
 }
 
-export function PlatformSidebar({ wayfarer, badges, terms, ...props }: PlatformSidebarProps) {
+export function PlatformSidebar({ wayfarer, badges, ...props }: PlatformSidebarProps) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const { state } = useSidebar()
@@ -126,27 +127,6 @@ export function PlatformSidebar({ wayfarer, badges, terms, ...props }: PlatformS
           <div className="flex items-center justify-center py-2">
             <img src="/cairn-summit.png" alt="Cairn Summit Logo" height={180} width={180} />
           </div>
-          {/* Global search trigger */}
-          <div className={collapsed ? '' : 'px-2 pb-1'}>
-            <button
-              onClick={() => window.dispatchEvent(new CustomEvent('cairn:open-search'))}
-              className={`
-                flex items-center gap-2 w-full rounded-md border border-border/60
-                px-2.5 py-1.5 text-xs text-muted-foreground
-                hover:text-foreground hover:bg-muted/50 transition-colors
-                ${collapsed ? 'justify-center' : ''}
-              `}
-              title="Search (⌘K)"
-            >
-              <Search className="h-3.5 w-3.5 shrink-0" />
-              {!collapsed && (
-                <>
-                  <span className="flex-1 text-left">{uiTerms.explore}…</span>
-                  <kbd className="text-[10px] font-mono opacity-50">⌘K</kbd>
-                </>
-              )}
-            </button>
-          </div>
         </SidebarHeader>
         <SidebarContent>
           {navItems.filter(({ group }) => group !== 'Admin' || wayfarer.isAdmin).map(({ group, items }) => (
@@ -154,7 +134,7 @@ export function PlatformSidebar({ wayfarer, badges, terms, ...props }: PlatformS
                 <SidebarGroupLabel>{group}</SidebarGroupLabel>
                 <SidebarMenu>
                   {items.map(({ title, url, icon: Icon, tooltip }) => {
-                    const isActive = pathname === url
+                    const isActive = pathname === url || (url !== '/' && pathname.startsWith(url + '/'))
                     const badge = getBadge(url)
                     return (
                         <SidebarMenuItem key={url}>
@@ -183,8 +163,9 @@ export function PlatformSidebar({ wayfarer, badges, terms, ...props }: PlatformS
               </SidebarGroup>
             ))}
         </SidebarContent>
-        <SidebarFooter>
-          <PlatformWayfarerMenu wayfarer={wayfarer} terms={terms} />
+        <SidebarFooter className="gap-2">
+          <SidebarUtilities />
+          <PlatformWayfarerMenu wayfarer={wayfarer} />
           {!collapsed && <FooterNav />}
         </SidebarFooter>
         <SidebarRail />
