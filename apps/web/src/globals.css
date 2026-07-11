@@ -112,6 +112,11 @@
   --color-error: #8B0000;
   --color-error-foreground: #FFB3B3;
   --color-header: var(--header);
+  --color-muted-hover: var(--muted-hover);
+  --color-column-shell: var(--column-shell);
+  --color-column-rail: var(--column-rail);
+  --color-column-inspector: var(--column-inspector);
+  --color-context-bar: var(--context-bar);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -159,6 +164,11 @@
   --sidebar-border: hsl(152 8% 90%);
   --sidebar-ring: oklch(0.708 0 0);
   --header: oklch(0.93 0.05 127);
+  --muted-hover: hsl(152 10% 92%);
+  --column-shell: hsl(152 15% 98%);
+  --column-rail: hsl(152 15% 100%);
+  --column-inspector: hsl(152 15% 100%);
+  --context-bar: hsl(152 18% 99%);
 }
 
 .dark {
@@ -198,6 +208,11 @@
   --sidebar-border: hsl(152 8% 16%);
   --sidebar-ring: oklch(0.556 0 0);
   --header: oklch(0.35 0.08 127);
+  --muted-hover: hsl(152 8% 13%);
+  --column-shell: hsl(152 9% 6.5%);
+  --column-rail: hsl(152 8% 9%);
+  --column-inspector: hsl(152 8% 9%);
+  --context-bar: hsl(152 10% 5.5%);
 }
 
 @layer base {

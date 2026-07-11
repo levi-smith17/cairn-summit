@@ -1,11 +1,8 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/use-auth'
 import {
-  BookOpen,
-  BookUser,
   ChevronsUpDown,
   LogOut,
-  Settings,
 } from "lucide-react"
 import {
   Avatar,
@@ -15,7 +12,6 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -27,7 +23,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { type Terms } from '@/lib/terminology'
 
 interface PlatformWayfarerMenuProps {
   wayfarer: {
@@ -37,10 +32,9 @@ interface PlatformWayfarerMenuProps {
     avatar: string | null
     isAdmin: boolean
   }
-  terms?: Terms
 }
 
-export function PlatformWayfarerMenu({ wayfarer, terms }: PlatformWayfarerMenuProps) {
+export function PlatformWayfarerMenu({ wayfarer }: PlatformWayfarerMenuProps) {
   const { isMobile, setOpenMobile } = useSidebar()
   const navigate = useNavigate()
   const { signOut } = useAuth()
@@ -49,6 +43,13 @@ export function PlatformWayfarerMenu({ wayfarer, terms }: PlatformWayfarerMenuPr
     if (isMobile) setOpenMobile(false)
     navigate(url)
   }
+
+  const initials = (wayfarer.name ?? wayfarer.email ?? 'CN')
+    .split(/\s+/)
+    .map(part => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
 
   return (
       <SidebarMenu>
@@ -61,7 +62,7 @@ export function PlatformWayfarerMenu({ wayfarer, terms }: PlatformWayfarerMenuPr
               >
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={wayfarer.avatar ?? undefined} alt={wayfarer.name ?? undefined} />
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{wayfarer.name}</span>
@@ -80,7 +81,7 @@ export function PlatformWayfarerMenu({ wayfarer, terms }: PlatformWayfarerMenuPr
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                   <Avatar className="h-8 w-8 rounded-lg">
                     <AvatarImage src={wayfarer.avatar ?? undefined} alt={wayfarer.name ?? undefined} />
-                    <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                    <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-medium">{wayfarer.name}</span>
@@ -88,30 +89,6 @@ export function PlatformWayfarerMenu({ wayfarer, terms }: PlatformWayfarerMenuPr
                   </div>
                 </div>
               </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                <DropdownMenuLabel className="p-0 font-normal">
-                  My {terms?.manifest ?? 'Manifest'}
-                </DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => go('/manifest')}>
-                  <BookOpen className="h-4 w-4" />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => wayfarer.username && window.open('/manifest/' + wayfarer.username, '_blank')}
-                  disabled={!wayfarer.username}
-                >
-                  <BookUser className="h-4 w-4" />
-                  View Public
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                <DropdownMenuItem onClick={() => go('/settings')}>
-                  <Settings className="h-4 w-4" />
-                  Settings
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => { signOut(); go('/login') }}>
                 <LogOut className="h-4 w-4" />

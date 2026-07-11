@@ -27,17 +27,18 @@ interface Props {
   markers: any[]
   month: number
   year: number
+  defaultMarkerId?: string
   onSaved: () => void
   onCancel: () => void
 }
 
-export function InlineCacheForm({ cache, markers, month, year, onSaved, onCancel }: Props) {
+export function InlineCacheForm({ cache, markers, month, year, defaultMarkerId, onSaved, onCancel }: Props) {
   const { saving, handleSubmit } = useFormStatus()
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      markerId: cache?.markerId ?? '',
+      markerId: cache?.markerId ?? defaultMarkerId ?? '',
       limit: cache?.limit ?? undefined,
     },
   })
