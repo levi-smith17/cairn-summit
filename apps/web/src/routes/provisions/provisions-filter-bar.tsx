@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { ChevronLeft, ChevronRight, Copy, X } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Copy } from 'lucide-react'
 import { ContextBarSearch } from '@/components/studio/layout/context-bar-search'
 import {
   FilterPaletteField,
   FilterPaletteStack,
 } from '@/components/studio/layout/filter-palette-field'
 import { STUDIO_CONTEXT_BAR_CLASS } from '@/components/studio/layout/studio-data-toolbar'
+import { StudioPagination } from '@/components/studio/ui/studio-pagination'
 import { ToolbarTooltip } from '@/components/studio/ui/toolbar-tooltip'
 import { MarkerPicker } from '@/components/ui/marker-picker'
 import { useTerminology } from '@/contexts/terminology-context'
@@ -46,63 +46,34 @@ export function ProvisionsFilterBar({
   return (
     <div className={cn(STUDIO_CONTEXT_BAR_CLASS)}>
       <div className="flex w-full min-w-0 items-center gap-2">
-        <div className="flex h-8 shrink-0 items-center gap-0.5 rounded-md border border-border">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={onPrevMonth}
-            aria-label="Previous month"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="min-w-28 px-1 text-center text-sm font-medium tabular-nums">{monthName}</span>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={onNextMonth}
-            aria-label="Next month"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-
-        {filtersActive ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 shrink-0 gap-1.5 text-sm"
-            onClick={() => {
-              onClearFilters()
-              setSearchExpanded(false)
-            }}
-          >
-            <X className="h-3.5 w-3.5" />
-            Clear
-          </Button>
-        ) : null}
+        <span className="shrink-0 text-sm font-semibold text-foreground">{terms.burn}</span>
+        <StudioPagination
+          className="shrink-0"
+          aria-label="Month"
+          label={monthName}
+          onPrev={onPrevMonth}
+          onNext={onNextMonth}
+          canGoPrev
+          canGoNext
+          prevLabel="Previous month"
+          nextLabel="Next month"
+        />
 
         <div className="ml-auto flex shrink-0 items-center gap-2">
           <ContextBarSearch
             expanded={searchExpanded}
-            onExpandedChange={(open) => {
-              setSearchExpanded(open)
-              if (!open) onSearchChange('')
-            }}
+            onExpandedChange={setSearchExpanded}
             query={search}
             onQueryChange={onSearchChange}
             placeholder={`Filter ${terms.burn}…`}
             tooltipLabel={`Filter ${terms.burn}`}
             triggerIcon="filter"
-            active={markerFilter !== 'all'}
+            active={filtersActive}
             onClearAll={onClearFilters}
             expandedPanel={
               markers.length > 0 ? (
                 <FilterPaletteStack>
-                  <FilterPaletteField label={terms.markers}>
+                  <FilterPaletteField label={terms.markers.slice(0, -1) || terms.markers}>
                     <MarkerPicker
                       markers={markers}
                       selected={markerFilter !== 'all' ? [markerFilter] : []}

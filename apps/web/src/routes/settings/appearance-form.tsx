@@ -31,14 +31,19 @@ function SettingRow({ label, description, control }: { label: string; descriptio
 const LANDING_PAGES = [
   { value: '/basecamp',   label: 'Basecamp' },
   { value: '/itinerary',  label: 'Itinerary' },
-  { value: '/waypoints',  label: 'Waypoints' },
   { value: '/logs',       label: 'Logs' },
   { value: '/provisions', label: 'Provisions' },
 ]
 
 export function AppearanceForm({ defaultValues }: AppearanceFormProps) {
   const { saving, saved, error, handleSubmit } = useFormStatus()
-  const [values, setValues] = useState<AppearanceValues>(defaultValues)
+  const [values, setValues] = useState<AppearanceValues>(() => ({
+    ...defaultValues,
+    defaultLandingPage:
+      defaultValues.defaultLandingPage === '/waypoints'
+        ? '/basecamp'
+        : defaultValues.defaultLandingPage,
+  }))
 
   function set<K extends keyof AppearanceValues>(key: K, value: AppearanceValues[K]) {
     setValues(prev => ({ ...prev, [key]: value }))

@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useQueryClient } from '@tanstack/react-query'
-import { Check, ChevronLeft, Loader2, Plus, X } from 'lucide-react'
+import { Check, Loader2, Plus, X } from 'lucide-react'
 import {
   Form,
   FormControl,
@@ -17,7 +17,10 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { MarkerPicker } from '@/components/ui/marker-picker'
-import { InspectorFormActions } from '@/components/studio/ui/inspector-form-actions'
+import {
+  InspectorFormActions,
+  InspectorFormHeader,
+} from '@/components/studio/ui/inspector-form-actions'
 import { useFormStatus } from '@/hooks/use-form-status'
 import { createWaypoint, updateWaypoint, deleteWaypoint, fetchWaypointMeta } from '@/lib/api/waypoints'
 import { createTrail } from '@/lib/api/trails'
@@ -188,21 +191,11 @@ export function WaypointForm({ waypoint, folders, tags, defaultTrailId, onBack, 
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
-      {/* Header */}
-      <div className="flex shrink-0 items-center justify-between border-b px-4 py-3">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={onBack}
-            className="text-muted-foreground transition-colors hover:text-foreground md:hidden"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <span className="text-sm font-medium">
-            {waypoint ? `Edit ${terms.waypoints.slice(0, -1)}` : `Add ${terms.waypoints.slice(0, -1)}`}
-          </span>
-        </div>
-      </div>
+      <InspectorFormHeader
+        title={waypoint ? `Edit ${terms.waypoints.slice(0, -1)}` : `Add ${terms.waypoints.slice(0, -1)}`}
+        onBack={onBack}
+        showBack
+      />
 
       {/* Form */}
       <div className="min-h-0 flex-1 overflow-y-auto p-4">

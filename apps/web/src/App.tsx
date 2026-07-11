@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/sonner'
 import { TerminologyProvider } from '@/contexts/terminology-context'
 import ProtectedRoute from '@/components/auth/protected-route'
 import PlatformLayout from '@/components/nav/platform/layout'
+import { useAuth } from '@/hooks/use-auth'
 
 // Public Routes
 import Home from '@/routes/home'
@@ -17,7 +18,6 @@ import Privacy from '@/routes/privacy'
 import PrivacyContact from './routes/privacy-contact/page'
 import Terms from '@/routes/terms'
 import Thread from '@/routes/thread'
-import ManifestPublic from '@/routes/manifest-public'
 import ManifestPublicContact from '@/routes/manifest-public/contact'
 import ManifestPublicJourney from '@/routes/manifest-public/journey'
 
@@ -30,15 +30,18 @@ import GuideTraverse from '@/routes/guides/guide-traverse'
 import Itinerary from '@/routes/itinerary'
 import Logs from '@/routes/logs'
 import ManifestEdit from '@/routes/manifest-edit'
-import Markers from '@/routes/markers'
 import NotFound from '@/routes/not-found'
 import Provisions from '@/routes/provisions'
 import Settings from '@/routes/settings'
 import Headwaters from '@/routes/headwaters'
 import Starfield from '@/routes/starfield'
 import Signals from '@/routes/signals'
-import Trails from '@/routes/trails'
-import Waypoints from '@/routes/waypoints'
+
+/** Full platform nav when logged in; limited public sidebar when anonymous. */
+function AdaptivePlatformLayout() {
+    const { user } = useAuth()
+    return <PlatformLayout mode={user ? 'full' : 'public'} />
+}
 
 export default function App() {
     return (
@@ -51,10 +54,13 @@ export default function App() {
             <TooltipProvider>
                 <TerminologyProvider>
                     <Routes>
-                        {/* Public shell — sidebar always present (limited nav) */}
-                        <Route element={<PlatformLayout mode="public" />}>
+                        {/* Adaptive shell — full nav when logged in, Outpost-only when anonymous */}
+                        <Route element={<AdaptivePlatformLayout />}>
                             <Route path="/" element={<Home />} />
                             <Route path="/outpost" element={<Navigate to="/" replace />} />
+                            <Route path="/manifest/:username" element={<Home />} />
+                            <Route path="/manifest/:username/contact" element={<ManifestPublicContact />} />
+                            <Route path="/manifest/:username/journey" element={<ManifestPublicJourney />} />
                             <Route path="/privacy" element={<Privacy />} />
                             <Route path="/privacy-contact" element={<PrivacyContact />} />
                             <Route path="/terms" element={<Terms />} />
@@ -65,9 +71,6 @@ export default function App() {
                         <Route path="/signup" element={<Signup />} />
                         <Route path="/verify-email" element={<VerifyEmail />} />
                         <Route path="/forgot-password" element={<ForgotPassword />} />
-                        <Route path="/manifest/:username" element={<ManifestPublic />} />
-                        <Route path="/manifest/:username/contact" element={<ManifestPublicContact />} />
-                        <Route path="/manifest/:username/journey" element={<ManifestPublicJourney />} />
                         <Route path="/invite/:token" element={<Invite />} />
                         <Route path="/thread/:token" element={<Thread />} />
 
@@ -76,14 +79,11 @@ export default function App() {
                             <Route element={<PlatformLayout mode="full" />}>
                                 <Route path="/admin" element={<Admin />} />
                                 <Route path="/basecamp" element={<Basecamp />} />
-                                <Route path="/waypoints" element={<Waypoints />} />
                                 <Route path="/signals" element={<Signals />} />
                                 <Route path="/logs" element={<Logs />} />
                                 <Route path="/guides" element={<Guides />} />
                                 <Route path="/guides/:guideId/pass" element={<GuidePass />} />
                                 <Route path="/guides/traverse" element={<GuideTraverse />} />
-                                <Route path="/trails" element={<Trails />} />
-                                <Route path="/markers" element={<Markers />} />
                                 <Route path="/provisions" element={<Provisions />} />
                                 <Route path="/itinerary" element={<Itinerary />} />
                                 <Route path="/manifest" element={<ManifestEdit />} />

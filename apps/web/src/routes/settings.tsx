@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/hooks/use-auth'
 import { SettingsClient } from './settings/settings-client'
-import { SettingsSkeleton } from '@/components/ui/page-skeleton'
+import { StudioPageSkeleton } from '@/components/studio/ui/studio-skeletons'
 import { getSettings } from '@/lib/api/settings'
 
 const DEFAULTS = {
@@ -61,7 +61,7 @@ export default function Settings() {
   }
 
   if (settingsQuery.isPending && settingsQuery.data === undefined) {
-    return <SettingsSkeleton />
+    return <StudioPageSkeleton />
   }
 
   const settings = settingsQuery.data

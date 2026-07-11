@@ -100,7 +100,7 @@ export function TrailSection({
             <Button
               variant="ghost"
               className="h-6 px-1 gap-0.5 text-xs font-normal text-muted-foreground shrink-0"
-              onClick={() => navigate(`/waypoints?trailId=${trail.id}`)}
+              onClick={() => navigate(`/basecamp?trailId=${trail.id}`)}
             >
               <Bookmark className="h-3 w-3" />
               {totalWaypointCount}

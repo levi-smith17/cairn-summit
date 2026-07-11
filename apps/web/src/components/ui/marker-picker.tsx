@@ -4,6 +4,7 @@ import { useState, useMemo, useRef, useEffect } from 'react'
 import { Check, ChevronRight, Search, Tag, X, ArrowLeft } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import {
   buildMarkerTree,
   getNodesAtPath,
@@ -21,12 +22,15 @@ interface MarkerPickerProps {
   onChange: (ids: string[]) => void
   placeholder?: string
   align?: 'start' | 'center' | 'end'
-  /** Compact mode — small trigger button, used inside tables / filter bars */
+  /** Compact mode — small dashed trigger, used inside dense tables */
   compact?: boolean
+  /** Solid toolbar trigger — matches CustomSelect / filter palette chrome */
+  toolbar?: boolean
   /** Single-select mode — selecting a leaf replaces the selection and closes the popover */
   singleSelect?: boolean
   /** Start drill-down at this path instead of the root (e.g. ['Provisions']) */
   initialPath?: string[]
+  triggerClassName?: string
 }
 
 export function MarkerPicker({
@@ -36,8 +40,10 @@ export function MarkerPicker({
   placeholder = 'Markers',
   align = 'start',
   compact = false,
+  toolbar = false,
   singleSelect = false,
   initialPath,
+  triggerClassName,
 }: MarkerPickerProps) {
   const [open, setOpen] = useState(false)
   const [path, setPath] = useState<string[]>(initialPath ?? [])
@@ -116,14 +122,18 @@ export function MarkerPicker({
   const selectedMarkers = markers.filter(m => selected.includes(m.id))
   const triggerContent = (() => {
     if (selectedMarkers.length === 0) {
-      return <span className="text-muted-foreground">{placeholder}</span>
+      return (
+        <span className={toolbar ? 'text-foreground' : 'text-muted-foreground'}>
+          {placeholder}
+        </span>
+      )
     }
     if (singleSelect) {
       const m = selectedMarkers[0]
       return (
-        <span className="flex items-center gap-1.5 min-w-0">
+        <span className="flex min-w-0 items-center gap-1.5">
           <span
-            className="inline-block h-2 w-2 rounded-full shrink-0"
+            className="inline-block h-2 w-2 shrink-0 rounded-full"
             style={{ backgroundColor: m.color }}
           />
           <span className="truncate">{m.name ? m.name.split('/').pop() : placeholder}</span>
@@ -133,7 +143,7 @@ export function MarkerPicker({
     const dots = selectedMarkers.map(m => (
       <span
         key={m.id}
-        className="inline-block h-2 w-2 rounded-full shrink-0"
+        className="inline-block h-2 w-2 shrink-0 rounded-full"
         style={{ backgroundColor: m.color }}
       />
     ))
@@ -142,8 +152,8 @@ export function MarkerPicker({
         ? selectedMarkers.map(m => (m.name ? m.name.split('/').pop() : m.id)).join(', ')
         : `${selectedMarkers.length} selected`
     return (
-      <span className="flex items-center gap-1.5 min-w-0">
-        <span className="flex items-center gap-0.5 shrink-0">{dots}</span>
+      <span className="flex min-w-0 items-center gap-1.5">
+        <span className="flex shrink-0 items-center gap-0.5">{dots}</span>
         <span className="truncate">{label}</span>
       </span>
     )
@@ -152,19 +162,33 @@ export function MarkerPicker({
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
-        {compact ? (
-          <button className="flex items-center gap-1.5 rounded border border-dashed border-border px-2 py-1 text-xs text-muted-foreground hover:bg-muted/50 transition-colors min-w-[72px] w-full">
-            <span className="flex-1 text-left truncate">{triggerContent}</span>
+        {toolbar ? (
+          <button
+            type="button"
+            className={cn(
+              'flex h-8 w-full min-w-[72px] items-center gap-1.5 rounded-md border border-border bg-input px-2.5 text-xs font-medium text-foreground transition-colors hover:bg-muted-hover',
+              triggerClassName,
+            )}
+          >
+            <span className="min-w-0 flex-1 truncate text-left">{triggerContent}</span>
+            <ChevronRight className="h-3 w-3 shrink-0 rotate-90 opacity-70" />
+          </button>
+        ) : compact ? (
+          <button
+            type="button"
+            className="flex min-w-[72px] w-full items-center gap-1.5 rounded border border-dashed border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted/50"
+          >
+            <span className="min-w-0 flex-1 truncate text-left">{triggerContent}</span>
             <ChevronRight className="h-2.5 w-2.5 shrink-0 rotate-90" />
           </button>
         ) : (
           <Button
             variant="outline"
             size="sm"
-            className="h-9 md:h-8 gap-1.5 text-sm justify-start min-w-[120px] w-full"
+            className="h-9 w-full min-w-[120px] justify-start gap-1.5 text-sm md:h-8"
           >
             <Tag className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            <span className="flex-1 text-left truncate flex items-center gap-1.5">
+            <span className="flex min-w-0 flex-1 items-center gap-1.5 truncate text-left">
               {triggerContent}
             </span>
             <ChevronRight className="h-3 w-3 shrink-0 rotate-90 text-muted-foreground" />
@@ -173,9 +197,10 @@ export function MarkerPicker({
       </PopoverTrigger>
 
       <PopoverContent
-        className="w-96 p-0 overflow-hidden"
+        className="w-96 overflow-hidden p-0"
         align={align}
         sideOffset={4}
+        data-studio-portal=""
       >
         {/* Search */}
         <div className="flex items-center gap-2 px-3 py-2 border-b">

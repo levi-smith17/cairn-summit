@@ -111,83 +111,81 @@ export function ItineraryClient({ stops, calendars, events }: ItineraryClientPro
     <>
       <PlatformHeader title={terms.itinerary} />
 
-      <div className="flex flex-1 p-4 overflow-hidden min-h-0">
-        <div className="flex flex-col flex-1 rounded-lg border border-border bg-card overflow-hidden min-w-0">
-          <div className="flex items-center gap-1 px-3 py-2 border-b shrink-0 flex-wrap gap-y-1.5">
-            <div className="flex items-center gap-0.5 shrink-0">
-              <Button
-                variant="ghost" size="icon" className="h-7 w-7"
-                onClick={() => setAnchor(d => navigateCalendar(view, d, -1, calendarMode))}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={goToday}>
-                Today
-              </Button>
-              <Button
-                variant="ghost" size="icon" className="h-7 w-7"
-                onClick={() => setAnchor(d => navigateCalendar(view, d, 1, calendarMode))}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-
-            <span className="text-sm font-medium flex-1 min-w-0 truncate">
-              {navLabel(view, anchor, calendarMode)}
-            </span>
-
-            <div className="flex items-center rounded-md border divide-x overflow-hidden text-xs shrink-0">
-              {(Object.entries(viewLabels) as [CalendarView, string][]).map(([v, label]) => (
-                <button
-                  key={v}
-                  onClick={() => setView(v)}
-                  className={`px-2.5 py-1 transition-colors ${
-                    view === v
-                      ? 'bg-foreground text-background'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex items-center rounded-md border divide-x overflow-hidden text-xs shrink-0">
-              {MODE_OPTIONS.map(opt => (
-                <Tooltip key={opt.value}>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => setCalendarMode(opt.value)}
-                      className={`px-2.5 py-1 transition-colors ${
-                        calendarMode === opt.value
-                          ? 'bg-foreground text-background'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
-                      }`}
-                    >
-                      <span className="hidden sm:inline">{opt.label}</span>
-                      <span className="sm:hidden">{opt.short}</span>
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>{opt.tip}</TooltipContent>
-                </Tooltip>
-              ))}
-            </div>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => navigate('/settings?section=itinerary')}>
-                  <Settings className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Itinerary settings</TooltipContent>
-            </Tooltip>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="flex shrink-0 flex-wrap items-center gap-1 gap-y-1.5 border-b border-border px-3 py-2">
+          <div className="flex shrink-0 items-center gap-0.5">
+            <Button
+              variant="ghost" size="icon" className="h-7 w-7"
+              onClick={() => setAnchor(d => navigateCalendar(view, d, -1, calendarMode))}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={goToday}>
+              Today
+            </Button>
+            <Button
+              variant="ghost" size="icon" className="h-7 w-7"
+              onClick={() => setAnchor(d => navigateCalendar(view, d, 1, calendarMode))}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
 
-          <div className="flex-1 overflow-auto min-h-0">
-            {view === 'month' && <MonthView {...viewProps} />}
-            {view === 'week'  && <WeekView  {...viewProps} />}
-            {view === 'day'   && <DayView   {...viewProps} />}
+          <span className="min-w-0 flex-1 truncate text-sm font-medium">
+            {navLabel(view, anchor, calendarMode)}
+          </span>
+
+          <div className="flex shrink-0 items-center overflow-hidden text-xs divide-x divide-border">
+            {(Object.entries(viewLabels) as [CalendarView, string][]).map(([v, label]) => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className={`px-2.5 py-1 transition-colors ${
+                  view === v
+                    ? 'bg-foreground text-background'
+                    : 'text-muted-foreground hover:bg-muted/40 hover:text-foreground'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
+
+          <div className="flex shrink-0 items-center overflow-hidden text-xs divide-x divide-border">
+            {MODE_OPTIONS.map(opt => (
+              <Tooltip key={opt.value}>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setCalendarMode(opt.value)}
+                    className={`px-2.5 py-1 transition-colors ${
+                      calendarMode === opt.value
+                        ? 'bg-foreground text-background'
+                        : 'text-muted-foreground hover:bg-muted/40 hover:text-foreground'
+                    }`}
+                  >
+                    <span className="hidden sm:inline">{opt.label}</span>
+                    <span className="sm:hidden">{opt.short}</span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>{opt.tip}</TooltipContent>
+              </Tooltip>
+            ))}
+          </div>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => navigate('/settings?section=itinerary')}>
+                <Settings className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Itinerary settings</TooltipContent>
+          </Tooltip>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-auto">
+          {view === 'month' && <MonthView {...viewProps} />}
+          {view === 'week'  && <WeekView  {...viewProps} />}
+          {view === 'day'   && <DayView   {...viewProps} />}
         </div>
       </div>
     </>

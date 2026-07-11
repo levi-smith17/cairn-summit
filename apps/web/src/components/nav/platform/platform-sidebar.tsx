@@ -2,7 +2,6 @@
 
 import { useSidebar } from "@/components/ui/sidebar"
 import {
-  Bookmark,
   BookOpen,
   CalendarDays,
   LayoutDashboard,
@@ -61,12 +60,11 @@ function buildNavItems(terms: Terms): { group: string; items: NavItem[] }[] {
     {
       group: 'Platform',
       items: [
-        { title: terms.waypoints, url: '/waypoints', icon: Bookmark, tooltip: terms.waypoints },
-        { title: terms.logs, url: '/logs', icon: NotebookPen, tooltip: terms.logs },
-        { title: terms.provisions, url: '/provisions', icon: Wallet, tooltip: terms.provisions },
-        { title: terms.manifest, url: '/manifest', icon: BookOpen, tooltip: terms.manifest },
         { title: terms.guides, url: '/guides', icon: LayersIcon, tooltip: terms.guides },
-      ],
+        { title: terms.logs, url: '/logs', icon: NotebookPen, tooltip: terms.logs },
+        { title: terms.manifest, url: '/manifest', icon: BookOpen, tooltip: terms.manifest },
+        { title: terms.provisions, url: '/provisions', icon: Wallet, tooltip: terms.provisions },
+      ].sort((a, b) => a.title.localeCompare(b.title)),
     },
     {
       group: 'Admin',
@@ -145,8 +143,8 @@ export function PlatformSidebar({
           <button
             type="button"
             className="flex w-full items-center justify-center py-2"
-            onClick={() => handleClick(isAuthenticated && isPublic ? '/basecamp' : '/')}
-            aria-label={isAuthenticated && isPublic ? uiTerms.basecamp : uiTerms.outpost}
+            onClick={() => handleClick('/')}
+            aria-label={uiTerms.outpost}
           >
             <img src="/cairn-summit.png" alt="Cairn Summit Logo" height={180} width={180} />
           </button>
@@ -159,7 +157,12 @@ export function PlatformSidebar({
                 <SidebarGroupLabel>{group}</SidebarGroupLabel>
                 <SidebarMenu>
                   {items.map(({ title, url, icon: Icon, tooltip }) => {
-                    const isActive = pathname === url || (url !== '/' && pathname.startsWith(url + '/'))
+                    const isActive =
+                      url === '/'
+                        ? pathname === '/' || /^\/manifest\/[^/]+/.test(pathname)
+                        : url === '/manifest'
+                          ? pathname === '/manifest'
+                          : pathname === url || pathname.startsWith(url + '/')
                     const badge = getBadge(url)
                     return (
                         <SidebarMenuItem key={url}>

@@ -69,9 +69,7 @@ function renderForm(props = {}) {
 }
 
 function getDeleteButton() {
-    return screen.getByRole('button', {
-        name: (_, element) => element?.querySelector('.lucide-trash-2') !== null,
-    })
+    return screen.getByRole('button', { name: /delete marker/i })
 }
 
 describe('MarkerForm — new marker', () => {
