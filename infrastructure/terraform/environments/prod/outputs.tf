@@ -58,3 +58,19 @@ output "ses_dkim_tokens" {
 output "web_bucket_name" {
   value = module.cloudfront.bucket_name
 }
+
+output "asgard_route53_user_name" {
+  description = "IAM user Asgard uses for Urdarbrunnr Cloud (Route53)"
+  value       = aws_iam_user.asgard_route53.name
+}
+
+output "asgard_route53_access_key_id" {
+  description = "Access key id for Asgard Settings → route53"
+  value       = aws_iam_access_key.asgard_route53.id
+}
+
+output "asgard_route53_secret_access_key" {
+  description = "Secret access key for Asgard Settings → route53 (sensitive)"
+  value       = aws_iam_access_key.asgard_route53.secret
+  sensitive   = true
+}
