@@ -11,6 +11,7 @@ export function PlatformStudioContextBar({
   metadata,
   tabs,
   actions,
+  showInspectorPin = false,
 }: {
   'aria-label': string
   title: string
@@ -19,6 +20,7 @@ export function PlatformStudioContextBar({
   tabs?: React.ReactNode
   /** Page-specific actions (e.g. Add buttons) rendered after the global cluster, on the far right. */
   actions?: React.ReactNode
+  showInspectorPin?: boolean
 }) {
   return (
     <StudioContextBar
@@ -27,7 +29,7 @@ export function PlatformStudioContextBar({
       subtitle={subtitle}
       metadata={metadata}
       tabs={tabs}
-      actions={<PlatformHeaderActions trailing={actions} />}
+      actions={<PlatformHeaderActions trailing={actions} showInspectorPin={showInspectorPin} />}
     />
   )
 }

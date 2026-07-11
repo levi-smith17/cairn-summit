@@ -574,6 +574,7 @@ export default function Manifest() {
         <PlatformStudioContextBar
           aria-label={`${terms.manifest} header`}
           title={terms.manifest}
+          showInspectorPin
           tabs={
             <ManifestPageTabs
               canvasView={canvasView}

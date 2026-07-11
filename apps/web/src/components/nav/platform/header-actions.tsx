@@ -89,9 +89,12 @@ export function HeaderPublicManifest() {
 
 export function PlatformHeaderActions({
   trailing,
+  showInspectorPin = false,
 }: {
   /** Rendered after search/pin/manifest — typically primary Add buttons on the far right. */
   trailing?: React.ReactNode
+  /** Pages with an inspector column should opt in. */
+  showInspectorPin?: boolean
 }) {
   const { user } = useAuth()
 
@@ -104,7 +107,7 @@ export function PlatformHeaderActions({
   return (
     <div className="flex items-center gap-1.5 sm:gap-2">
       <HeaderSearchTrigger />
-      <HeaderInspectorPin />
+      {showInspectorPin ? <HeaderInspectorPin /> : null}
       <HeaderPublicManifest />
       {trailing}
     </div>

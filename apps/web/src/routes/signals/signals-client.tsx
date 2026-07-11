@@ -120,6 +120,7 @@ export function SignalsClient({ signals, signalSettings }: SignalsClientProps) {
             aria-label={`${terms.signals} header`}
             title={terms.signals}
             subtitle="Contact-form messages"
+            showInspectorPin
             metadata={
               <span
                 className={cn(

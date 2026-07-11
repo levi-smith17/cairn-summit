@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
-import { Button } from '@/components/ui/button'
-import { ChevronLeft, ChevronRight, Wallet, RefreshCw, TrendingUp } from 'lucide-react'
+import { Wallet, RefreshCw, TrendingUp } from 'lucide-react'
 import { PlatformStudioContextBar } from '@/components/studio/platform-studio-context-bar'
 import { StudioLayout } from '@/components/studio/layout/studio-layout'
 import { ContextBarAddButton } from '@/components/studio/ui/context-bar-add-button'
+import { StudioPagination } from '@/components/studio/ui/studio-pagination'
 import { useInspectorPin } from '@/contexts/inspector-pin-context'
 import { useTerminology } from '@/contexts/terminology-context'
 import { useAuth } from '@/hooks/use-auth'
@@ -22,8 +22,17 @@ import type { BudgetUtilization } from './cache-row'
 import type { ProvisionsSelection } from './provisions-types'
 import { getBurnPage, getSupplylinesFiltered, getSupplylinesSummary } from '@/lib/api/supplylines'
 import { getMarkers } from '@/lib/api/markers'
-import { extractId, markerShortLabel, cn } from '@/lib/utils'
-import { markerDisplayName } from '@/lib/embedded-markers'
+import {
+  effectiveCacheSpent,
+  effectiveCacheUtilization,
+  totalEffectiveCacheUtilization,
+} from '@/lib/cache-supplyline'
+import {
+  buildBurnCanvasGroups,
+  cacheUtilizationColor,
+  canvasMarkerLabel,
+} from '@/lib/provisions-format'
+import { extractId, cn } from '@/lib/utils'
 
 interface Summary {
   monthlySupplylineCost: number
@@ -92,6 +101,14 @@ export function ProvisionsClient() {
     placeholderData: keepPreviousData,
   })
 
+  /** Active supplylines only — used for cache utilization (independent of rail filter). */
+  const cacheSupplylinesQuery = useQuery({
+    queryKey: ['provisions', 'supplylines-cache'],
+    queryFn: () => getSupplylinesFiltered({ active: 'true' }),
+    enabled: !!user,
+    placeholderData: keepPreviousData,
+  })
+
   useEffect(() => {
     setBurnPage(1)
   }, [month, year, debouncedSearch, markerFilter])
@@ -145,6 +162,8 @@ export function ProvisionsClient() {
     [supplylinesQuery.data],
   )
 
+  const cacheSupplylines = (cacheSupplylinesQuery.data ?? []) as Supplyline[]
+
   const cacheByMarkerId = useMemo(
     () => new Map(cacheUtilization.map((c) => [c.markerId, c])),
     [cacheUtilization],
@@ -153,6 +172,60 @@ export function ProvisionsClient() {
   const targetMarkerIds = useMemo(
     () => new Set(cacheUtilization.map((c) => c.markerId)),
     [cacheUtilization],
+  )
+
+  const canvasGroups = useMemo(
+    () =>
+      buildBurnCanvasGroups(burnItems, cacheUtilization, markers).filter(
+        (group) => markerFilter === 'all' || group.markerId === markerFilter,
+      ),
+    [burnItems, cacheUtilization, markers, markerFilter],
+  )
+
+  const cacheUtilizationPct = useMemo(
+    () => totalEffectiveCacheUtilization(cacheUtilization, cacheSupplylines),
+    [cacheUtilization, cacheSupplylines],
+  )
+
+  const selectedBurn =
+    selection?.kind === 'burn' ? burnItems.find((b) => b.id === selection.id) : undefined
+  const selectedSupplyline =
+    selection?.kind === 'supplyline'
+      ? supplylines.find((s) => s.id === selection.id)
+      : undefined
+  const selectedCache =
+    selection?.kind === 'cache'
+      ? cacheUtilization.find((c) => c.id === selection.id)
+      : selection?.kind === 'cache-marker'
+        ? cacheByMarkerId.get(selection.markerId)
+        : undefined
+
+  const selectedCacheMarkerId =
+    selection?.kind === 'cache'
+      ? selectedCache?.markerId
+      : selection?.kind === 'cache-marker'
+        ? selection.markerId
+        : null
+
+  const cacheBurnsQuery = useQuery({
+    queryKey: ['provisions', 'burn', 'cache-marker', month, year, selectedCacheMarkerId],
+    queryFn: () =>
+      getBurnPage({
+        month,
+        year,
+        page: 1,
+        markerId: selectedCacheMarkerId!,
+      }),
+    enabled: !!user && Boolean(selectedCacheMarkerId),
+    placeholderData: keepPreviousData,
+  })
+
+  const cacheMarkerBurns = useMemo(
+    () =>
+      [...((cacheBurnsQuery.data?.burn ?? []) as Burn[])].sort(
+        (left, right) => new Date(right.date).getTime() - new Date(left.date).getTime(),
+      ),
+    [cacheBurnsQuery.data?.burn],
   )
 
   if (isInitialRouteLoad([markersQuery, summaryQuery, burnQuery, supplylinesQuery])) {
@@ -179,49 +252,14 @@ export function ProvisionsClient() {
     year: 'numeric',
   })
 
-  const groupedExpenses = burnItems.reduce<Record<string, Burn[]>>((acc, e) => {
-    const label = markerShortLabel(markerDisplayName(e.markers[0]), 'Uncategorized')
-    if (!acc[label]) acc[label] = []
-    acc[label].push(e)
-    return acc
-  }, {})
-  const sortedExpenseGroups = Object.keys(groupedExpenses).sort()
-  const groupTotals = sortedExpenseGroups.reduce<Record<string, number>>((acc, label) => {
-    acc[label] = groupedExpenses[label].reduce((sum, e) => sum + e.amount, 0)
-    return acc
-  }, {})
-
-  const cacheOnlyGroups = cacheUtilization
-    .filter((c) => {
-      if (markerFilter !== 'all' && c.markerId !== markerFilter) return false
-      const label = markerShortLabel(c.marker?.name)
-      return !groupedExpenses[label]
-    })
-    .map((c) => ({
-      label: markerShortLabel(c.marker?.name),
-      cache: c,
-    }))
-
   const inspectorOpen = inspectorPinned || selection != null
   const inspectorState = inspectorOpen ? 'open' : 'hint'
-
-  const selectedBurn =
-    selection?.kind === 'burn' ? burnItems.find((b) => b.id === selection.id) : undefined
-  const selectedSupplyline =
-    selection?.kind === 'supplyline'
-      ? supplylines.find((s) => s.id === selection.id)
-      : undefined
-  const selectedCache =
-    selection?.kind === 'cache'
-      ? cacheUtilization.find((c) => c.id === selection.id)
-      : selection?.kind === 'cache-marker'
-        ? cacheByMarkerId.get(selection.markerId)
-        : undefined
 
   const selectedSupplylineId = selection?.kind === 'supplyline' ? selection.id : null
   const selectedBurnId = selection?.kind === 'burn' ? selection.id : null
 
   const emptyCacheMessage = `No ${terms.burn.toLowerCase()} in this ${terms.cache.toLowerCase()} yet.`
+  const burnTotalPages = Math.max(1, Math.ceil(burnTotal / burnPageSize))
 
   return (
     <StudioLayout
@@ -231,6 +269,7 @@ export function ProvisionsClient() {
           aria-label={`${terms.provisions} header`}
           title={terms.provisions}
           subtitle={monthName}
+          showInspectorPin
           metadata={
             <div className="hidden items-center gap-3 text-xs text-muted-foreground sm:flex">
               <span className="inline-flex items-center gap-1">
@@ -245,6 +284,20 @@ export function ProvisionsClient() {
                 <TrendingUp className="h-3 w-3" />
                 {fmt(summary?.totalMonthSpend ?? 0)}
               </span>
+              {cacheUtilizationPct != null ? (
+                <span
+                  className={cn(
+                    'rounded-full px-2 py-0.5 text-xs',
+                    cacheUtilizationPct >= 100
+                      ? 'bg-destructive/15 text-destructive'
+                      : cacheUtilizationPct >= 80
+                        ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400'
+                        : 'bg-muted text-muted-foreground',
+                  )}
+                >
+                  {Math.round(cacheUtilizationPct)}% {terms.cache.toLowerCase()}
+                </span>
+              ) : null}
             </div>
           }
           actions={
@@ -295,31 +348,29 @@ export function ProvisionsClient() {
           <div className="min-h-0 flex-1 overflow-y-auto">
             {burnRefetching && burnItems.length === 0 ? (
               <ListSectionSkeleton rows={8} />
-            ) : sortedExpenseGroups.length === 0 && cacheOnlyGroups.length === 0 ? (
+            ) : canvasGroups.length === 0 ? (
               <div className="px-4 py-8 text-sm text-muted-foreground sm:px-6">
                 No {terms.cache.toLowerCase()} or {terms.burn.toLowerCase()} found.
               </div>
             ) : (
               <div className="flex flex-col">
-                {sortedExpenseGroups.map((label) => {
-                  const groupBurns = groupedExpenses[label]
-                  const firstMarkerId = groupBurns[0]?.markers[0]
-                    ? ((groupBurns[0].markers[0] as { marker?: { id: string }; markerId?: string })
-                        .marker?.id ??
-                        (groupBurns[0].markers[0] as { markerId?: string }).markerId ??
-                        null)
-                    : null
-                  const cache = firstMarkerId ? cacheByMarkerId.get(firstMarkerId) : undefined
+                {canvasGroups.map(({ markerId, burns: groupBurns, cache }) => {
+                  const groupTotal = groupBurns.reduce((sum, b) => sum + b.amount, 0)
+                  const label = canvasMarkerLabel(markerId, markers, cache)
+                  const spent = cache ? effectiveCacheSpent(cache, cacheSupplylines) : 0
+                  const pct = cache ? effectiveCacheUtilization(cache, cacheSupplylines) : 0
+                  const hasCache = cache != null
+
                   return (
-                    <div key={label}>
-                      <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-muted/90 px-4 py-2 backdrop-blur-sm sm:px-6">
+                    <div key={markerId}>
+                      <div className="sticky top-0 z-10 flex items-start gap-2 border-b border-border bg-muted/90 px-4 py-2 backdrop-blur-sm sm:px-6">
                         <button
                           type="button"
                           data-inspectable
                           onClick={() => {
                             if (cache) setSelection({ kind: 'cache', id: cache.id })
-                            else if (firstMarkerId)
-                              setSelection({ kind: 'cache-marker', markerId: firstMarkerId })
+                            else if (markerId !== 'uncategorized')
+                              setSelection({ kind: 'cache-marker', markerId })
                             else setSelection({ kind: 'new-cache' })
                           }}
                           className="min-w-0 flex-1 text-left transition-colors hover:opacity-80"
@@ -327,13 +378,19 @@ export function ProvisionsClient() {
                           <div className="flex items-center justify-between gap-3">
                             <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                               {label}
-                              <span className="ml-2 font-normal normal-case">({groupBurns.length})</span>
+                              {groupBurns.length > 0 ? (
+                                <span className="ml-2 font-normal normal-case">
+                                  ({groupBurns.length})
+                                </span>
+                              ) : null}
                             </span>
                             <div className="flex shrink-0 items-center gap-3">
-                              {cache ? (
+                              {hasCache ? (
                                 <span className="text-xs tabular-nums text-muted-foreground">
-                                  {fmt(cache.spent)}{' '}
-                                  <span className="text-muted-foreground/70">/ {fmt(cache.limit)}</span>
+                                  {fmt(spent)}{' '}
+                                  <span className="text-muted-foreground/70">
+                                    / {fmt(cache.limit)}
+                                  </span>
                                 </span>
                               ) : (
                                 <span className="text-xs text-muted-foreground">
@@ -341,31 +398,33 @@ export function ProvisionsClient() {
                                 </span>
                               )}
                               <span className="text-xs font-medium tabular-nums">
-                                {fmt(groupTotals[label])}
+                                {fmt(groupTotal)}
                               </span>
                             </div>
                           </div>
-                          {cache ? (
-                            <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-muted">
-                              <div
-                                className={cn(
-                                  'h-full rounded-full transition-all',
-                                  cache.utilization >= 100
-                                    ? 'bg-destructive'
-                                    : cache.utilization >= 80
-                                      ? 'bg-amber-500'
-                                      : 'bg-primary',
-                                )}
-                                style={{ width: `${Math.min(cache.utilization, 100)}%` }}
-                              />
+                          {hasCache ? (
+                            <div className="mt-1.5 flex items-center gap-2">
+                              <div className="h-1 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
+                                <div
+                                  className={cn(
+                                    'h-full rounded-full transition-all',
+                                    cacheUtilizationColor(pct),
+                                  )}
+                                  style={{ width: `${Math.min(pct, 100)}%` }}
+                                />
+                              </div>
+                              <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
+                                {Math.round(pct)}%
+                              </span>
                             </div>
                           ) : null}
                         </button>
                         <BurnGroupHeaderActions
+                          label={`Add ${terms.burn}`}
                           onAdd={() =>
                             setSelection({
                               kind: 'new-burn',
-                              markerId: firstMarkerId ?? undefined,
+                              markerId: markerId === 'uncategorized' ? undefined : markerId,
                             })
                           }
                         />
@@ -381,85 +440,30 @@ export function ProvisionsClient() {
                             />
                           ))}
                         </div>
-                      ) : cache ? (
+                      ) : (
                         <div className="border-b border-border px-4 py-4 text-xs text-muted-foreground sm:px-6">
                           {emptyCacheMessage}
                         </div>
-                      ) : null}
+                      )}
                     </div>
                   )
                 })}
-
-                {cacheOnlyGroups.map(({ label, cache }) => (
-                  <div key={`cache-${cache.id}`}>
-                    <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-muted/90 px-4 py-2 backdrop-blur-sm sm:px-6">
-                      <button
-                        type="button"
-                        data-inspectable
-                        onClick={() => setSelection({ kind: 'cache', id: cache.id })}
-                        className="min-w-0 flex-1 text-left transition-colors hover:opacity-80"
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                            {label}
-                          </span>
-                          <span className="text-xs tabular-nums text-muted-foreground">
-                            {fmt(cache.spent)}{' '}
-                            <span className="text-muted-foreground/70">/ {fmt(cache.limit)}</span>
-                          </span>
-                        </div>
-                        <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-muted">
-                          <div
-                            className={cn(
-                              'h-full rounded-full transition-all',
-                              cache.utilization >= 100
-                                ? 'bg-destructive'
-                                : cache.utilization >= 80
-                                  ? 'bg-amber-500'
-                                  : 'bg-primary',
-                            )}
-                            style={{ width: `${Math.min(cache.utilization, 100)}%` }}
-                          />
-                        </div>
-                      </button>
-                      <BurnGroupHeaderActions
-                        onAdd={() => setSelection({ kind: 'new-burn', markerId: cache.markerId })}
-                      />
-                    </div>
-                    <div className="border-b border-border px-4 py-4 text-xs text-muted-foreground sm:px-6">
-                      {emptyCacheMessage}
-                    </div>
-                  </div>
-                ))}
               </div>
             )}
           </div>
 
-          {burnTotal > burnPageSize && (
-            <div className="flex shrink-0 items-center justify-between border-t px-4 py-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={() => setBurnPage((p) => p - 1)}
-                disabled={burnPage <= 1 || burnRefetching}
-              >
-                <ChevronLeft className="h-3.5 w-3.5" />
-              </Button>
-              <span className="text-xs text-muted-foreground">
-                {burnPage} / {Math.ceil(burnTotal / burnPageSize)}
-              </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={() => setBurnPage((p) => p + 1)}
-                disabled={burnPage >= Math.ceil(burnTotal / burnPageSize) || burnRefetching}
-              >
-                <ChevronRight className="h-3.5 w-3.5" />
-              </Button>
+          {burnTotal > burnPageSize ? (
+            <div className="flex shrink-0 items-center justify-center border-t border-border px-4 py-2 sm:px-6">
+              <StudioPagination
+                aria-label={`${terms.burn} pagination`}
+                label={`${burnPage} / ${burnTotalPages}`}
+                onPrev={() => setBurnPage((p) => p - 1)}
+                onNext={() => setBurnPage((p) => p + 1)}
+                canGoPrev={burnPage > 1 && !burnRefetching}
+                canGoNext={burnPage < burnTotalPages && !burnRefetching}
+              />
             </div>
-          )}
+          ) : null}
         </div>
       }
       inspectorState={inspectorState}
@@ -474,6 +478,8 @@ export function ProvisionsClient() {
             burn={selectedBurn}
             supplyline={selectedSupplyline}
             cache={selectedCache}
+            cacheSupplylines={cacheSupplylines}
+            cacheMarkerBurns={cacheMarkerBurns}
             targetMarkerIds={targetMarkerIds}
             onSaved={() => {
               refresh()

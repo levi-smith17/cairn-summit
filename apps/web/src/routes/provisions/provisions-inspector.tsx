@@ -20,6 +20,7 @@ import { InlineBurnForm } from './inline-burn-form'
 import { InlineSupplylineForm } from './inline-supplyline-form'
 import { InlineCacheForm } from './inline-cache-form'
 import { CacheCarryInspector } from './cache-carry-inspector'
+import { CacheAllocationPanel } from './cache-allocation-panel'
 import type { Burn } from './burn-row'
 import type { Supplyline } from './supplyline-row'
 import type { BudgetUtilization } from './cache-row'
@@ -37,6 +38,8 @@ export function ProvisionsInspector({
   burn,
   supplyline,
   cache,
+  cacheSupplylines = [],
+  cacheMarkerBurns = [],
   targetMarkerIds,
   onSaved,
   onDeleted,
@@ -49,6 +52,8 @@ export function ProvisionsInspector({
   burn?: Burn
   supplyline?: Supplyline
   cache?: BudgetUtilization
+  cacheSupplylines?: Supplyline[]
+  cacheMarkerBurns?: Burn[]
   targetMarkerIds: Set<string>
   onSaved: () => void
   onDeleted: () => void
@@ -168,25 +173,37 @@ export function ProvisionsInspector({
         ) : null}
 
         {showCacheForm ? (
-          <InlineCacheForm
-            cache={
-              cache
-                ? {
-                    id: cache.id,
-                    markerId: cache.markerId,
-                    limit: cache.limit,
-                    spent: cache.spent,
-                    utilization: cache.utilization,
-                  }
-                : undefined
-            }
-            defaultMarkerId={selection.kind === 'cache-marker' ? selection.markerId : undefined}
-            markers={markers}
-            month={month}
-            year={year}
-            formId={CACHE_FORM_ID}
-            onSaved={onSaved}
-          />
+          <>
+            <InlineCacheForm
+              cache={
+                cache
+                  ? {
+                      id: cache.id,
+                      markerId: cache.markerId,
+                      limit: cache.limit,
+                      spent: cache.spent,
+                      utilization: cache.utilization,
+                    }
+                  : undefined
+              }
+              defaultMarkerId={selection.kind === 'cache-marker' ? selection.markerId : undefined}
+              markers={markers}
+              month={month}
+              year={year}
+              formId={CACHE_FORM_ID}
+              onSaved={onSaved}
+            />
+            {selection.kind === 'cache' && cache ? (
+              <>
+                <div className="border-t border-border" />
+                <CacheAllocationPanel
+                  cache={cache}
+                  burns={cacheMarkerBurns}
+                  supplylines={cacheSupplylines}
+                />
+              </>
+            ) : null}
+          </>
         ) : null}
       </div>
 
