@@ -178,6 +178,43 @@ resource "aws_iam_policy" "terraform_aws" {
   }
 }
 
+# Inline policy for IAM users. PutRolePolicy is already allowed on the live
+# CI role, so this can land even when a prior managed-policy CreatePolicyVersion
+# did not take effect before CreateUser ran in the same apply.
+resource "aws_iam_role_policy" "iam_users" {
+  name = "${var.project_name}-${var.environment}-ci-iam-users"
+  role = aws_iam_role.github_actions.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "ManageAsgardIamUsers"
+        Effect = "Allow"
+        Action = [
+          "iam:CreateAccessKey",
+          "iam:CreateUser",
+          "iam:DeleteAccessKey",
+          "iam:DeleteUser",
+          "iam:DeleteUserPolicy",
+          "iam:GetAccessKeyLastUsed",
+          "iam:GetUser",
+          "iam:GetUserPolicy",
+          "iam:ListAccessKeys",
+          "iam:ListUserPolicies",
+          "iam:PutUserPolicy",
+          "iam:TagUser",
+          "iam:UntagUser",
+          "iam:UpdateAccessKey",
+        ]
+        Resource = [
+          "arn:aws:iam::*:user/${var.project_name}-${var.environment}-asgard-*",
+        ]
+      }
+    ]
+  })
+}
+
 # Attach policies to role (alphabetical)
 resource "aws_iam_role_policy_attachment" "lambda_deploy" {
   role       = aws_iam_role.github_actions.name

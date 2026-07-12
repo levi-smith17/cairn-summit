@@ -146,6 +146,18 @@ jobs:
         working-directory: infrastructure/terraform/environments/prod
         run: terraform init
 
+      - name: Terraform Apply — CI IAM (users)
+        working-directory: infrastructure/terraform/environments/prod
+        run: |
+          # Land PutRolePolicy for IAM-user management before CreateUser in the
+          # full apply. Same-apply depends_on is not enough when the prior
+          # managed-policy bump never became effective for the running role.
+          terraform apply \
+            -var-file="../shared.tfvars" \
+            -var-file="prod.tfvars" \
+            -target=module.github_oidc.aws_iam_role_policy.iam_users \
+            -auto-approve
+
       - name: Terraform Apply
         working-directory: infrastructure/terraform/environments/prod
         run: |
