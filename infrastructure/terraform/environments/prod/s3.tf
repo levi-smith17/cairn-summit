@@ -10,6 +10,9 @@ module "s3" {
     [
       "https://${var.domain}",
       module.cloudfront.cloudfront_url,
+      "https://asgard.levismith.us",
+      # Local Fjall Vite (apps/web port 5180) against prod media uploads
+      "http://localhost:5180",
     ],
     [for domain in var.manifest_web_domains : "https://${domain}"]
   )

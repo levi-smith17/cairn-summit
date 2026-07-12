@@ -9,6 +9,8 @@ module "s3" {
   allowed_origins = [
     "http://localhost:3000",
     "http://localhost:5173",
+    "http://localhost:5180",
+    "https://asgard.levismith.us",
     module.cloudfront.cloudfront_url,
   ]
 }

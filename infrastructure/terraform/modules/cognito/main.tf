@@ -64,6 +64,14 @@ resource "aws_cognito_user_pool_client" "web" {
     "ALLOW_USER_PASSWORD_AUTH",
   ]
 
+  # Optional Hosted UI / OAuth code-flow URLs (Fjall SPA + local). SRP remains enabled.
+  callback_urls                        = length(var.callback_urls) > 0 ? var.callback_urls : null
+  logout_urls                          = length(var.logout_urls) > 0 ? var.logout_urls : null
+  allowed_oauth_flows_user_pool_client = length(var.callback_urls) > 0
+  allowed_oauth_flows                  = length(var.callback_urls) > 0 ? ["code"] : null
+  allowed_oauth_scopes                 = length(var.callback_urls) > 0 ? ["openid", "email", "profile"] : null
+  supported_identity_providers         = length(var.callback_urls) > 0 ? ["COGNITO"] : null
+
   access_token_validity  = 1
   id_token_validity      = 1
   refresh_token_validity = 30
