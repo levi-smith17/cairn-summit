@@ -50,25 +50,27 @@ interface NavItem {
 }
 
 function buildNavItems(terms: Terms): { group: string; items: NavItem[] }[] {
+  const outpost: NavItem = {
+    title: terms.outpost,
+    url: '/',
+    icon: LayoutList,
+    tooltip: terms.outpost,
+  }
+  const rest: NavItem[] = [
+    { title: terms.basecamp, url: '/basecamp', icon: LayoutDashboard, tooltip: terms.basecamp },
+    { title: terms.itinerary, url: '/itinerary', icon: CalendarDays, tooltip: terms.itinerary },
+    { title: terms.signals, url: '/signals', icon: MessageSquare, tooltip: terms.signals },
+    { title: terms.guides, url: '/guides', icon: LayersIcon, tooltip: terms.guides },
+    { title: terms.headwaters, url: '/headwaters', icon: TreePine, tooltip: terms.headwaters },
+    { title: terms.logs, url: '/logs', icon: NotebookPen, tooltip: terms.logs },
+    { title: terms.manifest, url: '/manifest', icon: BookOpen, tooltip: terms.manifest },
+    { title: terms.provisions, url: '/provisions', icon: Wallet, tooltip: terms.provisions },
+  ].sort((a, b) => a.title.localeCompare(b.title))
+
   return [
     {
-      group: 'Navigation',
-      items: [
-        { title: terms.outpost, url: '/', icon: LayoutList, tooltip: terms.outpost },
-        { title: terms.basecamp, url: '/basecamp', icon: LayoutDashboard, tooltip: terms.basecamp },
-        { title: terms.itinerary, url: '/itinerary', icon: CalendarDays, tooltip: terms.itinerary },
-        { title: terms.signals, url: '/signals', icon: MessageSquare, tooltip: terms.signals },
-      ],
-    },
-    {
       group: 'Platform',
-      items: [
-        { title: terms.guides, url: '/guides', icon: LayersIcon, tooltip: terms.guides },
-        { title: terms.headwaters, url: '/headwaters', icon: TreePine, tooltip: terms.headwaters },
-        { title: terms.logs, url: '/logs', icon: NotebookPen, tooltip: terms.logs },
-        { title: terms.manifest, url: '/manifest', icon: BookOpen, tooltip: terms.manifest },
-        { title: terms.provisions, url: '/provisions', icon: Wallet, tooltip: terms.provisions },
-      ].sort((a, b) => a.title.localeCompare(b.title)),
+      items: [outpost, ...rest],
     },
     {
       group: 'Admin',
@@ -82,7 +84,7 @@ function buildNavItems(terms: Terms): { group: string; items: NavItem[] }[] {
 function buildPublicNavItems(terms: Terms): { group: string; items: NavItem[] }[] {
   return [
     {
-      group: 'Navigation',
+      group: 'Platform',
       items: [
         { title: terms.outpost, url: '/', icon: LayoutList, tooltip: terms.outpost },
       ],

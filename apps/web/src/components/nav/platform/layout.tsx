@@ -44,7 +44,7 @@ export default function PlatformLayout({
                     badges={
                         isAuthenticated
                             ? {
-                                  itinerary: profile?.itinerary ?? 0,
+            itinerary: 0,
                                   signals: profile?.signals ?? 0,
                               }
                             : undefined

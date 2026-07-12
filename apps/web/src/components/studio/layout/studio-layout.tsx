@@ -18,6 +18,7 @@ export function StudioLayout({
   inspectorState = 'hidden',
   inspectorHint,
   inspector,
+  inspectorWidth = INSPECTOR_PANEL_WIDTH,
 }: {
   contextBar: React.ReactNode
   rail?: React.ReactNode
@@ -27,6 +28,8 @@ export function StudioLayout({
   inspectorState?: InspectorSideState
   inspectorHint?: string
   inspector?: React.ReactNode
+  /** Desktop inspector column width in px. */
+  inspectorWidth?: number
 }) {
   const inspectorOpen = inspectorState === 'open' && Boolean(inspector)
   const isDesktop = useMediaQuery('(min-width: 1024px)')
@@ -98,7 +101,7 @@ export function StudioLayout({
               className={cn(
                 'relative hidden shrink-0 flex-col overflow-x-hidden overflow-y-auto border-l border-border bg-column-inspector md:flex',
               )}
-              style={{ width: INSPECTOR_PANEL_WIDTH }}
+              style={{ width: inspectorWidth }}
             >
               {inspector}
             </div>

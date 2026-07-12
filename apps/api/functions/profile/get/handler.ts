@@ -10,7 +10,7 @@ export const handler = async (
     try {
         const pk = getPk(event)
 
-        const [profileResult, signalResult, calendarsResult] = await Promise.all([
+        const [profileResult, signalResult] = await Promise.all([
             dynamo.send(new GetCommand({
                 TableName: TABLE_NAME,
                 Key: { pk, sk: 'PROFILE' },
@@ -22,15 +22,6 @@ export const handler = async (
                     ':pk': pk,
                     ':prefix': 'SIGNAL#',
                 },
-            })),
-            dynamo.send(new QueryCommand({
-                TableName: TABLE_NAME,
-                KeyConditionExpression: 'pk = :pk AND begins_with(sk, :prefix)',
-                ExpressionAttributeValues: {
-                    ':pk': pk,
-                    ':prefix': 'ITINERARY#',
-                },
-                Select: 'COUNT',
             })),
         ])
 
@@ -50,7 +41,8 @@ export const handler = async (
             image: profile.image ?? null,
             isAdmin: profile.isAdmin ?? false,
             signals: unreadSignals,
-            itinerary: calendarsResult.Count ?? 0,
+            // Reserved for a future “events today” badge — calendar connection count was misleading.
+            itinerary: 0,
         }))
     } catch (err) {
         console.error(err)

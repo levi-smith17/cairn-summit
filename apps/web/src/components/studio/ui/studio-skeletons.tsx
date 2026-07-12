@@ -229,3 +229,57 @@ export function ManifestStudioSkeleton() {
     />
   )
 }
+
+export function HeadwatersStudioSkeleton() {
+  return (
+    <StudioPageSkeleton
+      rail={false}
+      toolbar
+      canvas={<Block className="min-h-0 flex-1 rounded-none" />}
+    />
+  )
+}
+
+export function AdminStudioSkeleton() {
+  return (
+    <StudioPageSkeleton
+      rail
+      railRows={8}
+      tabs
+      canvas={
+        <div className="min-h-0 flex-1 space-y-4 overflow-hidden">
+          <div className="grid grid-cols-2 gap-3 border-b border-border p-4 md:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="space-y-2 rounded-lg border border-border p-3">
+                <Block className="h-3 w-20" />
+                <Block className="h-7 w-12" />
+              </div>
+            ))}
+          </div>
+          <div className="flex flex-1 flex-col items-center justify-center gap-2 px-6">
+            <Block className="h-10 w-10 rounded-full" />
+            <Block className="h-4 w-48" />
+          </div>
+        </div>
+      }
+    />
+  )
+}
+
+export function ItineraryStudioSkeleton() {
+  return (
+    <StudioPageSkeleton
+      rail={false}
+      toolbar
+      canvas={
+        <div className="min-h-0 flex-1 space-y-2 overflow-hidden p-3">
+          <div className="grid grid-cols-7 gap-1">
+            {Array.from({ length: 35 }).map((_, index) => (
+              <Block key={index} className="aspect-square rounded-md" />
+            ))}
+          </div>
+        </div>
+      }
+    />
+  )
+}

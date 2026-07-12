@@ -24,6 +24,21 @@ export type CalendarOption = {
   color: string
 }
 
+export type CalendarSyncStatus = {
+  calendarId: string
+  name: string
+  source: 'icloud' | 'subscription'
+  status: 'ok' | 'not_found' | 'auth_failed' | 'error'
+  eventCount: number
+  availableNames?: string[]
+  message?: string
+}
+
+export type ItineraryEventsPayload = {
+  events: ExternalCalendarEvent[]
+  calendarSync: CalendarSyncStatus[]
+}
+
 function mapEvent(e: Record<string, unknown>): ExternalCalendarEvent {
   return {
     uid: e.uid as string,
@@ -59,7 +74,7 @@ export async function getItineraryCalendars(): Promise<CalendarOption[]> {
 export async function fetchItineraryEvents(params?: {
   from?: string
   to?: string
-}): Promise<ExternalCalendarEvent[]> {
+}): Promise<ItineraryEventsPayload> {
   const qs = new URLSearchParams()
   if (params?.from) qs.set('from', params.from)
   if (params?.to) qs.set('to', params.to)
@@ -68,13 +83,21 @@ export async function fetchItineraryEvents(params?: {
   const res = await fetch(`${API_BASE}/itinerary/events${query ? `?${query}` : ''}`, {
     headers: await getAuthHeaders(),
   })
-  if (!res.ok) return []
+  if (!res.ok) {
+    return { events: [], calendarSync: [] }
+  }
   const json = await res.json()
-  const events = (json.data?.events ?? json.events ?? []) as Record<string, unknown>[]
-  return events.map(mapEvent)
+  const data = json.data ?? json
+  const events = (data.events ?? []) as Record<string, unknown>[]
+  const calendarSync = (data.calendarSync ?? []) as CalendarSyncStatus[]
+  return {
+    events: events.map(mapEvent),
+    calendarSync,
+  }
 }
 
 /** @deprecated Read-only itinerary has no manual stops; use fetchItineraryEvents */
 export async function fetchExternalCalendarEvents(): Promise<ExternalCalendarEvent[]> {
-  return fetchItineraryEvents()
+  const { events } = await fetchItineraryEvents()
+  return events
 }

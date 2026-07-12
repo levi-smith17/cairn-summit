@@ -1,13 +1,15 @@
 import { useState, useTransition } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ArrowUpDown, Eye, Shield, Users, UserPlus, UserX, X } from 'lucide-react'
+import { ArrowUpDown, Eye, Plus, Shield, Users, UserPlus, UserX, X } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { PlatformStudioContextBar } from '@/components/studio/platform-studio-context-bar'
 import { StudioLayout } from '@/components/studio/layout/studio-layout'
 import { ContextTabButton } from '@/components/studio/ui/context-tab'
-import { SearchInput } from '@/components/filters/search-input'
+import { FilterInput } from '@/components/ui/filter-input'
 import { CustomSelect } from '@/components/ui/custom-select'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -240,14 +242,46 @@ export function AdminClient({
     })
   }
 
+  const allSelected = filtered.length > 0 && filtered.every((w) => selectedBulk.has(w.id))
+
   const rail =
     activeTab === 'wayfarers' ? (
       <div className="flex h-full min-h-0 flex-col overflow-hidden">
-        <div className="shrink-0 space-y-2 border-b border-border p-3">
-          <SearchInput
+        <div className="flex h-14 min-h-14 max-h-14 shrink-0 items-center justify-between gap-2 border-b border-border px-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <Checkbox
+              checked={allSelected}
+              onCheckedChange={toggleAllBulk}
+              aria-label="Select all"
+              className="shrink-0"
+            />
+            <span className="truncate text-sm font-semibold text-foreground">
+              {`${filtered.length} ${filtered.length === 1 ? singularWayfarer : terms.wayfarers}`.toLowerCase()}
+            </span>
+          </div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                size="icon"
+                variant="secondary"
+                className="h-7 w-7"
+                onClick={showNew}
+                aria-label={`Add ${singularWayfarer.toLowerCase()}`}
+              >
+                <Plus className="h-3.5 w-3.5" aria-hidden />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Add {singularWayfarer.toLowerCase()}</TooltipContent>
+          </Tooltip>
+        </div>
+
+        <div className="shrink-0 space-y-2 border-b border-border px-3 py-2">
+          <FilterInput
             value={search}
             onChange={setSearch}
-            placeholder={`Search ${terms.wayfarers.toLowerCase()}…`}
+            placeholder="Filter"
+            className="w-full"
           />
           <div className="flex flex-wrap items-center gap-1.5">
             <CustomSelect
@@ -304,6 +338,7 @@ export function AdminClient({
             ) : null}
           </div>
         </div>
+
         <div className="min-h-0 flex-1 overflow-hidden">
           <WayfarerList
             wayfarers={filtered}
@@ -312,9 +347,7 @@ export function AdminClient({
             selectedBulk={selectedBulk}
             bulking={bulking}
             onSelect={selectWayfarer}
-            onNew={showNew}
             onToggleBulk={toggleBulk}
-            onToggleAllBulk={toggleAllBulk}
             onBulkMarkListed={handleBulkMarkListed}
             onBulkDelete={() => setBulkDeleteOpen(true)}
             onBulkClear={() => setSelectedBulk(new Set())}
