@@ -4,10 +4,12 @@ import { useSidebar } from "@/components/ui/sidebar"
 import {
   BookOpen,
   CalendarDays,
+  Compass,
   LayoutDashboard,
   LayoutList,
   LayersIcon,
   LogIn,
+  Mail,
   MessageSquare,
   NotebookPen,
   Rocket,
@@ -21,6 +23,7 @@ import { FooterNav } from '@/components/nav/footer'
 import { PlatformWayfarerMenu } from "@/components/nav/platform/platform-wayfarer-menu"
 import { SidebarUtilities } from "@/components/nav/platform/sidebar-utilities"
 import { useTerminology } from '@/contexts/terminology-context'
+import { usePublicProfileRoute } from '@/hooks/use-public-profile-route'
 import {
   Sidebar,
   SidebarContent,
@@ -35,6 +38,7 @@ import {
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { type Terms } from '@/lib/terminology'
+import { publicManifestPath, type PublicManifestView } from '@/lib/public-manifest-path'
 import type { PlatformLayoutMode } from './layout'
 
 type NavIcon = ComponentType<{ className?: string }>
@@ -93,6 +97,32 @@ function buildPublicNavItems(terms: Terms): { group: string; items: NavItem[] }[
   ]
 }
 
+function buildPublicProfileLinks(
+  username: string,
+  terms: Terms,
+): { view: PublicManifestView; title: string; url: string; icon: NavIcon }[] {
+  return [
+    {
+      view: 'manifest',
+      title: terms.manifest,
+      url: publicManifestPath(username, 'manifest'),
+      icon: BookOpen,
+    },
+    {
+      view: 'journey',
+      title: terms.bio_button,
+      url: publicManifestPath(username, 'journey'),
+      icon: Compass,
+    },
+    {
+      view: 'contact',
+      title: terms.contact,
+      url: publicManifestPath(username, 'contact'),
+      icon: Mail,
+    },
+  ]
+}
+
 interface PlatformSidebarProps extends React.ComponentProps<typeof Sidebar> {
   mode?: PlatformLayoutMode
   wayfarer: {
@@ -123,6 +153,7 @@ export function PlatformSidebar({
   const isPublic = mode === 'public'
   const isAuthenticated = Boolean(wayfarer)
   const navItems = isPublic ? buildPublicNavItems(uiTerms) : buildNavItems(uiTerms)
+  const publicProfile = usePublicProfileRoute()
 
   function getBadge(url: string): number {
     if (url === '/itinerary') return badges?.itinerary ?? 0
@@ -136,6 +167,17 @@ export function PlatformSidebar({
       setOpenMobile(false)
     }
   }
+
+  const ownUsername = wayfarer?.username ?? null
+  const ownPublicLinks = ownUsername ? buildPublicProfileLinks(ownUsername, uiTerms) : []
+
+  /** Name-headed section for direct public profile URLs (any visitor; skip when it's your own — covered under Platform). */
+  const showRouteProfileSection =
+    Boolean(publicProfile.username) && publicProfile.username !== ownUsername
+
+  const routeProfileLinks = publicProfile.username
+    ? buildPublicProfileLinks(publicProfile.username, uiTerms)
+    : []
 
   return (
       <Sidebar collapsible="icon" {...props}>
@@ -159,7 +201,7 @@ export function PlatformSidebar({
                   {items.map(({ title, url, icon: Icon, tooltip }) => {
                     const isActive =
                       url === '/'
-                        ? pathname === '/' || /^\/manifest\/[^/]+/.test(pathname)
+                        ? pathname === '/'
                         : url === '/manifest'
                           ? pathname === '/manifest'
                           : pathname === url || pathname.startsWith(url + '/')
@@ -188,8 +230,54 @@ export function PlatformSidebar({
                     )
                   })}
                 </SidebarMenu>
+
+                {/* Authenticated: public view of own Manifest (URL scheme), separate from editor link above */}
+                {group === 'Platform' && ownPublicLinks.length > 0 ? (
+                  <>
+                    <SidebarGroupLabel className="mt-2">{uiTerms.manifest}</SidebarGroupLabel>
+                    <SidebarMenu>
+                      {ownPublicLinks.map(({ title, url, icon: Icon, view }) => (
+                        <SidebarMenuItem key={url}>
+                          <SidebarMenuButton
+                            onClick={() => handleClick(url)}
+                            tooltip={title}
+                            isActive={
+                              publicProfile.username === ownUsername &&
+                              publicProfile.view === view
+                            }
+                          >
+                            <Icon className="h-4 w-4" />
+                            <span>{title}</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  </>
+                ) : null}
               </SidebarGroup>
             ))}
+
+          {showRouteProfileSection ? (
+            <SidebarGroup>
+              <SidebarGroupLabel>
+                {publicProfile.displayName ?? publicProfile.username}
+              </SidebarGroupLabel>
+              <SidebarMenu>
+                {routeProfileLinks.map(({ title, url, icon: Icon, view }) => (
+                  <SidebarMenuItem key={url}>
+                    <SidebarMenuButton
+                      onClick={() => handleClick(url)}
+                      tooltip={title}
+                      isActive={publicProfile.view === view}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{title}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroup>
+          ) : null}
         </SidebarContent>
         <SidebarFooter className="gap-2">
           <SidebarUtilities showSettings={isAuthenticated} />
@@ -201,20 +289,13 @@ export function PlatformSidebar({
                 asChild
                 variant="secondary"
                 size={collapsed ? 'icon' : 'sm'}
-                className={collapsed ? 'w-full' : 'w-full justify-start gap-2'}
+                className={collapsed ? 'w-full' : 'w-full justify-center gap-2'}
               >
                 <Link to="/login" onClick={() => isMobile && setOpenMobile(false)}>
                   <LogIn className="h-4 w-4 shrink-0" />
                   {!collapsed && <span>Log in</span>}
                 </Link>
               </Button>
-              {!collapsed && (
-                <Button asChild variant="outline" size="sm" className="w-full">
-                  <Link to="/signup" onClick={() => isMobile && setOpenMobile(false)}>
-                    Sign up
-                  </Link>
-                </Button>
-              )}
             </div>
           )}
           {!collapsed && <FooterNav />}

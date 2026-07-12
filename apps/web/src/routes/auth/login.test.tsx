@@ -11,8 +11,13 @@ vi.mock('@/hooks/use-auth', () => ({
     getAuthError: vi.fn((err: unknown) => (err instanceof Error ? err.message : 'Something went wrong.')),
 }))
 
-vi.mock('@/components/cairn-lockup', () => ({
-    CairnLockup: () => <div data-testid="cairn-lockup" />,
+vi.mock('@/routes/auth/auth-layout', () => ({
+    AuthLayout: ({ title, children }: { title: string; children: React.ReactNode }) => (
+        <div>
+            <h1>{title}</h1>
+            {children}
+        </div>
+    ),
 }))
 
 import { useAuth, signIn } from '@/hooks/use-auth'

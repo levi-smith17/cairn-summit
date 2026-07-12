@@ -6,13 +6,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import { ExternalLink, GitBranch } from 'lucide-react'
-import { FooterNav } from '@/components/nav/footer'
 import { RichTextContent } from '@/components/ui/rich-text-content'
 import { Timeline } from '@/components/ui/timeline'
 import { format } from 'date-fns'
 import { GearChart } from './gear-chart'
 import { ManifestContactInfo } from './manifest-contact-info'
-import { ManifestHeader } from './manifest-header'
 
 const toLocalDate = (d: string | Date) => {
   const date = new Date(d)
@@ -43,9 +41,9 @@ interface ManifestContentProps {
   landmarks: { id: string; name: string; description: string | null; url: string | null; githubUrl: string | null; startDate: string | null; endDate: string | null; current: boolean }[]
   summits: { id: string; title: string; issuer: string | null; date: string | null; description: string | null; url: string | null }[]
   pathfinding: { id: string; organization: string; role: string | null; location: string | null; startDate: string; endDate: string | null; current: boolean; description: string | null }[]
-  currentWayfarer: { name: string | null; email: string | null; avatar: string | null } | null
-  /** Hide public page chrome when embedded in Outpost studio canvas. */
-  embedded?: boolean
+  /** In-canvas navigation (Outpost) — when set, skips URL links. */
+  onJourneyClick?: () => void
+  onContactClick?: () => void
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -111,19 +109,18 @@ function LandmarkCard({ l }: { l: ManifestContentProps['landmarks'][number] }) {
   )
 }
 
-export function ManifestContent({ wayfarer, origins, expeditions, training, gear, landmarks, summits, pathfinding, currentWayfarer, embedded = false }: ManifestContentProps) {
-  const headerRef = useRef<HTMLDivElement>(null)
-  const [showStickyHeader, setShowStickyHeader] = useState(false)
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => setShowStickyHeader(!entry.isIntersecting),
-      { threshold: 0 }
-    )
-    if (headerRef.current) observer.observe(headerRef.current)
-    return () => observer.disconnect()
-  }, [])
-
+export function ManifestContent({
+  wayfarer,
+  origins,
+  expeditions,
+  training,
+  gear,
+  landmarks,
+  summits,
+  pathfinding,
+  onJourneyClick,
+  onContactClick,
+}: ManifestContentProps) {
   const { setTheme } = useTheme()
 
   useEffect(() => {
@@ -157,23 +154,9 @@ export function ManifestContent({ wayfarer, origins, expeditions, training, gear
 
   return (
     <div className="relative manifest-page">
-      {!embedded && (
-        <ManifestHeader
-          wayfarer={wayfarer}
-          terminology={terminology}
-          onTerminologyToggle={() => setTerminology(t => {
-            const next = t === 'CAIRN' ? 'STANDARD' : 'CAIRN'
-            sessionStorage.setItem(`manifest-terminology-${wayfarer.username}`, next)
-            return next
-          })}
-          showAvatar={showStickyHeader}
-          currentWayfarer={currentWayfarer}
-        />
-      )}
-
-      <div className={`max-w-3xl mx-auto px-6 pb-6 flex flex-col gap-12 print:max-w-none print:px-0 print:mx-0 print:pb-0 ${embedded ? 'pt-2' : ''}`}>
+      <div className="mx-auto flex max-w-3xl flex-col gap-12 px-6 pb-6 pt-2 print:mx-0 print:max-w-none print:px-0 print:pb-0">
         <div className="flex flex-col gap-6">
-          <div ref={headerRef} className={`flex items-center gap-4 ${embedded ? 'pt-4' : 'pt-8'}`}>
+          <div className="flex items-center gap-4 pt-4">
             <Avatar className="h-20 w-20">
               <AvatarImage src={wayfarer.avatar ?? undefined} />
               <AvatarFallback className="text-xl">{initials}</AvatarFallback>
@@ -184,14 +167,24 @@ export function ManifestContent({ wayfarer, origins, expeditions, training, gear
             </div>
           </div>
 
-          <ManifestContactInfo wayfarer={wayfarer} origins={origins} />
+          <ManifestContactInfo
+            wayfarer={wayfarer}
+            origins={origins}
+            onContactClick={onContactClick}
+          />
 
           {origins?.summary && <RichTextContent html={origins.summary} className="text-muted-foreground" />}
 
           <div className="flex justify-end print:hidden">
-            <Link to={`/manifest/${wayfarer.username}/journey`}>
-              <Button variant="outline" size="sm">{terms.bio_button}</Button>
-            </Link>
+            {onJourneyClick ? (
+              <Button type="button" variant="outline" size="sm" onClick={onJourneyClick}>
+                {terms.bio_button}
+              </Button>
+            ) : (
+              <Link to={`/manifest/${wayfarer.username}/journey`}>
+                <Button variant="outline" size="sm">{terms.bio_button}</Button>
+              </Link>
+            )}
           </div>
         </div>
 
@@ -284,8 +277,6 @@ export function ManifestContent({ wayfarer, origins, expeditions, training, gear
             ))}
           </Section>
         )}
-
-        {!embedded && <FooterNav showCairn={true} />}
       </div>
     </div>
   )

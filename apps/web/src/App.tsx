@@ -20,6 +20,7 @@ import Terms from '@/routes/terms'
 import Thread from '@/routes/thread'
 import ManifestPublicContact from '@/routes/manifest-public/contact'
 import ManifestPublicJourney from '@/routes/manifest-public/journey'
+import ManifestPublicPage from '@/routes/manifest-public'
 
 // Protected Routes
 import Admin from '@/routes/admin'
@@ -58,21 +59,20 @@ export default function App() {
                         <Route element={<AdaptivePlatformLayout />}>
                             <Route path="/" element={<Home />} />
                             <Route path="/outpost" element={<Navigate to="/" replace />} />
-                            <Route path="/manifest/:username" element={<Home />} />
+                            <Route path="/manifest/:username" element={<ManifestPublicPage />} />
                             <Route path="/manifest/:username/contact" element={<ManifestPublicContact />} />
                             <Route path="/manifest/:username/journey" element={<ManifestPublicJourney />} />
                             <Route path="/privacy" element={<Privacy />} />
                             <Route path="/privacy-contact" element={<PrivacyContact />} />
                             <Route path="/terms" element={<Terms />} />
+                            <Route path="/login" element={<Login />} />
+                            <Route path="/signup" element={<Signup />} />
+                            <Route path="/verify-email" element={<VerifyEmail />} />
+                            <Route path="/forgot-password" element={<ForgotPassword />} />
+                            <Route path="/invite/:token" element={<Invite />} />
+                            <Route path="/thread/:token" element={<Thread />} />
+                            <Route path="*" element={<NotFound />} />
                         </Route>
-
-                        {/* Standalone public routes (own chrome) */}
-                        <Route path="/login" element={<Login />} />
-                        <Route path="/signup" element={<Signup />} />
-                        <Route path="/verify-email" element={<VerifyEmail />} />
-                        <Route path="/forgot-password" element={<ForgotPassword />} />
-                        <Route path="/invite/:token" element={<Invite />} />
-                        <Route path="/thread/:token" element={<Thread />} />
 
                         {/* Protected routes — full platform sidebar */}
                         <Route element={<ProtectedRoute />}>
@@ -92,8 +92,6 @@ export default function App() {
                                 <Route path="/settings" element={<Settings />} />
                             </Route>
                         </Route>
-
-                        <Route path="*" element={<NotFound />} />
                     </Routes>
                 </TerminologyProvider>
             </TooltipProvider>
