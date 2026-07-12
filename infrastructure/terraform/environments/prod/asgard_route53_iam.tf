@@ -5,6 +5,10 @@
 resource "aws_iam_user" "asgard_route53" {
   name = "${var.project_name}-${var.environment}-asgard-route53"
 
+  # Ensure CI role policy gains CreateUser/etc. before this resource runs
+  # in the same apply that first introduces the IAM user.
+  depends_on = [module.github_oidc]
+
   tags = {
     environment = var.environment
     managed_by  = var.managed_by
