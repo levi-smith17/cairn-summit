@@ -1,14 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/use-auth'
-import { useTerminology } from '@/contexts/terminology-context'
 import { ItineraryClient } from './itinerary/itinerary-client'
-import { ItinerarySkeleton } from '@/components/ui/page-skeleton'
+import { ItineraryStudioSkeleton } from '@/components/studio/ui/studio-skeletons'
 import { isInitialRouteLoad } from '@/hooks/use-route-ready'
 import { fetchItineraryEvents, getItineraryCalendars } from '@/lib/api/itinerary'
 
 export default function Itinerary() {
   const { user } = useAuth()
-  const { terms } = useTerminology()
 
   const calendarsQuery = useQuery({
     queryKey: ['itinerary-calendars'],
@@ -26,14 +24,15 @@ export default function Itinerary() {
   })
 
   if (isInitialRouteLoad([calendarsQuery, eventsQuery])) {
-    return <ItinerarySkeleton title={terms.itinerary} />
+    return <ItineraryStudioSkeleton />
   }
 
   return (
     <ItineraryClient
       stops={[]}
       calendars={calendarsQuery.data ?? []}
-      events={eventsQuery.data ?? []}
+      events={eventsQuery.data?.events ?? []}
+      calendarSync={eventsQuery.data?.calendarSync ?? []}
     />
   )
 }

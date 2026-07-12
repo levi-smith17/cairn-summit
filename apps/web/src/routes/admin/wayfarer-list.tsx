@@ -1,10 +1,9 @@
 import { format } from 'date-fns'
-import { Eye, EyeOff, Plus, Shield, Trash2, UserX } from 'lucide-react'
+import { Eye, EyeOff, Shield, Trash2, UserX } from 'lucide-react'
 import { useTerminology } from '@/contexts/terminology-context'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Separator } from '@/components/ui/separator'
 import type { WayfarerSummary } from '@/lib/api/admin'
 
@@ -17,9 +16,7 @@ interface WayfarerListProps {
   selectedBulk: Set<string>
   bulking: boolean
   onSelect: (id: string) => void
-  onNew: () => void
   onToggleBulk: (id: string) => void
-  onToggleAllBulk: () => void
   onBulkMarkListed: (listed: boolean) => void
   onBulkDelete: () => void
   onBulkClear: () => void
@@ -32,115 +29,109 @@ export function WayfarerList({
   selectedBulk,
   bulking,
   onSelect,
-  onNew,
   onToggleBulk,
-  onToggleAllBulk,
   onBulkMarkListed,
   onBulkDelete,
   onBulkClear,
 }: WayfarerListProps) {
   const { terms } = useTerminology()
-  const singularWayfarer = terms.wayfarers.endsWith('s') ? terms.wayfarers.slice(0, -1) : terms.wayfarers
-  const allSelected = wayfarers.length > 0 && wayfarers.every(w => selectedBulk.has(w.id))
   const someSelected = selectedBulk.size > 0
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b shrink-0 gap-2">
-        <div className="flex items-center gap-2">
-          <Checkbox
-            checked={allSelected}
-            onCheckedChange={onToggleAllBulk}
-            aria-label="Select all"
-            className="shrink-0"
-          />
-          <span className="text-sm font-medium">
-            {`${wayfarers.length} ${wayfarers.length === 1 ? singularWayfarer : terms.wayfarers}`.toLowerCase()}
-          </span>
-        </div>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onNew}>
-              <Plus className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Add {singularWayfarer.toLowerCase()}</TooltipContent>
-        </Tooltip>
-      </div>
-
-      {someSelected && (
-        <div className="flex items-center gap-1.5 px-3 py-2 bg-muted/80 border-b shrink-0">
-          <span className="text-xs text-muted-foreground mr-1">{selectedBulk.size} selected</span>
-          <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-xs" disabled={bulking}
-            onClick={() => onBulkMarkListed(true)}>
-            <Eye className="h-3 w-3" />Listed
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
+      {someSelected ? (
+        <div className="flex shrink-0 items-center gap-1.5 border-b border-border bg-muted/80 px-3 py-2">
+          <span className="mr-1 text-xs text-muted-foreground">{selectedBulk.size} selected</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1.5 text-xs"
+            disabled={bulking}
+            onClick={() => onBulkMarkListed(true)}
+          >
+            <Eye className="h-3 w-3" />
+            Listed
           </Button>
-          <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-xs" disabled={bulking}
-            onClick={() => onBulkMarkListed(false)}>
-            <EyeOff className="h-3 w-3" />Unlisted
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1.5 text-xs"
+            disabled={bulking}
+            onClick={() => onBulkMarkListed(false)}
+          >
+            <EyeOff className="h-3 w-3" />
+            Unlisted
           </Button>
-          <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-xs text-destructive hover:text-destructive/80"
-            disabled={bulking} onClick={onBulkDelete}>
-            <Trash2 className="h-3 w-3" />Delete
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1.5 text-xs text-destructive hover:text-destructive/80"
+            disabled={bulking}
+            onClick={onBulkDelete}
+          >
+            <Trash2 className="h-3 w-3" />
+            Delete
           </Button>
-          <Button variant="ghost" size="sm" className="h-7 text-xs ml-auto" onClick={onBulkClear}>
+          <Button variant="ghost" size="sm" className="ml-auto h-7 text-xs" onClick={onBulkClear}>
             Cancel
           </Button>
         </div>
-      )}
+      ) : null}
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto">
         {wayfarers.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full py-16 px-4 text-center">
+          <div className="flex h-full flex-col items-center justify-center px-4 py-16 text-center">
             <p className="text-sm text-muted-foreground">No {terms.wayfarers.toLowerCase()} found.</p>
           </div>
         ) : (
           wayfarers.map((w, i) => (
             <div key={w.id}>
               <div
-                className={`flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50 ${
+                className={`flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-muted/50 ${
                   selectedId === w.id ? 'bg-primary/10 hover:bg-primary/10' : ''
                 }`}
               >
                 <Checkbox
                   checked={selectedBulk.has(w.id)}
                   onCheckedChange={() => onToggleBulk(w.id)}
-                  onClick={e => e.stopPropagation()}
+                  onClick={(e) => e.stopPropagation()}
                   aria-label={`Select ${w.name ?? w.email}`}
                   className="shrink-0"
                 />
 
                 <div
-                  className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
+                  className="flex min-w-0 flex-1 cursor-pointer items-center gap-3"
                   onClick={() => onSelect(w.id)}
                 >
-                  <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0 text-xs font-semibold text-muted-foreground uppercase">
-                    {(w.name?.[0] ?? w.email?.[0] ?? '?')}
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold uppercase text-muted-foreground">
+                    {w.name?.[0] ?? w.email?.[0] ?? '?'}
                   </div>
 
-                  <div className="flex-1 min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
-                      <p className="text-sm font-medium truncate">
+                      <p className="truncate text-sm font-medium">
                         {w.name ?? w.email ?? '(no name)'}
                       </p>
-                      {w.isAdmin && <Shield className="h-3 w-3 text-primary shrink-0" />}
-                      {!w.listed && <UserX className="h-3 w-3 text-muted-foreground shrink-0" />}
-                      {w.id === currentUserId && (
-                        <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 leading-none">you</Badge>
-                      )}
+                      {w.isAdmin ? <Shield className="h-3 w-3 shrink-0 text-primary" /> : null}
+                      {!w.listed ? <UserX className="h-3 w-3 shrink-0 text-muted-foreground" /> : null}
+                      {w.id === currentUserId ? (
+                        <Badge variant="outline" className="h-4 px-1 py-0 text-[10px] leading-none">
+                          you
+                        </Badge>
+                      ) : null}
                     </div>
-                    <p className="text-xs text-muted-foreground truncate">
+                    <p className="truncate text-xs text-muted-foreground">
                       {w.email}
-                      {w.username && <span className="ml-1.5 opacity-60">@{w.username}</span>}
+                      {w.username ? <span className="ml-1.5 opacity-60">@{w.username}</span> : null}
                     </p>
                   </div>
 
-                  <span className="text-[10px] text-muted-foreground shrink-0">
+                  <span className="shrink-0 text-[10px] text-muted-foreground">
                     {format(new Date(w.createdAt), 'MMM d, yyyy')}
                   </span>
                 </div>
               </div>
-              {i < wayfarers.length - 1 && <Separator />}
+              {i < wayfarers.length - 1 ? <Separator /> : null}
             </div>
           ))
         )}

@@ -67,7 +67,7 @@ export function IntegrationsForm() {
   }
 
   return (
-    <div className="max-w-xl space-y-6">
+    <div className="space-y-6">
       <div className="space-y-1">
         <h2 className="text-lg font-semibold">Integrations</h2>
         <p className="text-sm text-muted-foreground">
@@ -102,7 +102,7 @@ export function IntegrationsForm() {
               {' '}<code>/asgard/cairn/api-token</code>.
             </p>
             <div className="flex items-center gap-2">
-              <code className="flex-1 truncate rounded bg-background px-2 py-1 text-xs">{generatedToken}</code>
+              <code className="min-w-0 flex-1 break-all rounded bg-background px-2 py-1 text-xs">{generatedToken}</code>
               <Button type="button" size="sm" variant="outline" onClick={() => void copyToken()}>
                 <Copy className="h-4 w-4" />
                 Copy

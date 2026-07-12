@@ -1,11 +1,10 @@
 import { useState, useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/use-auth'
-import { useTerminology } from '@/contexts/terminology-context'
 import { getKin } from '@/lib/api/headwaters'
 import type { Kin } from '@cairn/types'
 import { HeadwatersClient } from './headwaters/headwaters-client'
-import { HeadwatersSkeleton } from '@/components/ui/page-skeleton'
+import { HeadwatersStudioSkeleton } from '@/components/studio/ui/studio-skeletons'
 import { isInitialRouteLoad } from '@/hooks/use-route-ready'
 
 type PanelState =
@@ -27,7 +26,6 @@ function parseName(fullName: string): { givenName: string; middleName?: string; 
 
 export default function Headwaters() {
   const { user } = useAuth()
-  const { terms } = useTerminology()
   const queryClient = useQueryClient()
   const [panel, setPanel] = useState<PanelState>({ mode: 'closed' })
 
@@ -58,7 +56,7 @@ export default function Headwaters() {
   }, [kins.length, user])
 
   if (isInitialRouteLoad([kinQuery])) {
-    return <HeadwatersSkeleton title={terms.headwaters} />
+    return <HeadwatersStudioSkeleton />
   }
 
   const displayKins = kins.length > 0 ? kins : wayfarerSeed ? [wayfarerSeed] : []

@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { getAdminData } from '@/lib/api/admin'
 import { getProfile } from '@/lib/api/profile'
 import { AdminClient } from './admin/admin-client'
-import { PageSkeleton } from '@/components/ui/page-skeleton'
+import { AdminStudioSkeleton } from '@/components/studio/ui/studio-skeletons'
 
 export default function Admin() {
   const { user, loading } = useAuth()
@@ -28,7 +28,7 @@ export default function Admin() {
   }
 
   if (loading || profileLoading) {
-    return <PageSkeleton title="Admin" />
+    return <AdminStudioSkeleton />
   }
 
   if (!user || !profile?.isAdmin || isError) {
@@ -36,7 +36,7 @@ export default function Admin() {
   }
 
   if (isLoading) {
-    return <PageSkeleton title="Admin" />
+    return <AdminStudioSkeleton />
   }
 
   const wayfarers = data?.wayfarers ?? []

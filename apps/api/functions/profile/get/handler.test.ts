@@ -39,15 +39,14 @@ describe('profile/get handler', () => {
 
     it('returns 404 when profile does not exist', async () => {
         vi.mocked(dynamo.send)
-            .mockResolvedValueOnce({ Item: undefined }) // GetItem
-            .mockResolvedValueOnce({ Count: 0 })        // signal count
-            .mockResolvedValueOnce({ Count: 0 })        // calendar count
+            .mockResolvedValueOnce({ Item: undefined })
+            .mockResolvedValueOnce({ Items: [] })
 
         const result = await handler(mockEvent()) as any
         expect(result.statusCode).toBe(404)
     })
 
-    it('returns profile with unread signal and calendar counts', async () => {
+    it('returns profile with unread signal count', async () => {
         vi.mocked(dynamo.send)
             .mockResolvedValueOnce({ Item: mockProfile })
             .mockResolvedValueOnce({ Items: [
@@ -55,7 +54,6 @@ describe('profile/get handler', () => {
                     { sk: 'SIGNAL#s2', read: true },
                     { sk: 'SIGNAL#s3', read: false },
                 ]})
-            .mockResolvedValueOnce({ Count: 7 })
 
         const result = await handler(mockEvent()) as any
         expect(result.statusCode).toBe(200)
@@ -63,15 +61,14 @@ describe('profile/get handler', () => {
         expect(data.username).toBe('levi')
         expect(data.email).toBe('levi@example.com')
         expect(data.signals).toBe(2)
-        expect(data.itinerary).toBe(7)
+        expect(data.itinerary).toBe(0)
         expect(data.isAdmin).toBe(false)
     })
 
-    it('returns zero counts when DynamoDB returns no Count', async () => {
+    it('returns zero signal count when DynamoDB returns no items', async () => {
         vi.mocked(dynamo.send)
             .mockResolvedValueOnce({ Item: mockProfile })
             .mockResolvedValueOnce({ Items: [] })
-            .mockResolvedValueOnce({})
 
         const result = await handler(mockEvent()) as any
         expect(result.statusCode).toBe(200)
@@ -84,7 +81,6 @@ describe('profile/get handler', () => {
         vi.mocked(dynamo.send)
             .mockResolvedValueOnce({ Item: { pk: 'USER#user-123', sk: 'PROFILE', username: 'levi', email: 'levi@example.com' } })
             .mockResolvedValueOnce({ Items: [] })
-            .mockResolvedValueOnce({ Count: 0 })
 
         const result = await handler(mockEvent()) as any
         const data = JSON.parse(result.body).data
@@ -104,10 +100,9 @@ describe('profile/get handler', () => {
             .mockResolvedValueOnce({ Item: mockProfile })
             .mockResolvedValueOnce({ Items: [
                     { sk: 'SIGNAL#s1' },
-                    { sk: 'SIGNAL#s1#REPLY#r1' }, // should be excluded
-                    { sk: 'SIGNAL#s1#REPLY#r2' }, // should be excluded
+                    { sk: 'SIGNAL#s1#REPLY#r1' },
+                    { sk: 'SIGNAL#s1#REPLY#r2' },
                 ]})
-            .mockResolvedValueOnce({ Count: 0 })
 
         const result = await handler(mockEvent()) as any
         const data = JSON.parse(result.body).data
