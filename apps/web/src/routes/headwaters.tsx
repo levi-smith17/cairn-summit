@@ -37,10 +37,6 @@ export default function Headwaters() {
     enabled: !!user,
   })
 
-  if (isInitialRouteLoad([kinQuery])) {
-    return <HeadwatersSkeleton title={terms.headwaters} />
-  }
-
   const kins = kinQuery.data ?? []
 
   const wayfarerSeed = useMemo<Kin | null>(() => {
@@ -60,6 +56,10 @@ export default function Headwaters() {
       updatedAt: new Date().toISOString(),
     }
   }, [kins.length, user])
+
+  if (isInitialRouteLoad([kinQuery])) {
+    return <HeadwatersSkeleton title={terms.headwaters} />
+  }
 
   const displayKins = kins.length > 0 ? kins : wayfarerSeed ? [wayfarerSeed] : []
 

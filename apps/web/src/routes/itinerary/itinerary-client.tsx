@@ -4,7 +4,9 @@ import { ChevronLeft, ChevronRight, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { PlatformHeader } from '@/components/nav/platform/platform-header'
+import { STUDIO_CONTEXT_BAR_CLASS } from '@/components/studio/layout/studio-data-toolbar'
 import { useTerminology } from '@/contexts/terminology-context'
+import { cn } from '@/lib/utils'
 import { luviNavLabel, type CalendarMode } from '@/lib/luvi'
 import { MonthView } from './month-view'
 import { WeekView } from './week-view'
@@ -112,7 +114,7 @@ export function ItineraryClient({ stops, calendars, events }: ItineraryClientPro
       <PlatformHeader title={terms.itinerary} />
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="flex shrink-0 flex-wrap items-center gap-1 gap-y-1.5 border-b border-border px-3 py-2">
+        <div className={cn(STUDIO_CONTEXT_BAR_CLASS, 'gap-1.5 sm:gap-2')}>
           <div className="flex shrink-0 items-center gap-0.5">
             <Button
               variant="ghost" size="icon" className="h-7 w-7"
@@ -135,33 +137,37 @@ export function ItineraryClient({ stops, calendars, events }: ItineraryClientPro
             {navLabel(view, anchor, calendarMode)}
           </span>
 
-          <div className="flex shrink-0 items-center overflow-hidden text-xs divide-x divide-border">
+          <div className="inline-flex shrink-0 items-center overflow-hidden rounded-md border border-border text-xs divide-x divide-border">
             {(Object.entries(viewLabels) as [CalendarView, string][]).map(([v, label]) => (
               <button
                 key={v}
+                type="button"
                 onClick={() => setView(v)}
-                className={`px-2.5 py-1 transition-colors ${
+                className={cn(
+                  'px-2.5 py-1 transition-colors',
                   view === v
                     ? 'bg-foreground text-background'
-                    : 'text-muted-foreground hover:bg-muted/40 hover:text-foreground'
-                }`}
+                    : 'text-muted-foreground hover:bg-muted/40 hover:text-foreground',
+                )}
               >
                 {label}
               </button>
             ))}
           </div>
 
-          <div className="flex shrink-0 items-center overflow-hidden text-xs divide-x divide-border">
+          <div className="inline-flex shrink-0 items-center overflow-hidden rounded-md border border-border text-xs divide-x divide-border">
             {MODE_OPTIONS.map(opt => (
               <Tooltip key={opt.value}>
                 <TooltipTrigger asChild>
                   <button
+                    type="button"
                     onClick={() => setCalendarMode(opt.value)}
-                    className={`px-2.5 py-1 transition-colors ${
+                    className={cn(
+                      'px-2.5 py-1 transition-colors',
                       calendarMode === opt.value
                         ? 'bg-foreground text-background'
-                        : 'text-muted-foreground hover:bg-muted/40 hover:text-foreground'
-                    }`}
+                        : 'text-muted-foreground hover:bg-muted/40 hover:text-foreground',
+                    )}
                   >
                     <span className="hidden sm:inline">{opt.label}</span>
                     <span className="sm:hidden">{opt.short}</span>
