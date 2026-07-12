@@ -1,41 +1,35 @@
 import { Link } from 'react-router-dom'
-import { useWayfarerHeader } from '@/hooks/use-wayfarer-header'
-import { FooterNav } from '@/components/nav/footer'
-import { PublicHeader } from '@/components/nav/public/public-header'
+import { PlatformStudioContextBar } from '@/components/studio/platform-studio-context-bar'
 import { Button } from '@/components/ui/button'
 import { MapPin } from 'lucide-react'
+import { useTerminology } from '@/contexts/terminology-context'
 
 export default function NotFound() {
-    const wayfarer = useWayfarerHeader()
+  const { terms } = useTerminology()
 
-    return (
-        <div className="min-h-screen flex flex-col">
-            <header className="sticky top-0 z-10 flex items-center justify-between bg-header px-6 py-3 border-b">
-                <img src="/cairn-lockup.png" alt="Cairn Summit Lockup" height={50} width={160} />
-                <PublicHeader wayfarer={wayfarer} />
-            </header>
-
-            <div className="flex-1 flex items-center justify-center px-4 py-12">
-                <div className="bg-card border rounded-xl px-10 py-10 max-w-md w-full text-center flex flex-col items-center gap-4">
-                    <div className="bg-muted rounded-full p-4">
-                        <MapPin className="h-8 w-8 text-muted-foreground" />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">404</span>
-                        <h1 className="text-2xl font-semibold">Trail Not Found</h1>
-                        <p className="text-sm text-muted-foreground mt-1">
-                            You've wandered off the marked path. This cairn doesn't exist — or it may have been moved further up the mountain.
-                        </p>
-                    </div>
-                    <Button asChild className="mt-2">
-                        <Link to="/">Return to the Outpost</Link>
-                    </Button>
-                </div>
-            </div>
-
-            <div className="pb-6 flex justify-center">
-                <FooterNav showCairn={true} />
-            </div>
+  return (
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
+      <PlatformStudioContextBar aria-label="Not found" title="Not found" />
+      <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto px-4 py-12">
+        <div className="flex w-full max-w-md flex-col items-center gap-4 rounded-xl border bg-card px-10 py-10 text-center">
+          <div className="rounded-full bg-muted p-4">
+            <MapPin className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              404
+            </span>
+            <h1 className="text-2xl font-semibold">Trail Not Found</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              You&apos;ve wandered off the marked path. This cairn doesn&apos;t exist — or it may have
+              been moved further up the mountain.
+            </p>
+          </div>
+          <Button asChild className="mt-2">
+            <Link to="/">Return to {terms.outpost}</Link>
+          </Button>
         </div>
-    )
+      </div>
+    </div>
+  )
 }

@@ -41,7 +41,7 @@ export default function SignupPage() {
     }
 
     return (
-        <AuthLayout>
+        <AuthLayout title="Sign up">
             <div className="w-full flex flex-col gap-8">
                 <div className="flex flex-col items-center gap-4">
                     <img src="/cairn-summit.png" alt="Cairn Summit Logo" height={200} width={200} />

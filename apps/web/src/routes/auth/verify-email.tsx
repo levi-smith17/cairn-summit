@@ -21,7 +21,7 @@ export default function VerifyEmailPage() {
 
     if (!email) {
         return (
-            <AuthLayout>
+            <AuthLayout title="Verify email">
                 <div className="w-full flex flex-col gap-4 items-center">
                     <p className="text-sm text-destructive text-center">
                         No email address provided.
@@ -67,7 +67,7 @@ export default function VerifyEmailPage() {
     }
 
     return (
-        <AuthLayout>
+        <AuthLayout title="Verify email">
             <div className="w-full flex flex-col gap-8">
                 <div className="flex flex-col items-center gap-4">
                     <img src="/cairn-summit.png" alt="Cairn Summit Logo" height={200} width={200} />

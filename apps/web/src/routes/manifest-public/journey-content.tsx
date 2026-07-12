@@ -1,12 +1,10 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useTheme } from 'next-themes'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { FooterNav } from '@/components/nav/footer'
 import { Separator } from '@/components/ui/separator'
 import { RichTextContent } from '@/components/ui/rich-text-content'
 import { getTerms, type TerminologyStyle } from '@/lib/terminology'
 import { ManifestContactInfo } from './manifest-contact-info'
-import { ManifestHeader } from './manifest-header'
 import { format } from 'date-fns'
 import { formatAge } from '@/lib/format-age'
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel'
@@ -51,7 +49,7 @@ interface JourneyContentProps {
     github: string | null
   } | null
   companions: Companion[]
-  currentWayfarer: { name: string | null; email: string | null; avatar: string | null } | null
+  onContactClick?: () => void
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -105,19 +103,12 @@ function CompanionMediaCarousel({ companion }: { companion: Companion }) {
   )
 }
 
-export function JourneyContent({ wayfarer, origins, companions, currentWayfarer }: JourneyContentProps) {
-  const headerRef = useRef<HTMLDivElement>(null)
-  const [showStickyHeader, setShowStickyHeader] = useState(false)
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => setShowStickyHeader(!entry.isIntersecting),
-      { threshold: 0, rootMargin: '0px' }
-    )
-    if (headerRef.current) observer.observe(headerRef.current)
-    return () => observer.disconnect()
-  }, [])
-
+export function JourneyContent({
+  wayfarer,
+  origins,
+  companions,
+  onContactClick,
+}: JourneyContentProps) {
   const { setTheme } = useTheme()
 
   useEffect(() => {
@@ -147,22 +138,9 @@ export function JourneyContent({ wayfarer, origins, companions, currentWayfarer 
 
   return (
     <div className="relative">
-      <ManifestHeader
-        wayfarer={wayfarer}
-        terminology={terminology}
-        onTerminologyToggle={() => setTerminology(t => {
-          const next = t === 'CAIRN' ? 'STANDARD' : 'CAIRN'
-          sessionStorage.setItem(`manifest-terminology-${wayfarer.username}`, next)
-          return next
-        })}
-        showAvatar={showStickyHeader}
-        currentWayfarer={currentWayfarer}
-        backTo={`/manifest/${wayfarer.username}`}
-      />
-
-      <div className="max-w-3xl mx-auto px-6 pb-6 flex flex-col gap-12">
+      <div className="mx-auto flex max-w-3xl flex-col gap-12 px-6 pb-6 pt-2">
         <div className="flex flex-col gap-6">
-          <div ref={headerRef} className="flex items-center gap-4 pt-8">
+          <div className="flex items-center gap-4 pt-4">
             <Avatar className="h-20 w-20">
               <AvatarImage src={wayfarer.avatar ?? undefined} />
               <AvatarFallback className="text-xl">{initials}</AvatarFallback>
@@ -172,7 +150,11 @@ export function JourneyContent({ wayfarer, origins, companions, currentWayfarer 
               {origins?.headline && <p className="text-muted-foreground">{origins.headline}</p>}
             </div>
           </div>
-          <ManifestContactInfo wayfarer={wayfarer} origins={origins} />
+          <ManifestContactInfo
+            wayfarer={wayfarer}
+            origins={origins}
+            onContactClick={onContactClick}
+          />
         </div>
 
         {origins?.bio && (
@@ -221,8 +203,6 @@ export function JourneyContent({ wayfarer, origins, companions, currentWayfarer 
             </div>
           </Section>
         )}
-
-        <FooterNav showCairn={true} />
       </div>
     </div>
   )
