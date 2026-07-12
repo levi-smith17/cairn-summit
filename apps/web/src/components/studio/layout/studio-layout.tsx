@@ -105,8 +105,9 @@ export function StudioLayout({
           ) : null}
         </div>
         {inspectorOpen ? (
-          <div className="fixed inset-x-0 bottom-0 z-50 flex max-h-[50dvh] flex-col overflow-hidden rounded-t-xl border-t border-border bg-column-inspector pb-[env(safe-area-inset-bottom)] shadow-2xl md:hidden">
-            <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">{inspector}</div>
+          <div className="fixed inset-x-0 bottom-0 z-50 flex h-[min(50dvh,100%)] max-h-[50dvh] flex-col overflow-hidden rounded-t-xl border-t border-border bg-column-inspector pb-[env(safe-area-inset-bottom)] shadow-2xl md:hidden">
+            {/* Fixed height so inspector footers stay pinned; only the form body scrolls. */}
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{inspector}</div>
           </div>
         ) : null}
       </div>

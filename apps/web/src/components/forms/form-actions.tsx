@@ -78,10 +78,18 @@ export function FormActions({
         </Button>
       )}
       <Button
-        type="submit"
-        form={formId}
+        type="button"
         disabled={saving}
         className={`w-full md:w-auto ${buttonClassName ?? ''}`}
+        onClick={() => {
+          if (formId) {
+            const form = document.getElementById(formId)
+            if (form instanceof HTMLFormElement) {
+              form.requestSubmit()
+              return
+            }
+          }
+        }}
       >
         {saving ? (
           <Loader2 className="h-4 w-4 animate-spin" />

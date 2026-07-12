@@ -32,12 +32,20 @@ export function InspectorFormActions({
     <>
       <div className={cn('shrink-0 border-t border-border px-5 py-4', className)}>
         <Button
-          type={formId ? 'submit' : 'button'}
-          form={formId}
+          type="button"
           size="sm"
           className="w-full"
           disabled={!canSave || isSaving}
-          onClick={formId ? undefined : onSave}
+          onClick={() => {
+            if (formId) {
+              const form = document.getElementById(formId)
+              if (form instanceof HTMLFormElement) {
+                form.requestSubmit()
+                return
+              }
+            }
+            onSave?.()
+          }}
         >
           {isSaving ? 'Saving…' : isNew ? createLabel : saveLabel}
         </Button>
