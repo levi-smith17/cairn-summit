@@ -1,13 +1,9 @@
 'use client'
 
-import { BookUser, Pin, PinOff, Search } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { Pin, PinOff, Search } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useAuth } from '@/hooks/use-auth'
 import { useInspectorPin } from '@/contexts/inspector-pin-context'
-import { useTerminology } from '@/contexts/terminology-context'
-import { getProfile } from '@/lib/api/profile'
 import { cn } from '@/lib/utils'
 
 const iconButtonClass =
@@ -56,42 +52,11 @@ export function HeaderInspectorPin() {
   )
 }
 
-export function HeaderPublicManifest() {
-  const { user } = useAuth()
-  const { terms } = useTerminology()
-  const navigate = useNavigate()
-  const { data: profile } = useQuery({
-    queryKey: ['profile'],
-    queryFn: getProfile,
-    enabled: !!user,
-  })
-  const username = profile?.username ?? null
-
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          disabled={!username}
-          onClick={() => username && navigate(`/manifest/${username}`)}
-          className={cn(iconButtonClass, !username && 'opacity-40 cursor-not-allowed')}
-          aria-label={`View public ${terms.manifest}`}
-        >
-          <BookUser className="h-4 w-4" />
-        </button>
-      </TooltipTrigger>
-      <TooltipContent>
-        {username ? `View public ${terms.manifest}` : `Set a username to view your public ${terms.manifest}`}
-      </TooltipContent>
-    </Tooltip>
-  )
-}
-
 export function PlatformHeaderActions({
   trailing,
   showInspectorPin = false,
 }: {
-  /** Rendered after search/pin/manifest — typically primary Add buttons on the far right. */
+  /** Rendered after search/pin — typically primary Add buttons on the far right. */
   trailing?: React.ReactNode
   /** Pages with an inspector column should opt in. */
   showInspectorPin?: boolean
@@ -108,7 +73,6 @@ export function PlatformHeaderActions({
     <div className="flex items-center gap-1.5 sm:gap-2">
       <HeaderSearchTrigger />
       {showInspectorPin ? <HeaderInspectorPin /> : null}
-      <HeaderPublicManifest />
       {trailing}
     </div>
   )

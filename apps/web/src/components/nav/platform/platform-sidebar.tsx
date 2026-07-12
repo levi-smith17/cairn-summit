@@ -12,7 +12,6 @@ import {
   Mail,
   MessageSquare,
   NotebookPen,
-  Rocket,
   TreePine,
   Users,
   Wallet,
@@ -65,6 +64,7 @@ function buildNavItems(terms: Terms): { group: string; items: NavItem[] }[] {
       group: 'Platform',
       items: [
         { title: terms.guides, url: '/guides', icon: LayersIcon, tooltip: terms.guides },
+        { title: terms.headwaters, url: '/headwaters', icon: TreePine, tooltip: terms.headwaters },
         { title: terms.logs, url: '/logs', icon: NotebookPen, tooltip: terms.logs },
         { title: terms.manifest, url: '/manifest', icon: BookOpen, tooltip: terms.manifest },
         { title: terms.provisions, url: '/provisions', icon: Wallet, tooltip: terms.provisions },
@@ -74,13 +74,6 @@ function buildNavItems(terms: Terms): { group: string; items: NavItem[] }[] {
       group: 'Admin',
       items: [
         { title: terms.wayfarers, url: '/admin', icon: Users, tooltip: terms.wayfarers },
-      ],
-    },
-    {
-      group: 'Apps',
-      items: [
-        { title: terms.headwaters, url: '/headwaters', icon: TreePine, tooltip: terms.headwaters },
-        { title: 'Starfield', url: '/starfield', icon: Rocket, tooltip: 'Starfield' },
       ],
     },
   ]
@@ -234,7 +227,7 @@ export function PlatformSidebar({
                 {/* Authenticated: public view of own Manifest (URL scheme), separate from editor link above */}
                 {group === 'Platform' && ownPublicLinks.length > 0 ? (
                   <>
-                    <SidebarGroupLabel className="mt-2">{uiTerms.manifest}</SidebarGroupLabel>
+                    <SidebarGroupLabel className="mt-2">Public View</SidebarGroupLabel>
                     <SidebarMenu>
                       {ownPublicLinks.map(({ title, url, icon: Icon, view }) => (
                         <SidebarMenuItem key={url}>

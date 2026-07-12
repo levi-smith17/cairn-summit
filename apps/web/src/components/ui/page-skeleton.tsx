@@ -274,14 +274,15 @@ export function ItinerarySkeleton({ title }: { title?: string }) {
   return (
     <>
       {title && <PlatformHeader title={title} />}
-      <div className="flex flex-1 p-4 overflow-hidden min-h-0">
-        <div className="flex flex-col flex-1 rounded-lg border border-border bg-card overflow-hidden min-w-0">
-          <div className="flex items-center gap-2 px-3 py-2 border-b shrink-0">
-            <Skeleton className="h-7 w-24" />
-            <Skeleton className="h-4 flex-1 max-w-48" />
-            <Skeleton className="h-7 w-32" />
-          </div>
-          <div className="flex-1 p-3 grid grid-cols-7 gap-1">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="box-border flex h-14 min-h-14 max-h-14 shrink-0 items-center gap-2 border-b border-border bg-context-bar px-3 sm:px-6 lg:px-8">
+          <Skeleton className="h-7 w-24" />
+          <Skeleton className="h-4 max-w-48 flex-1" />
+          <Skeleton className="h-7 w-28 rounded-md" />
+          <Skeleton className="h-7 w-36 rounded-md" />
+        </div>
+        <div className="min-h-0 flex-1 overflow-auto p-3">
+          <div className="grid grid-cols-7 gap-1">
             {Array.from({ length: 35 }).map((_, i) => (
               <Skeleton key={i} className="aspect-square rounded-md" />
             ))}
