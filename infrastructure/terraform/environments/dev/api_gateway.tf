@@ -11,7 +11,9 @@ module "api_gateway" {
   allowed_origins      = [
     "http://localhost:3000",
     "http://localhost:5173",
+    "http://localhost:5180",
     "https://dev.cairn.ing",
+    "https://asgard.levismith.us",
     module.cloudfront.cloudfront_url,
   ]
   # Exclude public routes — those are wired explicitly below without JWT auth
