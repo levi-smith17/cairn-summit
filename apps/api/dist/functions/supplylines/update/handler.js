@@ -57,13 +57,14 @@ const handler = async (event) => {
             exprValues[':active'] = body.active;
         }
         if ('url' in body) {
+            // `url` is a DynamoDB reserved keyword — always alias it.
+            exprNames['#url'] = 'url';
             if (body.url) {
                 setExprs.push('#url = :url');
-                exprNames['#url'] = 'url';
                 exprValues[':url'] = body.url;
             }
             else {
-                removeExprs.push('url');
+                removeExprs.push('#url');
             }
         }
         if ('notes' in body) {
@@ -80,6 +81,15 @@ const handler = async (event) => {
             setExprs.push('markers = :markers');
             exprValues[':markers'] = markers;
         }
+        if ('fundId' in body) {
+            if (body.fundId) {
+                setExprs.push('fundId = :fundId');
+                exprValues[':fundId'] = body.fundId;
+            }
+            else {
+                removeExprs.push('fundId');
+            }
+        }
         if (setExprs.length === 0 && removeExprs.length === 0) {
             return (0, response_1.toApiGatewayResponse)((0, response_1.badRequest)('No valid fields to update'));
         }
@@ -94,7 +104,9 @@ const handler = async (event) => {
             Key: { pk, sk },
             UpdateExpression,
             ...(Object.keys(exprNames).length > 0 ? { ExpressionAttributeNames: exprNames } : {}),
-            ExpressionAttributeValues: exprValues,
+            ...(Object.keys(exprValues).length > 0
+                ? { ExpressionAttributeValues: exprValues }
+                : {}),
             ReturnValues: 'ALL_NEW',
         }));
         return (0, response_1.toApiGatewayResponse)((0, response_1.ok)(result.Attributes));
