@@ -330,6 +330,17 @@ jobs:
       aws_role_arn: ${{ secrets.PROD_AWS_ROLE_ARN }}
       aws_region: ${{ secrets.AWS_REGION }}
 
+  deploy-lambda-sjodr:
+    name: Deploy Lambda — Sjodr
+    needs: [build-lambda, terraform-apply]
+    uses: ./.github/workflows/deploy-lambda.yml
+    with:
+      environment: prod
+      functions: sjodr/get sjodr/create sjodr/update sjodr/delete
+    secrets:
+      aws_role_arn: ${{ secrets.PROD_AWS_ROLE_ARN }}
+      aws_region: ${{ secrets.AWS_REGION }}
+
   deploy-lambda-starfield:
     name: Deploy Lambda — Starfield
     needs: [build-lambda, terraform-apply]
