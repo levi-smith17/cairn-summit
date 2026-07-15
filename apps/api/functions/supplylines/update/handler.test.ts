@@ -133,6 +133,53 @@ describe('supplylines/update handler', () => {
         ) as any
 
         expect(result.statusCode).toBe(200)
+        const updateInput = vi.mocked(dynamo.send).mock.calls[0][0].input as {
+            UpdateExpression: string
+            ExpressionAttributeNames?: Record<string, string>
+        }
+        expect(updateInput.UpdateExpression).toContain('REMOVE #url, notes')
+        expect(updateInput.ExpressionAttributeNames?.['#url']).toBe('url')
+    })
+
+    it('updates fundId alongside clearing a reserved keyword field', async () => {
+        vi.mocked(dynamo.send).mockResolvedValueOnce({
+            Attributes: {
+                pk: 'USER#user-123',
+                sk: 'SUPPLYLINE#supplyline-123',
+                name: 'AppleCare One',
+                amount: 12.99,
+                billingCycle: 'MONTHLY',
+                nextRenewal: '2026-08-01',
+                active: true,
+                fundId: 'fund-1',
+                markers: []
+            }
+        })
+
+        const result = await handler(
+            mockEvent('user-123', { id: 'supplyline-123' }, {
+                name: 'AppleCare One',
+                amount: 12.99,
+                billingCycle: 'MONTHLY',
+                nextRenewal: '2026-08-01',
+                url: null,
+                notes: null,
+                fundId: 'fund-1',
+                active: true,
+                markerIds: [],
+            })
+        ) as any
+
+        expect(result.statusCode).toBe(200)
+        const updateInput = vi.mocked(dynamo.send).mock.calls[0][0].input as {
+            UpdateExpression: string
+            ExpressionAttributeNames?: Record<string, string>
+            ExpressionAttributeValues?: Record<string, unknown>
+        }
+        expect(updateInput.UpdateExpression).toContain('#url')
+        expect(updateInput.UpdateExpression).toContain('fundId = :fundId')
+        expect(updateInput.ExpressionAttributeNames?.['#url']).toBe('url')
+        expect(updateInput.ExpressionAttributeValues?.[':fundId']).toBe('fund-1')
     })
 
     it('returns 400 when id is missing', async () => {

@@ -70,12 +70,13 @@ export const handler = async (
         }
 
         if ('url' in body) {
+            // `url` is a DynamoDB reserved keyword — always alias it.
+            exprNames['#url'] = 'url'
             if (body.url) {
                 setExprs.push('#url = :url')
-                exprNames['#url'] = 'url'
                 exprValues[':url'] = body.url
             } else {
-                removeExprs.push('url')
+                removeExprs.push('#url')
             }
         }
 
@@ -117,7 +118,9 @@ export const handler = async (
             Key: { pk, sk },
             UpdateExpression,
             ...(Object.keys(exprNames).length > 0 ? { ExpressionAttributeNames: exprNames } : {}),
-            ExpressionAttributeValues: exprValues,
+            ...(Object.keys(exprValues).length > 0
+                ? { ExpressionAttributeValues: exprValues }
+                : {}),
             ReturnValues: 'ALL_NEW',
         }))
 
