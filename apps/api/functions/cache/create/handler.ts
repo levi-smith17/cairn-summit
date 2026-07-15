@@ -33,6 +33,7 @@ export const handler = async (
             limit: body.limit,
             month: body.month,
             year: body.year,
+            ...(body.fundId ? { fundId: body.fundId } : {}),
         }
 
         await dynamo.send(new PutCommand({

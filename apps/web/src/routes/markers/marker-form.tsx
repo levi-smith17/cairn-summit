@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import * as icons from 'lucide-react'
 import { createMarker, updateMarker, deleteMarker } from '@/lib/api/markers'
 import { ChevronRight } from 'lucide-react'
 import {
@@ -39,44 +38,15 @@ import { useAuth } from '@/hooks/use-auth'
 import { toast } from 'sonner'
 
 const PRESET_COLORS = [
-  '#ef4444', '#f97316', '#eab308', '#22c55e',
-  '#14b8a6', '#3b82f6', '#8b5cf6', '#ec4899',
-  '#6b7280', '#ffffff',
-]
-
-const ICON_OPTIONS = [
-  // General / UI
-  'Tag', 'Star', 'Bookmark', 'Flag', 'Zap', 'Bell', 'Pin',
-  'Check', 'AlertTriangle', 'Info', 'HelpCircle', 'Sparkles',
-  // People & Social
-  'User', 'Users', 'UserCheck', 'Contact', 'MessageCircle', 'Mail', 'Phone',
-  // Places & Travel
-  'Home', 'Building', 'Building2', 'MapPin', 'Globe', 'Compass', 'Navigation',
-  'Plane', 'Car', 'Train', 'Ship', 'Bike',
-  // Nature & Outdoors
-  'Leaf', 'Trees', 'Flower2', 'Mountain', 'Sun', 'Moon', 'Cloud', 'Umbrella', 'Wind', 'Flame',
-  // Food & Drink
-  'Coffee', 'Wine', 'UtensilsCrossed', 'ShoppingCart', 'ShoppingBag', 'Apple',
-  // Work & Finance
-  'Briefcase', 'BarChart2', 'TrendingUp', 'DollarSign', 'CreditCard',
-  'Receipt', 'Wallet', 'PiggyBank', 'Landmark',
-  // Tech & Media
-  'Code', 'Monitor', 'Smartphone', 'Wifi', 'Lock', 'Key', 'Camera', 'Music',
-  'Headphones', 'Video', 'Radio', 'Tv',
-  // Health & Fitness
-  'Heart', 'Activity', 'Stethoscope', 'Dumbbell',
-  // Education & Knowledge
-  'Book', 'BookOpen', 'GraduationCap', 'Pencil', 'FileText', 'Clipboard',
-  // Fun & Hobbies
-  'Trophy', 'Gamepad2', 'Palette', 'Scissors',
-  // Tools & Organization
-  'Wrench', 'Settings', 'Package', 'Box', 'Archive', 'Layers', 'Grid', 'LayoutGrid', 'FolderOpen',
+  '#ef4444', '#f43f5e', '#f97316', '#fb923c', '#eab308', '#a3e635',
+  '#70ca21', '#22c55e', '#16a34a', '#10b981', '#14b8a6', '#06b6d4',
+  '#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef',
+  '#ec4899', '#78716c', '#6b7280', '#334155', '#1e293b', '#ffffff',
 ]
 
 const markerSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   color: z.string().min(1, 'Color is required'),
-  icon: z.string().optional(),
 })
 
 type MarkerFormValues = z.infer<typeof markerSchema>
@@ -116,14 +86,12 @@ export function MarkerForm({ tag, parentMarker, onBack, onSaved, onDeleted }: Ma
     resolver: zodResolver(markerSchema),
     defaultValues: {
       name: tag?.name ?? '',
-      color: tag?.color ?? parentMarker?.color ?? PRESET_COLORS[0],
-      icon: tag?.icon ?? parentMarker?.icon ?? '',
+      color: tag?.color ?? parentMarker?.color ?? PRESET_COLORS[6],
     },
   })
 
   const watchedName = form.watch('name')
   const watchedColor = form.watch('color')
-  const watchedIcon = form.watch('icon')
 
   // For preview: show the full resolved name
   const resolvedName = parentMarker
@@ -140,7 +108,7 @@ export function MarkerForm({ tag, parentMarker, onBack, onSaved, onDeleted }: Ma
         await updateMarker(tag.id, {
           name: fullName,
           color: values.color,
-          icon: values.icon || ''
+          icon: tag.icon ?? '',
         })
         await queryClient.invalidateQueries({ queryKey: ['markers', user?.id] })
         onSaved(tag.id)
@@ -148,7 +116,7 @@ export function MarkerForm({ tag, parentMarker, onBack, onSaved, onDeleted }: Ma
         const result = await createMarker({
           name: fullName,
           color: values.color,
-          icon: values.icon || ''
+          icon: parentMarker?.icon ?? '',
         })
         await queryClient.invalidateQueries({ queryKey: ['markers', user?.id] })
         onSaved(extractId(result.sk))
@@ -187,7 +155,13 @@ export function MarkerForm({ tag, parentMarker, onBack, onSaved, onDeleted }: Ma
               {/* Preview */}
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">Preview:</span>
-                <MarkerBadge marker={{ name: resolvedName || markerSingular.toLowerCase(), color: watchedColor, icon: watchedIcon || null }} />
+                <MarkerBadge
+                  marker={{
+                    name: resolvedName || markerSingular.toLowerCase(),
+                    color: watchedColor,
+                    icon: tag?.icon ?? parentMarker?.icon ?? null,
+                  }}
+                />
               </div>
 
               {/* Parent path — locked, shown only for sub-markers */}
@@ -269,37 +243,6 @@ export function MarkerForm({ tag, parentMarker, onBack, onSaved, onDeleted }: Ma
                           style={{ backgroundColor: customColor }}
                         />
                       )}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Icon */}
-              <FormField
-                control={form.control}
-                name="icon"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Icon (optional)</FormLabel>
-                    <div className="flex flex-wrap gap-2">
-                      {ICON_OPTIONS.map(iconName => {
-                        const Icon = (icons as any)[iconName]
-                        if (!Icon) return null
-                        return (
-                          <button
-                            key={iconName}
-                            type="button"
-                            className={`p-1.5 rounded border transition-colors ${field.value === iconName
-                              ? 'border-foreground bg-muted'
-                              : 'border-transparent hover:border-muted-foreground'
-                              }`}
-                            onClick={() => field.onChange(field.value === iconName ? '' : iconName)}
-                          >
-                            <Icon className="h-4 w-4" />
-                          </button>
-                        )
-                      })}
                     </div>
                     <FormMessage />
                   </FormItem>

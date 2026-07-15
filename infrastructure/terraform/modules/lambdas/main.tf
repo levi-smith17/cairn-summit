@@ -18,6 +18,7 @@ locals {
     local.lambdas_profile,
     local.lambdas_settings,
     local.lambdas_signals,
+    local.lambdas_sjodr,
     local.lambdas_search,
     local.lambdas_starfield,
     local.lambdas_supplylines,

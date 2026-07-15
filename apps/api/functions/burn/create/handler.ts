@@ -50,6 +50,7 @@ export const handler = async (
             date: body.date,
             ...(body.notes ? { notes: body.notes } : {}),
             ...(body.receiptUrl ? { receiptUrl: body.receiptUrl } : {}),
+            ...(body.fundId ? { fundId: body.fundId } : {}),
             markers,
             createdAt: new Date().toISOString(),
         }
