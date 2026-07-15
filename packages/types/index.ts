@@ -206,8 +206,18 @@ export interface Stop {
     updatedAt: string
 }
 
+// ── Sjodr (funds) ──────────────────────────────────────
+export interface Sjodr {
+    pk: string
+    sk: string
+    name: string
+    description?: string
+    createdAt: string
+}
+
 // ── Supplylines (recurring costs) ──────────────────────
 export interface Supplyline {
+    fundId?: string
     pk: string
     sk: string
     name: string
@@ -223,6 +233,7 @@ export interface Supplyline {
 
 // ── Burn (one-time expenses) ───────────────────────────
 export interface Burn {
+    fundId?: string
     pk: string
     sk: string
     name: string
@@ -236,6 +247,7 @@ export interface Burn {
 
 // ── Cache (marker-based budgets) ───────────────────────
 export interface Cache {
+    fundId?: string
     pk: string
     sk: string
     markerId: string

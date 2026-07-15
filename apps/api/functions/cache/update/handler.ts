@@ -18,8 +18,8 @@ export const handler = async (
 
         const body = JSON.parse(event.body ?? '{}')
 
-        if (body.limit === undefined) {
-            return toApiGatewayResponse(badRequest('limit is required'))
+        if (body.limit === undefined && !('fundId' in body)) {
+            return toApiGatewayResponse(badRequest('limit or fundId is required'))
         }
 
         const pk = getPk(event)
@@ -39,12 +39,36 @@ export const handler = async (
             return toApiGatewayResponse(notFound('Cache not found'))
         }
 
+        const setExprs: string[] = []
+        const removeExprs: string[] = []
+        const exprNames: Record<string, string> = {}
+        const exprValues: Record<string, unknown> = {}
+
+        if (body.limit !== undefined) {
+            setExprs.push('#limit = :limit')
+            exprNames['#limit'] = 'limit'
+            exprValues[':limit'] = body.limit
+        }
+
+        if ('fundId' in body) {
+            if (body.fundId) {
+                setExprs.push('fundId = :fundId')
+                exprValues[':fundId'] = body.fundId
+            } else {
+                removeExprs.push('fundId')
+            }
+        }
+
+        const parts: string[] = []
+        if (setExprs.length > 0) parts.push(`SET ${setExprs.join(', ')}`)
+        if (removeExprs.length > 0) parts.push(`REMOVE ${removeExprs.join(', ')}`)
+
         const updateResult = await dynamo.send(new UpdateCommand({
             TableName: TABLE_NAME,
             Key: { pk, sk: cache.sk },
-            UpdateExpression: 'SET #limit = :limit',
-            ExpressionAttributeNames: { '#limit': 'limit' },
-            ExpressionAttributeValues: { ':limit': body.limit },
+            UpdateExpression: parts.join(' '),
+            ...(Object.keys(exprNames).length > 0 ? { ExpressionAttributeNames: exprNames } : {}),
+            ...(Object.keys(exprValues).length > 0 ? { ExpressionAttributeValues: exprValues } : {}),
             ReturnValues: 'ALL_NEW',
         }))
 

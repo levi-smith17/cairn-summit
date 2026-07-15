@@ -94,6 +94,15 @@ export const handler = async (
             exprValues[':markers'] = markers
         }
 
+        if ('fundId' in body) {
+            if (body.fundId) {
+                setExprs.push('fundId = :fundId')
+                exprValues[':fundId'] = body.fundId
+            } else {
+                removeExprs.push('fundId')
+            }
+        }
+
         if (setExprs.length === 0 && removeExprs.length === 0) {
             return toApiGatewayResponse(badRequest('No valid fields to update'))
         }

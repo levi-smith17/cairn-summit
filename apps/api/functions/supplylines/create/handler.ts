@@ -51,6 +51,7 @@ export const handler = async (
             nextRenewal: body.nextRenewal,
             ...(body.url ? { url: body.url } : {}),
             ...(body.notes ? { notes: body.notes } : {}),
+            ...(body.fundId ? { fundId: body.fundId } : {}),
             active: body.active ?? true,
             markers,
             createdAt: new Date().toISOString(),

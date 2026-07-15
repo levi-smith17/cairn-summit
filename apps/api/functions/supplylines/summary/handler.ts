@@ -114,6 +114,7 @@ export const handler = async (
                 limit: c.limit,
                 spent,
                 utilization,
+                ...(c.fundId ? { fundId: c.fundId } : {}),
             }
         })
 
