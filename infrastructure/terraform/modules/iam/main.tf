@@ -272,6 +272,7 @@ resource "aws_iam_policy" "lambda_write_ssm" {
           "dynamodb:BatchWriteItem",
           "dynamodb:GetItem",
           "dynamodb:PutItem",
+          "dynamodb:Query",
           "dynamodb:TransactWriteItems",
           "dynamodb:UpdateItem",
         ]
@@ -421,6 +422,7 @@ resource "aws_iam_policy" "lambda_write" {
           "dynamodb:DeleteItem",
           "dynamodb:GetItem",
           "dynamodb:PutItem",
+          "dynamodb:Query",
           "dynamodb:TransactWriteItems",
           "dynamodb:UpdateItem",
         ]

@@ -1,10 +1,23 @@
-import { QueryCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb'
+import { GetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb'
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from 'aws-lambda'
 import type { Cache } from '@cairn/types'
 import { dynamo, TABLE_NAME } from '../../shared/db'
 import { getPathId, getPk } from '../../shared/auth'
-import { findCacheById } from '../../shared/cache'
 import { toApiGatewayResponse, ok, badRequest, notFound, serverError } from '../../shared/response'
+
+function resolveCacheSk(
+    id: string,
+    body: { markerId?: string; month?: number; year?: number },
+): string | null {
+    if (body.markerId != null && body.month != null && body.year != null) {
+        return `CACHE#${body.markerId}#${body.month}#${body.year}`
+    }
+    // Legacy composite ids are the sk without the CACHE# prefix (markerId#month#year).
+    if (id.includes('#')) {
+        return id.startsWith('CACHE#') ? id : `CACHE#${id}`
+    }
+    return null
+}
 
 export const handler = async (
     event: APIGatewayProxyEventV2WithJWTAuthorizer
@@ -23,19 +36,22 @@ export const handler = async (
         }
 
         const pk = getPk(event)
+        const sk = resolveCacheSk(id, body)
 
-        const result = await dynamo.send(new QueryCommand({
+        if (!sk) {
+            // UUID-only updates need marker/month/year so we can target the deterministic key
+            // without a DynamoDB Query (write roles historically lack Query).
+            return toApiGatewayResponse(
+                badRequest('markerId, month, and year are required to update cache'),
+            )
+        }
+
+        const existing = await dynamo.send(new GetCommand({
             TableName: TABLE_NAME,
-            KeyConditionExpression: 'pk = :pk AND begins_with(sk, :prefix)',
-            ExpressionAttributeValues: {
-                ':pk': pk,
-                ':prefix': 'CACHE#',
-            },
+            Key: { pk, sk },
         }))
 
-        const cache = findCacheById((result.Items ?? []) as (Cache & { id?: string })[], id)
-
-        if (!cache) {
+        if (!existing.Item) {
             return toApiGatewayResponse(notFound('Cache not found'))
         }
 
@@ -59,13 +75,17 @@ export const handler = async (
             }
         }
 
+        if (setExprs.length === 0 && removeExprs.length === 0) {
+            return toApiGatewayResponse(ok(existing.Item as Cache))
+        }
+
         const parts: string[] = []
         if (setExprs.length > 0) parts.push(`SET ${setExprs.join(', ')}`)
         if (removeExprs.length > 0) parts.push(`REMOVE ${removeExprs.join(', ')}`)
 
         const updateResult = await dynamo.send(new UpdateCommand({
             TableName: TABLE_NAME,
-            Key: { pk, sk: cache.sk },
+            Key: { pk, sk },
             UpdateExpression: parts.join(' '),
             ...(Object.keys(exprNames).length > 0 ? { ExpressionAttributeNames: exprNames } : {}),
             ...(Object.keys(exprValues).length > 0 ? { ExpressionAttributeValues: exprValues } : {}),
