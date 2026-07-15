@@ -48,6 +48,14 @@ export const handler = async (
             items = items.filter(e => e.markers.some(m => m.id === params.markerId))
         }
 
+        if (params.fundId) {
+            if (params.fundId === 'unassigned') {
+                items = items.filter(e => !e.fundId)
+            } else {
+                items = items.filter(e => e.fundId === params.fundId)
+            }
+        }
+
         items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
         const total = items.length

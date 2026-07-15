@@ -60,4 +60,40 @@ END:VCALENDAR`
         expect(events[0].startDate.toISOString()).toBe('2026-07-07T14:15:00.000Z')
         expect(events[0].endDate?.toISOString()).toBe('2026-07-07T15:15:00.000Z')
     })
+
+    it('resolves Windows and GMT offset TZIDs without failing the feed', () => {
+        const ics = `BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+UID:win-tz
+SUMMARY:Outlook meeting
+DTSTART;TZID=Eastern Standard Time:20260707T101500
+DTEND;TZID=Eastern Standard Time:20260707T111500
+END:VEVENT
+BEGIN:VEVENT
+UID:gmt-tz
+SUMMARY:Offset meeting
+DTSTART;TZID=GMT-0400:20260707T101500
+DTEND;TZID=GMT-0400:20260707T111500
+END:VEVENT
+BEGIN:VEVENT
+UID:quoted-tz
+SUMMARY:Quoted Outlook zone
+DTSTART;TZID="Eastern Standard Time":20260708T090000
+DTEND;TZID="Eastern Standard Time":20260708T100000
+END:VEVENT
+END:VCALENDAR`
+
+        const events = parseICSEvents(
+            ics,
+            'https://example.com/cal.ics',
+            new Date('2026-07-01'),
+            new Date('2026-08-01'),
+        )
+
+        expect(events).toHaveLength(3)
+        expect(events[0].startDate.toISOString()).toBe('2026-07-07T14:15:00.000Z')
+        expect(events[1].startDate.toISOString()).toBe('2026-07-07T14:15:00.000Z')
+        expect(events[2].startDate.toISOString()).toBe('2026-07-08T13:00:00.000Z')
+    })
 })

@@ -1,3 +1,5 @@
+import { WINDOWS_TO_IANA } from './windows-timezones'
+
 export interface ICalEvent {
     uid: string
     url: string
@@ -24,10 +26,80 @@ function parseICSProperty(ics: string, key: string): ICSProperty | null {
     for (const part of match[1].split(';').filter(Boolean)) {
         const eq = part.indexOf('=')
         if (eq === -1) params[part.toUpperCase()] = 'TRUE'
-        else params[part.slice(0, eq).toUpperCase()] = part.slice(eq + 1)
+        else {
+            const raw = part.slice(eq + 1)
+            // Outlook often quotes TZIDs: TZID="Eastern Standard Time"
+            params[part.slice(0, eq).toUpperCase()] = raw.replace(/^"(.*)"$/, '$1').replace(/^'(.*)'$/, '$1')
+        }
     }
 
     return { params, value: match[2].trim() }
+}
+
+function isValidTimeZone(timeZone: string): boolean {
+    try {
+        // Some runtimes only throw when formatting; force evaluation.
+        new Intl.DateTimeFormat('en-US', { timeZone }).format(0)
+        return true
+    } catch {
+        return false
+    }
+}
+
+/** Resolve ICS TZID (IANA or Windows) to an IANA zone Intl accepts. */
+export function resolveIanaTimeZone(tzid: string | null | undefined): string | null {
+    if (!tzid) return null
+    let tz = tzid
+        .trim()
+        .replace(/^"(.*)"$/, '$1')
+        .replace(/^'(.*)'$/, '$1')
+        .replace(/\u00a0/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+    tz = tz.replace(/^tzone:\/\/Microsoft\//i, '')
+    tz = tz.replace(/^\//, '')
+    if (!tz) return null
+    if (isValidTimeZone(tz)) return tz
+
+    // Display-name variants Outlook sometimes emits instead of Windows IDs.
+    const displayAliases: Record<string, string> = {
+        'Eastern Time (US & Canada)': 'Eastern Standard Time',
+        'Eastern Daylight Time': 'Eastern Standard Time',
+        '(UTC-05:00) Eastern Time (US & Canada)': 'Eastern Standard Time',
+        'Central Time (US & Canada)': 'Central Standard Time',
+        'Pacific Time (US & Canada)': 'Pacific Standard Time',
+        'Mountain Time (US & Canada)': 'Mountain Standard Time',
+    }
+    const alias = displayAliases[tz]
+    if (alias) tz = alias
+
+    const mapped = WINDOWS_TO_IANA[tz] ?? WINDOWS_TO_IANA[tz.replace(/_/g, ' ')]
+    if (mapped && isValidTimeZone(mapped)) return mapped
+
+    // Offset TZIDs like GMT-0400, GMT-04:00, UTC+0530 — map to Etc/GMT (POSIX sign inverted).
+    const offset = tz.match(/^(?:GMT|UTC)([+-])(\d{1,2})(?::?(\d{2}))?$/i)
+    if (offset) {
+        const sign = offset[1] === '-' ? '+' : '-'
+        const hours = Number(offset[2])
+        const minutes = Number(offset[3] ?? '0')
+        if (minutes === 0 && hours >= 0 && hours <= 14) {
+            const etc = `Etc/GMT${sign}${hours}`
+            if (isValidTimeZone(etc)) return etc
+        }
+    }
+    // Fallback: GMT-0400 style already partially matched above; also accept GMT0400 without sign separator.
+    const compact = tz.match(/^(?:GMT|UTC)([+-]?)(\d{2})(\d{2})$/i)
+    if (compact) {
+        const rawSign = compact[1] || '+'
+        const sign = rawSign === '-' ? '+' : '-'
+        const hours = Number(compact[2])
+        const minutes = Number(compact[3])
+        if (minutes === 0 && hours >= 0 && hours <= 14) {
+            const etc = `Etc/GMT${sign}${hours}`
+            if (isValidTimeZone(etc)) return etc
+        }
+    }
+    return null
 }
 
 function zonedComponentsToUtc(
@@ -44,16 +116,22 @@ function zonedComponentsToUtc(
     )
     let utcMs = desiredUtc
 
-    const formatter = new Intl.DateTimeFormat('en-US', {
-        timeZone,
-        hourCycle: 'h23',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-    })
+    let formatter: Intl.DateTimeFormat
+    try {
+        formatter = new Intl.DateTimeFormat('en-US', {
+            timeZone,
+            hourCycle: 'h23',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+        })
+    } catch {
+        // Unknown zone — treat as floating local time rather than failing the whole feed.
+        return new Date(comps.year, comps.month - 1, comps.day, comps.hour, comps.minute, comps.second)
+    }
 
     for (let i = 0; i < 4; i++) {
         const parts = formatter.formatToParts(new Date(utcMs))
@@ -101,8 +179,9 @@ function parseICSDate(value: string, tzid?: string | null): { date: Date; allDay
             minute: +m[5],
             second: +m[6],
         }
-        if (tzid) {
-            return { date: zonedComponentsToUtc(comps, tzid), allDay: false }
+        const iana = resolveIanaTimeZone(tzid)
+        if (iana) {
+            return { date: zonedComponentsToUtc(comps, iana), allDay: false }
         }
         return {
             date: new Date(comps.year, comps.month - 1, comps.day, comps.hour, comps.minute, comps.second),
@@ -165,18 +244,21 @@ function expandRRule(
     const endLimit = until && until < to ? until : to
 
     const results: ICalEvent[] = []
+    const seenOccurrenceKeys = new Set<string>()
     let current = new Date(base.startDate)
     let n = 0
 
     while (current <= endLimit && n < count && n < 2000) {
         const dateKey = current.toISOString().slice(0, 10)
+        const occurrenceKey = current.toISOString()
         const inWindow = current >= from && current <= to
         const notExcluded = !exDates.has(dateKey)
 
-        if (inWindow && notExcluded) {
+        if (inWindow && notExcluded && !seenOccurrenceKeys.has(occurrenceKey)) {
+            seenOccurrenceKeys.add(occurrenceKey)
             results.push({
                 ...base,
-                uid: `${base.uid}:${current.toISOString()}`,
+                uid: `${base.uid}:${occurrenceKey}`,
                 startDate: new Date(current),
                 endDate: duration > 0 ? new Date(current.getTime() + duration) : null,
             })
@@ -220,6 +302,11 @@ function expandRRule(
     return results
 }
 
+/** RFC 5545 line unfolding: CRLF/LF followed by a space or tab continues the previous line. */
+export function unfoldICS(icsString: string): string {
+    return icsString.replace(/\r\n[ \t]/g, '').replace(/\n[ \t]/g, '')
+}
+
 export function parseICSEvents(
     icsString: string,
     url: string,
@@ -228,20 +315,26 @@ export function parseICSEvents(
 ): ICalEvent[] {
     const windowFrom = from ?? new Date(0)
     const windowTo = to ?? new Date(8_640_000_000_000_000)
+    const unfolded = unfoldICS(icsString)
 
     const overrides = new Set<string>()
-    const vevents = extractVEvents(icsString)
+    const vevents = extractVEvents(unfolded)
 
     for (const vevent of vevents) {
-        const uid = extractICSValue(vevent, 'UID')
-        const recIdProp = parseICSProperty(vevent, 'RECURRENCE-ID')
-        if (uid && recIdProp) {
-            const recId = parseICSDateProperty(recIdProp)
-            if (recId) overrides.add(`${uid}:${recId.date.toISOString().slice(0, 10)}`)
+        try {
+            const uid = extractICSValue(vevent, 'UID')
+            const recIdProp = parseICSProperty(vevent, 'RECURRENCE-ID')
+            if (uid && recIdProp) {
+                const recId = parseICSDateProperty(recIdProp)
+                if (recId) overrides.add(`${uid}:${recId.date.toISOString().slice(0, 10)}`)
+            }
+        } catch {
+            // Skip malformed recurrence overrides (exotic TZIDs, etc.)
         }
     }
 
     return vevents.flatMap(vevent => {
+      try {
         const uid = extractICSValue(vevent, 'UID')
         const summary = extractICSValue(vevent, 'SUMMARY')
         const dtstartProp = parseICSProperty(vevent, 'DTSTART')
@@ -294,6 +387,10 @@ export function parseICSEvents(
         }
 
         return start.date >= windowFrom && start.date <= windowTo ? [base] : []
+      } catch {
+        // Skip malformed events (e.g. exotic TZIDs) instead of failing the whole feed.
+        return []
+      }
     })
 }
 
@@ -303,8 +400,21 @@ export async function fetchSubscriptionEvents(
     to: Date,
 ): Promise<ICalEvent[]> {
     const url = feedUrl.replace(/^webcal:\/\//i, 'https://')
-    const res = await fetch(url)
-    if (!res.ok) throw new Error(`Failed to fetch feed (${res.status})`)
+    const res = await fetch(url, {
+        headers: {
+            Accept: 'text/calendar, text/plain, */*',
+            'User-Agent': 'Asgard-Dagatal/1.0 (ICS subscription sync)',
+        },
+        redirect: 'follow',
+    })
+    if (!res.ok) throw new Error(`Failed to fetch subscription feed (${res.status})`)
     const icsString = await res.text()
+    const trimmed = icsString.trim()
+    if (!trimmed) throw new Error('Subscription feed was empty')
+    if (!/BEGIN:VCALENDAR/i.test(trimmed) && !/BEGIN:VEVENT/i.test(trimmed)) {
+        throw new Error(
+            'Subscription URL did not return an ICS calendar feed. Check the URL in Thing → Dagatal.',
+        )
+    }
     return parseICSEvents(icsString, url, from, to)
 }

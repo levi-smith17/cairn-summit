@@ -108,4 +108,60 @@ describe('burn/get handler', () => {
         expect(result.statusCode).toBe(500)
         expect(JSON.parse(result.body).error).toBe('Internal server error')
     })
+
+    it('filters by fundId and unassigned', async () => {
+        vi.mocked(dynamo.send).mockImplementationOnce(() => Promise.resolve({
+            Items: [
+                {
+                    pk: 'USER#user-123',
+                    sk: 'BURN#a',
+                    name: 'Funded',
+                    amount: 10,
+                    date: '2026-05-10',
+                    fundId: 'fund-1',
+                    markers: [],
+                },
+                {
+                    pk: 'USER#user-123',
+                    sk: 'BURN#b',
+                    name: 'Unfunded',
+                    amount: 5,
+                    date: '2026-05-11',
+                    markers: [],
+                },
+            ],
+        }))
+
+        const funded = await handler(
+            mockEvent('user-123', { month: '5', year: '2026', fundId: 'fund-1' })
+        ) as any
+        expect(JSON.parse(funded.body).data.burn.map((b: { name: string }) => b.name)).toEqual(['Funded'])
+
+        vi.mocked(dynamo.send).mockImplementationOnce(() => Promise.resolve({
+            Items: [
+                {
+                    pk: 'USER#user-123',
+                    sk: 'BURN#a',
+                    name: 'Funded',
+                    amount: 10,
+                    date: '2026-05-10',
+                    fundId: 'fund-1',
+                    markers: [],
+                },
+                {
+                    pk: 'USER#user-123',
+                    sk: 'BURN#b',
+                    name: 'Unfunded',
+                    amount: 5,
+                    date: '2026-05-11',
+                    markers: [],
+                },
+            ],
+        }))
+
+        const unassigned = await handler(
+            mockEvent('user-123', { month: '5', year: '2026', fundId: 'unassigned' })
+        ) as any
+        expect(JSON.parse(unassigned.body).data.burn.map((b: { name: string }) => b.name)).toEqual(['Unfunded'])
+    })
 })
