@@ -83,13 +83,13 @@ describe('cache/update handler', () => {
         expect(dynamo.send).not.toHaveBeenCalled()
     })
 
-    it('returns 400 when limit is missing', async () => {
+    it('returns 400 when limit and fundId are missing', async () => {
         const result = await handler(
             mockEvent('user-123', { id: 'cache-123' }, {})
         ) as any
 
         expect(result.statusCode).toBe(400)
-        expect(JSON.parse(result.body).error).toBe('limit is required')
+        expect(JSON.parse(result.body).error).toBe('limit or fundId is required')
         expect(dynamo.send).not.toHaveBeenCalled()
     })
 
