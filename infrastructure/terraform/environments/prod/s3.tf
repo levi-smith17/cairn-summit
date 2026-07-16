@@ -12,6 +12,8 @@ module "s3" {
       module.cloudfront.cloudfront_url,
       "https://asgard.levismith.us",
       "https://fjall.levismith.us",
+      "https://levismith.us",
+      "https://www.levismith.us",
       # Local Fjall Vite (apps/web port 5180) against prod media uploads
       "http://localhost:5180",
     ],
