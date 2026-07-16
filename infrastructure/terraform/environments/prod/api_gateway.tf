@@ -13,6 +13,7 @@ module "api_gateway" {
       "https://${var.domain}",
       module.cloudfront.cloudfront_url,
       "https://asgard.levismith.us",
+      "https://fjall.levismith.us",
       # Local Fjall Vite (apps/web port 5180) against api.cairn.ing
       "http://localhost:5180",
     ],

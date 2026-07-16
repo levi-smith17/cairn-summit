@@ -10,16 +10,20 @@ module "cognito" {
   owner        = var.owner
   project_name = var.project_name
 
-  # Fjall public origin + local Vite (port 5180). Trailing-slash variants included.
+  # Fjall public + LAN-only origin + local Vite (port 5180). Trailing-slash variants included.
   callback_urls = [
     "https://asgard.levismith.us",
     "https://asgard.levismith.us/",
+    "https://fjall.levismith.us",
+    "https://fjall.levismith.us/",
     "http://localhost:5180",
     "http://localhost:5180/",
   ]
   logout_urls = [
     "https://asgard.levismith.us",
     "https://asgard.levismith.us/",
+    "https://fjall.levismith.us",
+    "https://fjall.levismith.us/",
     "http://localhost:5180",
     "http://localhost:5180/",
   ]
